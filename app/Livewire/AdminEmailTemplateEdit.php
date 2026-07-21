@@ -1,0 +1,211 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Models\EmailTemplate;
+use App\Models\EmailTemplateType;
+use App\Services\EmailTemplateService;
+use Illuminate\Contracts\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+
+#[Layout('layouts.app')]
+class AdminEmailTemplateEdit extends Component
+{
+    public ?int $templateId = null;
+    public ?EmailTemplate $template = null;
+
+    // Form fields
+    public int $email_type_id = 1;
+    public string $profile_name = '';
+    public ?string $from_address = null;
+    public ?string $from_name = null;
+    public ?string $bcc_address = null;
+    public string $subject = '';
+    public ?string $header_html = null;
+    public ?string $banner_image_url = null;
+    public ?string $banner_image_link = null;
+    public bool $show_banner = false;
+    public ?string $salutation = null;
+    public bool $include_salutation = false;
+    public ?string $greeting = null;
+    public ?string $body = null;
+    public ?string $sign_off = null;
+    public ?string $signature = null;
+    public ?string $disclaimer = null;
+    public ?string $copyright = null;
+    public ?string $footer_image_url = null;
+    public ?string $footer_image_link = null;
+    public bool $show_footer_image = false;
+    public ?string $footer_html = null;
+    public bool $is_active = false;
+
+    // Preview
+    public bool $showPreviewModal = false;
+    public string $previewHtml = '';
+
+    protected function rules(): array
+    {
+        return [
+            'email_type_id' => 'required|exists:email_template_types,id',
+            'profile_name' => 'required|string|max:255',
+            'from_address' => 'nullable|email|max:255',
+            'from_name' => 'nullable|string|max:255',
+            'bcc_address' => 'nullable|string|max:255',
+            'subject' => 'required|string',
+            'header_html' => 'nullable|string',
+            'banner_image_url' => 'nullable|string|max:2000',
+            'banner_image_link' => 'nullable|string|max:2000',
+            'show_banner' => 'boolean',
+            'salutation' => 'nullable|string',
+            'include_salutation' => 'boolean',
+            'greeting' => 'nullable|string',
+            'body' => 'nullable|string',
+            'sign_off' => 'nullable|string',
+            'signature' => 'nullable|string',
+            'disclaimer' => 'nullable|string',
+            'copyright' => 'nullable|string',
+            'footer_image_url' => 'nullable|string|max:2000',
+            'footer_image_link' => 'nullable|string|max:2000',
+            'show_footer_image' => 'boolean',
+            'footer_html' => 'nullable|string',
+            'is_active' => 'boolean',
+        ];
+    }
+
+    public function mount(?int $id = null, ?int $type_id = null): void
+    {
+        abort_unless(auth()->check() && auth()->user()->isAdmin(), 403);
+
+        if ($id) {
+            $this->templateId = $id;
+            $this->template = EmailTemplate::findOrFail($id);
+
+            // Fill form fields
+            $this->email_type_id = $this->template->email_type_id;
+            $this->profile_name = $this->template->profile_name;
+            $this->from_address = $this->template->from_address;
+            $this->from_name = $this->template->from_name;
+            $this->bcc_address = $this->template->bcc_address;
+            $this->subject = $this->template->subject;
+            $this->header_html = $this->template->header_html;
+            $this->banner_image_url = $this->template->banner_image_url;
+            $this->banner_image_link = $this->template->banner_image_link;
+            $this->show_banner = $this->template->show_banner;
+            $this->salutation = $this->template->salutation;
+            $this->include_salutation = $this->template->include_salutation;
+            $this->greeting = $this->template->greeting;
+            $this->body = $this->template->body;
+            $this->sign_off = $this->template->sign_off;
+            $this->signature = $this->template->signature;
+            $this->disclaimer = $this->template->disclaimer;
+            $this->copyright = $this->template->copyright;
+            $this->footer_image_url = $this->template->footer_image_url;
+            $this->footer_image_link = $this->template->footer_image_link;
+            $this->show_footer_image = $this->template->show_footer_image;
+            $this->footer_html = $this->template->footer_html;
+            $this->is_active = $this->template->is_active;
+        } elseif ($type_id) {
+            $this->email_type_id = $type_id;
+        }
+    }
+
+    public function save()
+    {
+        $data = $this->validate();
+
+        if ($this->is_active) {
+            // Deactivate all other templates of this type
+            EmailTemplate::where('email_type_id', $this->email_type_id)
+                ->when($this->templateId, function($q) {
+                    $q->where('id', '!=', $this->templateId);
+                })
+                ->update(['is_active' => false]);
+        } else {
+            // If this is the only template of this type, it MUST be active
+            $siblingCount = EmailTemplate::where('email_type_id', $this->email_type_id)
+                ->when($this->templateId, function($q) {
+                    $q->where('id', '!=', $this->templateId);
+                })
+                ->count();
+            if ($siblingCount === 0) {
+                $data['is_active'] = true;
+                $this->is_active = true;
+            }
+        }
+
+        if ($this->templateId) {
+            $this->template->update($data);
+            session()->flash('status', 'Email template updated successfully.');
+        } else {
+            EmailTemplate::create($data);
+            session()->flash('status', 'Email template created successfully.');
+        }
+
+        return redirect()->route('admin.email-templates.index', navigate: true);
+    }
+
+    public function generatePreview(): void
+    {
+        $mockTemplate = new EmailTemplate([
+            'email_type_id' => $this->email_type_id,
+            'profile_name' => $this->profile_name,
+            'from_address' => $this->from_address,
+            'from_name' => $this->from_name,
+            'bcc_address' => $this->bcc_address,
+            'subject' => $this->subject,
+            'header_html' => $this->header_html,
+            'banner_image_url' => $this->banner_image_url,
+            'banner_image_link' => $this->banner_image_link,
+            'show_banner' => $this->show_banner,
+            'salutation' => $this->salutation,
+            'include_salutation' => $this->include_salutation,
+            'greeting' => $this->greeting,
+            'body' => $this->body,
+            'sign_off' => $this->sign_off,
+            'signature' => $this->signature,
+            'disclaimer' => $this->disclaimer,
+            'copyright' => $this->copyright,
+            'footer_image_url' => $this->footer_image_url,
+            'footer_image_link' => $this->footer_image_link,
+            'show_footer_image' => $this->show_footer_image,
+            'footer_html' => $this->footer_html,
+        ]);
+
+        $mockVars = [
+            'order_id' => '100245',
+            'customer_name' => 'John Doe',
+            'order_total' => '$150.00',
+            'order_subtotal' => '$138.56',
+            'order_taxes' => '$11.44',
+            'order_shipping' => '$0.00',
+            'order_items_table' => '<table width="100%" style="border-collapse: collapse; font-size: 14px; margin-top: 15px;"><tr style="border-bottom: 2px solid #e2e8f0; font-weight: bold;"><th align="left" style="padding: 8px 0;">Item Name</th><th align="center" style="padding: 8px 0;">Qty</th><th align="right" style="padding: 8px 0;">Price</th></tr><tr><td style="padding: 8px 0;">Premium Leather Backpack (BP-01)</td><td align="center" style="padding: 8px 0;">1</td><td align="right" style="padding: 8px 0;">$150.00</td></tr></table>',
+            'tracking_number' => '1Z999AA10123456784',
+            'download_links' => '<a href="#" style="color: #4f46e5; text-decoration: underline;">Download Link 1</a>',
+            'activation_url' => 'https://example.com/activate/token123',
+            'reset_url' => 'https://example.com/password/reset/token123',
+            'ticket_title' => 'Unable to complete checkout',
+            'ticket_status' => 'Open',
+            'ticket_url' => 'https://example.com/tickets/abc-123',
+            'reply_author' => 'Agent Sarah',
+            'reply_body' => 'I have reviewed your account and updated your billing details. Please try checking out again.',
+            'previous_status' => 'Pending Info',
+            'app_name' => config('app.name'),
+            'year' => date('Y'),
+        ];
+
+        $this->previewHtml = EmailTemplateService::renderBody($mockTemplate, $mockVars);
+        $this->showPreviewModal = true;
+    }
+
+    public function render(): View
+    {
+        $types = EmailTemplateType::orderBy('ordering')->get();
+        $selectedType = EmailTemplateType::find($this->email_type_id);
+
+        return view('livewire.admin-email-template-edit', [
+            'types' => $types,
+            'selectedType' => $selectedType,
+        ]);
+    }
+}

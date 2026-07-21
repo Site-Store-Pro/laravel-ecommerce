@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Staudenmeir\LaravelAdjacencyList\Eloquent\HasRecursiveRelationships;
+
+class Category extends Model
+{
+    use HasRecursiveRelationships;
+
+    protected $table = 'product_categories';
+
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+        'parent_id',
+        'sort_order',
+        'is_visible_in_menu'
+    ];
+
+    /**
+     * Relationship: Products belonging to this category.
+     */
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_categories_assignments', 'category_id', 'product_id');
+    }
+
+    /**
+     * Get distinct products count in this category and all its descendants.
+     */
+    public function getCascadingProductsCount(): int
+    {
+        $categoryIds = $this->descendantsAndSelf()->pluck('id');
+        return \DB::table('product_categories_assignments')
+            ->whereIn('category_id', $categoryIds)
+            ->distinct()
+            ->count('product_id');
+    }
+
+    /**
+     * Check if this category or any descendant has products.
+     * Uses loaded relations if available to avoid extra DB queries.
+     */
+    public function hasActiveProducts(): bool
+    {
+        if ($this->relationLoaded('products')) {
+            if ($this->products->isNotEmpty()) {
+                return true;
+            }
+        } else {
+            if ($this->products()->exists()) {
+                return true;
+            }
+        }
+
+        if ($this->relationLoaded('children')) {
+            foreach ($this->children as $child) {
+                if ($child->hasActiveProducts()) {
+                    return true;
+                }
+            }
+        } else {
+            foreach ($this->children()->get() as $child) {
+                if ($child->hasActiveProducts()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+}

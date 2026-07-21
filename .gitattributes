@@ -1,0 +1,11 @@
+# GitHub Linguist settings
+
+*.blade.php linguist-language=Blade
+
+*.css linguist-language=CSS
+
+*.js linguist-language=JavaScript
+
+/node_modules/* linguist-vendored
+/vendor/* linguist-vendored
+/storage/* linguist-vendored

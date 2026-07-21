@@ -1,0 +1,147 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+
+class CmsSetting extends Model
+{
+    protected $table = 'cms_settings';
+
+    protected $fillable = ['key', 'value', 'label', 'type', 'group', 'sort_order'];
+
+    /**
+     * Get all settings as a key=>value array, cached for 60 minutes.
+     */
+    public static function allCached(): array
+    {
+        return Cache::remember('cms_settings_all', 60, function () {
+            return static::pluck('value', 'key')->toArray();
+        });
+    }
+
+    /**
+     * Retrieve a single setting value by key.
+     */
+    public static function get(string $key, mixed $default = null): mixed
+    {
+        $settings = static::allCached();
+        return $settings[$key] ?? $default;
+    }
+
+    /**
+     * Set / upsert a single setting value and clear the cache.
+     */
+    public static function set(string $key, mixed $value): void
+    {
+        static::updateOrCreate(
+            ['key' => $key],
+            ['value' => $value, 'label' => $key]
+        );
+        Cache::forget('cms_settings_all');
+    }
+
+    /**
+     * Bulk-set multiple settings at once and clear the cache once.
+     */
+    public static function setMany(array $data): void
+    {
+        foreach ($data as $key => $value) {
+            static::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value, 'label' => $key]
+            );
+        }
+        Cache::forget('cms_settings_all');
+    }
+
+    /**
+     * Check if a boolean-type setting is truthy.
+     */
+    public static function isEnabled(string $key): bool
+    {
+        $val = static::get($key, false);
+        return in_array($val, ['1', 1, true, 'true'], true);
+    }
+
+    /**
+     * Get the configured site name, falling back to APP_NAME env.
+     */
+    public static function getSiteName(): string
+    {
+        $siteName = static::get('site_name', '');
+        return (is_string($siteName) && trim($siteName) !== '') ? trim($siteName) : config('app.name', 'Support Tickets');
+    }
+
+    /**
+     * Resolve the logo URL or SVG HTML from cms_settings.
+     * Returns an array: ['type' => 'url'|'svg'|null, 'value' => '...']
+     * Returns ['type' => null, 'value' => null] if no logo is configured.
+     */
+    public static function resolveLogoUrl(): array
+    {
+        $settings = static::allCached();
+        $type = $settings['logo_type'] ?? null;
+        $path = $settings['logo_path'] ?? null;
+        $cdnUrl = $settings['logo_cdn_url'] ?? null;
+        $svgHtml = $settings['logo_svg_html'] ?? null;
+
+        if (!$type) {
+            return ['type' => null, 'value' => null];
+        }
+
+        switch ($type) {
+            case 'local':
+                if ($path) {
+                    return ['type' => 'url', 'value' => asset('storage/' . ltrim($path, '/'))];
+                }
+                break;
+
+            case 's3':
+                if ($path) {
+                    $bucket = config('filesystems.disks.s3.bucket', '');
+                    $region = config('filesystems.disks.s3.region', 'us-east-1');
+                    $url = "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+                    if ($cdnUrl) {
+                        $url = rtrim($cdnUrl, '/') . '/' . ltrim($path, '/');
+                    }
+                    return ['type' => 'url', 'value' => $url];
+                }
+                break;
+
+            case 'custom_s3':
+                $bucket  = $settings['logo_s3_bucket'] ?? '';
+                $s3Key   = $settings['logo_s3_key'] ?? '';
+                $region  = $settings['logo_s3_region'] ?? 'us-east-1';
+                if ($bucket && $path) {
+                    $url = "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+                    if ($cdnUrl) {
+                        $url = rtrim($cdnUrl, '/') . '/' . ltrim($path, '/');
+                    }
+                    return ['type' => 'url', 'value' => $url];
+                }
+                break;
+
+            case 'cdn':
+                if ($cdnUrl && $path) {
+                    return ['type' => 'url', 'value' => rtrim($cdnUrl, '/') . '/' . ltrim($path, '/')];
+                }
+                break;
+
+            case 'url':
+                if ($path) {
+                    return ['type' => 'url', 'value' => $path];
+                }
+                break;
+
+            case 'svg':
+                if ($svgHtml) {
+                    return ['type' => 'svg', 'value' => $svgHtml];
+                }
+                break;
+        }
+
+        return ['type' => null, 'value' => null];
+    }
+}

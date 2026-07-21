@@ -1,0 +1,650 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Models\Order;
+use App\Models\OrderRefund;
+use App\Models\OrderPayment;
+use App\Models\ProductInventory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+
+#[Layout('layouts.app')]
+class AdminOrderDetails extends Component
+{
+    public int $orderId;
+    public Order $order;
+    public float $refundAmount = 0.00;
+
+    // Status change with confirm step
+    public int $pendingStatus = 0;
+    public bool $showStatusConfirm = false;
+
+    // Mark shipped form
+    public bool $showShipForm = false;
+    public string $shipDate = '';
+    public string $trackingNumber = '';
+
+    // Delete order confirm
+    public bool $showDeleteConfirm = false;
+
+    public function mount(int $id): void
+    {
+        abort_unless(auth()->check() && auth()->user()->isStaff(), 403, 'Unauthorized staff access.');
+        $this->orderId = $id;
+        $this->loadOrder();
+        $this->shipDate = now()->format('Y-m-d');
+    }
+
+    private function loadOrder(): void
+    {
+        $this->order = Order::with(['user', 'details.variant.product', 'payments', 'refunds', 'statusList'])->findOrFail($this->orderId);
+        
+        $alreadyRefunded = (float) $this->order->refunds->sum('amount');
+        $this->refundAmount = max(0.00, (float)$this->order->order_total - $alreadyRefunded);
+    }
+
+    // ---------- Status Change ----------
+
+    public function setPendingStatus(int $statusCode): void
+    {
+        $this->pendingStatus = $statusCode;
+        $this->showStatusConfirm = true;
+    }
+
+    public function cancelStatusChange(): void
+    {
+        $this->pendingStatus = 0;
+        $this->showStatusConfirm = false;
+    }
+
+    public function applyStatusChange(): void
+    {
+        if ($this->pendingStatus === 0) {
+            return;
+        }
+        $this->updateOrderStatus($this->pendingStatus);
+        $this->showStatusConfirm = false;
+        $this->pendingStatus = 0;
+    }
+
+    public function updateOrderStatus(int $statusCode): void
+    {
+        $oldStatus = $this->order->order_status;
+        $newStatus = $statusCode;
+
+        $this->order->order_status = $newStatus;
+
+        if ($newStatus === 2 && $oldStatus !== 2) {
+            $this->order->order_shipping_date = now();
+            if (empty($this->order->order_shipping_tracking)) {
+                $this->order->order_shipping_tracking = 'TRK' . strtoupper(Str::random(10));
+            }
+        }
+
+        $this->order->save();
+
+        if ($newStatus === 2 && $oldStatus !== 2) {
+            $this->sendShipmentEmail();
+        }
+
+        session()->flash('status', 'Order status updated successfully.');
+        $this->loadOrder();
+    }
+
+    // ---------- Mark Shipped ----------
+
+    public function toggleShipForm(): void
+    {
+        $this->showShipForm = !$this->showShipForm;
+        if ($this->showShipForm) {
+            $this->shipDate = now()->format('Y-m-d');
+            $this->trackingNumber = '';
+        }
+    }
+
+    public function markShipped(): void
+    {
+        $this->validate([
+            'shipDate' => 'required|date',
+        ], [], [
+            'shipDate' => 'Ship Date',
+        ]);
+
+        $this->order->order_status = 2; // Shipped
+        $this->order->order_shipping_date = $this->shipDate;
+        $this->order->order_shipping_tracking = !empty(trim($this->trackingNumber))
+            ? trim($this->trackingNumber)
+            : ('TRK' . strtoupper(Str::random(10)));
+        $this->order->save();
+
+        $this->sendShipmentEmail();
+        $this->showShipForm = false;
+
+        session()->flash('status', 'Order marked as shipped. Tracking: ' . $this->order->order_shipping_tracking);
+        $this->loadOrder();
+    }
+
+    // ---------- Process Refund ----------
+
+    public function processRefund(): void
+    {
+        $alreadyRefunded = (float) $this->order->refunds->sum('amount');
+        $remainingRefundable = (float) ($this->order->order_total - $alreadyRefunded);
+
+        $this->validate([
+            'refundAmount' => 'required|numeric|min:0.01|max:' . $remainingRefundable,
+        ], [
+            'refundAmount.max' => 'The refund amount cannot exceed the remaining refundable order total of $' . number_format($remainingRefundable, 2) . '.',
+        ]);
+
+        // Create refund record
+        OrderRefund::create([
+            'order_id' => $this->order->id,
+            'amount' => $this->refundAmount,
+            'refund_date' => now(),
+            'authorization_code' => 'RFND-' . strtoupper(Str::random(6)),
+            'processor_response' => 'Successful simulated partial refund of $' . number_format($this->refundAmount, 2)
+        ]);
+
+        $newRefundedTotal = $alreadyRefunded + $this->refundAmount;
+
+        // If fully refunded, mark status as Refunded (3)
+        if (abs($newRefundedTotal - (float)$this->order->order_total) < 0.01) {
+            $this->order->order_status = 3; // Fully Refunded
+        }
+        $this->order->save();
+
+        // Restock inventory on first refund to prevent double restocking
+        if ($this->order->refunds->count() === 1) {
+            foreach ($this->order->details as $detail) {
+                if ($detail->inventory_id > 0) {
+                    $inventory = ProductInventory::where('variant_id', $detail->inventory_id)->first();
+                    if ($inventory) {
+                        $inventory->quantity_available += (int)$detail->item_qty;
+                        $inventory->save();
+                    }
+                }
+            }
+        }
+
+        session()->flash('status', 'Refund of $' . number_format($this->refundAmount, 2) . ' processed successfully.');
+        $this->loadOrder();
+    }
+
+    // ---------- Delete Order ----------
+
+    public function confirmDelete(): void
+    {
+        $this->showDeleteConfirm = true;
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->showDeleteConfirm = false;
+    }
+
+    public function deleteOrder(): void
+    {
+        // Restore inventory for each purchased item
+        foreach ($this->order->details as $detail) {
+            if ($detail->inventory_id > 0) {
+                $inventory = ProductInventory::where('variant_id', $detail->inventory_id)->first();
+                if ($inventory) {
+                    $inventory->quantity_available += (int) $detail->item_qty;
+                    $inventory->save();
+                }
+            }
+        }
+
+        // Delete the order (cascade deletes details, payments, refunds via FK constraints)
+        $this->order->delete();
+
+        session()->flash('status', 'Order deleted and inventory restored successfully.');
+        $this->redirect(route('admin.ecommerce.orders'), navigate: true);
+    }
+
+    // ---------- Send Shipment Email ----------
+
+    private function sendShipmentEmail(): void
+    {
+        $user = $this->order->user;
+        if (!$user) {
+            return;
+        }
+
+        try {
+            $statusText = $this->order->statusList ? $this->order->statusList->customerdisplay : 'Shipped';
+            
+            $itemsHtml = '<div style="margin-top: 24px; font-family: sans-serif; color: #1e293b;">';
+            
+            // Order details summary box
+            $itemsHtml .= '<div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 24px;">';
+            $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">';
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td style="padding-bottom: 12px;"><span style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Order Status</span><strong style="color: #4f46e5; font-size: 14px;">' . e($statusText) . '</strong></td>';
+            $itemsHtml .= '<td style="padding-bottom: 12px;" align="right"><span style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Order Date</span><strong style="color: #334155; font-size: 14px;">' . $this->order->order_date->format('F d, Y h:i A') . '</strong></td>';
+            $itemsHtml .= '</tr>';
+            $itemsHtml .= '</table>';
+            $itemsHtml .= '</div>';
+
+            // Items Ordered section
+            $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Items Ordered</h3>';
+            $itemsHtml .= '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 24px; padding: 16px;">';
+            $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">';
+            
+            foreach ($this->order->details as $item) {
+                $itemTypeBadge = $item->download_item 
+                    ? '<span style="background-color: #f0fdf4; color: #15803d; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bbf7d0; display: inline-block; margin-top: 4px;">Digital Download</span>'
+                    : '<span style="background-color: #e0f2fe; color: #0369a1; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bae6fd; display: inline-block; margin-top: 4px;">Shippable Item</span>';
+
+                $itemsHtml .= '<tr style="border-bottom: 1px solid #f1f5f9;">';
+                $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;">';
+                $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . e($item->item_name) . '</strong>';
+                $itemsHtml .= '<span style="color: #64748b; font-size: 12px; display: block; margin-top: 2px;">Quantity: ' . number_format($item->item_qty, 0) . '</span>';
+                $itemsHtml .= $itemTypeBadge;
+                $itemsHtml .= '</td>';
+                $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;" align="right">';
+                $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px;">$' . number_format($item->final_price * $item->item_qty, 2) . '</strong>';
+                $itemsHtml .= '</td>';
+                $itemsHtml .= '</tr>';
+            }
+            
+            // Financial Summary Block
+            $itemsHtml .= '<tr><td colspan="2" style="padding-top: 16px;">';
+            $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">';
+            
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Subtotal</td>';
+            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">$' . number_format($this->order->order_subtotal, 2) . '</td>';
+            $itemsHtml .= '</tr>';
+
+            if ($this->order->order_discounts > 0) {
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #16a34a; padding-bottom: 8px;">Promotional Discount</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #16a34a; padding-bottom: 8px;" align="right">-$' . number_format($this->order->order_discounts, 2) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
+
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Tax</td>';
+            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">$' . number_format($this->order->order_taxes, 2) . '</td>';
+            $itemsHtml .= '</tr>';
+
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 12px;">Shipping</td>';
+            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 12px;" align="right">$' . number_format($this->order->order_shipping, 2) . '</td>';
+            $itemsHtml .= '</tr>';
+
+            $itemsHtml .= '<tr style="border-top: 1px solid #e2e8f0;">';
+            $itemsHtml .= '<td style="font-size: 16px; font-weight: 800; color: #0f172a; padding-top: 12px;">Total Charged</td>';
+            $itemsHtml .= '<td style="font-size: 16px; font-weight: 800; color: #0f172a; padding-top: 12px;" align="right">$' . number_format($this->order->order_total, 2) . '</td>';
+            $itemsHtml .= '</tr>';
+            
+            $itemsHtml .= '</table>';
+            $itemsHtml .= '</td></tr>';
+            
+            $itemsHtml .= '</table>';
+            $itemsHtml .= '</div>';
+
+            // Shipping Address section if required
+            if ($this->order->order_shipping_method == 1) {
+                $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Shipping Address</h3>';
+                $itemsHtml .= '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 14px; color: #334155; line-height: 1.5; margin-bottom: 24px;">';
+                $itemsHtml .= '<strong style="color: #0f172a; display: block; margin-bottom: 4px;">' . e($user->name) . '</strong>';
+                if ($user->company) {
+                    $itemsHtml .= '<span style="color: #64748b; display: block;">' . e($user->company) . '</span>';
+                }
+                $itemsHtml .= '<span style="display: block;">' . e($user->shipping_address1) . '</span>';
+                if ($user->shipping_address2) {
+                    $itemsHtml .= '<span style="display: block;">' . e($user->shipping_address2) . '</span>';
+                }
+                $itemsHtml .= '<span style="display: block;">' . e($user->shipping_city) . ', ' . e($user->shopping_postalcode) . '</span>';
+                $itemsHtml .= '<strong style="display: block; margin-top: 4px; color: #475569;">' . e($user->shipping_country) . '</strong>';
+                $itemsHtml .= '</div>';
+            }
+            
+            $itemsHtml .= '</div>';
+
+            $vars = [
+                'order_id' => $this->order->order_invoice_no,
+                'customer_name' => $user->name,
+                'tracking_number' => $this->order->order_shipping_tracking ?: '-',
+                'order_total' => '$' . number_format($this->order->order_total, 2),
+                'order_subtotal' => '$' . number_format($this->order->order_subtotal, 2),
+                'order_taxes' => '$' . number_format($this->order->order_taxes, 2),
+                'order_shipping' => '$' . number_format($this->order->order_shipping, 2),
+                'order_items_table' => $itemsHtml,
+                'app_name' => config('app.name'),
+                'year' => date('Y'),
+            ];
+
+            \App\Services\EmailTemplateService::sendEmail('order_shipment', $user->email, $user->name, $vars);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to send shipment confirmation email: " . $e->getMessage());
+        }
+    }
+
+    // ---------- Send Download Reminder ----------
+
+    public function sendDownloadReminder(): void
+    {
+        $user = $this->order->user;
+        if (!$user) {
+            session()->flash('error', 'Cannot send download reminder: no customer account is linked to this order.');
+            $this->showDownloadConfirm = false;
+            return;
+        }
+
+        try {
+            $statusText = $this->order->statusList ? $this->order->statusList->customerdisplay : 'Open';
+            
+            // Build full order stats block
+            $itemsHtml = '<div style="margin-top: 24px; font-family: sans-serif; color: #1e293b;">';
+            $itemsHtml .= '<div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 24px;">';
+            $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">';
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td style="padding-bottom: 12px;"><span style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Order Status</span><strong style="color: #4f46e5; font-size: 14px;">' . e($statusText) . '</strong></td>';
+            $itemsHtml .= '<td style="padding-bottom: 12px;" align="right"><span style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Order Date</span><strong style="color: #334155; font-size: 14px;">' . $this->order->order_date->format('F d, Y h:i A') . '</strong></td>';
+            $itemsHtml .= '</tr>';
+            $itemsHtml .= '</table>';
+            $itemsHtml .= '</div>';
+
+            $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Items Ordered</h3>';
+            $itemsHtml .= '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 24px; padding: 16px;">';
+            $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">';
+            
+            foreach ($this->order->details as $item) {
+                $itemTypeBadge = $item->download_item 
+                    ? '<span style="background-color: #f0fdf4; color: #15803d; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bbf7d0; display: inline-block; margin-top: 4px;">Digital Download</span>'
+                    : '<span style="background-color: #e0f2fe; color: #0369a1; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bae6fd; display: inline-block; margin-top: 4px;">Shippable Item</span>';
+
+                $itemsHtml .= '<tr style="border-bottom: 1px solid #f1f5f9;">';
+                $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;">';
+                $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . e($item->item_name) . '</strong>';
+                $itemsHtml .= '<span style="color: #64748b; font-size: 12px; display: block; margin-top: 2px;">Quantity: ' . number_format($item->item_qty, 0) . '</span>';
+                $itemsHtml .= $itemTypeBadge;
+                $itemsHtml .= '</td>';
+                $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;" align="right">';
+                $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px;">$' . number_format($item->final_price * $item->item_qty, 2) . '</strong>';
+                $itemsHtml .= '</td>';
+                $itemsHtml .= '</tr>';
+            }
+            
+            $itemsHtml .= '<tr><td colspan="2" style="padding-top: 16px;">';
+            $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">';
+            
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Subtotal</td>';
+            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">$' . number_format($this->order->order_subtotal, 2) . '</td>';
+            $itemsHtml .= '</tr>';
+
+            if ($this->order->order_discounts > 0) {
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #16a34a; padding-bottom: 8px;">Promotional Discount</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #16a34a; padding-bottom: 8px;" align="right">-$' . number_format($this->order->order_discounts, 2) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
+
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Tax</td>';
+            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">$' . number_format($this->order->order_taxes, 2) . '</td>';
+            $itemsHtml .= '</tr>';
+
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 12px;">Shipping</td>';
+            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 12px;" align="right">$' . number_format($this->order->order_shipping, 2) . '</td>';
+            $itemsHtml .= '</tr>';
+
+            $itemsHtml .= '<tr style="border-top: 1px solid #e2e8f0;">';
+            $itemsHtml .= '<td style="font-size: 16px; font-weight: 800; color: #0f172a; padding-top: 12px;">Total Charged</td>';
+            $itemsHtml .= '<td style="font-size: 16px; font-weight: 800; color: #0f172a; padding-top: 12px;" align="right">$' . number_format($this->order->order_total, 2) . '</td>';
+            $itemsHtml .= '</tr>';
+            $itemsHtml .= '</table>';
+            $itemsHtml .= '</td></tr>';
+            $itemsHtml .= '</table>';
+            $itemsHtml .= '</div>';
+            $itemsHtml .= '</div>';
+
+            // Build links
+            $linksHtml = '<div style="margin-top: 15px; font-family: sans-serif;">';
+            foreach ($this->order->details as $item) {
+                if ($item->download_item) {
+                    $downloadUrl = route('products.download', [$item->id, $this->order->order_external_id]);
+                    $linksHtml .= '<div style="margin-bottom: 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px;">';
+                    $linksHtml .= '<strong style="color: #166534; font-size: 14px; display: block; margin-bottom: 4px;">' . e($item->item_name) . '</strong>';
+                    $linksHtml .= '<a href="' . $downloadUrl . '" style="background-color: #4f46e5; color: #ffffff; padding: 6px 12px; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 4px;">Download File</a>';
+                    $linksHtml .= '</div>';
+                }
+            }
+            $linksHtml .= '</div>';
+
+            $vars = [
+                'order_id' => $this->order->order_invoice_no,
+                'customer_name' => $user->name,
+                'order_total' => '$' . number_format($this->order->order_total, 2),
+                'order_subtotal' => '$' . number_format($this->order->order_subtotal, 2),
+                'order_taxes' => '$' . number_format($this->order->order_taxes, 2),
+                'order_shipping' => '$' . number_format($this->order->order_shipping, 2),
+                'download_links' => $linksHtml,
+                'order_items_table' => $itemsHtml,
+                'app_name' => config('app.name'),
+                'year' => date('Y'),
+            ];
+
+            \App\Services\EmailTemplateService::sendEmail('download_reminder', $user->email, $user->name, $vars);
+            session()->flash('status', 'Download reminder email sent successfully to ' . $user->email);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to send download reminder email: " . $e->getMessage());
+            session()->flash('error', 'Failed to send download reminder: ' . $e->getMessage());
+        }
+        $this->showDownloadConfirm = false;
+    }
+
+    // ---------- Send Duplicate Order Confirmation Email ----------
+
+    public bool $showEmailConfirm = false;
+
+    public function triggerEmailConfirm(): void
+    {
+        $this->showEmailConfirm = true;
+    }
+
+    public function cancelEmailSend(): void
+    {
+        $this->showEmailConfirm = false;
+    }
+
+    // ---------- Send Download Reminder Confirmation ----------
+
+    public bool $showDownloadConfirm = false;
+
+    public function triggerDownloadReminderConfirm(): void
+    {
+        $this->showDownloadConfirm = true;
+    }
+
+    public function cancelDownloadReminderSend(): void
+    {
+        $this->showDownloadConfirm = false;
+    }
+
+    public function sendDuplicateOrderConfirmation(): void
+    {
+        $user = $this->order->user;
+        if (!$user) {
+            session()->flash('error', 'Cannot send confirmation email: no customer account is linked to this order.');
+            $this->showEmailConfirm = false;
+            return;
+        }
+
+        try {
+            $order = $this->order;
+            $statusText = $order->statusList ? $order->statusList->customerdisplay : 'Payment Received - Order Being Processed.';
+            
+            $itemsHtml = '<div style="margin-top: 24px; font-family: sans-serif; color: #1e293b;">';
+            
+            // Order details summary box
+            $itemsHtml .= '<div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 24px;">';
+            $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">';
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td style="padding-bottom: 12px;"><span style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Order Status</span><strong style="color: #4f46e5; font-size: 14px;">' . e($statusText) . '</strong></td>';
+            $itemsHtml .= '<td style="padding-bottom: 12px;" align="right"><span style="font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; display: block; margin-bottom: 4px;">Order Date</span><strong style="color: #334155; font-size: 14px;">' . $order->order_date->format('F d, Y h:i A') . '</strong></td>';
+            $itemsHtml .= '</tr>';
+            $itemsHtml .= '</table>';
+            $itemsHtml .= '</div>';
+
+            // Items Ordered section
+            $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Items Ordered</h3>';
+            $itemsHtml .= '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 24px; padding: 16px;">';
+            $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">';
+            
+            foreach ($order->details as $item) {
+                $itemTypeBadge = $item->download_item 
+                    ? '<span style="background-color: #f0fdf4; color: #15803d; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bbf7d0; display: inline-block; margin-top: 4px;">Digital Download</span>'
+                    : '<span style="background-color: #e0f2fe; color: #0369a1; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bae6fd; display: inline-block; margin-top: 4px;">Shippable Item</span>';
+
+                $itemsHtml .= '<tr style="border-bottom: 1px solid #f1f5f9;">';
+                $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;">';
+                $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . e($item->item_name) . '</strong>';
+                $itemsHtml .= '<span style="color: #64748b; font-size: 12px; display: block; margin-top: 2px;">Quantity: ' . number_format($item->item_qty, 0) . '</span>';
+                $itemsHtml .= $itemTypeBadge;
+                if ($item->download_item) {
+                    $downloadUrl = route('products.download', [$item->id, $order->order_external_id]);
+                    $itemsHtml .= '<div style="margin-top: 8px;">';
+                    $itemsHtml .= '<a href="' . e($downloadUrl) . '" target="_blank" style="background-color: #4f46e5; color: #ffffff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: 1px solid #4338ca;">Download File</a>';
+                    $itemsHtml .= '</div>';
+                }
+                $itemsHtml .= '</td>';
+                $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;" align="right">';
+                $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . \App\Services\CurrencyService::format($item->final_price * $item->item_qty) . '</strong>';
+                if ($item->discount_price > 0) {
+                    $itemsHtml .= '<span style="color: #94a3b8; font-size: 11px; text-decoration: line-through; display: block;">' . \App\Services\CurrencyService::format(($item->final_price + $item->discount_price) * $item->item_qty) . '</span>';
+                }
+                $itemsHtml .= '</td>';
+                $itemsHtml .= '</tr>';
+            }
+            
+            // Financial Summary Block
+            $itemsHtml .= '<tr><td colspan="2" style="padding-top: 16px;">';
+            $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">';
+            
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Subtotal</td>';
+            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format((float)$order->order_subtotal) . '</td>';
+            $itemsHtml .= '</tr>';
+
+            if ($order->order_discounts > 0) {
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #16a34a; padding-bottom: 8px;">Promotional Discount</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #16a34a; padding-bottom: 8px;" align="right">-$' . number_format($order->order_discounts, 2) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
+
+            // Determine tax row label and display for the email
+            $emailTaxLabel = \App\Services\CurrencyService::taxLabel($user->shipping_countrycode ?? 'US');
+            $emailVatInclusive = \App\Services\CurrencyService::isVatInclusive();
+            $emailCrossBorder  = \App\Services\CurrencyService::isCrossBorderExport($user->shipping_countrycode ?? 'US');
+
+            if ($emailVatInclusive && !$emailCrossBorder) {
+                // VAT-inclusive domestic: show embedded VAT amount as an informational row
+                $emailVatRate   = \App\Services\CurrencyService::merchantVatRate();
+                $emailVatAmount = \App\Services\CurrencyService::extractVat((float)$order->order_subtotal, $emailVatRate);
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Includes ' . e($emailTaxLabel) . '</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format($emailVatAmount) . '</td>';
+                $itemsHtml .= '</tr>';
+            } elseif (!$emailVatInclusive || ($emailVatInclusive && $emailCrossBorder)) {
+                // US/CA merchant tax added on top, or cross-border export (VAT stripped, 0 tax)
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e($emailTaxLabel) . '</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format((float)$order->order_taxes) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
+
+            $itemsHtml .= '<tr>';
+            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Shipping (' . e($order->order_shipping_method_name ?? 'Standard') . ')</td>';
+            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format((float)$order->order_shipping) . '</td>';
+            $itemsHtml .= '</tr>';
+
+            if ($order->order_handling > 0) {
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Handling Surcharge</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format((float)$order->order_handling) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
+
+            $itemsHtml .= '<tr style="border-top: 1px solid #e2e8f0;">';
+            $itemsHtml .= '<td style="font-size: 16px; font-weight: 800; color: #0f172a; padding-top: 12px;">Total Charged</td>';
+            $itemsHtml .= '<td style="font-size: 16px; font-weight: 800; color: #0f172a; padding-top: 12px;" align="right">' . \App\Services\CurrencyService::format((float)$order->order_total) . '</td>';
+            $itemsHtml .= '</tr>';
+            
+            $itemsHtml .= '</table>';
+            $itemsHtml .= '</td></tr>';
+            
+            $itemsHtml .= '</table>';
+            $itemsHtml .= '</div>';
+
+            // Shipping Address section if required
+            if ($order->order_shipping_method == 1 && $user) {
+                $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Shipping Address</h3>';
+                $itemsHtml .= '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 14px; color: #334155; line-height: 1.5; margin-bottom: 24px;">';
+                $itemsHtml .= '<strong style="color: #0f172a; display: block; margin-bottom: 4px;">' . e($user->name) . '</strong>';
+                if ($user->company) {
+                    $itemsHtml .= '<span style="color: #64748b; display: block;">' . e($user->company) . '</span>';
+                }
+                $itemsHtml .= '<span style="display: block;">' . e($user->shipping_address1) . '</span>';
+                if ($user->shipping_address2) {
+                    $itemsHtml .= '<span style="display: block;">' . e($user->shipping_address2) . '</span>';
+                }
+                $statePart = $user->shipping_state ? ', ' . e($user->shipping_state) : '';
+                $itemsHtml .= '<span style="display: block;">' . e($user->shipping_city) . $statePart . ' ' . e($user->shopping_postalcode) . '</span>';
+                $itemsHtml .= '<strong style="display: block; margin-top: 4px; color: #475569;">' . e($user->shipping_country) . '</strong>';
+                $itemsHtml .= '</div>';
+            }
+
+            if (!empty($order->order_comments)) {
+                $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Order Comments</h3>';
+                $itemsHtml .= '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 14px; color: #334155; line-height: 1.5; margin-bottom: 24px; white-space: pre-wrap;">';
+                $itemsHtml .= e($order->order_comments);
+                $itemsHtml .= '</div>';
+            }
+            
+            $itemsHtml .= '</div>';
+
+            $vars = [
+                'order_id'          => $order->order_invoice_no,
+                'customer_name'     => $user->name,
+                'order_total'       => \App\Services\CurrencyService::format((float)$order->order_total),
+                'order_subtotal'    => \App\Services\CurrencyService::format((float)$order->order_subtotal),
+                'order_taxes'       => \App\Services\CurrencyService::format((float)$order->order_taxes),
+                'order_shipping'    => \App\Services\CurrencyService::format((float)$order->order_shipping),
+                'order_items_table' => $itemsHtml,
+                'app_name'          => config('app.name'),
+                'year'              => date('Y'),
+            ];
+
+            \App\Services\EmailTemplateService::sendEmail('order_confirmation', $user->email, $user->name, $vars);
+            session()->flash('status', 'Duplicate order confirmation email sent successfully to ' . $user->email);
+        } catch (\Exception $e) {
+            dd($e->getMessage(), $e->getTraceAsString());
+            \Illuminate\Support\Facades\Log::error("Failed to send duplicate order confirmation email: " . $e->getMessage());
+            session()->flash('error', 'Failed to send duplicate order confirmation email: ' . $e->getMessage());
+        }
+
+        $this->showEmailConfirm = false;
+    }
+
+    public function render(): View
+    {
+        $statuses = \App\Models\OrderStatusList::where('Active', 1)
+            ->where('orderstatuscode', '!=', 5)
+            ->orderBy('sortorder', 'asc')
+            ->get();
+        return view('livewire.admin-order-details', [
+            'statuses' => $statuses
+        ]);
+    }
+}

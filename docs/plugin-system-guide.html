@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Plugin System — Developer & Administrator Guide</title>
+    <style>
+        /* CSS reset and base styles */
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #334155; /* slate-700 */
+            background-color: #f8fafc; /* slate-50 */
+            line-height: 1.6;
+        }
+        
+        /* A4 Page constraints for screen */
+        .page-container {
+            max-width: 210mm; /* A4 width */
+            margin: 2rem auto;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        
+        /* Header */
+        header {
+            background-color: #312e81; /* indigo-900 */
+            color: white;
+            padding: 40px;
+            text-align: left;
+        }
+        header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 400;
+            color: #c7d2fe; /* indigo-200 */
+        }
+        
+        /* Content area */
+        .content {
+            padding: 40px;
+        }
+        
+        /* Typography */
+        h2 {
+            color: #1e1b4b; /* indigo-950 */
+            font-size: 1.75rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0; /* slate-200 */
+        }
+        h3 {
+            color: #312e81; /* indigo-900 */
+            font-size: 1.25rem;
+            margin-top: 1.5rem;
+        }
+        p, ul, ol {
+            margin-bottom: 1rem;
+        }
+        li {
+            margin-bottom: 0.25rem;
+        }
+        a {
+            color: #4f46e5; /* indigo-600 */
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Sections with color-coded left borders */
+        .section-block {
+            margin-bottom: 2.5rem;
+            padding-left: 1.5rem;
+            border-left: 4px solid #4f46e5; /* indigo-600 */
+        }
+        .section-block:nth-of-type(even) {
+            border-left-color: #64748b; /* slate-500 */
+        }
+        
+        /* Code blocks */
+        pre {
+            background-color: #1e1e2e;
+            color: #a6e3a1;
+            padding: 1.25rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            margin: 1.5rem 0;
+            page-break-inside: avoid;
+        }
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            background-color: #f1f5f9; /* slate-100 */
+            color: #334155;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-size: 0.875em;
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.875rem;
+            page-break-inside: auto;
+        }
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        th {
+            background-color: #312e81; /* indigo-900 */
+            color: white;
+            text-align: left;
+            padding: 12px;
+            font-weight: 600;
+            border: 1px solid #312e81;
+        }
+        td {
+            padding: 12px;
+            border: 1px solid #e2e8f0; /* slate-200 */
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f8fafc; /* slate-50 */
+        }
+        
+        /* TOC */
+        .toc {
+            background-color: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+        .toc h2 {
+            margin-top: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+            font-size: 1.25rem;
+            page-break-before: avoid;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            color: #334155;
+            font-weight: 500;
+        }
+        .toc a:hover {
+            color: #4f46e5;
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.125rem 0.375rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-indigo { background-color: #e0e7ff; color: #3730a3; }
+        .badge-amber { background-color: #fef3c7; color: #92400e; }
+        .badge-emerald { background-color: #d1fae5; color: #065f46; }
+        .badge-slate { background-color: #f1f5f9; color: #334155; }
+
+        /* Print footer container */
+        #print-footer {
+            display: none;
+        }
+
+        /* Print Styles */
+        @media print {
+            @page {
+                size: A4;
+                margin: 2.5cm;
+            }
+            body {
+                background-color: white;
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .page-container {
+                max-width: none;
+                margin: 0;
+                box-shadow: none;
+                padding: 0;
+            }
+            header {
+                background-color: #312e81 !important;
+                color: white !important;
+                padding: 2cm 0 1cm 0;
+            }
+            header h2 {
+                color: #c7d2fe !important;
+            }
+            .content {
+                padding: 0;
+                margin-top: 2rem;
+            }
+            .section-block {
+                margin-bottom: 2rem;
+            }
+            h2 {
+                page-break-before: always;
+            }
+            .toc h2 {
+                page-break-before: avoid;
+            }
+            .content > .section-block:first-of-type h2 {
+                page-break-before: avoid;
+            }
+            pre {
+                background-color: #1e1e2e !important;
+                color: #a6e3a1 !important;
+                border: 1px solid #334155;
+            }
+            th {
+                background-color: #312e81 !important;
+                color: white !important;
+            }
+            /* Add fixed footer for print */
+            #print-footer {
+                display: block;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                font-size: 9pt;
+                color: #64748b;
+                text-align: right;
+                border-top: 1px solid #e2e8f0;
+                padding-top: 0.5cm;
+                padding-bottom: 0;
+                background: white;
+            }
+            #print-footer::before {
+                content: "Laravel Livewire Platform Plugin System";
+                float: left;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+    <header>
+        <h1>Plugin System — Developer & Administrator Guide</h1>
+        <h2>Laravel Livewire Platform — Dynamic Plugin Architecture</h2>
+    </header>
+
+    <div class="content">
+        <div class="toc">
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#section-1">1. Overview</a></li>
+                <li><a href="#section-2">2. Database Schema</a></li>
+                <li><a href="#section-3">3. File Architecture</a></li>
+                <li><a href="#section-4">4. How Shortcodes Work</a></li>
+                <li><a href="#section-5">5. Built-in Plugins</a></li>
+                <li><a href="#section-6">6. Admin Panel (/admin/plugins)</a></li>
+                <li><a href="#section-7">7. Creating a New Built-in Plugin</a></li>
+                <li><a href="#section-8">8. Creating a Drop-in External Plugin</a></li>
+                <li><a href="#section-9">9. Accessing Plugin Settings in Code</a></li>
+                <li><a href="#section-10">10. Deployment Checklist</a></li>
+            </ul>
+        </div>
+
+        <div class="section-block" id="section-1">
+            <h2>1. Overview</h2>
+            <p>The plugin system is a fully dynamic, database-driven architecture that enables display elements (Swiper slideshows, galleries) and shipping providers (FedEx) to be registered, configured, and embedded into any CMS page or product description without code changes.</p>
+            <p><strong>Key concepts:</strong></p>
+            <ul>
+                <li><strong>Plugins auto-discovered</strong> — built-in classes in <code>app/Plugins/</code> OR drop-in folders in root <code>/plugins/</code> directory</li>
+                <li>All settings stored in DB, managed via Admin Panel at <code>/admin/plugins</code></li>
+                <li>Display plugins embedded using shortcodes: <code>[plugin:slug]</code> or <code>[plugin:slug param=value]</code></li>
+                <li>Shipping plugins invoked programmatically via <code>PluginManager</code> singleton</li>
+                <li>No artisan commands needed to activate a plugin — toggling active in the admin is sufficient</li>
+            </ul>
+        </div>
+
+        <div class="section-block" id="section-2">
+            <h2>2. Database Schema</h2>
+            
+            <h3>Table: plugins</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Column</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>id</td><td>bigint PK</td><td></td></tr>
+                    <tr><td>api_id</td><td>varchar 255, unique</td><td>External API identifier</td></tr>
+                    <tr><td>name</td><td>text</td><td>Display name</td></tr>
+                    <tr><td>version</td><td>text</td><td>Version string</td></tr>
+                    <tr><td>type</td><td>varchar 100</td><td>display, shipping, email, images</td></tr>
+                    <tr><td>author</td><td>text</td><td>Author name</td></tr>
+                    <tr><td>filename</td><td>varchar 150, unique</td><td>Slug for class resolution</td></tr>
+                    <tr><td>install_type</td><td>tinyint</td><td>0=drop-in, 1=built-in</td></tr>
+                    <tr><td>description</td><td>text</td><td>Short description</td></tr>
+                    <tr><td>shortcode</td><td>varchar 150, unique</td><td>Used in [plugin:shortcode]</td></tr>
+                    <tr><td>activation_required</td><td>varchar</td><td>yes or no</td></tr>
+                    <tr><td>activation_instructions</td><td>text</td><td>Shown in Activation tab</td></tr>
+                    <tr><td>activation_failed_msg</td><td>text</td><td></td></tr>
+                    <tr><td>activation_success_msg</td><td>text</td><td></td></tr>
+                    <tr><td>usage_instructions</td><td>text</td><td>Shown in Usage tab</td></tr>
+                    <tr><td>help_info</td><td>text</td><td></td></tr>
+                    <tr><td>help_url</td><td>text</td><td></td></tr>
+                    <tr><td>activation_date</td><td>dateTime</td><td>When activated</td></tr>
+                    <tr><td>activation_status</td><td>tinyint</td><td>0=inactive, 1=active</td></tr>
+                    <tr><td>activation_key</td><td>text</td><td></td></tr>
+                    <tr><td>serial_number</td><td>text</td><td></td></tr>
+                    <tr><td>created_at, updated_at</td><td>timestamps</td><td></td></tr>
+                </tbody>
+            </table>
+
+            <h3>Table: plugin_options</h3>
+            <p>Defines the settings form schema — fully data-driven, no hardcoded forms.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Column</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>id</td><td>bigint PK</td><td></td></tr>
+                    <tr><td>plugin_id</td><td>unsignedBigInt</td><td>FK to plugins</td></tr>
+                    <tr><td>field_name</td><td>text</td><td>Programmatic key</td></tr>
+                    <tr><td>field_label</td><td>text</td><td>Displayed label</td></tr>
+                    <tr><td>field_type</td><td>text</td><td>input, textarea, checkbox, select, text-only</td></tr>
+                    <tr><td>field_data_format</td><td>text</td><td>string, float, integer, date</td></tr>
+                    <tr><td>field_default_value</td><td>longText</td><td>Default value</td></tr>
+                    <tr><td>field_selections</td><td>text</td><td>Comma-separated options for select type</td></tr>
+                    <tr><td>field_min_value</td><td>text</td><td></td></tr>
+                    <tr><td>field_max_value</td><td>text</td><td></td></tr>
+                    <tr><td>field_editor</td><td>text</td><td>null=plain, css=dark CSS editor</td></tr>
+                    <tr><td>field_help</td><td>text</td><td>Help text shown below field</td></tr>
+                    <tr><td>field_required</td><td>varchar</td><td>yes or no</td></tr>
+                    <tr><td>field_error_msg</td><td>text</td><td></td></tr>
+                    <tr><td>field_html</td><td>text</td><td></td></tr>
+                    <tr><td>sort_order</td><td>int</td><td>Display order</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Table: plugin_settings</h3>
+            <p>Stores current saved values per plugin.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Column</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>id</td><td>bigint PK</td><td></td></tr>
+                    <tr><td>plugin_id</td><td>unsignedBigInt</td><td>FK to plugins</td></tr>
+                    <tr><td>field_name</td><td>text</td><td>Matches plugin_options.field_name</td></tr>
+                    <tr><td>field_value</td><td>longText</td><td>Current saved value</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-block" id="section-3">
+            <h2>3. File Architecture</h2>
+<pre><code>app/
+  Plugins/
+    Contracts/
+      DisplayPlugin.php          Interface all display plugins implement
+      ShippingPlugin.php         Interface all shipping plugins implement
+    Support/
+      PluginManager.php          Singleton: discovers, registers, renders
+      ShortcodeProcessor.php     Parses [plugin:slug] from content
+      ShippingContext.php        Readonly DTO passed to shipping plugins
+    Display/
+      SlideshowPlugin.php        Built-in Swiper.js slideshow
+    Shipping/
+      FedExPlugin.php            Built-in FedEx REST API v1
+  Http/Controllers/
+      PluginApiController.php    JSON endpoint for plugin picker
+  Livewire/
+      AdminPlugins.php           Admin panel Livewire component
+  Models/
+      Plugin.php
+      PluginOption.php
+      PluginSetting.php
+  Providers/
+      PluginServiceProvider.php  Registers PluginManager, boots built-ins
+
+plugins/                         Drop-in external plugin folder (root)
+  .gitkeep
+  example-plugin/
+    plugin.json
+    ExamplePlugin.php
+
+resources/views/
+  plugins/display/
+    slideshow.blade.php          Swiper.js renderer
+  livewire/
+    admin-plugins.blade.php      Admin plugin manager UI
+
+database/
+  migrations/
+    2026_07_18_100000_create_plugins_tables.php
+  seeders/
+    PluginSeeder.php
+
+bootstrap/
+  providers.php                  PluginServiceProvider registered here</code></pre>
+        </div>
+
+        <div class="section-block" id="section-4">
+            <h2>4. How Shortcodes Work</h2>
+            <p>The <code>ShortcodeProcessor</code> uses <code>preg_replace_callback</code> to scan content for <code>[plugin:slug]</code> or <code>[plugin:slug key=value]</code> patterns.</p>
+            <p><strong>Flow:</strong></p>
+            <ol>
+                <li><code>ContentParserService</code> (Blade renderer) pipes content through <code>ShortcodeProcessor::process()</code></li>
+                <li>Each match: <code>PluginManager</code> looks up the registered DisplayPlugin by slug</li>
+                <li><code>plugin->render(array $params, Plugin $plugin)</code> is called</li>
+                <li>Returned HTML replaces the shortcode inline</li>
+            </ol>
+            <p><strong>Example shortcodes:</strong></p>
+<pre><code>[plugin:slideshow-2026]
+[plugin:slideshow-2026 id=3]
+[plugin:slideshow-2026 id=2 nav=off paging=off]</code></pre>
+        </div>
+
+        <div class="section-block" id="section-5">
+            <h2>5. Built-in Plugins</h2>
+            
+            <h3>Slideshow Plugin (type: <span class="badge badge-indigo">display</span>)</h3>
+            <ul>
+                <li><strong>Shortcode:</strong> <code>[plugin:slideshow-2026]</code></li>
+                <li><strong>File:</strong> <code>app/Plugins/Display/SlideshowPlugin.php</code></li>
+                <li><strong>View:</strong> <code>resources/views/plugins/display/slideshow.blade.php</code></li>
+                <li><strong>Engine:</strong> Swiper.js (CDN, <code>@once</code> directive prevents conflicts)</li>
+                <li><strong>Parameters:</strong> id (slideshow ID), nav (on/off), paging (on/off), autoplay (on/off), speed (ms)</li>
+                <li><strong>Admin Settings:</strong> Live CSS (editable dark code editor), Default CSS (read-only reference)</li>
+                <li><strong>Slide data managed at:</strong> <code>/admin/slideshows</code></li>
+            </ul>
+
+            <h3>FedEx Shipping Plugin (type: <span class="badge badge-amber">shipping</span>)</h3>
+            <ul>
+                <li><strong>Filename slug:</strong> <code>fedex_api_2026</code></li>
+                <li><strong>File:</strong> <code>app/Plugins/Shipping/FedExPlugin.php</code></li>
+                <li><strong>API:</strong> FedEx REST API v1 with OAuth2 (NOT legacy SOAP)</li>
+                <li><strong>Required credentials:</strong> Account Number, Client ID, Client Secret</li>
+                <li><strong>Toggle per-service:</strong> Ground, Ground Home Delivery, Express Saver, 2-Day Air, 2-Day Air AM, Priority Overnight, Standard Overnight, First Overnight, International Priority, International Economy, International First, 1/2/3-Day Freight</li>
+                <li><strong>Markup/Markdown:</strong> numeric adjustment to all returned rates</li>
+            </ul>
+        </div>
+
+        <div class="section-block" id="section-6">
+            <h2>6. Admin Panel (/admin/plugins)</h2>
+            <p><strong>Plugin List Table columns:</strong> Name/Description, Type (color-coded badge), Shortcode, Version, Active toggle, Settings button</p>
+            <p><strong>Type badge colors:</strong> 
+                <span class="badge badge-indigo">display</span>, 
+                <span class="badge badge-amber">shipping</span>, 
+                <span class="badge badge-emerald">email</span>, 
+                <span class="badge badge-slate">other</span>
+            </p>
+            
+            <p><strong>Settings Panel (right slide-in, 3 tabs):</strong></p>
+            
+            <h3>Settings Tab</h3>
+            <p>Data-driven form from <code>plugin_options</code>:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>field_type</th>
+                        <th>field_editor</th>
+                        <th>Renders As</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>input</td><td>—</td><td>Monospace text input</td></tr>
+                    <tr><td>textarea</td><td>—</td><td>Resizable plain textarea</td></tr>
+                    <tr><td>textarea</td><td>css</td><td>Dark code editor (slate-900 bg, green text)</td></tr>
+                    <tr><td>checkbox</td><td>—</td><td>Animated toggle switch</td></tr>
+                    <tr><td>select</td><td>—</td><td>Dropdown (field_selections comma list)</td></tr>
+                    <tr><td>text-only</td><td>—</td><td>Read-only pre/code reference block</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Usage Tab</h3>
+            <p>Displays the shortcode with a copy button, <code>usage_instructions</code> HTML, and docs link.</p>
+            
+            <h3>Activation Tab</h3>
+            <p>Only shown if <code>activation_required=yes</code>; shows key entry, activate/deactivate functionality.</p>
+        </div>
+
+        <div class="section-block" id="section-7">
+            <h2>7. Creating a New Built-in Plugin</h2>
+            
+            <p><strong>Step 1 — Create the PHP class</strong> in <code>app/Plugins/Display/</code> or <code>app/Plugins/Shipping/</code></p>
+            <p>Display plugin example:</p>
+<pre><code>&lt;?php
+namespace App\Plugins\Display;
+use App\Models\Plugin;
+use App\Plugins\Contracts\DisplayPlugin;
+
+class MyPlugin implements DisplayPlugin
+{
+    public function slug(): string { return 'my-plugin'; }
+    public function name(): string { return 'My Custom Plugin'; }
+
+    public function render(array $params, Plugin $plugin): string
+    {
+        $setting = $plugin-&gt;getSetting('my_setting', 'default');
+        return view('plugins.display.my-plugin', compact('params', 'setting'))-&gt;render();
+    }
+}</code></pre>
+            
+            <p>Shipping plugin returns array of rate options:</p>
+<pre><code>return [
+    ['label' =&gt; 'Standard Rate', 'rate' =&gt; 12.50, 'days' =&gt; 3, 'code' =&gt; 'MY_CODE'],
+];</code></pre>
+
+            <p><strong>Step 2 — Register in PluginServiceProvider boot() method:</strong></p>
+<pre><code>$manager-&gt;register(\App\Plugins\Display\MyPlugin::class);</code></pre>
+
+            <p><strong>Step 3 — Add DB record + options to PluginSeeder.php then run:</strong></p>
+<pre><code>php artisan db:seed --class=PluginSeeder</code></pre>
+        </div>
+
+        <div class="section-block" id="section-8">
+            <h2>8. Creating a Drop-in External Plugin</h2>
+            <p>Drop-in plugins live in the root <code>/plugins/</code> directory and are auto-discovered on boot.</p>
+            
+            <p><strong>Folder structure:</strong></p>
+<pre><code>plugins/
+  my-custom-plugin/
+    plugin.json
+    MyCustomPlugin.php</code></pre>
+
+            <p><strong>plugin.json format:</strong></p>
+<pre><code>{
+  "class": "MyCustomPlugin",
+  "name": "My Custom Plugin",
+  "version": "1.0",
+  "type": "display",
+  "shortcode": "my-custom",
+  "description": "A drop-in custom plugin",
+  "author": "Your Name",
+  "options": [
+    {
+      "field_name": "api_key",
+      "field_label": "API Key",
+      "field_type": "input",
+      "field_required": "yes",
+      "sort_order": 10,
+      "field_default_value": ""
+    }
+  ]
+}</code></pre>
+
+            <p><strong>Discovery flow in PluginManager::discoverExternalPlugins():</strong></p>
+            <ol>
+                <li>Scans <code>/plugins/*/plugin.json</code></li>
+                <li><code>require_once</code>'s the PHP class file</li>
+                <li>Calls <code>syncExternalPlugin()</code> — upserts DB record + options</li>
+                <li>Registers the class instance</li>
+            </ol>
+        </div>
+
+        <div class="section-block" id="section-9">
+            <h2>9. Accessing Plugin Settings in Code</h2>
+<pre><code>use App\Models\Plugin;
+
+$plugin = Plugin::where('shortcode', 'slideshow-2026')-&gt;first();
+
+// All settings as key =&gt; value array
+$settings = $plugin-&gt;getSettings();
+
+// Single setting with fallback
+$css = $plugin-&gt;getSetting('live_css', '');
+
+// Save settings (upserts into plugin_settings)
+$plugin-&gt;saveSettings(['live_css' =&gt; '.wrapper { width: 100%; }']);
+
+// Get options schema (ordered by sort_order)
+$schema = $plugin-&gt;getOptionsSchema();
+
+// Check active plugins by type
+$displayPlugins = Plugin::scopeActive()-&gt;scopeOfType('display')-&gt;get();</code></pre>
+        </div>
+
+        <div class="section-block" id="section-10">
+            <h2>10. Deployment Checklist</h2>
+            <p>After uploading all files to a new server:</p>
+<pre><code>php artisan migrate                      # Creates the 3 plugin tables
+php artisan db:seed --class=PluginSeeder # Seeds Slideshow + FedEx with all options
+php artisan optimize:clear               # Clears caches so PluginServiceProvider loads</code></pre>
+            <p>No other plugin-specific artisan commands are required. <code>PluginServiceProvider</code> is auto-loaded from <code>bootstrap/providers.php</code> on every request.</p>
+            <p><strong>Routes added:</strong></p>
+            <ul>
+                <li><code>GET /admin/plugins</code> → AdminPlugins Livewire component</li>
+                <li><code>GET /admin/plugins/list-display</code> → PluginApiController::listDisplay() JSON</li>
+            </ul>
+            <p><strong>Sidebar nav link added to:</strong> <code>resources/views/layouts/cms-sidebar.blade.php</code></p>
+        </div>
+    </div>
+    
+    <div id="print-footer">
+        <!-- Footer for print layout -->
+    </div>
+</div>
+
+</body>
+</html>

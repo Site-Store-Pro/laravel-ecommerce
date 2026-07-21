@@ -1,0 +1,507 @@
+<div class="py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between gap-3 mb-8 flex-wrap">
+            <div class="flex items-center gap-3">
+                <a href="{{ route('admin.ecommerce.orders') }}" wire:navigate
+                   class="p-2.5 rounded-2xl border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+                <div>
+                    <h2 class="font-extrabold text-2xl text-slate-900 leading-tight">Order Details: {{ $order->order_invoice_no }}</h2>
+                    <p class="text-sm text-slate-500 mt-0.5">Manage customer transaction history, shipping statuses, and partial refunding parameters</p>
+                </div>
+            </div>
+
+            <!-- Delete Order Button -->
+            @if(!$showDeleteConfirm)
+                <button wire:click="confirmDelete" class="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 text-red-700 text-xs font-bold rounded-xl hover:bg-red-100 transition-all shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Delete Order
+                </button>
+            @else
+                <div class="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-2xl">
+                    <span class="text-xs font-bold text-red-700">⚠ Delete this order and restore inventory?</span>
+                    <button wire:click="deleteOrder" wire:loading.attr="disabled" wire:target="deleteOrder" class="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-xl hover:bg-red-500 transition-all">
+                        Yes, Delete
+                    </button>
+                    <button wire:click="cancelDelete" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all">
+                        Cancel
+                    </button>
+                </div>
+            @endif
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Sidebar Navigation -->
+            <div class="lg:col-span-3 space-y-2">
+                <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-1">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-3">Shop Administration</h2>
+                    
+                    <a href="{{ route('admin.ecommerce.pending-orders') }}" wire:navigate class="flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 transition duration-150">
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Pending Orders
+                    </a>
+
+                    <a href="{{ route('admin.ecommerce.products') }}" wire:navigate class="flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 transition duration-150">
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        Products
+                    </a>
+
+                    <a href="{{ route('admin.ecommerce.orders') }}" wire:navigate class="flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold text-sm bg-indigo-50 text-indigo-600 transition duration-150">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                        </svg>
+                        Orders
+                    </a>
+
+                    <a href="{{ route('admin.ecommerce.inventory') }}" wire:navigate class="flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold text-sm text-slate-600 hover:bg-slate-50 transition duration-150">
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        Inventory
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Order Panels -->
+            <div class="lg:col-span-9 space-y-8">
+                <!-- Status Notifications -->
+                <x-toast-alert />
+
+                <!-- Overview Card -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-6">
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-4">
+                        <div>
+                            <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Order Date</span>
+                            <span class="font-bold text-slate-700 text-sm">{{ $order->order_date->format('F d, Y h:i A') }}</span>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Status</span>
+                            @if($order->order_status == 1)
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 rounded-full text-xs font-bold border border-red-150">
+                                    {{ $order->statusList ? $order->statusList->AdminDisplay : 'Open (PENDING)' }}
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-700 rounded-full text-xs font-bold border border-slate-200">
+                                    {{ $order->statusList ? $order->statusList->AdminDisplay : 'Pending (' . $order->order_status . ')' }}
+                                </span>
+                            @endif
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Order #</span>
+                            <span class="font-bold text-slate-800 text-sm">{{ $order->order_invoice_no }}</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
+                        <!-- Customer details -->
+                        <div class="space-y-3">
+                            <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Customer Details</h4>
+                            <div class="space-y-1.5 text-sm">
+                                <div><span class="text-slate-500">Name:</span> <span class="font-bold text-slate-800">{{ $order->user ? $order->user->name : 'Guest User' }}</span></div>
+                                <div><span class="text-slate-500">Email:</span> <span class="font-semibold text-slate-800">{{ $order->user ? $order->user->email : '-' }}</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Shipping details if shippable -->
+                        <div class="space-y-3">
+                            <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Shipping Details</h4>
+                            <div class="space-y-1.5 text-sm">
+                                @if($order->order_shipping_method == 1 && $order->user)
+                                    <div><span class="text-slate-500">Address:</span> <span class="font-semibold text-slate-800">{{ $order->user->shipping_address1 }} {{ $order->user->shipping_address2 }}</span></div>
+                                    <div><span class="text-slate-500">City/ZIP:</span> <span class="font-semibold text-slate-800">{{ $order->user->shipping_city }}@if($order->user->shipping_state), {{ $order->user->shipping_state }}@endif {{ $order->user->shopping_postalcode }}</span></div>
+                                    <div><span class="text-slate-500">Country:</span> <span class="font-semibold text-slate-800">{{ $order->user->shipping_country }} ({{ $order->user->shipping_countrycode }})</span></div>
+                                @else
+                                    <span class="text-xs text-slate-400 italic">No physical shipping required for this order (Digital Download).</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Comments Card -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-4">
+                    <h3 class="text-lg font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center gap-2">
+                        <span class="w-1.5 h-6 bg-indigo-600 rounded"></span> Order Comments
+                    </h3>
+                    @if(!empty($order->order_comments))
+                        <div class="text-sm text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-200 whitespace-pre-wrap">
+                            {{ $order->order_comments }}
+                        </div>
+                    @else
+                        <p class="text-sm text-slate-400 italic font-medium">no customer comments for this order</p>
+                    @endif
+                </div>
+
+                <!-- Purchased Items Card -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-6">
+                    <h3 class="text-lg font-bold text-slate-900 pb-3 border-b border-slate-100">Items Purchased</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-500">
+                            <thead class="text-xs text-slate-400 uppercase bg-slate-50">
+                                <tr>
+                                    <th class="px-4 py-3">Item Name</th>
+                                    <th class="px-4 py-3 text-center">Quantity</th>
+                                    <th class="px-4 py-3">Delivery Option</th>
+                                    <th class="px-4 py-3 text-right">Price</th>
+                                    <th class="px-4 py-3 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @foreach($order->details as $detail)
+                                    <tr class="hover:bg-slate-50/50">
+                                        <td class="px-4 py-3.5 font-bold text-slate-800">
+                                            @if($detail->variant && $detail->variant->product)
+                                                <a href="{{ route('admin.ecommerce.product-edit', $detail->variant->product->id) }}" class="text-indigo-600 hover:underline">
+                                                    {{ $detail->item_name }}
+                                                </a>
+                                            @else
+                                                {{ $detail->item_name }}
+                                            @endif
+
+                                            @php
+                                                $customs = json_decode($detail->options_list, true) ?: [];
+                                                $customizations = isset($customs['customizations']) ? $customs['customizations'] : (is_array($customs) ? $customs : []);
+                                            @endphp
+                                            @if(!empty($customizations))
+                                                <div class="mt-1.5 space-y-0.5 text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-100 max-w-md">
+                                                    @foreach($customizations as $cust)
+                                                        @if(is_array($cust) && isset($cust['label']))
+                                                            <div>
+                                                                <span class="font-bold text-slate-600">{{ $cust['label'] }}:</span>
+                                                                <span>{{ $cust['value'] }}</span>
+                                                                @if(isset($cust['price_modifier']) && $cust['price_modifier'] > 0)
+                                                                    <span class="text-indigo-600 font-bold ml-0.5">(+${{ number_format($cust['price_modifier'], 2) }})</span>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3.5 text-center font-bold text-slate-700">{{ number_format($detail->item_qty, 0) }}</td>
+                                        <td class="px-4 py-3.5">
+                                            @if($detail->download_item)
+                                                <span class="inline-block bg-teal-50 text-teal-700 text-[10px] px-2 py-0.5 rounded font-bold border border-teal-150">Instant Download</span>
+                                            @else
+                                                <span class="inline-block bg-indigo-50 text-indigo-700 text-[10px] px-2 py-0.5 rounded font-bold border border-indigo-150">Shipped Product</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3.5 text-right">
+                                            <span class="font-semibold text-slate-700 block">${{ number_format($detail->final_price, 2) }}</span>
+                                            @if($detail->discount_price > 0)
+                                                <span class="line-through text-slate-400 text-[10px] block">${{ number_format($detail->final_price + $detail->discount_price, 2) }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-3.5 text-right">
+                                            <span class="font-bold text-slate-900 block">${{ number_format($detail->final_price * $detail->item_qty, 2) }}</span>
+                                            @if($detail->discount_price > 0)
+                                                <span class="line-through text-slate-400 text-[10px] block">${{ number_format(($detail->final_price + $detail->discount_price) * $detail->item_qty, 2) }}</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Financial Statement summary -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                    <!-- Accounting Calculations -->
+                    <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-4">
+                        <h3 class="text-sm font-extrabold text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-100">Order Totals</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between text-slate-600">
+                                <span>Subtotal</span>
+                                <span class="font-bold text-slate-800">${{ number_format($order->order_subtotal, 2) }}</span>
+                            </div>
+                            <div class="flex justify-between text-slate-600">
+                                <span>Tax</span>
+                                <span class="font-bold text-slate-800">${{ number_format($order->order_taxes, 2) }}</span>
+                            </div>
+                            <div class="flex justify-between text-slate-600">
+                                <span>Shipping Fee</span>
+                                <span class="font-bold text-slate-800">${{ number_format($order->order_shipping, 2) }}</span>
+                            </div>
+                            <div class="flex justify-between text-slate-800 pt-3 border-t border-slate-100 text-base font-extrabold">
+                                <span>Total Paid</span>
+                                <span>${{ number_format($order->order_total, 2) }}</span>
+                            </div>
+
+                            @php
+                                $totalRefunded = $order->refunds->sum('amount');
+                                $remainingRefundable = max(0.00, $order->order_total - $totalRefunded);
+                            @endphp
+
+                            <div class="flex justify-between text-red-600 pt-3 border-t border-slate-100 text-sm font-bold">
+                                <span>Total Refunded</span>
+                                <span>-${{ number_format($totalRefunded, 2) }}</span>
+                            </div>
+                            <div class="flex justify-between text-emerald-600 pt-1 text-sm font-bold">
+                                <span>Remaining Refundable</span>
+                                <span>${{ number_format($remainingRefundable, 2) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions Form Card -->
+                    <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-6">
+                        <h3 class="text-sm font-extrabold text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-100">Order Actions</h3>
+
+                        <!-- Update Status Dropdown with Confirm Button -->
+                        <div class="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                            <h4 class="text-xs font-bold text-slate-700">Update Order Status</h4>
+                            <select wire:change="setPendingStatus($event.target.value)"
+                                    class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 font-medium text-xs">
+                                @foreach($statuses as $status)
+                                    <option value="{{ $status->orderstatuscode }}" @if($order->order_status == $status->orderstatuscode) selected @endif>
+                                        {{ $status->orderstatus }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            @if($showStatusConfirm)
+                                <div class="flex items-center gap-2 mt-2">
+                                    <button wire:click="applyStatusChange"
+                                            wire:loading.attr="disabled"
+                                            wire:target="applyStatusChange"
+                                            class="flex-1 px-3 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-500 transition-all flex items-center justify-center gap-1.5">
+                                        <svg wire:loading wire:target="applyStatusChange" class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span>✓ Apply Status</span>
+                                    </button>
+                                    <button wire:click="cancelStatusChange"
+                                            class="px-3 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all">
+                                        Cancel
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Send Duplicate Order Confirmation Email -->
+                        <div class="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                            <h4 class="text-xs font-bold text-slate-700">Resend Confirmation Email</h4>
+                            <p class="text-xs text-slate-500">Sends a duplicate order confirmation email to the customer (does not change order status).</p>
+                            
+                            @if(!$showEmailConfirm)
+                                <button wire:click="triggerEmailConfirm"
+                                        class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-md hover:opacity-90 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                    Send Email
+                                </button>
+                            @else
+                                <div class="flex items-center gap-2 mt-2">
+                                    <button wire:click="sendDuplicateOrderConfirmation"
+                                            wire:loading.attr="disabled"
+                                            wire:target="sendDuplicateOrderConfirmation"
+                                            class="flex-1 px-3 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-500 transition-all flex items-center justify-center gap-1.5">
+                                        <svg wire:loading wire:target="sendDuplicateOrderConfirmation" class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span>Confirm Send</span>
+                                    </button>
+                                    <button wire:click="cancelEmailSend"
+                                            class="px-3 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all">
+                                        Cancel
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Mark Shipped Action -->
+                        @if($order->order_status == 1 && $order->order_shipping_method == 1)
+                            <div class="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                                <h4 class="text-xs font-bold text-slate-700">Fulfillment</h4>
+                                <p class="text-xs text-slate-500">This order requires physical shipping. Enter the ship date and optional tracking number, then confirm.</p>
+
+                                @if(!$showShipForm)
+                                    <button wire:click="toggleShipForm" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-md hover:opacity-90 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1.293 9.293A1 1 0 007.28 18h9.44a1 1 0 00.987-.836L19 8M10 12h4"/></svg>
+                                        Mark Shipped
+                                    </button>
+                                @else
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Ship Date <span class="text-red-500">*</span></label>
+                                            <input type="date" wire:model="shipDate"
+                                                   class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 font-medium text-xs">
+                                            @error('shipDate') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Tracking Number <span class="text-slate-400 font-normal">(optional — auto-generated if blank)</span></label>
+                                            <input type="text" wire:model="trackingNumber" placeholder="e.g. 1Z999AA10123456784"
+                                                   class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 font-mono text-xs">
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <button wire:click="markShipped"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="markShipped"
+                                                    class="flex-1 px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-md hover:opacity-90 flex items-center justify-center gap-1.5">
+                                                <svg wire:loading wire:target="markShipped" class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                <span>✓ Confirm Shipment</span>
+                                            </button>
+                                            <button wire:click="toggleShipForm"
+                                                    class="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        @elseif($order->order_status == 2)
+                            <div class="p-4 bg-emerald-50 border border-emerald-100 text-xs font-semibold text-emerald-800 rounded-2xl">
+                                ✓ Shipped on {{ $order->order_shipping_date?->format('Y-m-d') }}<br>
+                                Tracking: <code class="font-bold text-indigo-600">{{ $order->order_shipping_tracking }}</code>
+                            </div>
+                        @endif
+
+                        <!-- Send Download Reminder Action -->
+                        @if($order->details->where('download_item', true)->isNotEmpty())
+                            <div class="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                                <h4 class="text-xs font-bold text-slate-700">Digital Downloads</h4>
+                                <p class="text-xs text-slate-500">Send an email reminder with customer download links and order totals summary.</p>
+                                
+                                @if(!$showDownloadConfirm)
+                                    <button type="button" wire:click="triggerDownloadReminderConfirm" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-md hover:opacity-90 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                        </svg>
+                                        <span>Send Download Reminder</span>
+                                    </button>
+                                @else
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <button type="button" 
+                                                wire:click="sendDownloadReminder" 
+                                                wire:loading.attr="disabled" 
+                                                wire:target="sendDownloadReminder" 
+                                                class="flex-1 px-3 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-500 transition-all flex items-center justify-center gap-1.5">
+                                            <svg wire:loading wire:target="sendDownloadReminder" class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span>Confirm Send</span>
+                                        </button>
+                                        <button type="button" 
+                                                wire:click="cancelDownloadReminderSend" 
+                                                class="px-3 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+
+                        <!-- Refund Form -->
+                        @if($order->order_total > 0.00)
+                            <div class="space-y-4 pt-2">
+                                <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Process Refund</h4>
+                                
+                                @if($remainingRefundable <= 0)
+                                    <div class="p-3 bg-red-50 border border-red-100 text-xs font-semibold text-red-800 rounded-2xl">
+                                        This order has been fully refunded. No additional refunds can be processed.
+                                    </div>
+                                @else
+                                    <form wire:submit.prevent="processRefund" class="space-y-3">
+                                        <div>
+                                            <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Refund Amount ($)</label>
+                                            <input type="number" step="0.01" min="0.01" max="{{ $remainingRefundable }}" wire:model="refundAmount" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 font-bold text-sm">
+                                            @error('refundAmount') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                        </div>
+                                        <button type="submit" onclick="return confirm('Are you sure you want to refund this specific amount?')" wire:loading.attr="disabled" wire:target="processRefund" class="w-full py-2.5 bg-red-600 text-white text-xs font-bold rounded-xl shadow-md hover:bg-red-500 flex items-center justify-center gap-1.5">
+                                            <svg wire:loading wire:target="processRefund" class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span>Submit Refund</span>
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Refund History Log Card -->
+                @if($order->refunds->isNotEmpty())
+                    <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-4">
+                        <h3 class="text-lg font-bold text-slate-900 pb-3 border-b border-slate-100">Refunding History Logs</h3>
+                        <div class="space-y-4">
+                            @foreach($order->refunds as $refund)
+                                <div class="p-4 bg-red-50/50 border border-red-100 rounded-2xl flex items-center justify-between text-sm flex-wrap gap-4">
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Refunded On</span>
+                                        <span class="font-semibold text-slate-700">{{ $refund->refund_date->format('Y-m-d h:i A') }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Auth Code</span>
+                                        <span class="font-bold text-indigo-700 font-mono">{{ $refund->authorization_code }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Amount Refunded</span>
+                                        <span class="font-extrabold text-red-600">${{ number_format($refund->amount, 2) }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Payment History Card -->
+                <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-4 mt-8">
+                    <h3 class="text-lg font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center gap-2">
+                        <span class="w-1.5 h-6 bg-indigo-600 rounded"></span> Payment History
+                    </h3>
+                    @if($order->payments->isNotEmpty())
+                        <div class="space-y-4">
+                            @foreach($order->payments as $payment)
+                                <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between text-sm gap-4">
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Payment Date</span>
+                                        <span class="font-semibold text-slate-700">{{ $payment->payment_date ? $payment->payment_date->format('Y-m-d h:i A') : '-' }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Method</span>
+                                        <span class="font-bold text-slate-700">{{ $payment->payment_method ?: '-' }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Status</span>
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border {{ strtolower($payment->payment_status) === 'success' || strtolower($payment->payment_status) === 'completed' || strtolower($payment->payment_status) === 'paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200' }}">
+                                            {{ $payment->payment_status ?: 'Unknown' }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Auth Code</span>
+                                        <span class="font-mono text-xs text-slate-600">{{ $payment->authorization_code ?: '-' }}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Amount</span>
+                                        <span class="font-extrabold text-slate-900">${{ number_format($payment->payment_amount, 2) }}</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-sm text-slate-500 italic">No payments recorded for this order.</p>
+                    @endif
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

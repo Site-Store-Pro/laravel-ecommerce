@@ -1,0 +1,423 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+        .auth-bg {
+            background: #f8fafc;
+            background-image:
+                radial-gradient(ellipse 80% 60% at 20% -10%, rgba(99,102,241,0.08) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 80% 110%, rgba(139,92,246,0.06) 0%, transparent 50%);
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(99,102,241,0.12);
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.8) inset,
+                0 12px 30px rgba(0,0,0,0.03),
+                0 0 40px rgba(99,102,241,0.03);
+        }
+
+        .auth-input {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #1e293b !important;
+            transition: all 0.2s ease;
+        }
+        .auth-input::placeholder { color: #94a3b8 !important; }
+        .auth-input:focus {
+            background: #ffffff !important;
+            border-color: #6366f1 !important;
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.15) !important;
+            outline: none !important;
+        }
+
+        .auth-btn {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+            padding: 0.65rem 1.5rem;
+            border-radius: 0.6rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(99,102,241,0.2);
+        }
+        .auth-btn:hover {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            box-shadow: 0 6px 28px rgba(99,102,241,0.3);
+            transform: translateY(-1px);
+        }
+        .auth-btn:active { transform: translateY(0); }
+
+        .auth-link {
+            color: #4f46e5;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.2s;
+        }
+        .auth-link:hover { color: #3730a3; text-decoration: underline; }
+
+        .auth-label {
+            color: #475569;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            margin-bottom: 0;
+            display: block;
+        }
+
+        .auth-footer {
+            padding-top: 10px;
+            padding-bottom: 10px;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #94a3b8;
+            font-size: 0.8.rem;
+        }
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .social-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.6rem 1rem;
+            border-radius: 0.6rem;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #475569;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .social-btn:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+
+        .brand-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            box-shadow: 0 0 12px rgba(99,102,241,0.5);
+            display: inline-block;
+        }
+
+        .checkbox-custom {
+            accent-color: #6366f1;
+            width: 1rem; height: 1rem;
+        }
+
+        .auth-card-wrap {
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Override default Blade component styling on inputs */
+        input[type="text"].auth-input,
+        input[type="email"].auth-input,
+        input[type="password"].auth-input {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #1e293b !important;
+        }
+
+        /* Knowledge Base Article Content Scoped Styles */
+        .kb-article-content h1 {
+            font-size: 1.875rem; /* 30px */
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            line-height: 1.25;
+        }
+        .kb-article-content h2 {
+            font-size: 1.5rem; /* 24px */
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 1.75rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.3;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        .kb-article-content h3 {
+            font-size: 1.25rem; /* 20px */
+            font-weight: 600;
+            color: #334155;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .kb-article-content p {
+            margin-top: 0;
+            margin-bottom: 1.25rem;
+            line-height: 1.75;
+            color: #475569;
+        }
+        .kb-article-content ul {
+            list-style-type: disc;
+            margin-top: 0;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+        }
+        .kb-article-content ol {
+            list-style-type: decimal;
+            margin-top: 0;
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+        }
+        .kb-article-content li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+            color: #475569;
+        }
+        .kb-article-content code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.875em;
+            color: #db2777;
+            background-color: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+        }
+        .kb-article-content pre {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            overflow-x: auto;
+            margin-top: 1.25rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .kb-article-content pre code {
+            color: inherit;
+            background-color: transparent;
+            padding: 0;
+            font-size: 0.875rem;
+            border-radius: 0;
+        }
+        .kb-article-content blockquote {
+            border-left: 4px solid #6366f1;
+            padding-left: 1.25rem;
+            color: #64748b;
+            font-style: italic;
+            margin: 1.5rem 0;
+            background-color: #f8fafc;
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .kb-article-content strong {
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .kb-article-content a {
+            color: #4f46e5;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        .kb-article-content a:hover {
+            color: #3730a3;
+        }
+
+/* ==========================================================
+   Dark Mode Overrides
+   These kick in when the `dark` class is on <html>.
+   Tailwind dark: utilities handle most inline-Tailwind styles;
+   these rules cover CSS-class-based elements in app.css.
+   ========================================================== */
+
+/* Auth background in dark mode */
+.dark .auth-bg {
+    background: #0f172a;
+    background-image:
+        radial-gradient(ellipse 80% 60% at 20% -10%, rgba(99,102,241,0.12) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 50% at 80% 110%, rgba(139,92,246,0.08) 0%, transparent 50%);
+}
+
+/* Auth card in dark mode */
+.dark .auth-card {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(99,102,241,0.2);
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.05) inset,
+        0 12px 30px rgba(0,0,0,0.2),
+        0 0 40px rgba(99,102,241,0.05);
+}
+
+/* Auth inputs in dark mode */
+.dark .auth-input,
+.dark input[type="text"].auth-input,
+.dark input[type="email"].auth-input,
+.dark input[type="password"].auth-input {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #f1f5f9 !important;
+}
+.dark .auth-input::placeholder { color: #64748b !important; }
+.dark .auth-input:focus {
+    background: #1e293b !important;
+    border-color: #6366f1 !important;
+}
+
+/* Auth labels / links in dark mode */
+.dark .auth-label { color: #94a3b8; }
+.dark .auth-link { color: #818cf8; }
+.dark .auth-link:hover { color: #a5b4fc; }
+.dark .auth-footer { color: #94a3b8; }
+
+/* Social button dark mode */
+.dark .social-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+.dark .social-btn:hover {
+    background: #273549;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+
+/* Divider dark mode */
+.dark .auth-divider { color: #475569; }
+.dark .auth-divider::before,
+.dark .auth-divider::after { background: #334155; }
+
+/* KB article content dark mode */
+.dark .kb-article-content h1 { color: #f1f5f9; }
+.dark .kb-article-content h2 {
+    color: #e2e8f0;
+    border-bottom-color: #334155;
+}
+.dark .kb-article-content h3 { color: #cbd5e1; }
+.dark .kb-article-content p  { color: #94a3b8; }
+.dark .kb-article-content li { color: #94a3b8; }
+.dark .kb-article-content code {
+    color: #f472b6;
+    background-color: #1e293b;
+}
+.dark .kb-article-content blockquote {
+    color: #64748b;
+    background-color: #1e293b;
+}
+.dark .kb-article-content strong { color: #e2e8f0; }
+.dark .kb-article-content a { color: #818cf8; }
+.dark .kb-article-content a:hover { color: #a5b4fc; }
+
+/* Navigation bar dark mode */
+.dark nav.bg-white\/80 {
+    background-color: rgba(15, 23, 42, 0.85) !important;
+    border-bottom-color: #1e293b;
+}
+
+/* Generic white card/panel dark mode helpers */
+.dark body {
+    background-color: #0f172a !important;
+    color: #cbd5e1 !important;
+}
+.dark .bg-\[\#f8fafc\] {
+    background-color: #0f172a !important;
+}
+.dark .bg-slate-50 {
+    background-color: #0f172a !important;
+}
+.dark .bg-slate-100 {
+    background-color: #1e293b !important;
+}
+.dark .bg-slate-200 {
+    background-color: #334155 !important;
+}
+.dark .bg-white {
+    background-color: #1e293b !important;
+}
+.dark .border-slate-100 {
+    border-color: #334155 !important;
+}
+.dark .border-slate-200 {
+    border-color: #334155 !important;
+}
+.dark .text-slate-900 {
+    color: #f1f5f9 !important;
+}
+.dark .text-slate-800 {
+    color: #e2e8f0 !important;
+}
+.dark .text-slate-700 {
+    color: #cbd5e1 !important;
+}
+.dark .text-slate-600 {
+    color: #94a3b8 !important;
+}
+.dark .text-slate-500 {
+    color: #64748b !important;
+}
+.dark input, .dark textarea, .dark select {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+.dark input::placeholder, .dark textarea::placeholder {
+    color: #64748b !important;
+}
+.dark .bg-clip-text {
+    background-image: linear-gradient(to right, #ffffff, #a5b4fc) !important;
+    color: transparent !important;
+}
+
+/* ==========================================================
+   FAQ Accordion Widget (CMS HTML Widget Library)
+   ----------------------------------------------------------
+   Icons use inline styles (opacity:1 / opacity:0) so they
+   work without any CSS framework. The rules below handle the
+   open ↔ closed toggle via the native details[open] selector.
+
+   Two sets of selectors are kept:
+     A) .faq-icon-plus / .faq-icon-minus  — new widget HTML
+     B) .group-open\:opacity-*            — legacy widget HTML
+        (backward-compat for already-published pages)
+   ========================================================== */
+
+/* Remove the browser's default disclosure triangle */
+.faq-accordion details > summary       { list-style: none; }
+.faq-accordion details > summary::-webkit-details-marker { display: none; }
+
+/* ── A) New widget HTML (inline-style icons, simple class names) ── */
+
+/* Initial state: plus visible, minus hidden */
+.faq-accordion .faq-icon-plus  { opacity: 1 !important; }
+.faq-accordion .faq-icon-minus { opacity: 0 !important; }
+
+/* Open state: swap icons */
+.faq-accordion details[open] .faq-icon-plus  { opacity: 0 !important; }
+.faq-accordion details[open] .faq-icon-minus { opacity: 1 !important; }
+
+/* ── B) Legacy widget HTML (Tailwind group-open: class names) ── */
+.faq-accordion details[open] .group-open\:opacity-0  { opacity: 0 !important; }
+.faq-accordion details[open] .group-open\:opacity-100 { opacity: 1 !important; }
+
