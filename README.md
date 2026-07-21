@@ -1,6 +1,6 @@
-# Laravel Helpdesk, Ticketing & E-Commerce Platform
+# Laravel E-Commerce Platform
 
-A comprehensive, enterprise-ready e-commerce platform built on Laravel 13, Livewire 3, Tailwind CSS, and Alpine.js. This platform combines a dynamic, high-performance storefront and e-commerce administration workspace.
+A comprehensive, enterprise-ready, e-commerce platform built on Laravel 13, Livewire 3, Tailwind CSS, and Alpine.js. This platform combines a dynamic, high-performance storefront, full-featured CMS / sitebuilder and e-commerce administration workspace.
 
 ---
 
