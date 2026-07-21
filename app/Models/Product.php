@@ -59,6 +59,13 @@ class Product extends Model
     public function primaryThumbnailUrl(): ?string
     {
         foreach ($this->variants as $variant) {
+            $img = $variant->images->where('active', 1)->where('search_image', 1)->first();
+            if ($img) {
+                return $img->thumbnailUrl();
+            }
+        }
+
+        foreach ($this->variants as $variant) {
             $url = $variant->thumbnailImageUrl();
             if ($url) {
                 return $url;

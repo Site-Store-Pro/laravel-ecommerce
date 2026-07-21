@@ -308,8 +308,8 @@
                     @endphp
                     <div class="group bg-white border border-slate-100 rounded-3xl shadow-sm hover:shadow-md hover:border-slate-200 transition-all duration-300 flex flex-col overflow-hidden">
                         <a href="{{ route('shop.product', $product->seo_slug) }}" wire:navigate class="{{ $aspectClass }} bg-gradient-to-br from-indigo-50/50 to-violet-50/50 flex items-center justify-center relative overflow-hidden">
-                            @if($defaultVariant && $defaultVariant->thumbnailImageUrl())
-                                <img src="{{ $defaultVariant->thumbnailImageUrl() }}" alt="{{ $product->title }}"
+                            @if($product->primaryThumbnailUrl())
+                                <img src="{{ $product->primaryThumbnailUrl() }}" alt="{{ $product->title }}"
                                      class="w-full h-full {{ $objectClass }}">
                             @else
                                 <span class="p-4 rounded-full bg-white shadow-md text-indigo-600 group-hover:scale-110 transition-all duration-300 relative z-10">
@@ -434,8 +434,8 @@
 
                         {{-- Thumbnail --}}
                         <a href="{{ route('shop.product', $product->seo_slug) }}" wire:navigate class="{{ $listSizeClass }} shrink-0 bg-gradient-to-br from-indigo-50/60 to-violet-50/60 flex items-center justify-center relative overflow-hidden">
-                            @if($defaultVariant && $defaultVariant->thumbnailImageUrl())
-                                <img src="{{ $defaultVariant->thumbnailImageUrl() }}" alt="{{ $product->title }}"
+                            @if($product->primaryThumbnailUrl())
+                                <img src="{{ $product->primaryThumbnailUrl() }}" alt="{{ $product->title }}"
                                      class="w-full h-full {{ $objectClass }}">
                             @else
                                 <span class="text-indigo-400 group-hover:scale-110 transition-all duration-300">

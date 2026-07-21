@@ -49,8 +49,8 @@
                 {{-- Product Image --}}
                 <a href="{{ route('shop.product', $product->seo_slug) }}"
                    class="{{ $aspectClass }} bg-gradient-to-br from-indigo-50/50 to-violet-50/50 flex items-center justify-center relative overflow-hidden">
-                    @if($defaultVariant && $defaultVariant->thumbnailImageUrl())
-                        <img src="{{ $defaultVariant->thumbnailImageUrl() }}"
+                    @if($product->primaryThumbnailUrl())
+                        <img src="{{ $product->primaryThumbnailUrl() }}"
                              alt="{{ $product->title }}"
                              class="w-full h-full {{ $objectClass }} group-hover:scale-105 transition-transform duration-500">
                     @else

@@ -64,4 +64,102 @@ class VariantImagesTest extends TestCase
         // Verify variant's download fields are untouched
         $this->assertEquals('download-key', $variant->download_s3_access_key_id);
     }
+
+    public function test_product_primary_thumbnail_url_returns_search_image()
+    {
+        $product = Product::create([
+            'title' => 'Test Product',
+            'slug' => 'test-product',
+            'description' => 'Test Description',
+            'sku_prefix' => 'TP',
+        ]);
+
+        $variant1 = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'TP-VAR-1',
+            'public_price' => 10.00,
+            'wholesale_price' => 8.00,
+        ]);
+
+        $variant2 = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'TP-VAR-2',
+            'public_price' => 20.00,
+            'wholesale_price' => 16.00,
+        ]);
+
+        // Add standard image to variant 1
+        $image1 = ProductImage::create([
+            'variant_id' => $variant1->id,
+            'thumbnail_path' => 'images/thumbnails/thumb1.jpg',
+            'main_path' => 'images/mains/main1.jpg',
+            'active' => 1,
+            'search_image' => 0,
+        ]);
+
+        // Add search image to variant 2
+        $image2 = ProductImage::create([
+            'variant_id' => $variant2->id,
+            'thumbnail_path' => 'images/thumbnails/thumb2.jpg',
+            'main_path' => 'images/mains/main2.jpg',
+            'active' => 1,
+            'search_image' => 1,
+        ]);
+
+        // Clear relations cache and reload
+        $product->load('variants.images');
+
+        // It should return the search image from variant 2 (thumb2.jpg)
+        $thumbnailUrl = $product->primaryThumbnailUrl();
+        $this->assertStringContainsString('thumb2.jpg', $thumbnailUrl);
+    }
+
+    public function test_product_primary_thumbnail_url_returns_first_search_image_if_multiple()
+    {
+        $product = Product::create([
+            'title' => 'Test Product 2',
+            'slug' => 'test-product-2',
+            'description' => 'Test Description',
+            'sku_prefix' => 'TP2',
+        ]);
+
+        $variant1 = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'TP2-VAR-1',
+            'public_price' => 10.00,
+            'wholesale_price' => 8.00,
+        ]);
+
+        $variant2 = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'TP2-VAR-2',
+            'public_price' => 20.00,
+            'wholesale_price' => 16.00,
+        ]);
+
+        // Add search image 1 to variant 1
+        $image1 = ProductImage::create([
+            'variant_id' => $variant1->id,
+            'thumbnail_path' => 'images/thumbnails/thumb1.jpg',
+            'main_path' => 'images/mains/main1.jpg',
+            'active' => 1,
+            'search_image' => 1,
+        ]);
+
+        // Add search image 2 to variant 2
+        $image2 = ProductImage::create([
+            'variant_id' => $variant2->id,
+            'thumbnail_path' => 'images/thumbnails/thumb2.jpg',
+            'main_path' => 'images/mains/main2.jpg',
+            'active' => 1,
+            'search_image' => 1,
+        ]);
+
+        // Clear relations cache and reload
+        $product->load('variants.images');
+
+        // It should return the first search image found (thumb1.jpg)
+        $thumbnailUrl = $product->primaryThumbnailUrl();
+        $this->assertStringContainsString('thumb1.jpg', $thumbnailUrl);
+    }
 }

@@ -145,8 +145,8 @@
 
                             {{-- Image --}}
                             <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-img-wrap">
-                                @if($defaultVariant && $defaultVariant->thumbnailImageUrl())
-                                    <img src="{{ $defaultVariant->thumbnailImageUrl() }}" alt="{{ $product->title }}">
+                                @if($product->primaryThumbnailUrl())
+                                    <img src="{{ $product->primaryThumbnailUrl() }}" alt="{{ $product->title }}">
                                 @else
                                     <svg class="w-10 h-10 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
