@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class CmsDownload extends Model
 {
@@ -19,6 +20,7 @@ class CmsDownload extends Model
     const SOURCE_CUSTOM_S3  = 3;
 
     protected $fillable = [
+        'uuid',
         'internal_name',
         'link_label',
         'is_active',
@@ -51,10 +53,30 @@ class CmsDownload extends Model
         'is_active'       => 'boolean',
         'force_download'  => 'boolean',
         'open_in_new_tab' => 'boolean',
-        'show_icon'       => 'integer',   // 0=none, 1=left, 2=right, 3=top, 4=bottom
+        'show_icon'       => 'integer',
         'expires_at'      => 'datetime',
         'source_type'     => 'integer',
     ];
+
+    /**
+     * Auto-generate a UUID for every new CmsDownload record.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (CmsDownload $model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    /**
+     * Use UUID as the route key instead of numeric id.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     /**
      * Whether this download's access window has passed.

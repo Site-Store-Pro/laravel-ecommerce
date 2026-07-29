@@ -44,9 +44,10 @@ class SlideshowPlugin implements DisplayPlugin
             return '';
         }
 
-        $liveCss = $plugin->getSetting('live_css', '');
-        $swiperId = 'swiper_' . $slideshow->slideshow_id;
+        $defaultCss = $plugin->getSetting('default_css', '');
+        $customCss  = $params['custom_css'] ?? $plugin->getSetting('custom_css', $plugin->getSetting('live_css', ''));
+        $swiperId   = 'swiper_' . $slideshow->slideshow_id;
 
-        return view('plugins.display.slideshow', compact('slideshow', 'slides', 'params', 'plugin', 'swiperId', 'liveCss', 'nav', 'paging', 'autoplay', 'speed', 'effect'))->render();
+        return view('plugins.display.slideshow', compact('slideshow', 'slides', 'params', 'plugin', 'swiperId', 'defaultCss', 'customCss', 'nav', 'paging', 'autoplay', 'speed', 'effect'))->render();
     }
 }

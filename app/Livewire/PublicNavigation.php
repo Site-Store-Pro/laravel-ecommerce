@@ -7,6 +7,7 @@ use Livewire\Attributes\On;
 use App\Models\ShoppingCartLog;
 use App\Models\NavMenu;
 use App\Models\NavItem;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
 class PublicNavigation extends Component
@@ -14,9 +15,11 @@ class PublicNavigation extends Component
     public int $cartCount = 0;
     public bool $mobileMenuOpen = false;
 
-    // Dynamic nav — null means fall back to the hardcoded nav
-    public ?NavMenu $navMenu = null;
-    public $navItems = null;
+    // NOTE: $navMenu and $navItems are intentionally NOT public Livewire properties.
+    // Livewire serialises public properties to JSON between requests, which strips
+    // eager-loaded Eloquent relations (including `translations`). Instead, the nav
+    // tree is rebuilt fresh on every render() call via buildNav() so that
+    // HasTranslations::getAttribute() always sees the translations relation loaded.
 
     #[On('cart-updated')]
     public function updateCartCount(): void
@@ -32,7 +35,6 @@ class PublicNavigation extends Component
     public function mount(): void
     {
         $this->loadCartCount();
-        $this->loadDynamicNav();
     }
 
     private function loadCartCount(): void
@@ -42,10 +44,10 @@ class PublicNavigation extends Component
             $cookieSessionId = request()->cookie('cart_session_id', '');
             $userId = auth()->id() ?? 0;
             $this->cartCount = ShoppingCartLog::where('order_id', 0)
-                ->where(function($query) use ($cookieSessionId, $userId) {
+                ->where(function ($query) use ($cookieSessionId, $userId) {
                     if ($userId > 0) {
                         $query->where('user_id', $userId)
-                              ->orWhere(function($sub) use ($cookieSessionId) {
+                              ->orWhere(function ($sub) use ($cookieSessionId) {
                                   $sub->where('cart_log_session', $cookieSessionId)->where('user_id', 0);
                               });
                     } else {
@@ -55,21 +57,32 @@ class PublicNavigation extends Component
         }
     }
 
-    private function loadDynamicNav(): void
+    /**
+     * Build the nav tree fresh on every render so that eager-loaded translations
+     * are always present. Returns [$navMenu, $navItems] or [null, null] on failure.
+     */
+    private function buildNav(): array
     {
         try {
-            if (!Schema::hasTable('nav_menus')) return;
+            if (!Schema::hasTable('nav_menus')) {
+                return [null, null];
+            }
 
             $menu = NavMenu::getPrimary();
-            if (!$menu) return;
+            if (!$menu) {
+                return [null, null];
+            }
 
-            $this->navMenu  = $menu;
-            $flat           = $menu->items()->where('is_active', true)->get();
-            $this->navItems = NavItem::buildTree($flat);
+            $flat     = $menu->items()
+                ->withCurrentTranslations()
+                ->where('is_active', true)
+                ->get();
+            $navItems = NavItem::buildTree($flat);
+
+            return [$menu, $navItems];
         } catch (\Throwable) {
             // Nav tables not yet migrated — degrade gracefully to hardcoded nav
-            $this->navMenu  = null;
-            $this->navItems = null;
+            return [null, null];
         }
     }
 
@@ -81,9 +94,11 @@ class PublicNavigation extends Component
 
     public function render()
     {
+        [$navMenu, $navItems] = $this->buildNav();
+
         return view('livewire.public-navigation', [
-            'navMenu'  => $this->navMenu,
-            'navItems' => $this->navItems,
+            'navMenu'  => $navMenu,
+            'navItems' => $navItems,
         ]);
     }
 }

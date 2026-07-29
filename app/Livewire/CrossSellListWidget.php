@@ -89,7 +89,7 @@ class CrossSellListWidget extends Component
                 auth()->user()?->shipping_state
             );
             if ($available <= 0) {
-                session()->flash('error', 'Item is out of stock.');
+                $this->dispatch('show-cart-error', message: 'This item is currently out of stock.');
                 return;
             }
         }
@@ -129,7 +129,7 @@ class CrossSellListWidget extends Component
                 ->whereHas('product', fn($q) => $q->where('standalone_purchase', 1))
                 ->exists();
             if ($hasStandalone) {
-                session()->flash('error', 'Your cart contains a standalone item which cannot be purchased with other items.');
+                $this->dispatch('show-cart-error', message: 'Your cart contains a standalone item which cannot be purchased with other items.');
                 return;
             }
         }
@@ -137,11 +137,14 @@ class CrossSellListWidget extends Component
         if ($product && $product->standalone_purchase == 1 && $cartItems->isNotEmpty()) {
             $onlySame = collect($skusInCart)->every(fn($s) => $s === $variant->sku);
             if (!$onlySame) {
-                session()->flash('error', 'This standalone item cannot be purchased with other items. Please empty your cart first.');
+                $this->dispatch('show-cart-error', message: 'This standalone item cannot be purchased with other items. Please empty your cart first.');
                 return;
             }
         }
 
+        // IMPORTANT: must also filter by item_name (which encodes the SKU) so we only
+        // match THIS product's cart row — not any other simple product whose item_attributes
+        // is also an empty string ''.
         $cartItem = ShoppingCartLog::where(function ($q) use ($sessionId, $userId) {
             if ($userId > 0) {
                 $q->where('user_id', $userId);
@@ -149,12 +152,13 @@ class CrossSellListWidget extends Component
                 $q->where('cart_log_session', $sessionId)->where('user_id', 0);
             }
         })
+            ->where('item_name', 'like', '%(' . $variant->sku . ')')
             ->where('item_attributes', $variant->attributes)
             ->where('order_id', 0)
             ->first();
 
         if ($cartItem && $product && $product->max_qty == 1) {
-            session()->flash('error', 'You can only purchase a maximum of 1 unit of this item per order.');
+            $this->dispatch('show-cart-error', message: 'You can only purchase a maximum of 1 unit of this item per order.');
             if ($product->checkout_redirect == 1 || $product->standalone_purchase == 1) {
                 return redirect()->route('shop.checkout');
             }
@@ -198,6 +202,7 @@ class CrossSellListWidget extends Component
     {
         if ($this->productId > 0) {
             $query = ProductCrossSell::with([
+                'crossSellProduct' => fn ($q) => $q->withCurrentTranslations(),
                 'crossSellProduct.variants.inventory',
                 'crossSellProduct.variants.images',
             ])

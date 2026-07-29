@@ -38,7 +38,22 @@ class CrossSellListPlugin implements DisplayPlugin
 
             $instanceId = 'cs_' . substr(md5('cross-sell' . $productId . $display . microtime()), 0, 8);
 
-            return \Illuminate\Support\Facades\Blade::render(
+            $defaultCss = $plugin->getSetting('default_css', '');
+            $customCss  = $params['custom_css'] ?? $settings['custom_css'] ?? '';
+
+            $cssHtml = '';
+            if (!empty($defaultCss) || !empty($customCss)) {
+                $cssHtml = "<style>\n";
+                if (!empty($defaultCss)) {
+                    $cssHtml .= \App\Services\CssMinifierService::minify($defaultCss) . "\n";
+                }
+                if (!empty($customCss)) {
+                    $cssHtml .= \App\Services\CssMinifierService::minify($customCss) . "\n";
+                }
+                $cssHtml .= "</style>";
+            }
+
+            return $cssHtml . \Illuminate\Support\Facades\Blade::render(
                 "@livewire('cross-sell-list-widget', [
                     'productId'  => {$productId},
                     'display'    => '{$display}',

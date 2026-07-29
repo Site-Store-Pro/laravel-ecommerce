@@ -34,12 +34,14 @@ class FeaturedItemsPlugin implements DisplayPlugin
             $autoplay = strtolower($params['autoplay']  ?? $settings['autoplay'] ?? 'on');
             $slides   = max(1, (int) ($params['slides'] ?? $settings['slides_visible'] ?? 4));
             $speed    = max(500, (int) ($params['speed'] ?? $settings['autoplay_speed'] ?? 4000));
+            $showBadge = strtolower($params['badge']    ?? $settings['show_badge'] ?? 'on') === 'on' ? 'on' : 'off';
 
             // Clamp cols to valid range
             $cols = max(2, min(6, $cols));
 
             // --- Query featured products ---
             $query = Product::with(['variants.inventory', 'variants.images'])
+                ->withCurrentTranslations()
                 ->where('featured_item', 1);
 
             // Only include products with at least one variant
@@ -60,12 +62,24 @@ class FeaturedItemsPlugin implements DisplayPlugin
             }
 
             // Unique ID for this render (supports multiple on same page)
-            $instanceId = 'fi_' . substr(md5($display . $max . microtime()), 0, 8);
+            $instanceId = 'fi_' . substr(md5(uniqid('fi', true)), 0, 8);
 
-            // --- Render via Livewire component so wire:click / modal work on CMS pages ---
-            // Blade::render() compiles @livewire(...) tags, which causes the
-            // FeaturedItemsWidget Livewire component to be mounted with all params.
-            return \Illuminate\Support\Facades\Blade::render(
+            $defaultCss = $plugin->getSetting('default_css', '');
+            $customCss  = $params['custom_css'] ?? $settings['custom_css'] ?? '';
+
+            $cssHtml = '';
+            if (!empty($defaultCss) || !empty($customCss)) {
+                $cssHtml = "<style>\n";
+                if (!empty($defaultCss)) {
+                    $cssHtml .= \App\Services\CssMinifierService::minify($defaultCss) . "\n";
+                }
+                if (!empty($customCss)) {
+                    $cssHtml .= \App\Services\CssMinifierService::minify($customCss) . "\n";
+                }
+                $cssHtml .= "</style>";
+            }
+
+            return $cssHtml . \Illuminate\Support\Facades\Blade::render(
                 "@livewire('featured-items-widget', [
                     'display'    => '{$display}',
                     'max'        => {$max},
@@ -77,6 +91,7 @@ class FeaturedItemsPlugin implements DisplayPlugin
                     'slides'     => {$slides},
                     'speed'      => {$speed},
                     'instanceId' => '{$instanceId}',
+                    'showBadge'  => '{$showBadge}',
                 ])"
             );
         } catch (\Throwable $e) {

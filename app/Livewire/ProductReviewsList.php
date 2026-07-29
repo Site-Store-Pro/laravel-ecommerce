@@ -38,6 +38,12 @@ class ProductReviewsList extends Component
 
     public function submitReview(\App\Services\RecaptchaService $recaptcha): void
     {
+        // Limit to one review per session
+        if (session()->has('submitted_review_' . $this->productId)) {
+            $this->addError('name', 'You have already submitted a review for this product.');
+            return;
+        }
+
         // reCAPTCHA v3 verification
         if (! $recaptcha->verify($this->recaptchaToken, 'product_review')) {
             $this->addError('name', 'Security check failed. Please refresh the page and try again.');
@@ -54,6 +60,8 @@ class ProductReviewsList extends Component
             'comments' => strip_tags(trim($this->comments)),
             'approved' => false,
         ]);
+
+        session()->put('submitted_review_' . $this->productId, true);
 
         $this->reset(['name', 'location', 'rating', 'comments', 'recaptchaToken']);
         $this->dispatch('toast', message: 'Your review has been submitted and is awaiting approval.', type: 'success');

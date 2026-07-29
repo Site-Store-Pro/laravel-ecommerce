@@ -22,6 +22,7 @@ class AdminEcommerceBrands extends Component
     public string $slug = '';
     public string $description = '';
     public int $sort_order = 0;
+    public bool $is_visible_in_menu = true;
     public string $brand_icon = '';
     public string $brand_url = '';
 
@@ -85,6 +86,7 @@ class AdminEcommerceBrands extends Component
         $this->slug = '';
         $this->description = '';
         $this->sort_order = 0;
+        $this->is_visible_in_menu = true;
         $this->brand_icon = '';
         $this->brand_url = '';
         $this->logoFile = null;
@@ -113,6 +115,7 @@ class AdminEcommerceBrands extends Component
         $this->slug = $brand->slug;
         $this->description = $brand->description ?? '';
         $this->sort_order = (int) $brand->sort_order;
+        $this->is_visible_in_menu = (bool) $brand->is_visible_in_menu;
         $this->brand_icon = $brand->brand_icon ?? '';
         $this->brand_url = $brand->brand_url ?? '';
         $this->brand_logo_s3 = (int) $brand->brand_logo_s3;
@@ -127,6 +130,7 @@ class AdminEcommerceBrands extends Component
             'slug' => 'required|string|max:255|unique:product_brands,slug,' . ($this->brandId ?? 'NULL') . ',id',
             'description' => 'nullable|string',
             'sort_order' => 'required|integer',
+            'is_visible_in_menu' => 'required|boolean',
             'brand_url' => 'nullable|url|max:255',
             'logoFile' => 'nullable|image|max:2048',
             'brand_logo_s3' => 'required|integer',
@@ -153,6 +157,7 @@ class AdminEcommerceBrands extends Component
                 'slug' => $this->slug,
                 'description' => $this->description ?: null,
                 'sort_order' => $this->sort_order,
+                'is_visible_in_menu' => $this->is_visible_in_menu,
                 'brand_icon' => $brand_icon_path,
                 'brand_url' => $this->brand_url ?: null,
                 'brand_logo_s3' => $this->brand_logo_s3,
@@ -164,6 +169,7 @@ class AdminEcommerceBrands extends Component
                 'slug' => $this->slug,
                 'description' => $this->description ?: null,
                 'sort_order' => $this->sort_order,
+                'is_visible_in_menu' => $this->is_visible_in_menu,
                 'brand_icon' => $brand_icon_path,
                 'brand_url' => $this->brand_url ?: null,
                 'brand_logo_s3' => $this->brand_logo_s3,

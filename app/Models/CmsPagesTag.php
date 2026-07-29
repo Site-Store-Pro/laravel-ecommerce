@@ -3,10 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasTranslations;
 
 class CmsPagesTag extends Model
 {
+    use HasTranslations;
+
     protected $table = 'cms_pages_tags';
+
+    protected array $translatable = ['name'];
+
+    protected function translationForeignKey(): string
+    {
+        return 'cms_pages_tag_id';
+    }
 
     protected $fillable = ['name', 'slug'];
 

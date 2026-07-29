@@ -163,17 +163,19 @@ class ShortcodeProcessor
     }
 
     /**
-     * Process [download:N] and [download:N label="Custom Label"] shortcodes.
+     * Process [download:UUID] and [download:UUID label="Custom Label"] shortcodes.
+     * Also accepts legacy numeric IDs for backward compatibility (looks up by id).
      */
     protected function processDownloads(string $content): string
     {
-        $pattern = '/\[download:(\d+)([^\]]*)\]/i';
+        // Matches both UUID format and legacy numeric IDs
+        $pattern = '/\[download:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d+)([^\]]*)\]/i';
 
         return preg_replace_callback($pattern, function (array $matches) {
-            $id     = (int) $matches[1];
+            $token  = trim($matches[1]);
             $params = $this->parseParams(trim($matches[2] ?? ''));
 
-            return $this->renderDownload($id, $params);
+            return $this->renderDownload($token, $params);
         }, $content);
     }
 
@@ -184,7 +186,7 @@ class ShortcodeProcessor
     private static bool $videoJsLoaded = false;
 
     /**
-     * Render a single [download:N] shortcode to HTML.
+     * Render a single [download:UUID] shortcode to HTML.
      *
      * Rendering strategy based on file type (when force_download is false):
      *   - Image (png/jpg/gif/webp/etc.) → <img> tag inline
@@ -192,21 +194,27 @@ class ShortcodeProcessor
      *   - Audio (mp3)                   → Video.js <audio> player
      *   - Everything else               → <a> download link with optional positioned file-type icon
      */
-    protected function renderDownload(int $id, array $params): string
+    protected function renderDownload(string $token, array $params): string
     {
         try {
-            $download = CmsDownload::find($id);
+            // Support both UUID and legacy numeric id
+            $download = is_numeric($token)
+                ? CmsDownload::find((int) $token)
+                : CmsDownload::where('uuid', $token)->first();
 
             if (!$download || !$download->is_active || $download->isExpired()) {
-                return '<!-- [download-inactive: ' . $id . '] -->';
+                return '<!-- [download-inactive: ' . e($token) . '] -->';
             }
+
+            // $id is used for CSS class names and style tag IDs throughout this method
+            $id = $download->id;
 
             $ext        = $download->fileExtension() ?? '';
             $label      = $download->resolvedLinkLabel($params['label'] ?? '');
-            $href       = url('/cms-download/' . $id);
+            $href       = url('/cms-download/' . $download->uuid);
             $target     = $download->open_in_new_tab ? ' target="_blank" rel="noopener noreferrer"' : '';
             $poster     = $download->posterImageUrl() ?? '';
-            $randomId   = 'cms-media-' . $id . '-' . mt_rand(1000, 99999);
+            $randomId   = 'cms-media-' . $download->id . '-' . mt_rand(1000, 99999);
             $packClass  = $this->resolveIconPackClass(); // e.g. 'fiv-viv'
 
             // Resolve actual file URL for inline image/media players (bypasses download controller)
@@ -346,8 +354,8 @@ class ShortcodeProcessor
             return $output;
 
         } catch (\Throwable $e) {
-            \Log::error("[ShortcodeProcessor] Download #{$id} render error: " . $e->getMessage());
-            return '<!-- [download-error: ' . $id . '] -->';
+            \Log::error("[ShortcodeProcessor] Download '{$token}' render error: " . $e->getMessage());
+            return '<!-- [download-error: ' . e($token) . '] -->';
         }
     }
 

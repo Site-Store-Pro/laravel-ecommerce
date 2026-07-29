@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class CmsPage extends Model
 {
     use HasFactory;
+    use HasTranslations;
 
     protected $table = 'cms_pages';
 
@@ -29,6 +31,7 @@ class CmsPage extends Model
         'header_image',
         'background_image',
         'is_active',
+        'exclude_from_search',
         'layout_type',
         'left_col',
         'right_col',
@@ -58,12 +61,27 @@ class CmsPage extends Model
         'page_title_css',
         'include_slideshow',
         'min_header_height',
+        'cms_search_index',
+        'cms_search_index_locked',
+    ];
+
+    /** Fields automatically translated when translations relation is loaded. */
+    protected array $translatable = [
+        'title',
+        'content',
+        'meta_title',
+        'meta_description',
+        'alternate_page_title',
+        'left_col',
+        'right_col',
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
         'requires_code' => 'boolean',
         'is_active' => 'boolean',
+        'exclude_from_search' => 'boolean',
+        'cms_search_index_locked' => 'boolean',
         'layout_type' => 'integer',
         'show_author' => 'boolean',
         'show_title' => 'boolean',
@@ -75,6 +93,82 @@ class CmsPage extends Model
         'featured_image_s3' => 'integer',
         'media_image_s3' => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (CmsPage $page) {
+            $page->rebuildSearchIndex();
+        });
+    }
+
+    public static function stripShortcodesAndHtml(?string $text): string
+    {
+        if (empty($text)) {
+            return '';
+        }
+
+        // Strip bracketed shortcodes e.g. [code-embed:12], [plugin:brands-2026], [plugin:live-search-2026]
+        $text = preg_replace('/\[[^\]]+\]/', ' ', $text);
+
+        // Strip HTML tags
+        $text = strip_tags($text);
+
+        // Normalize whitespace
+        return trim(preg_replace('/\s+/', ' ', $text));
+    }
+
+    public function rebuildSearchIndex(bool $force = false): string
+    {
+        if ($this->cms_search_index_locked && !$force) {
+            return (string) $this->cms_search_index;
+        }
+
+        $parts = [];
+
+        if (!empty($this->title)) {
+            $parts[] = $this->title;
+        }
+        if (!empty($this->slug)) {
+            $parts[] = str_replace(['-', '_'], ' ', $this->slug);
+        }
+        if (!empty($this->meta_title)) {
+            $parts[] = $this->meta_title;
+        }
+        if (!empty($this->meta_description)) {
+            $cleaned = static::stripShortcodesAndHtml($this->meta_description);
+            if ($cleaned !== '') $parts[] = $cleaned;
+        }
+        if (!empty($this->content)) {
+            $cleaned = static::stripShortcodesAndHtml($this->content);
+            if ($cleaned !== '') $parts[] = $cleaned;
+        }
+        if (!empty($this->left_col)) {
+            $cleaned = static::stripShortcodesAndHtml($this->left_col);
+            if ($cleaned !== '') $parts[] = $cleaned;
+        }
+        if (!empty($this->right_col)) {
+            $cleaned = static::stripShortcodesAndHtml($this->right_col);
+            if ($cleaned !== '') $parts[] = $cleaned;
+        }
+        if ($this->relationLoaded('type') && $this->type) {
+            $parts[] = $this->type->name;
+        }
+        if ($this->relationLoaded('categories') && $this->categories) {
+            foreach ($this->categories as $cat) {
+                $parts[] = $cat->name;
+            }
+        }
+        if ($this->relationLoaded('tags') && $this->tags) {
+            foreach ($this->tags as $tag) {
+                $parts[] = $tag->name;
+            }
+        }
+
+        $indexContent = implode(' ', array_filter(array_map('trim', $parts)));
+        $this->cms_search_index = $indexContent;
+
+        return $indexContent;
+    }
 
     public function getHeaderImageStorageDisk()
     {

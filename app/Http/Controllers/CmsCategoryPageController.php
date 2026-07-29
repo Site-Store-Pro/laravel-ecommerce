@@ -12,6 +12,7 @@ class CmsCategoryPageController extends Controller
         $category = CmsPagesCategory::where('slug', $slug)->firstOrFail();
 
         $pagesQuery = $category->pages()
+            ->withCurrentTranslations()
             ->where('is_active', 1)
             ->where(function ($q) {
                 $q->whereNull('expires_at')

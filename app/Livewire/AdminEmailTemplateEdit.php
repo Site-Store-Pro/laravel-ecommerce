@@ -44,6 +44,11 @@ class AdminEmailTemplateEdit extends Component
     public bool $showPreviewModal = false;
     public string $previewHtml = '';
 
+    // Translation panel properties
+    public ?int $editingLanguageId = null;  // null = default language (English)
+    public array $translationData = [];     // [language_id => [field => value, ...]]
+    public bool $isTranslating = false;     // AI translation in progress
+
     protected function rules(): array
     {
         return [
@@ -79,7 +84,8 @@ class AdminEmailTemplateEdit extends Component
 
         if ($id) {
             $this->templateId = $id;
-            $this->template = EmailTemplate::findOrFail($id);
+            $this->template = EmailTemplate::with('translations')->findOrFail($id);
+            $this->editingLanguageId = null;
 
             // Fill form fields
             $this->email_type_id = $this->template->email_type_id;
@@ -143,6 +149,85 @@ class AdminEmailTemplateEdit extends Component
         }
 
         return redirect()->route('admin.email-templates.index', navigate: true);
+    }
+
+    public function setEditingLanguage(?int $languageId): void
+    {
+        $this->editingLanguageId = $languageId;
+
+        if ($languageId !== null && $this->template) {
+            $translation = $this->template->translations
+                ->firstWhere('language_id', $languageId);
+
+            $this->translationData[$languageId] = [
+                'subject'     => $translation?->subject ?? '',
+                'header_html' => $translation?->header_html ?? '',
+                'salutation'  => $translation?->salutation ?? '',
+                'greeting'    => $translation?->greeting ?? '',
+                'body'        => $translation?->body ?? '',
+                'sign_off'    => $translation?->sign_off ?? '',
+                'signature'   => $translation?->signature ?? '',
+                'disclaimer'  => $translation?->disclaimer ?? '',
+                'copyright'   => $translation?->copyright ?? '',
+                'footer_html' => $translation?->footer_html ?? '',
+            ];
+        }
+    }
+
+    public function saveTranslation(): void
+    {
+        $languageId = $this->editingLanguageId;
+        if (!$languageId || !$this->template) {
+            return;
+        }
+
+        $data = $this->translationData[$languageId] ?? [];
+
+        \App\Models\EmailTemplateTranslation::updateOrCreate(
+            [
+                'email_template_id' => $this->template->id,
+                'language_id'       => $languageId,
+            ],
+            array_merge($data, [
+                'email_template_id'  => $this->template->id,
+                'language_id'        => $languageId,
+                'translation_status' => 'reviewed',
+                'translated_at'      => now(),
+            ])
+        );
+
+        $this->template->load('translations');
+        $this->dispatch('toast', message: 'Translation saved.', type: 'success');
+    }
+
+    public function aiTranslateEmail(): void
+    {
+        $languageId = $this->editingLanguageId;
+        if (!$languageId || !$this->template) {
+            return;
+        }
+
+        $this->isTranslating = true;
+
+        try {
+            $language = \App\Models\Language::find($languageId);
+            if (!$language) {
+                $this->dispatch('toast', message: 'Language not found.', type: 'error');
+                return;
+            }
+
+            $service = app(\App\Services\TranslationService::class);
+            $service->translateRecord($this->template, $language);
+
+            $this->template->load('translations');
+            $this->setEditingLanguage($languageId);
+
+            $this->dispatch('toast', message: 'AI translation completed for ' . $language->name . '.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
+        } finally {
+            $this->isTranslating = false;
+        }
     }
 
     public function generatePreview(): void

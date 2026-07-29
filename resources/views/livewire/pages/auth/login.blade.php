@@ -28,6 +28,13 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
+        // Guest users are auto-logged in by LoginForm and a redirect flash key is set.
+        // Send them to set-password rather than the dashboard.
+        if (Session::has('guest_redirect')) {
+            $this->redirect(Session::pull('guest_redirect'), navigate: false);
+            return;
+        }
+
         $this->redirectIntended(default: route('dashboard'), navigate: true);
     }
 }; ?>
@@ -35,8 +42,8 @@ new #[Layout('layouts.guest')] class extends Component
 <div>
     <!-- Page heading -->
     <div class="mb-7">
-        <h1 class="text-xl font-bold text-slate-900">Welcome back</h1>
-        <p class="text-sm text-slate-500 mt-1">Sign in to your account to continue</p>
+        <h1 class="text-xl font-bold text-slate-900">@label('auth.login_heading', 'Welcome back')</h1>
+        <p class="text-sm text-slate-500 mt-1">@label('auth.login_message', 'Sign in to your account to continue')</p>
     </div>
 
     <!-- Session Status -->
@@ -66,7 +73,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         <!-- Email Address -->
         <div>
-            <label for="email" class="auth-label">Email Address</label>
+            <label for="email" class="auth-label">@label('auth.email', 'Email Address')</label>
 
             <input wire:model="form.email"
                    id="email"
@@ -75,7 +82,7 @@ new #[Layout('layouts.guest')] class extends Component
                    required
                    autofocus
                    autocomplete="username"
-                   placeholder="you@example.com"
+                   placeholder="@label('auth.email_placeholder', 'you@example.com')"
                    class="auth-input block w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
 
              @error('form.email')
@@ -89,11 +96,11 @@ new #[Layout('layouts.guest')] class extends Component
         <!-- Password -->
         <div>
             <div class="flex items-center justify-between mb-1">
-                <label for="password" class="auth-label" style="margin-bottom:0;">Password</label>
+                <label for="password" class="auth-label" style="margin-bottom:0;">@label('auth.password', 'Password')</label>
 
                 @if (Route::has('password.request'))
                     <a href="{{ route('password.request') }}" class="auth-link text-xs">
-                        Forgot password?
+                        @label('auth.forgot_password', 'Forgot password?')
                     </a>
                 @endif
             </div>
@@ -124,20 +131,20 @@ new #[Layout('layouts.guest')] class extends Component
                    class="checkbox-custom rounded">
 
             <label for="remember" class="text-sm text-slate-500 cursor-pointer select-none">
-                Keep me signed in
+                @label('auth.remember_me', 'Keep me signed in')
             </label>
         </div>
 
         <!-- Submit -->
         <button type="submit" class="auth-btn w-full mt-2">
-            <span wire:loading.remove wire:target="login">Sign In</span>
+            <span wire:loading.remove wire:target="login">@label('auth.sign_in', 'Sign In')</span>
 
             <span wire:loading wire:target="login" class="flex items-center justify-center gap-2">
                 <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                Signing in…
+                @label('auth.signing_in', 'Signing in…')
             </span>
         </button>
     </form>
@@ -152,7 +159,7 @@ new #[Layout('layouts.guest')] class extends Component
 
 @if($cols > 0)
     <!-- Divider -->
-    <div class="auth-divider my-6" style="padding: 15px 0;">or continue with</div>
+    <div class="auth-divider my-6" style="padding: 15px 0;">@label('auth.or_continue_with', 'or continue with')</div>
 
     <!-- Social Buttons -->
     <div class="grid {{ $cols === 3 ? 'grid-cols-3' : ($cols === 2 ? 'grid-cols-2' : 'grid-cols-1') }} gap-3">
@@ -187,7 +194,7 @@ new #[Layout('layouts.guest')] class extends Component
 @endif
     <!-- Register link -->
     <p class="auth-footer">
-        Don't have an account?
-        <a href="{{ route('register') }}" class="auth-link font-medium ml-1">Create one free</a>
+        @label('auth.no_account', 'Don\'t have an account?')
+        <a href="{{ route('register') }}" class="auth-link font-medium ml-1">@label('auth.create_one', 'Create one free')</a>
     </p>
 </div>

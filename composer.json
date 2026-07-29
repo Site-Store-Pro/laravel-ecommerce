@@ -16,6 +16,7 @@
         "openai-php/client": "^0.20.0",
         "paddlehq/paddle-php-sdk": "*",
         "php-http/guzzle7-adapter": "^1.1",
+        "phpoffice/phpspreadsheet": "^5.9",
         "staudenmeir/laravel-adjacency-list": "^1.26",
         "stripe/stripe-php": "*",
         "zbateson/mail-mime-parser": "^4.0"

@@ -5,6 +5,10 @@
         </span>
         <input wire:model.live.debounce.300ms="query" id="kb-search" type="search"
                class="block w-full ps-11 pe-4 {{ $isLanding ? 'py-3.5 border-slate-200/80 bg-white text-slate-800' : 'py-2 border-white/10 bg-white/5 text-slate-100 placeholder-slate-400 focus:bg-white/10 focus:border-indigo-500' }} rounded-2xl border focus:ring-indigo-500 text-sm shadow-sm transition-colors"
-               placeholder="{{ $isLanding ? 'Type keywords (e.g. password, billing, attachment)...' : 'Search knowledge base...' }}" />
+               @if($isLanding)
+               placeholder="@label('kb.search_placeholder', 'Type keywords (e.g. password, billing, attachment)...')"
+               @else
+               placeholder="Search knowledge base..."
+               @endif />
     </form>
 </div>

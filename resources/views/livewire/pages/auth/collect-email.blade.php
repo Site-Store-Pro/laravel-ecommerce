@@ -54,20 +54,20 @@ new #[Layout('layouts.guest')] class extends Component
 <div>
     <!-- Page heading -->
     <div class="mb-7">
-        <h1 class="text-xl font-bold text-white">Provide your email address</h1>
-        <p class="text-sm text-slate-400 mt-1">We couldn't retrieve an email from your provider. Please enter one to complete your registration.</p>
+        <h1 class="text-xl font-bold text-white">@label('auth.collect_email_heading', 'Provide your email address')</h1>
+        <p class="text-sm text-slate-400 mt-1">@label('auth.collect_email_message', 'We couldn\'t retrieve an email from your provider. Please enter one to complete your registration.')</p>
     </div>
 
     <form wire:submit="submit">
         <!-- Email Address -->
         <div class="mb-5">
-            <label for="email" class="auth-label">Email Address</label>
+            <label for="email" class="auth-label">@label('auth.email', 'Email Address')</label>
             <input wire:model="email"
                    id="email"
                    type="email"
                    required
                    autofocus
-                   placeholder="you@example.com"
+                   placeholder="@label('auth.email_placeholder', 'you@example.com')"
                    class="auth-input block w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
 
              @error('email')
@@ -80,19 +80,19 @@ new #[Layout('layouts.guest')] class extends Component
 
         <!-- Submit -->
         <button type="submit" class="auth-btn w-full">
-            <span wire:loading.remove wire:target="submit">Complete Registration</span>
+            <span wire:loading.remove wire:target="submit">@label('auth.complete_registration', 'Complete Registration')</span>
             <span wire:loading wire:target="submit" class="flex items-center justify-center gap-2">
                 <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                Saving email…
+                @label('auth.saving_email', 'Saving email…')
             </span>
         </button>
     </form>
 
     <!-- Footer / Cancel -->
     <p class="auth-footer mt-6">
-        <a href="{{ route('login') }}" class="auth-link font-medium" wire:navigate>Cancel and go back</a>
+        <a href="{{ route('login') }}" class="auth-link font-medium" wire:navigate>@label('auth.cancel_go_back', 'Cancel and go back')</a>
     </p>
 </div>

@@ -22,6 +22,53 @@ class AdminKbCategories extends Component
     public ?int $editingId = null;
     public bool $creating = false;
 
+    // Translation state
+    public int $tlLangId = 0;
+    public array $tlBuffer = [];
+
+    public function selectTlLang(int $id): void
+    {
+        $this->tlLangId = $id;
+        $this->tlBuffer = [];
+    }
+
+    public function loadTlFor(int $id): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        $existing = \App\Models\KbCategoryTranslation::where('kb_category_id', $id)
+            ->where('language_id', $this->tlLangId)
+            ->first();
+        $this->tlBuffer = $existing ? $existing->only(['name', 'description']) : [];
+    }
+
+    public function saveTlCategory(int $id): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        \App\Models\KbCategoryTranslation::updateOrCreate(
+            ['kb_category_id' => $id, 'language_id' => $this->tlLangId],
+            array_merge($this->tlBuffer, ['translation_status' => 'reviewed', 'translated_at' => now()])
+        );
+        $this->dispatch('toast', message: 'Translation saved.', type: 'success');
+    }
+
+    public function aiTlCategory(int $id): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        $record = KbCategory::findOrFail($id);
+        $lang = \App\Models\Language::findOrFail($this->tlLangId);
+        try {
+            $svc = app(\App\Services\TranslationService::class);
+            foreach (['name', 'description'] as $field) {
+                if (!empty($record->$field)) {
+                    $this->tlBuffer[$field] = $svc->translateText($record->$field, $lang->name, 'kb category translation');
+                }
+            }
+            $this->dispatch('toast', message: 'AI translation ready — review and save.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
+        }
+    }
+
     #[Validate]
     public string $name = '';
 
@@ -93,6 +140,7 @@ class AdminKbCategories extends Component
         $this->description = $category->description ?? '';
         $this->sort_order  = $category->sort_order;
         $this->creating    = true;
+        $this->loadTlFor($id);
     }
 
     public function update(): void
@@ -128,6 +176,8 @@ class AdminKbCategories extends Component
             ->orderBy('name')
             ->paginate(2);
 
-        return view('livewire.admin-kb-categories', compact('categories'));
+        $activeLanguages = \App\Models\Language::active()->where('is_default', false)->get();
+
+        return view('livewire.admin-kb-categories', compact('categories', 'activeLanguages'));
     }
 }

@@ -24,6 +24,50 @@ class AdminCmsCategories extends Component
         'slug' => 'required|string|max:255',
     ];
 
+    public int $tlLangId = 0;
+    public array $tlBuffer = [];
+
+    public function selectTlLang(int $id): void
+    {
+        $this->tlLangId = $id;
+        $this->tlBuffer = [];
+    }
+
+    public function loadTlFor(int $id): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        $existing = \App\Models\CmsPagesCategoryTranslation::where('cms_pages_category_id', $id)
+            ->where('language_id', $this->tlLangId)
+            ->first();
+        $this->tlBuffer = $existing ? $existing->only(['name']) : [];
+    }
+
+    public function saveTlCategory(int $id): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        \App\Models\CmsPagesCategoryTranslation::updateOrCreate(
+            ['cms_pages_category_id' => $id, 'language_id' => $this->tlLangId],
+            array_merge($this->tlBuffer, ['translation_status' => 'reviewed', 'translated_at' => now()])
+        );
+        $this->dispatch('toast', message: 'Translation saved.', type: 'success');
+    }
+
+    public function aiTlCategory(int $id): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        $record = CmsPagesCategory::findOrFail($id);
+        $lang = \App\Models\Language::findOrFail($this->tlLangId);
+        try {
+            $svc = app(\App\Services\TranslationService::class);
+            if (!empty($record->name)) {
+                $this->tlBuffer['name'] = $svc->translateText($record->name, $lang->name, 'cms pages category translation');
+            }
+            $this->dispatch('toast', message: 'AI translation ready — review and save.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
+        }
+    }
+
     public function openForm(?int $id = null): void
     {
         $this->resetValidation();
@@ -32,6 +76,7 @@ class AdminCmsCategories extends Component
             $this->categoryId = $id;
             $this->name = $category->name;
             $this->slug = $category->slug;
+            $this->loadTlFor($id);
         } else {
             $this->categoryId = null;
             $this->name = '';
@@ -88,6 +133,7 @@ class AdminCmsCategories extends Component
     {
         abort_unless(auth()->check() && auth()->user()->isEcommerceAdmin(), 403);
         $categories = CmsPagesCategory::orderBy('name', 'asc')->paginate(25);
-        return view('livewire.admin-cms-categories', compact('categories'));
+        $activeLanguages = \App\Models\Language::active()->where('is_default', false)->get();
+        return view('livewire.admin-cms-categories', compact('categories', 'activeLanguages'));
     }
 }

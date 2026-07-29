@@ -34,17 +34,17 @@ class PluginSeeder extends Seeder
 
         $slideshowOptions = [
             [
-                'field_name'          => 'live_css',
-                'field_label'         => 'Live CSS',
+                'field_name'          => 'custom_css',
+                'field_label'         => 'Custom CSS Overrides',
                 'field_type'          => 'textarea',
                 'field_editor'        => 'css',
-                'field_required'      => 'yes',
+                'field_required'      => 'no',
                 'sort_order'          => 10,
-                'field_default_value' => $defaultCss,
+                'field_default_value' => '',
             ],
             [
                 'field_name'          => 'default_css',
-                'field_label'         => 'Default CSS (Reference — Do Not Edit)',
+                'field_label'         => 'Default Plugin CSS (Read-Only Reference)',
                 'field_type'          => 'text-only',
                 'field_required'      => 'no',
                 'sort_order'          => 20,
@@ -257,6 +257,8 @@ class PluginSeeder extends Seeder
             ]
         );
 
+        $featuredDefaultCss = "/* Featured Items 2026 Default Formatting */\n.featured-items-plugin-section {\n    width: 100%;\n}\n.featured-items-card {\n    transition: all 0.3s ease;\n}\n.featured-items-card:hover {\n    transform: translateY(-2px);\n}";
+
         $featuredOptions = [
             ['field_name' => 'display',       'field_label' => 'Default Display Mode',       'field_type' => 'select',   'field_selections' => 'grid,list,slider', 'sort_order' => 10,  'field_default_value' => 'grid',   'field_help' => 'Can be overridden per shortcode with display=grid|list|slider'],
             ['field_name' => 'max_items',      'field_label' => 'Max Items to Show',          'field_type' => 'input',    'field_data_format' => 'integer', 'sort_order' => 20,  'field_default_value' => '12',     'field_help' => 'Maximum number of featured products to display (1–100)'],
@@ -267,6 +269,8 @@ class PluginSeeder extends Seeder
             ['field_name' => 'show_nav',       'field_label' => 'Slider: Show Navigation Arrows', 'field_type' => 'select', 'field_selections' => 'on,off', 'sort_order' => 70, 'field_default_value' => 'on',    'field_help' => 'Show prev/next arrows in slider mode'],
             ['field_name' => 'autoplay',       'field_label' => 'Slider: Autoplay',           'field_type' => 'select',   'field_selections' => 'on,off', 'sort_order' => 80,  'field_default_value' => 'on',     'field_help' => 'Automatically advance slides in slider mode'],
             ['field_name' => 'autoplay_speed', 'field_label' => 'Slider: Autoplay Speed (ms)', 'field_type' => 'input',  'field_data_format' => 'integer', 'sort_order' => 90, 'field_default_value' => '4000',   'field_help' => 'Milliseconds between slide advances (e.g. 4000 = 4 seconds)'],
+            ['field_name' => 'custom_css',      'field_label' => 'Custom CSS Overrides',    'field_type' => 'textarea', 'field_editor' => 'css',                'sort_order' => 95, 'field_default_value' => ''],
+            ['field_name' => 'default_css',     'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 96, 'field_default_value' => $featuredDefaultCss],
         ];
 
         PluginOption::where('plugin_id', $featuredPlugin->id)->delete();
@@ -321,6 +325,8 @@ class PluginSeeder extends Seeder
             ]
         );
 
+        $crossSellDefaultCss = "/* Cross-Sell List 2026 Default Formatting */\n.cross-sell-plugin-section {\n    width: 100%;\n}\n.cross-sell-card {\n    transition: all 0.3s ease;\n}\n.cross-sell-card:hover {\n    transform: translateY(-2px);\n}";
+
         $crossSellOptions = [
             ['field_name' => 'product_id',     'field_label' => 'Default Product ID',            'field_type' => 'input',    'field_data_format' => 'integer', 'sort_order' => 5,   'field_default_value' => '',      'field_help' => 'Numeric product ID whose cross-sells to display. Can be overridden per shortcode with product_id=X'],
             ['field_name' => 'display',         'field_label' => 'Default Display Mode',          'field_type' => 'select',   'field_selections' => 'grid,list,slider', 'sort_order' => 10,  'field_default_value' => 'grid',  'field_help' => 'Can be overridden per shortcode with display=grid|list|slider'],
@@ -332,6 +338,8 @@ class PluginSeeder extends Seeder
             ['field_name' => 'show_nav',         'field_label' => 'Slider: Show Navigation Arrows', 'field_type' => 'select', 'field_selections' => 'on,off',   'sort_order' => 70,  'field_default_value' => 'on',    'field_help' => 'Show prev/next arrows in slider mode'],
             ['field_name' => 'autoplay',         'field_label' => 'Slider: Autoplay',              'field_type' => 'select',   'field_selections' => 'on,off',   'sort_order' => 80,  'field_default_value' => 'on',    'field_help' => 'Automatically advance slides in slider mode'],
             ['field_name' => 'autoplay_speed',   'field_label' => 'Slider: Autoplay Speed (ms)',   'field_type' => 'input',    'field_data_format' => 'integer', 'sort_order' => 90,  'field_default_value' => '4000',  'field_help' => 'Milliseconds between slide advances (e.g. 4000 = 4 seconds)'],
+            ['field_name' => 'custom_css',      'field_label' => 'Custom CSS Overrides',    'field_type' => 'textarea', 'field_editor' => 'css',                'sort_order' => 95, 'field_default_value' => ''],
+            ['field_name' => 'default_css',     'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 96, 'field_default_value' => $crossSellDefaultCss],
         ];
 
         PluginOption::where('plugin_id', $crossSellPlugin->id)->delete();
@@ -354,6 +362,304 @@ class PluginSeeder extends Seeder
                     'field_name'  => $opt['field_name'],
                     'field_value' => $opt['field_default_value'],
                 ]);
+            }
+        }
+
+        // ── Brands 2026 Plugin ────────────────────────────────────────────────
+        $brandsPlugin = Plugin::updateOrCreate(
+            ['filename' => 'brands_2026'],
+            [
+                'name'                => 'Brands Display (2026)',
+                'shortcode'           => 'brands-2026',
+                'type'                => 'display',
+                'author'              => 'Built-in',
+                'version'             => '1.0',
+                'install_type'        => 1,
+                'activation_required' => 'no',
+                'activation_status'   => 1,
+                'description'         => 'Displays brand logos and links to brand SEO slugs in Slider, Grid, or List mode. Shortcode: [plugin:brands-2026]',
+                'usage_instructions'  => '<p>Add <strong>[plugin:brands-2026]</strong> to any page. Options: <code>display=slider|grid|list</code>, <code>max=12</code>, <code>cols=4</code>, <code>header="Featured Brands"</code>.</p>',
+            ]
+        );
+
+        $brandsDefaultCss = "/* Brands 2026 Default Formatting */\n.brands-plugin-wrapper {\n    width: 100%;\n}\n.brands-plugin-card img {\n    filter: grayscale(100%);\n    transition: filter 0.3s ease;\n}\n.brands-plugin-card:hover img {\n    filter: grayscale(0%);\n}";
+
+        $brandsOptions = [
+            ['field_name' => 'display_type', 'field_label' => 'Display Mode', 'field_type' => 'select', 'field_selections' => 'slider,grid,list', 'sort_order' => 10, 'field_default_value' => 'slider'],
+            ['field_name' => 'max_brands',   'field_label' => 'Max Brands',   'field_type' => 'input',  'field_data_format' => 'integer', 'sort_order' => 20, 'field_default_value' => '12'],
+            ['field_name' => 'columns',      'field_label' => 'Columns',      'field_type' => 'select', 'field_selections' => '2,3,4,5,6',     'sort_order' => 30, 'field_default_value' => '4'],
+            ['field_name' => 'header_title', 'field_label' => 'Header Title', 'field_type' => 'input',  'field_data_format' => 'string',  'sort_order' => 40, 'field_default_value' => 'Featured Brands'],
+            ['field_name' => 'custom_css',   'field_label' => 'Custom CSS Overrides',    'field_type' => 'textarea', 'field_editor' => 'css', 'sort_order' => 50, 'field_default_value' => ''],
+            ['field_name' => 'default_css',  'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 55, 'field_default_value' => $brandsDefaultCss],
+        ];
+
+        PluginOption::where('plugin_id', $brandsPlugin->id)->delete();
+        foreach ($brandsOptions as $opt) {
+            PluginOption::create(array_merge(['plugin_id' => $brandsPlugin->id], $opt));
+            if (!PluginSetting::where('plugin_id', $brandsPlugin->id)->where('field_name', $opt['field_name'])->exists()) {
+                PluginSetting::create(['plugin_id' => $brandsPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
+            }
+        }
+
+        // ── Categories 2026 Plugin ───────────────────────────────────────────
+        $categoriesPlugin = Plugin::updateOrCreate(
+            ['filename' => 'categories_2026'],
+            [
+                'name'                => 'Top Level Categories Display (2026)',
+                'shortcode'           => 'categories-2026',
+                'type'                => 'display',
+                'author'              => 'Built-in',
+                'version'             => '1.0',
+                'install_type'        => 1,
+                'activation_required' => 'no',
+                'activation_status'   => 1,
+                'description'         => 'Displays TOP LEVEL categories only with image, name, and link to category SEO slug. Shortcode: [plugin:categories-2026]',
+                'usage_instructions'  => '<p>Add <strong>[plugin:categories-2026]</strong> to any page. Options: <code>display=grid|slider|list</code>, <code>max=12</code>, <code>cols=4</code>, <code>header="Top Categories"</code>.</p>',
+            ]
+        );
+
+        $categoriesDefaultCss = "/* Categories 2026 Default Formatting */\n.categories-plugin-wrapper {\n    width: 100%;\n}\n.categories-plugin-card {\n    transition: all 0.3s ease;\n}\n.categories-plugin-card:hover {\n    transform: translateY(-2px);\n}";
+
+        $categoriesOptions = [
+            ['field_name' => 'display_type',   'field_label' => 'Display Mode', 'field_type' => 'select', 'field_selections' => 'grid,slider,list', 'sort_order' => 10, 'field_default_value' => 'grid'],
+            ['field_name' => 'max_categories', 'field_label' => 'Max Categories', 'field_type' => 'input', 'field_data_format' => 'integer', 'sort_order' => 20, 'field_default_value' => '12'],
+            ['field_name' => 'columns',        'field_label' => 'Columns',      'field_type' => 'select', 'field_selections' => '2,3,4,5,6',     'sort_order' => 30, 'field_default_value' => '4'],
+            ['field_name' => 'header_title',   'field_label' => 'Header Title', 'field_type' => 'input',  'field_data_format' => 'string',  'sort_order' => 40, 'field_default_value' => 'Top Categories'],
+            ['field_name' => 'custom_css',      'field_label' => 'Custom CSS Overrides',    'field_type' => 'textarea', 'field_editor' => 'css', 'sort_order' => 50, 'field_default_value' => ''],
+            ['field_name' => 'default_css',     'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 55, 'field_default_value' => $categoriesDefaultCss],
+        ];
+
+        PluginOption::where('plugin_id', $categoriesPlugin->id)->delete();
+        foreach ($categoriesOptions as $opt) {
+            PluginOption::create(array_merge(['plugin_id' => $categoriesPlugin->id], $opt));
+            if (!PluginSetting::where('plugin_id', $categoriesPlugin->id)->where('field_name', $opt['field_name'])->exists()) {
+                PluginSetting::create(['plugin_id' => $categoriesPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
+            }
+        }
+
+        // ── Site News Flash 2026 Plugin ──────────────────────────────────────
+        $newsflashPlugin = Plugin::updateOrCreate(
+            ['filename' => 'newsflash_2026'],
+            [
+                'name'                => 'Site News Flash Banner (2026)',
+                'shortcode'           => 'newsflash-2026',
+                'type'                => 'display',
+                'author'              => 'Built-in',
+                'version'             => '1.0',
+                'install_type'        => 1,
+                'activation_required' => 'no',
+                'activation_status'   => 1,
+                'description'         => 'Renders an announcement news flash ticker banner. Shortcode: [plugin:newsflash-2026]',
+                'usage_instructions'  => '<p>Add <strong>[plugin:newsflash-2026]</strong> to any header or page section. Options: <code>message="Announcement Text"</code>, <code>bg_color="#4f46e5"</code>, <code>text_color="#ffffff"</code>, <code>dismissible=on</code>.</p>',
+            ]
+        );
+
+        $newsflashDefaultCss = "/* Newsflash 2026 Default Formatting */\n.site-news-flash-ticker {\n    width: 100%;\n    transition: all 0.2s ease;\n}\n.site-news-flash-ticker a {\n    text-decoration: underline;\n}";
+
+        $newsflashOptions = [
+            ['field_name' => 'news_message', 'field_label' => 'News Message Text', 'field_type' => 'input', 'field_data_format' => 'string', 'sort_order' => 10, 'field_default_value' => 'Welcome to our store! Enjoy free shipping on orders over $50.'],
+            ['field_name' => 'bg_color',     'field_label' => 'Background Color', 'field_type' => 'input', 'field_data_format' => 'string', 'sort_order' => 20, 'field_default_value' => 'transparent'],
+            ['field_name' => 'text_color',   'field_label' => 'Text Color',       'field_type' => 'input', 'field_data_format' => 'string', 'sort_order' => 30, 'field_default_value' => ''],
+            ['field_name' => 'dismissible',  'field_label' => 'Allow Dismiss',    'field_type' => 'select', 'field_selections' => 'on,off',     'sort_order' => 40, 'field_default_value' => 'off'],
+            ['field_name' => 'custom_css',   'field_label' => 'Custom CSS Overrides',    'field_type' => 'textarea', 'field_editor' => 'css', 'sort_order' => 50, 'field_default_value' => ''],
+            ['field_name' => 'default_css',  'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 55, 'field_default_value' => $newsflashDefaultCss],
+        ];
+
+        PluginOption::where('plugin_id', $newsflashPlugin->id)->delete();
+        foreach ($newsflashOptions as $opt) {
+            PluginOption::create(array_merge(['plugin_id' => $newsflashPlugin->id], $opt));
+            if (!PluginSetting::where('plugin_id', $newsflashPlugin->id)->where('field_name', $opt['field_name'])->exists()) {
+                PluginSetting::create(['plugin_id' => $newsflashPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
+            }
+        }
+
+        // ── Testimonials 2026 Plugin ──────────────────────────────────────────
+        $testimonialsPlugin = Plugin::updateOrCreate(
+            ['filename' => 'testimonials_2026'],
+            [
+                'name'                => 'Testimonials Display (2026)',
+                'shortcode'           => 'testimonials-2026',
+                'type'                => 'display',
+                'author'              => 'Built-in',
+                'version'             => '1.0',
+                'install_type'        => 1,
+                'activation_required' => 'no',
+                'activation_status'   => 1,
+                'description'         => 'Renders testimonials from the CMS testimonials table in Slider or List view with ratings and quote icons. Shortcode: [plugin:testimonials-2026]',
+                'usage_instructions'  => '<p>Add <strong>[plugin:testimonials-2026]</strong> to any page. Options: <code>display=slider|list</code>, <code>max=6</code>, <code>cols=3</code>, <code>quote_icon=quote-left|none</code>, <code>header="What Our Customers Say"</code>.</p>',
+            ]
+        );
+
+        $testimonialsDefaultCss = "/* Testimonials 2026 Default Formatting */\n.testimonials-plugin-wrapper {\n    width: 100%;\n}\n.testimonials-card {\n    transition: all 0.3s ease;\n}\n.testimonials-card:hover {\n    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);\n}";
+
+        $testimonialsOptions = [
+            ['field_name' => 'display_type', 'field_label' => 'Display Mode', 'field_type' => 'select', 'field_selections' => 'slider,list', 'sort_order' => 10, 'field_default_value' => 'slider'],
+            ['field_name' => 'max_items',    'field_label' => 'Max Testimonials', 'field_type' => 'input', 'field_data_format' => 'integer', 'sort_order' => 20, 'field_default_value' => '6'],
+            ['field_name' => 'columns',      'field_label' => 'Columns',      'field_type' => 'select', 'field_selections' => '1,2,3,4',        'sort_order' => 30, 'field_default_value' => '3'],
+            ['field_name' => 'quote_icon',    'field_label' => 'Quote Icon Style', 'field_type' => 'select', 'field_selections' => 'quote-left,none', 'sort_order' => 40, 'field_default_value' => 'quote-left'],
+            ['field_name' => 'header_title', 'field_label' => 'Header Title', 'field_type' => 'input',  'field_data_format' => 'string',  'sort_order' => 50, 'field_default_value' => 'What Our Customers Say'],
+            ['field_name' => 'custom_css',   'field_label' => 'Custom CSS Overrides',    'field_type' => 'textarea', 'field_editor' => 'css', 'sort_order' => 60, 'field_default_value' => ''],
+            ['field_name' => 'default_css',  'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 65, 'field_default_value' => $testimonialsDefaultCss],
+        ];
+
+        PluginOption::where('plugin_id', $testimonialsPlugin->id)->delete();
+        foreach ($testimonialsOptions as $opt) {
+            PluginOption::create(array_merge(['plugin_id' => $testimonialsPlugin->id], $opt));
+            if (!PluginSetting::where('plugin_id', $testimonialsPlugin->id)->where('field_name', $opt['field_name'])->exists()) {
+                PluginSetting::create(['plugin_id' => $testimonialsPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
+            }
+        }
+
+        // ── Social Icons 2026 Plugin ──────────────────────────────────────────
+        $socialPlugin = Plugin::updateOrCreate(
+            ['filename' => 'social_icons_2026'],
+            [
+                'name'                => 'Social Media Icons (2026)',
+                'shortcode'           => 'social-icons-2026',
+                'type'                => 'display',
+                'author'              => 'Built-in',
+                'version'             => '1.0',
+                'install_type'        => 1,
+                'activation_required' => 'no',
+                'activation_status'   => 1,
+                'description'         => 'Renders social media profile links with optional Font-Awesome 6 CDN integration. Shortcode: [plugin:social-icons-2026]',
+                'usage_instructions'  => '<p>Add <strong>[plugin:social-icons-2026]</strong> to any page or footer block. Options: <code>align=left|center|right</code>, <code>size=sm|md|lg</code>, <code>font_awesome=on|off</code>.</p>',
+            ]
+        );
+
+        $socialDefaultCss = "/* Social Media Icons 2026 Default Formatting */\n.social-icons-2026-wrapper {\n    display: flex;\n    align-items: center;\n    gap: 0.75rem;\n}\n.social-icon-link {\n    transition: color 0.2s ease, transform 0.2s ease;\n}\n.social-icon-link:hover {\n    transform: translateY(-1px);\n}";
+
+        $socialOptions = [
+            ['field_name' => 'icon_style',          'field_label' => 'Icon Style (Shape)',          'field_type' => 'select', 'field_selections' => 'non-circle,circle', 'sort_order' => 5,  'field_default_value' => 'non-circle'],
+            ['field_name' => 'alignment',           'field_label' => 'Alignment',                   'field_type' => 'select', 'field_selections' => 'left,center,right', 'sort_order' => 10, 'field_default_value' => 'left'],
+            ['field_name' => 'icon_size',           'field_label' => 'Icon Size',                   'field_type' => 'select', 'field_selections' => 'sm,md,lg',          'sort_order' => 20, 'field_default_value' => 'md'],
+            ['field_name' => 'use_font_awesome',    'field_label' => 'Font-Awesome CDN',           'field_type' => 'select', 'field_selections' => 'on,off',            'sort_order' => 30, 'field_default_value' => 'on'],
+            ['field_name' => 'header_icon_color',   'field_label' => 'Header Icon Color Override',  'field_type' => 'color',  'field_data_format' => 'string',       'sort_order' => 31, 'field_default_value' => '#ffffff'],
+            ['field_name' => 'footer_icon_color',   'field_label' => 'Footer Icon Color Override',  'field_type' => 'color',  'field_data_format' => 'string',       'sort_order' => 32, 'field_default_value' => ''],
+            ['field_name' => 'icon_color_override', 'field_label' => 'General Icon Color Override', 'field_type' => 'color',  'field_data_format' => 'string',       'sort_order' => 33, 'field_default_value' => ''],
+            ['field_name' => 'phone_number',        'field_label' => 'Phone Number / Link',         'field_type' => 'input',  'field_data_format' => 'string',       'sort_order' => 35, 'field_default_value' => ''],
+            ['field_name' => 'email_address',       'field_label' => 'Email Address / Link',        'field_type' => 'input',  'field_data_format' => 'string',       'sort_order' => 36, 'field_default_value' => ''],
+            ['field_name' => 'facebook_url',        'field_label' => 'Facebook URL',                 'field_type' => 'input',  'field_data_format' => 'string',       'sort_order' => 40, 'field_default_value' => 'https://facebook.com'],
+            ['field_name' => 'twitter_url',         'field_label' => 'X / Twitter URL',              'field_type' => 'input',  'field_data_format' => 'string',       'sort_order' => 50, 'field_default_value' => 'https://twitter.com'],
+            ['field_name' => 'instagram_url',       'field_label' => 'Instagram URL',                'field_type' => 'input',  'field_data_format' => 'string',       'sort_order' => 60, 'field_default_value' => 'https://instagram.com'],
+            ['field_name' => 'youtube_url',         'field_label' => 'YouTube URL',                  'field_type' => 'input',  'field_data_format' => 'string',       'sort_order' => 70, 'field_default_value' => 'https://youtube.com'],
+            ['field_name' => 'custom_css',          'field_label' => 'Custom CSS Overrides',        'field_type' => 'textarea', 'field_editor' => 'css',                'sort_order' => 80, 'field_default_value' => ''],
+            ['field_name' => 'default_css',         'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 85, 'field_default_value' => $socialDefaultCss],
+        ];
+
+        PluginOption::where('plugin_id', $socialPlugin->id)->delete();
+        foreach ($socialOptions as $opt) {
+            PluginOption::create(array_merge(['plugin_id' => $socialPlugin->id], $opt));
+            if (!PluginSetting::where('plugin_id', $socialPlugin->id)->where('field_name', $opt['field_name'])->exists()) {
+                PluginSetting::create(['plugin_id' => $socialPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
+            }
+        }
+
+        // ── Live Search 2026 Plugin ───────────────────────────────────────────
+        $searchPlugin = Plugin::updateOrCreate(
+            ['filename' => 'live_search_2026'],
+            [
+                'name'                => 'Live Search Display (2026)',
+                'shortcode'           => 'live-search-2026',
+                'type'                => 'display',
+                'author'              => 'Built-in',
+                'version'             => '1.0',
+                'install_type'        => 1,
+                'activation_required' => 'no',
+                'activation_status'   => 1,
+                'description'         => 'Multi-content live search input and results display for active Products, CMS Pages, KB Articles, and Testimonials. Shortcode: [plugin:live-search-2026]',
+                'usage_instructions'  => '<p>Add <strong>[plugin:live-search-2026]</strong> to render a search bar widget. To render search results on a page, use: <strong>[plugin:live-search-2026 mode=results]</strong>. Options: <code>placeholder="..."</code>, <code>button_label="..."</code>, <code>layout=list|grid</code>, <code>custom_css="..."</code>, <code>custom_js="..."</code>.</p>',
+            ]
+        );
+
+        $searchDefaultCss = "/* Live Search 2026 Default Formatting */
+.live-search-2026-wrapper {
+    position: relative;
+    width: 100%;
+}
+.live-search-form {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+.live-search-form input[type=\"text\"] {
+    width: 100%;
+    max-width: 250px;
+    padding: 0.75rem 1rem;
+    border: none;
+    outline: none;
+    font-size: 0.875rem;
+}
+.live-search-form button[type=\"submit\"] {
+    padding: 0.75rem 1.5rem;
+    background-color: #4f46e5;
+    color: #ffffff;
+    font-weight: 700;
+    border: none;
+    border-top-left-radius: 0px !important;
+    border-bottom-left-radius: 0px !important;
+    border-top-right-radius: 0.75rem;
+    border-bottom-right-radius: 0.75rem;
+    cursor: pointer;
+}
+.live-search-form button[type=\"submit\"]:hover {
+    background-color: #4338ca;
+}";
+
+        $searchOptions = [
+            ['field_name' => 'default_mode',   'field_label' => 'Default Mode',            'field_type' => 'select',   'field_selections' => 'input,results', 'sort_order' => 10, 'field_default_value' => 'input'],
+            ['field_name' => 'placeholder',    'field_label' => 'Input Placeholder Text',  'field_type' => 'input',    'field_data_format' => 'string',       'sort_order' => 20, 'field_default_value' => 'Search products, pages, articles...'],
+            ['field_name' => 'button_label',   'field_label' => 'Button Label',            'field_type' => 'input',    'field_data_format' => 'string',       'sort_order' => 30, 'field_default_value' => 'Search'],
+            ['field_name' => 'layout',         'field_label' => 'Results Layout Mode',     'field_type' => 'select',   'field_selections' => 'list,grid',     'sort_order' => 40, 'field_default_value' => 'list'],
+            ['field_name' => 'custom_css',      'field_label' => 'Custom CSS Overrides',    'field_type' => 'textarea', 'field_editor' => 'css',                'sort_order' => 50, 'field_default_value' => ''],
+            ['field_name' => 'default_css',     'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 55, 'field_default_value' => $searchDefaultCss],
+            ['field_name' => 'custom_js',       'field_label' => 'Custom JS Override Widget','field_type' => 'textarea', 'field_editor' => 'javascript',         'sort_order' => 60, 'field_default_value' => ''],
+        ];
+
+        PluginOption::where('plugin_id', $searchPlugin->id)->delete();
+        foreach ($searchOptions as $opt) {
+            PluginOption::create(array_merge(['plugin_id' => $searchPlugin->id], $opt));
+            if (!PluginSetting::where('plugin_id', $searchPlugin->id)->where('field_name', $opt['field_name'])->exists()) {
+                PluginSetting::create(['plugin_id' => $searchPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
+            }
+        }
+
+        // ── Events Calendar 2026 Plugin ──────────────────────────────────────
+        $eventsCalendarPlugin = Plugin::updateOrCreate(
+            ['filename' => 'events_calendar_2026'],
+            [
+                'name'                => 'Events Calendar Display (2026)',
+                'shortcode'           => 'events-calendar-2026',
+                'type'                => 'display',
+                'author'              => 'Built-in',
+                'version'             => '1.0',
+                'install_type'        => 1,
+                'activation_required' => 'no',
+                'activation_status'   => 1,
+                'description'         => 'Interactive events calendar displaying products marked as events based on start and stop dates. Shortcode: [plugin:events-calendar-2026]',
+                'usage_instructions'  => '<p>Add <strong>[plugin:events-calendar-2026]</strong> to any page. Options: <code>layout=month|list|grid</code>, <code>max=50</code>, <code>header="Upcoming Events"</code>, <code>category="slug"</code>.</p>',
+            ]
+        );
+
+        $eventsDefaultCss = "/* Events Calendar 2026 Formatting */\n.events-calendar-wrapper {\n    width: 100%;\n}";
+
+        $eventsOptions = [
+            ['field_name' => 'header_title',   'field_label' => 'Header Title',            'field_type' => 'input',    'field_data_format' => 'string',       'sort_order' => 10, 'field_default_value' => 'Upcoming Events Calendar'],
+            ['field_name' => 'default_layout',  'field_label' => 'Default Layout Mode',     'field_type' => 'select',   'field_selections' => 'month,list,grid','sort_order' => 20, 'field_default_value' => 'month'],
+            ['field_name' => 'max_events',     'field_label' => 'Max Events to Display',   'field_type' => 'input',    'field_data_format' => 'integer',      'sort_order' => 30, 'field_default_value' => '50'],
+            ['field_name' => 'custom_css',      'field_label' => 'Custom CSS Overrides',    'field_type' => 'textarea', 'field_editor' => 'css',                'sort_order' => 40, 'field_default_value' => ''],
+            ['field_name' => 'default_css',     'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 50, 'field_default_value' => $eventsDefaultCss],
+        ];
+
+        PluginOption::where('plugin_id', $eventsCalendarPlugin->id)->delete();
+        foreach ($eventsOptions as $opt) {
+            PluginOption::create(array_merge(['plugin_id' => $eventsCalendarPlugin->id], $opt));
+            if (!PluginSetting::where('plugin_id', $eventsCalendarPlugin->id)->where('field_name', $opt['field_name'])->exists()) {
+                PluginSetting::create(['plugin_id' => $eventsCalendarPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
             }
         }
     }

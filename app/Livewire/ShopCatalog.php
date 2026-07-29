@@ -20,6 +20,7 @@ class ShopCatalog extends Component
 {
     use WithPagination;
 
+    #[Url]
     public string $search = '';
 
     #[Url]
@@ -30,6 +31,28 @@ class ShopCatalog extends Component
 
     #[Url]
     public $perPage = 25;
+
+    #[Url]
+    public string $sort = 'price_asc';
+
+    // Advanced Search Filtering state
+    #[Url]
+    public array $selectedBrands = [];
+
+    #[Url]
+    public array $selectedCategories = [];
+
+    #[Url]
+    public ?float $minPriceFilter = null;
+
+    #[Url]
+    public ?float $maxPriceFilter = null;
+
+    #[Url]
+    public array $selectedAttributes = [];
+
+    public bool $slideoutOpen = false;
+    public ?string $catalogError = null;
 
     // 'grid' or 'list' — display preference, not URL-backed
     public string $viewMode = 'grid';
@@ -45,33 +68,153 @@ class ShopCatalog extends Component
         }
     }
 
+    public function sanitizeSort(): void
+    {
+        $allowed = ['price_asc', 'price_desc', 'title_asc', 'title_desc', 'rating_desc', 'rating_asc'];
+        if (!in_array($this->sort, $allowed, true)) {
+            $this->sort = 'price_asc';
+        }
+    }
+
     public function hydrate(): void
     {
         $this->sanitizePerPage();
+        $this->sanitizeSort();
+        $this->syncActivePreselection();
     }
 
     public function mount(?string $category_slug = null, ?string $brand_slug = null): void
     {
         $this->sanitizePerPage();
+        $this->sanitizeSort();
         if ($category_slug) {
             $this->category = $category_slug;
         }
         if ($brand_slug) {
             $this->brand = $brand_slug;
         }
+
+        $this->syncActivePreselection();
+
+        if (\App\Models\CmsSetting::isEnabled('disable_shop_landing')) {
+            $hasFilter = !empty($this->category) || !empty($this->brand) || !empty(trim(request()->query('search', '')));
+            if (!$hasFilter) {
+                $this->redirect('/', navigate: true);
+                return;
+            }
+        }
+    }
+
+    private function syncActivePreselection(): void
+    {
+        if ($this->category) {
+            $catModel = Category::where('slug', $this->category)->first();
+            if ($catModel && !in_array((string)$catModel->id, array_map('strval', $this->selectedCategories), true)) {
+                $this->selectedCategories[] = (string) $catModel->id;
+            }
+        }
+        if ($this->brand) {
+            $brandModel = Brand::where('slug', $this->brand)->first();
+            if ($brandModel && !in_array((string)$brandModel->id, array_map('strval', $this->selectedBrands), true)) {
+                $this->selectedBrands[] = (string) $brandModel->id;
+            }
+        }
+    }
+
+    public function updatedSort(): void { $this->resetPage(); }
+    public function updatedSelectedBrands(): void { $this->resetPage(); }
+    public function updatedSelectedCategories(): void { $this->resetPage(); }
+    public function updatedMinPriceFilter(): void { $this->resetPage(); }
+    public function updatedMaxPriceFilter(): void { $this->resetPage(); }
+    public function updatedSelectedAttributes(): void
+    {
+        if (is_array($this->selectedAttributes)) {
+            foreach ($this->selectedAttributes as $key => $val) {
+                if (is_bool($val)) {
+                    unset($this->selectedAttributes[$key]);
+                } elseif (is_array($val)) {
+                    $filtered = array_values(array_filter($val, function ($item) {
+                        return !is_bool($item) && is_string($item) && trim($item) !== '';
+                    }));
+                    if (empty($filtered)) {
+                        unset($this->selectedAttributes[$key]);
+                    } else {
+                        $this->selectedAttributes[$key] = array_values(array_unique($filtered));
+                    }
+                } elseif (is_string($val) && trim($val) !== '') {
+                    $this->selectedAttributes[$key] = [trim($val)];
+                } else {
+                    unset($this->selectedAttributes[$key]);
+                }
+            }
+        } else {
+            $this->selectedAttributes = [];
+        }
+        $this->resetPage();
+    }
+
+    public function getHasActiveFiltersProperty(): bool
+    {
+        $hasSelectedAttrs = false;
+        if (is_array($this->selectedAttributes)) {
+            foreach ($this->selectedAttributes as $vals) {
+                if (is_array($vals) && !empty($vals)) {
+                    $filtered = array_filter($vals, fn($v) => !is_bool($v) && is_string($v) && trim($v) !== '');
+                    if (!empty($filtered)) {
+                        $hasSelectedAttrs = true;
+                        break;
+                    }
+                } elseif (!is_bool($vals) && is_string($vals) && trim($vals) !== '') {
+                    $hasSelectedAttrs = true;
+                    break;
+                }
+            }
+        }
+
+        return !empty($this->category)
+            || !empty($this->brand)
+            || !empty(trim($this->search))
+            || !empty($this->selectedBrands)
+            || !empty($this->selectedCategories)
+            || $hasSelectedAttrs
+            || $this->minPriceFilter !== null
+            || $this->maxPriceFilter !== null;
+    }
+
+    public function resetAllAdvancedFilters(): mixed
+    {
+        $this->category = null;
+        $this->brand = null;
+        $this->search = '';
+        $this->selectedBrands = [];
+        $this->selectedCategories = [];
+        $this->selectedAttributes = [];
+        $this->minPriceFilter = null;
+        $this->maxPriceFilter = null;
+        $this->resetPage();
+
+        if (request()->routeIs('shop.category') || request()->routeIs('shop.brand')) {
+            return $this->redirectRoute('shop.index', navigate: true);
+        }
+
+        return null;
     }
 
     public function clearCategory(): mixed
     {
         $this->category = null;
         $this->resetPage();
-        // If category was locked into the URL path via the shop.category route,
-        // we must redirect away from that path. Preserve any active brand filter.
         if (request()->routeIs('shop.category')) {
             if ($this->brand) {
-                return redirect()->route('shop.brand', ['brand_slug' => $this->brand]);
+                return $this->redirectRoute('shop.brand', ['brand_slug' => $this->brand], navigate: true);
             }
-            return redirect()->route('shop.index');
+            if (\App\Models\CmsSetting::isEnabled('disable_shop_landing') && empty(trim($this->search))) {
+                return $this->redirect('/', navigate: true);
+            }
+            return $this->redirectRoute('shop.index', navigate: true);
+        }
+        if (\App\Models\CmsSetting::isEnabled('disable_shop_landing') && !$this->brand && empty(trim($this->search))) {
+            return $this->redirect('/', navigate: true);
         }
         return null;
     }
@@ -80,15 +223,82 @@ class ShopCatalog extends Component
     {
         $this->brand = null;
         $this->resetPage();
-        // If brand was locked into the URL path via the shop.brand route,
-        // we must redirect away from that path. Preserve any active category filter.
         if (request()->routeIs('shop.brand')) {
             if ($this->category) {
-                return redirect()->route('shop.category', $this->category);
+                return $this->redirectRoute('shop.category', ['category_slug' => $this->category], navigate: true);
             }
-            return redirect()->route('shop.index');
+            if (\App\Models\CmsSetting::isEnabled('disable_shop_landing') && empty(trim($this->search))) {
+                return $this->redirect('/', navigate: true);
+            }
+            return $this->redirectRoute('shop.index', navigate: true);
+        }
+        if (\App\Models\CmsSetting::isEnabled('disable_shop_landing') && !$this->category && empty(trim($this->search))) {
+            return $this->redirect('/', navigate: true);
         }
         return null;
+    }
+
+    public function clearSearch(): void
+    {
+        $this->search = '';
+        $this->resetPage();
+    }
+
+    public function clearPriceFilter(): void
+    {
+        $this->minPriceFilter = null;
+        $this->maxPriceFilter = null;
+        $this->resetPage();
+    }
+
+    public function removeSelectedBrand(int $id): void
+    {
+        $this->selectedBrands = array_values(array_filter(
+            $this->selectedBrands,
+            fn($bId) => (int)$bId !== $id
+        ));
+        if ($this->brand) {
+            $brandModel = Brand::where('slug', $this->brand)->first();
+            if ($brandModel && $brandModel->id === $id) {
+                $this->clearBrand();
+                return;
+            }
+        }
+        $this->resetPage();
+    }
+
+    public function removeSelectedCategory(int $id): void
+    {
+        $this->selectedCategories = array_values(array_filter(
+            $this->selectedCategories,
+            fn($cId) => (int)$cId !== $id
+        ));
+        if ($this->category) {
+            $catModel = Category::where('slug', $this->category)->first();
+            if ($catModel && $catModel->id === $id) {
+                $this->clearCategory();
+                return;
+            }
+        }
+        $this->resetPage();
+    }
+
+    public function removeSelectedAttribute(string $key, string $val): void
+    {
+        if (isset($this->selectedAttributes[$key])) {
+            if (is_array($this->selectedAttributes[$key])) {
+                $this->selectedAttributes[$key] = array_values(array_filter(
+                    $this->selectedAttributes[$key],
+                    fn($v) => (string)$v !== (string)$val
+                ));
+                if (empty($this->selectedAttributes[$key])) {
+                    unset($this->selectedAttributes[$key]);
+                }
+            } else {
+                unset($this->selectedAttributes[$key]);
+            }
+        }
+        $this->resetPage();
     }
 
     public function updatingPerPage(): void
@@ -136,22 +346,21 @@ class ShopCatalog extends Component
         $sessionId = $this->getCartSessionId();
         $userId = auth()->id() ?? 0;
 
-        // Check inventory
         if (!$variant->download_item && $variant->inventory) {
             $available = $variant->getStockForFulfillment(
                 auth()->user()?->shipping_countrycode,
                 auth()->user()?->shipping_state
             );
             if ($available <= 0) {
-                session()->flash('error', "Item is out of stock.");
+                $this->catalogError = "Item is out of stock.";
+                session()->flash('error', $this->catalogError);
+                $this->dispatch('show-catalog-error', message: $this->catalogError);
                 return;
             }
         }
 
-        // Fetch user type
         $userType = (auth()->check() && auth()->user()->isWholesale()) ? 2 : 1;
 
-        // Calculate price based on user type & sale status
         $price = $userType == 2 ? $variant->wholesale_price : $variant->public_price;
         $discountPrice = 0;
         if ($userType != 2 && $variant->on_sale && $variant->sale_price > 0) {
@@ -159,13 +368,11 @@ class ShopCatalog extends Component
             $price = $variant->sale_price;
         }
 
-        // Add variant_fee or wholesale_variant_fee if configured
         $variantFee = $userType == 2 ? $variant->wholesale_variant_fee : $variant->variant_fee;
         if ($variantFee > 0) {
             $price += $variantFee;
         }
 
-        // Fetch current active cart items
         $cartItems = ShoppingCartLog::where('order_id', 0)
             ->where(function($query) use ($sessionId, $userId) {
                 if ($userId > 0) {
@@ -183,7 +390,6 @@ class ShopCatalog extends Component
             }
         }
 
-        // A. Is there a standalone item already in the cart?
         if (!empty($skusInCart)) {
             $hasStandaloneInCart = \App\Models\ProductVariant::whereIn('sku', $skusInCart)
                 ->whereHas('product', function ($q) {
@@ -192,12 +398,13 @@ class ShopCatalog extends Component
                 ->exists();
 
             if ($hasStandaloneInCart) {
-                session()->flash('error', "Your cart contains a standalone item which cannot be purchased with other items.");
+                $this->catalogError = "Your cart contains a standalone item which cannot be purchased with other items.";
+                session()->flash('error', $this->catalogError);
+                $this->dispatch('show-catalog-error', message: $this->catalogError);
                 return;
             }
         }
 
-        // B. Is this item a standalone purchase, and the cart has OTHER items?
         if ($product && $product->standalone_purchase == 1 && $cartItems->isNotEmpty()) {
             $onlySameSku = true;
             foreach ($skusInCart as $skuInCart) {
@@ -207,12 +414,16 @@ class ShopCatalog extends Component
                 }
             }
             if (!$onlySameSku) {
-                session()->flash('error', "This standalone item cannot be purchased with other items. Please empty your cart first.");
+                $this->catalogError = "This standalone item cannot be purchased with other items. Please empty your cart first.";
+                session()->flash('error', $this->catalogError);
+                $this->dispatch('show-catalog-error', message: $this->catalogError);
                 return;
             }
         }
 
-        // Check if item is already in cart
+        // IMPORTANT: must also filter by item_name (which encodes the SKU) so we only
+        // match THIS product's cart row — not any other simple product whose item_attributes
+        // is also an empty string ''.
         $cartItem = ShoppingCartLog::where(function($query) use ($sessionId, $userId) {
             if ($userId > 0) {
                 $query->where('user_id', $userId);
@@ -221,20 +432,22 @@ class ShopCatalog extends Component
                       ->where('user_id', 0);
             }
         })
-        ->where('item_attributes', $variant->attributes) // match exactly by configuration
+        ->where('item_name', 'like', '%(' . $variant->sku . ')')
+        ->where('item_attributes', $variant->attributes)
         ->where('order_id', 0)
         ->first();
 
-        // C. If max_qty = 1, prevent adding it again if it exists
         if ($cartItem && $product && $product->max_qty == 1) {
-            session()->flash('error', "You can only purchase a maximum of 1 unit of this item per order.");
+            $this->catalogError = "You can only purchase a maximum of 1 unit of this item per order.";
+            session()->flash('error', $this->catalogError);
+            $this->dispatch('show-catalog-error', message: $this->catalogError);
             if ($product->checkout_redirect == 1 || $product->standalone_purchase == 1) {
                 return redirect()->route('shop.checkout');
             }
             return;
         }
 
-        $qtyToAdd = ($product && $product->max_qty == 1) ? 1 : 1;
+        $qtyToAdd = 1;
 
         if ($cartItem) {
             $cartItem->item_qty += $qtyToAdd;
@@ -259,12 +472,10 @@ class ShopCatalog extends Component
         $this->dispatch('cart-updated');
         session()->flash('status', 'Item successfully added to your cart!');
 
-        // checkout_redirect / standalone → go straight to checkout
         if ($product && ($product->checkout_redirect == 1 || $product->standalone_purchase == 1)) {
             return redirect()->route('shop.checkout');
         }
 
-        // Fire browser event — the global modal in public.blade.php will display it.
         $this->dispatch('show-cart-modal',
             itemName: $variant->product->title . ' (' . $variant->sku . ')',
             qty: 1,
@@ -274,6 +485,22 @@ class ShopCatalog extends Component
     public function render(): View
     {
         $this->sanitizePerPage();
+
+        if (\App\Models\CmsSetting::isEnabled('disable_shop_landing')) {
+            $hasFilter = !empty($this->category) || !empty($this->brand) || !empty(trim($this->search));
+            if (!$hasFilter) {
+                $this->redirect('/', navigate: true);
+            }
+        }
+
+        $userType = (auth()->check() && auth()->user()->isWholesale()) ? 2 : 1;
+        $priceCol = ($userType === 2) ? 'wholesale_price' : 'public_price';
+
+        // Calculate maximum catalog item price for range slider
+        $catalogMaxPrice = (float) (ProductVariant::max(DB::raw("CASE WHEN on_sale = 1 AND sale_price > 0 THEN sale_price ELSE {$priceCol} END")) ?? 500);
+        if ($catalogMaxPrice <= 0) {
+            $catalogMaxPrice = 500;
+        }
 
         // ── Base query (shared scope) ────────────────────────────────────────
         $baseQuery = Product::query()
@@ -307,36 +534,111 @@ class ShopCatalog extends Component
                             $q->where('sku', 'like', $searchTerm);
                         });
                 });
+            })
+            // Advanced Multi-Brand Filter (checkboxes)
+            ->when(!empty($this->selectedBrands), function ($query) {
+                $query->whereIn('brand_id', $this->selectedBrands);
+            })
+            // Advanced Multi-Category / Subcategory Filter (checkboxes)
+            ->when(!empty($this->selectedCategories), function ($query) {
+                $cats = Category::whereIn('id', $this->selectedCategories)->get();
+                $allCatIds = collect();
+                foreach ($cats as $cat) {
+                    $allCatIds = $allCatIds->merge($cat->descendantsAndSelf()->pluck('id'));
+                }
+                $allCatIds = $allCatIds->unique();
+                $query->whereHas('categories', function ($q) use ($allCatIds) {
+                    $q->whereIn('product_categories.id', $allCatIds);
+                });
+            })
+            // Price Range Slider Filter
+            ->when(($this->minPriceFilter !== null || $this->maxPriceFilter !== null), function ($query) use ($priceCol, $userType, $catalogMaxPrice) {
+                $minP = (float) ($this->minPriceFilter ?? 0);
+                $maxP = (float) ($this->maxPriceFilter ?? $catalogMaxPrice);
+                $query->whereHas('variants', function ($vQuery) use ($priceCol, $minP, $maxP, $userType) {
+                    if ($userType !== 2) {
+                        $vQuery->where(function ($sub) use ($priceCol, $minP, $maxP) {
+                            $sub->where(function ($s1) use ($minP, $maxP) {
+                                $s1->where('on_sale', 1)->where('sale_price', '>', 0)
+                                   ->whereBetween('sale_price', [$minP, $maxP]);
+                            })->orWhere(function ($s2) use ($priceCol, $minP, $maxP) {
+                                $s2->where(function ($s3) {
+                                    $s3->where('on_sale', 0)->orWhereNull('sale_price')->orWhere('sale_price', 0);
+                                })->whereBetween($priceCol, [$minP, $maxP]);
+                            });
+                        });
+                    } else {
+                        $vQuery->whereBetween($priceCol, [$minP, $maxP]);
+                    }
+                });
+            })
+            // Dynamic Variant Attributes JSON Filter
+            ->when(!empty($this->selectedAttributes), function ($query) {
+                foreach ($this->selectedAttributes as $attrKey => $attrVals) {
+                    if (is_bool($attrVals) || empty($attrVals)) continue;
+                    $attrVals = (array) $attrVals;
+                    $query->whereHas('variants', function ($vQuery) use ($attrKey, $attrVals) {
+                        $vQuery->where(function ($sub) use ($attrKey, $attrVals) {
+                            foreach ($attrVals as $val) {
+                                if (is_bool($val) || is_array($val)) continue;
+                                $val = trim((string) $val);
+                                if ($val === '') continue;
+                                $sub->orWhere('attributes', 'like', '%"' . $attrKey . '":"' . $val . '"%')
+                                    ->orWhere('attributes', 'like', '%' . $attrKey . ':' . $val . '%')
+                                    ->orWhere('attributes', 'like', '%' . $val . '%');
+                            }
+                        });
+                    });
+                }
             });
 
-        // ── Paginated product list ───────────────────────────────────────────
-        $products = (clone $baseQuery)
-            ->with(['variants.inventory', 'variants.images'])
-            ->latest()
-            ->paginate($this->perPage);
+        // ── Paginated product list with dynamic sorting ─────────────────────
+        $sortPriceSubquery = '(SELECT MIN(CASE WHEN on_sale = 1 AND sale_price > 0 THEN sale_price ELSE public_price END) FROM product_variants WHERE product_variants.product_id = products.id)';
+        $sortRatingSubquery = 'COALESCE((SELECT AVG(rating) FROM product_reviews WHERE product_reviews.product_id = products.id AND approved = 1), products.reviews_rating, 0)';
 
-        // ── Filter panel data (only when no active filter of that type) ──────
+        $productsQuery = (clone $baseQuery)->with(['variants.inventory', 'variants.images']);
+
+        switch ($this->sort) {
+            case 'price_desc':
+                $productsQuery->orderByRaw("{$sortPriceSubquery} DESC");
+                break;
+            case 'title_asc':
+                $productsQuery->orderBy('title', 'asc');
+                break;
+            case 'title_desc':
+                $productsQuery->orderBy('title', 'desc');
+                break;
+            case 'rating_desc':
+                $productsQuery->orderByRaw("{$sortRatingSubquery} DESC")->orderBy('title', 'asc');
+                break;
+            case 'rating_asc':
+                $productsQuery->orderByRaw("{$sortRatingSubquery} ASC")->orderBy('title', 'asc');
+                break;
+            case 'price_asc':
+            default:
+                $productsQuery->orderByRaw("{$sortPriceSubquery} ASC");
+                break;
+        }
+
+        $products = $productsQuery->withCurrentTranslations()->paginate($this->perPage);
+
+        // ── Filter panel data ───────────────────────────────────────────────
         $filterCategories = collect();
         $filterBrands     = collect();
 
-        // Category drill-down: show when no category is active, or show
-        // children of the active category when one is selected.
         if (!$this->category) {
-            // All product IDs in the current result set (un-paginated)
             $productIds = (clone $baseQuery)->pluck('id');
 
-            // Category IDs assigned to those products
             $assignedCategoryIds = \DB::table('product_categories_assignments')
                 ->whereIn('product_id', $productIds)
                 ->pluck('category_id')
                 ->unique();
 
-            // Load those categories with their ancestors so we can build the tree
             $assignedCategories = Category::with(['ancestors', 'children'])
                 ->whereIn('id', $assignedCategoryIds)
+                ->where('is_visible_in_menu', true)
                 ->get();
 
-            // Collect every root-level ancestor that appears in the result set
             $rootIds = $assignedCategories
                 ->flatMap(fn($c) => $c->ancestors->isEmpty()
                     ? collect([$c->id])
@@ -347,32 +649,29 @@ class ShopCatalog extends Component
                 )
                 ->unique();
 
-            // Build nested tree: root → children → grandchildren
-            $filterCategories = Category::with(['children.children'])
+            $filterCategories = Category::withCurrentTranslations()->with(['children' => function ($q) {
+                    $q->where('is_visible_in_menu', true)->orderBy('sort_order')->orderBy('name')->withCurrentTranslations();
+                }, 'children.children' => function ($q) {
+                    $q->where('is_visible_in_menu', true)->orderBy('sort_order')->orderBy('name')->withCurrentTranslations();
+                }])
                 ->whereIn('id', $rootIds)
+                ->where('is_visible_in_menu', true)
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get()
                 ->filter(function ($root) use ($assignedCategoryIds) {
-                    // Only include roots that have at least one assigned category in their subtree
                     $subtreeIds = $root->descendantsAndSelf()->pluck('id');
                     return $assignedCategoryIds->intersect($subtreeIds)->isNotEmpty();
                 })
                 ->map(function ($root) use ($assignedCategoryIds) {
-                    // ── In-memory filter: children & grandchildren ──────────────
-                    // Relations are already loaded via with(['children.children']),
-                    // so no extra queries are fired here.
                     $filteredChildren = $root->children->map(function ($child) use ($assignedCategoryIds) {
-                        // Filter grandchildren: only keep those directly assigned
                         $filteredGrandchildren = $child->children
-                            ->filter(fn($gc) => $assignedCategoryIds->contains($gc->id))
+                            ->filter(fn($gc) => $gc->is_visible_in_menu && $assignedCategoryIds->contains($gc->id))
                             ->values();
                         $child->setRelation('children', $filteredGrandchildren);
                         return $child;
                     })->filter(function ($child) use ($assignedCategoryIds) {
-                        // Keep child if it is directly assigned OR has at least one valid grandchild
-                        return $assignedCategoryIds->contains($child->id)
-                            || $child->children->isNotEmpty();
+                        return $child->is_visible_in_menu && ($assignedCategoryIds->contains($child->id) || $child->children->isNotEmpty());
                     })->values();
 
                     $root->setRelation('children', $filteredChildren);
@@ -380,8 +679,14 @@ class ShopCatalog extends Component
                 })
                 ->values();
         } elseif ($this->category) {
-            // Active category: show its direct children as sub-filters
-            $activeCategory = Category::where('slug', $this->category)->with('children.children')->first();
+            $activeCategory = Category::withCurrentTranslations()
+                ->where('slug', $this->category)
+                ->where('is_visible_in_menu', true)
+                ->with(['children' => function ($q) {
+                    $q->where('is_visible_in_menu', true)->withCurrentTranslations();
+                }, 'children.children' => function ($q) {
+                    $q->where('is_visible_in_menu', true)->withCurrentTranslations();
+                }])->first();
             if ($activeCategory && $activeCategory->children->isNotEmpty()) {
                 $productIds = (clone $baseQuery)->pluck('id');
                 $assignedCategoryIds = \DB::table('product_categories_assignments')
@@ -390,16 +695,15 @@ class ShopCatalog extends Component
                     ->unique();
 
                 $filterCategories = $activeCategory->children
+                    ->filter(fn($child) => $child->is_visible_in_menu)
                     ->map(function ($child) use ($assignedCategoryIds) {
-                        // Filter grandchildren: only keep those directly assigned
                         $filteredGrandchildren = $child->children
-                            ->filter(fn($gc) => $assignedCategoryIds->contains($gc->id))
+                            ->filter(fn($gc) => $gc->is_visible_in_menu && $assignedCategoryIds->contains($gc->id))
                             ->values();
                         $child->setRelation('children', $filteredGrandchildren);
                         return $child;
                     })
                     ->filter(function ($child) use ($assignedCategoryIds) {
-                        // Keep child if it is directly assigned OR has at least one valid grandchild
                         $subtreeIds = $child->descendantsAndSelf()->pluck('id');
                         return $assignedCategoryIds->intersect($subtreeIds)->isNotEmpty();
                     })
@@ -407,62 +711,165 @@ class ShopCatalog extends Component
             }
         }
 
-        // Brand filter: show when no brand is active and multiple brands exist
         if (!$this->brand) {
             $productIds = isset($productIds) ? $productIds : (clone $baseQuery)->pluck('id');
-            $filterBrands = \App\Models\Brand::whereHas('products', function ($q) use ($productIds) {
+            $filterBrands = \App\Models\Brand::visibleInMenu()
+                ->whereHas('products', function ($q) use ($productIds) {
                     $q->whereIn('products.id', $productIds);
                 })
                 ->orderBy('name')
                 ->get(['id', 'name', 'slug', 'brand_icon', 'brand_logo_s3']);
         }
 
-        $userType = (auth()->check() && auth()->user()->isWholesale()) ? 2 : 1;
+        // Available all brands and categories for Advanced Search Checkbox panel
+        $allAvailableBrands = \App\Models\Brand::visibleInMenu()->orderBy('name')->get();
+        $allAvailableCategories = \App\Models\Category::withCurrentTranslations()
+            ->where('is_visible_in_menu', true)
+            ->where(function($q) {
+                $q->whereNull('parent_id')
+                  ->orWhere('parent_id', 0)
+                  ->orWhereDoesntHave('parent');
+            })
+            ->with(['children' => function ($q) {
+                $q->where('is_visible_in_menu', true)->orderBy('sort_order')->orderBy('name')->withCurrentTranslations();
+            }, 'children.children' => function ($q) {
+                $q->where('is_visible_in_menu', true)->orderBy('sort_order')->orderBy('name')->withCurrentTranslations();
+            }])
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        // Extract available variant JSON attributes
+        $advancedSearchEnabled = \App\Models\CmsSetting::isAdvancedSearchEnabled();
+        $availableVariantAttributes = [];
+        if ($advancedSearchEnabled) {
+            $variantAttributesRaw = ProductVariant::whereNotNull('attributes')
+                ->where('attributes', '!=', '')
+                ->pluck('attributes');
+
+            foreach ($variantAttributesRaw as $attrRaw) {
+                $attrArray = is_string($attrRaw) ? json_decode($attrRaw, true) : $attrRaw;
+                if (!is_array($attrArray)) {
+                    $pairs = explode(',', (string)$attrRaw);
+                    $attrArray = [];
+                    foreach ($pairs as $pair) {
+                        if (str_contains($pair, ':')) {
+                            [$k, $v] = explode(':', $pair, 2);
+                            $attrArray[trim($k)] = trim($v);
+                        }
+                    }
+                }
+                if (is_array($attrArray)) {
+                    foreach ($attrArray as $aKey => $aVal) {
+                        $aKey = trim((string)$aKey);
+                        if (empty($aKey) || in_array(strtolower($aKey), ['sku', 'price', 'weight', 'inventory'])) continue;
+                        if (is_array($aVal)) {
+                            foreach ($aVal as $vItem) {
+                                $vItem = trim((string)$vItem);
+                                if ($vItem !== '') {
+                                    $availableVariantAttributes[$aKey][$vItem] = true;
+                                }
+                            }
+                        } else {
+                            $aVal = trim((string)$aVal);
+                            if ($aVal !== '') {
+                                $availableVariantAttributes[$aKey][$aVal] = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach ($availableVariantAttributes as $k => $vMap) {
+                ksort($vMap);
+                $availableVariantAttributes[$k] = array_keys($vMap);
+                if (!isset($this->selectedAttributes[$k]) || !is_array($this->selectedAttributes[$k])) {
+                    $this->selectedAttributes[$k] = [];
+                }
+            }
+            ksort($availableVariantAttributes);
+        }
+
+        // Count active advanced filter badges
+        $activeAttributeCount = 0;
+        if (is_array($this->selectedAttributes)) {
+            foreach ($this->selectedAttributes as $vals) {
+                if (is_array($vals)) {
+                    $activeAttributeCount += count(array_filter($vals, fn($v) => !is_bool($v) && is_string($v) && trim($v) !== ''));
+                }
+            }
+        }
+
+        $activeFilterCount = count($this->selectedBrands)
+            + count($this->selectedCategories)
+            + $activeAttributeCount
+            + (($this->minPriceFilter !== null || $this->maxPriceFilter !== null) ? 1 : 0);
 
         // ── Resolve active filter models & compute page heading ──────────────
         $activeCategory = $this->category
-            ? Category::where('slug', $this->category)->first()
+            ? Category::withCurrentTranslations()->where('slug', $this->category)->first()
             : null;
         $activeBrand = $this->brand
             ? Brand::where('slug', $this->brand)->first()
             : null;
 
+        $categoryTitle = $activeCategory
+            ? $activeCategory->ancestorsAndSelf()->withCurrentTranslations()->get()->pluck('name')->reverse()->implode(' › ')
+            : '';
+
+        $defaultDescription = siteLabel('catalog.page_description', 'Browse our curated catalog. Enjoy exclusive wholesale pricing if eligible.');
+
         if ($activeCategory && $activeBrand) {
-            // Both filters active → "Category Name > Brand Name", no subtitle
-            $pageTitle       = $activeCategory->name . ' › ' . $activeBrand->name;
+            $pageTitle       = $categoryTitle . ' › ' . $activeBrand->name;
             $pageDescription = '';
         } elseif ($activeCategory) {
-            $pageTitle       = $activeCategory->name;
-            $pageDescription = $activeCategory->description ?? 'Browse our curated catalog. Enjoy exclusive wholesale pricing if eligible.';
+            $pageTitle       = $categoryTitle;
+            $pageDescription = $activeCategory->description ?? $defaultDescription;
         } elseif ($activeBrand) {
             $pageTitle       = $activeBrand->name;
-            $pageDescription = $activeBrand->description ?? 'Browse our curated catalog. Enjoy exclusive wholesale pricing if eligible.';
+            $pageDescription = $activeBrand->description ?? $defaultDescription;
+        } elseif (!empty(trim($this->search))) {
+            $pageTitle       = 'Search results for "' . trim($this->search) . '"';
+            $pageDescription = 'Showing items matching your search.';
         } else {
-            $pageTitle       = 'E-Commerce Products';
-            $pageDescription = 'Browse our curated catalog. Enjoy exclusive wholesale pricing if eligible.';
+            $pageTitle       = siteLabel('catalog.page_title', 'E-Commerce Products');
+            $pageDescription = $defaultDescription;
+        }
+
+        $siteName  = \App\Models\CmsSetting::getSiteName();
+        $metaTitle = $pageTitle . ($siteName ? ' | ' . $siteName : '');
+
+        $selectedCategoryModels = collect();
+        if (!empty($this->selectedCategories)) {
+            $selectedCategoryModels = Category::withCurrentTranslations()->whereIn('id', $this->selectedCategories)->get()->keyBy('id');
         }
 
         return view('livewire.shop-catalog', [
-            'products'         => $products,
-            'userType'         => $userType,
-            'filterCategories' => $filterCategories,
-            'filterBrands'     => $filterBrands,
-            'activeCategory'   => $activeCategory,
-            'activeBrand'      => $activeBrand,
-            'pageTitle'        => $pageTitle,
-            'pageDescription'  => $pageDescription,
-            'viewMode'         => $this->viewMode,
-            'currencySymbol'   => \App\Services\CurrencyService::symbol(),
-            'vatInclusive'     => \App\Services\CurrencyService::isVatInclusive(),
-            'merchantVatRate'  => \App\Services\CurrencyService::merchantVatRate(),
+            'products'                   => $products,
+            'userType'                   => $userType,
+            'filterCategories'           => $filterCategories,
+            'filterBrands'               => $filterBrands,
+            'allAvailableBrands'         => $allAvailableBrands,
+            'allAvailableCategories'     => $allAvailableCategories,
+            'selectedCategoryModels'     => $selectedCategoryModels,
+            'availableVariantAttributes' => $availableVariantAttributes,
+            'catalogMaxPrice'            => $catalogMaxPrice,
+            'advancedSearchEnabled'      => $advancedSearchEnabled,
+            'activeFilterCount'          => $activeFilterCount,
+            'activeCategory'             => $activeCategory,
+            'activeBrand'                => $activeBrand,
+            'pageTitle'                  => $pageTitle,
+            'pageDescription'            => $pageDescription,
+            'viewMode'                   => $this->viewMode,
+            'currencySymbol'             => \App\Services\CurrencyService::symbol(),
+            'vatInclusive'               => \App\Services\CurrencyService::isVatInclusive(),
+            'merchantVatRate'            => \App\Services\CurrencyService::merchantVatRate(),
+        ])->layout('layouts.public', [
+            'metaTitle' => $metaTitle,
+            'title'     => $metaTitle,
         ]);
     }
 
-    /**
-     * Determine if a cart item is taxable.
-     * Returns 1 if the variant has charge_tax=1 OR if ANY product field
-     * on the product has charge_tax=1 (OR logic — most permissive wins).
-     */
     private function resolveItemTaxable(\App\Models\ProductVariant $variant, $product): int
     {
         if ((int)($variant->charge_tax ?? 1) === 1) {

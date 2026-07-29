@@ -301,11 +301,99 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
 
             </div>
         </div>
+
+        {{-- ── Translations Section ───────────────────────────────────────── --}}
+        @if(isset($article) && $activeLanguages->count() > 0)
+        <div x-data="{ open: false }" class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden mt-6">
+            <button @click="open = !open" type="button"
+                    class="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                    <span class="font-bold text-slate-800">Translations</span>
+                    <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">{{ $activeLanguages->count() }} language(s)</span>
+                </div>
+                <svg class="w-4 h-4 text-slate-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+
+            <div x-show="open" class="border-t border-slate-100 p-6 space-y-6" style="display:none">
+                {{-- Flash --}}
+                @if(session()->has('status'))
+                    <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-sm font-semibold">{{ session('status') }}</div>
+                @endif
+
+                {{-- Language pills --}}
+                <div class="flex flex-wrap gap-2">
+                    @foreach($activeLanguages as $lang)
+                        @php $tRecord = \App\Models\KbArticleTranslation::where('kb_article_id', $article->id)->where('language_id', $lang->id)->first(); @endphp
+                        <button wire:click="selectTranslationLang('{{ $lang->code }}', {{ $lang->id }})" type="button"
+                                class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition
+                                       {{ $activeLangCode === $lang->code ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300' }}">
+                            <span>{{ $lang->flag_emoji }}</span>
+                            {{ $lang->native_name }}
+                            @if($tRecord)
+                                <span class="text-[10px] px-1.5 py-0.5 rounded-full {{ $tRecord->translation_status === 'reviewed' ? 'bg-emerald-200 text-emerald-800' : 'bg-amber-200 text-amber-800' }}">{{ $tRecord->translation_status === 'reviewed' ? '✓' : 'AI' }}</span>
+                            @endif
+                        </button>
+                    @endforeach
+                </div>
+
+                @if($activeLangCode)
+                <div class="space-y-4 bg-slate-50 rounded-2xl p-5 border border-slate-200">
+                    {{-- Status + auto-translate --}}
+                    <div class="flex items-center justify-between flex-wrap gap-3">
+                        <span class="px-3 py-1 rounded-lg text-xs font-bold {{ $trans_status === 'reviewed' ? 'bg-emerald-100 text-emerald-800' : ($trans_status === 'ai_translated' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600') }}">
+                            {{ $trans_status === 'reviewed' ? 'Reviewed' : ($trans_status === 'ai_translated' ? 'AI Translated' : 'Pending') }}
+                            @if($trans_translated_at) &nbsp;· {{ $trans_translated_at }}@endif
+                        </span>
+                        <div class="flex items-center flex-wrap gap-2">
+                            <button wire:click="aiTranslateKbInline" wire:loading.attr="disabled" type="button"
+                                    title="Generate a fresh AI translation now. Results fill the fields below for your review before saving."
+                                    class="flex items-center gap-2 px-4 py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-xl text-xs font-bold transition">
+                                <span wire:loading wire:target="aiTranslateKbInline" class="animate-spin w-3.5 h-3.5 border-2 border-violet-400 border-t-transparent rounded-full inline-block"></span>
+                                <svg class="w-4 h-4" wire:loading.remove wire:target="aiTranslateKbInline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                ✦ Generate Translation
+                            </button>
+                            <button wire:click="autoTranslateKb" type="button" wire:loading.attr="disabled"
+                                    title="Queue a background translation job. Page will refresh with AI-translated content."
+                                    class="flex items-center gap-2 px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold transition">
+                                <span wire:loading wire:target="autoTranslateKb" class="animate-spin w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full inline-block"></span>
+                                Queue Bulk Job
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Title</label>
+                        <input type="text" wire:model="trans_title" placeholder="Translated title..."
+                               class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Article Content (HTML)</label>
+                        <textarea wire:model="trans_article_content" rows="10" placeholder="Translated article content..."
+                                  class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-indigo-400"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Meta Description</label>
+                        <input type="text" wire:model="trans_meta_description" placeholder="Translated SEO description..."
+                               class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
+                    </div>
+                    <div class="flex justify-end pt-2">
+                        <button wire:click="saveKbTranslation" type="button" wire:loading.attr="disabled"
+                                class="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow transition">
+                            <span wire:loading wire:target="saveKbTranslation" class="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full inline-block"></span>
+                            Save Translation
+                        </button>
+                    </div>
+                </div>
+                @else
+                    <p class="text-slate-400 text-sm text-center py-4">Select a language above to view or edit its translation.</p>
+                @endif
+            </div>
+        </div>
+        @endif
     </div>
 
     <script src="{{ asset('build/node_modules/tinymce/tinymce.min.js') }}"></script>

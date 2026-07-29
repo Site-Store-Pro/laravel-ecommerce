@@ -17,10 +17,25 @@ class Brand extends Model
         'slug',
         'description',
         'sort_order',
+        'is_visible_in_menu',
         'brand_icon',
         'brand_url',
         'brand_logo_s3'
     ];
+
+    protected $casts = [
+        'is_visible_in_menu' => 'boolean',
+        'sort_order'         => 'integer',
+        'brand_logo_s3'      => 'integer',
+    ];
+
+    /**
+     * Scope: Only brands visible in menus & filters.
+     */
+    public function scopeVisibleInMenu($query)
+    {
+        return $query->where('is_visible_in_menu', true);
+    }
 
     /**
      * Relationship: Products belonging to this brand.

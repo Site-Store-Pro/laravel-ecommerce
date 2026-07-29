@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\SocialAuthController;
 use App\Http\Controllers\CmsFormSubmissionController;
+use App\Http\Controllers\ContentAccessController;
 use App\Http\Controllers\InboundEmailController;
 use App\Http\Controllers\TicketAttachmentController;
 use App\Livewire\AdminCreateUser;
@@ -24,10 +25,12 @@ use App\Livewire\AdminNavMenus;
 use App\Livewire\AdminNavMenuEdit;
 use App\Livewire\UserDashboard;
 use App\Livewire\AdminPlugins;
+use App\Livewire\AdminSiteLabels;
+
 use App\Http\Controllers\PluginApiController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome');
+Route::view('/', 'pages.home');
 
 Route::get('tickets/view/{token}', PublicTicketView::class)->name('tickets.public');
 
@@ -50,10 +53,19 @@ Route::get('checkout', \App\Livewire\Checkout::class)->name('shop.checkout');
 Route::get('checkout/review', \App\Livewire\OrderReview::class)->name('shop.checkout-review');
 Route::get('checkout/success/{external_id}', \App\Livewire\CheckoutSuccess::class)->name('shop.checkout-success');
 Route::get('downloads/{orderDetail}/{token}', [\App\Http\Controllers\ProductDownloadController::class, 'download'])->name('products.download');
-Route::get('cms-download/{id}', [\App\Http\Controllers\CmsDownloadController::class, 'serve'])->name('cms.download');
+Route::get('cms-download/{uuid}', [\App\Http\Controllers\CmsDownloadController::class, 'serve'])->name('cms.download')->where('uuid', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
+Route::get('api/live-search-api', [PluginApiController::class, 'liveSearchApi'])->name('api.live-search');
+
+// Secure content access token redemption (no auth required — supports guest purchasers)
+Route::get('content-access/{token}', [ContentAccessController::class, 'redeem'])->name('content.access');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', UserDashboard::class)->name('dashboard');
+    // Dashboard bypasses 'verified' so guests reach mount() first (where they are redirected
+    // to /account/set-password before the email verification check ever runs).
+    Route::get('dashboard', UserDashboard::class)->name('dashboard')->withoutMiddleware('verified');
+
+    // Guest account conversion — set a password (auth but NOT verified required)
+    Route::get('account/set-password', \App\Livewire\GuestSetPassword::class)->name('guest.set-password')->withoutMiddleware('verified');
 
     Route::get('tickets/create', CreateTicket::class)->name('tickets.create');
     Route::get('tickets/{ticket}', ShowTicket::class)->name('tickets.show');
@@ -79,6 +91,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('cms-pages/upload-image', [\App\Http\Controllers\CmsImageUploadController::class, 'upload'])->name('cms-pages.upload-image');
     });
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('ecommerce/import', \App\Livewire\AdminProductImport::class)->name('ecommerce.import'); // Admin-only: bulk import
         Route::get('users', AdminUsers::class)->name('users');
         Route::get('users/create', AdminCreateUser::class)->name('users.create');
         Route::get('users/{user}', \App\Livewire\AdminUserShow::class)->name('users.show');
@@ -139,18 +152,40 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Navigation Builder
         Route::get('nav-builder', AdminNavMenus::class)->name('nav-builder.index');
         Route::get('nav-builder/{menu}/edit', AdminNavMenuEdit::class)->name('nav-builder.edit');
+
+        // Header & Footer Layout Builder
+        Route::get('cms-header-footer', \App\Livewire\AdminHeaderFooterBuilder::class)->name('cms-header-footer.index');
+        Route::get('cms-header-footer/preview', \App\Http\Controllers\Admin\HeaderFooterPreviewController::class)->name('cms-header-footer.preview');
+
+        // Testimonials
+        Route::get('testimonials', \App\Livewire\AdminTestimonialsManager::class)->name('testimonials.index');
+
+        // Site Labels (dynamic text overrides)
+        Route::get('site-labels', AdminSiteLabels::class)->name('site-labels.index');
+
+        // ── Language Manager ──────────────────────────────────────────────────────
+        Route::get('languages', \App\Livewire\AdminLanguages::class)->name('languages.index');
+        Route::get('languages/{languageId}/translations', \App\Livewire\AdminLanguageTranslations::class)->name('languages.translations');
+        Route::get('languages/queue-monitor', \App\Livewire\AdminQueueMonitor::class)->name('languages.queue-monitor');
+
     });
 });
 
 Route::get('category/{slug}', [\App\Http\Controllers\CmsCategoryPageController::class, 'show'])->name('cms.category');
 Route::get('tag/{slug}', [\App\Http\Controllers\CmsTagPageController::class, 'show'])->name('cms.tag');
 
+// Language switch (handled by Livewire component action, but provide a fallback GET route)
+Route::get('/set-language/{code}', function (string $code) {
+    app(\App\Services\LanguageService::class)->setLanguage($code);
+    return redirect()->back();
+})->name('language.switch');
+
 Route::middleware('guest')->group(function () {
     Route::get('auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('social.redirect');
     Route::get('auth/{provider}/callback', [SocialAuthController::class, 'callback'])->name('social.callback');
 });
 
-Route::view('profile', 'profile')
+Route::view('profile', 'user.profile')
     ->middleware(['auth'])
     ->name('profile');
 

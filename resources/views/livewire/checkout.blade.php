@@ -1,6 +1,6 @@
 <div class="pt-4 pb-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-12">Checkout</h1>
+        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-12">@label('checkout.page_heading', 'Checkout')</h1>
 
         <!-- Flash Status Message -->
         @if(session()->has('status'))
@@ -38,22 +38,22 @@
                 @if(!auth()->check())
                     <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-6">
                         <div class="border-b border-slate-100 pb-4">
-                            <h2 class="text-lg font-bold text-slate-900">Returning Customer?</h2>
-                            <p class="text-xs text-slate-400 mt-1">Sign in to check out faster with your saved details, or continue below to order as a guest.</p>
+                            <h2 class="text-lg font-bold text-slate-900">@label('checkout.returning_customer_heading', 'Returning Customer?')</h2>
+                            <p class="text-xs text-slate-400 mt-1">@label('checkout.returning_customer_message', 'Sign in to check out faster with your saved details, or continue below to order as a guest.')</p>
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
                             <!-- Email / Password Login Form (Col 7) -->
                             <div class="md:col-span-7 space-y-4">
-                                <h3 class="text-sm font-bold text-slate-800">Sign In to Your Account</h3>
+                                <h3 class="text-sm font-bold text-slate-800">@label('checkout.sign_in_heading', 'Sign In to Your Account')</h3>
                                 <div class="grid grid-cols-1 gap-3">
                                     <div>
-                                        <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Email Address</label>
-                                        <input type="email" wire:model="loginEmail" placeholder="you@example.com" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                                        <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_email', 'Email Address')</label>
+                                        <input type="email" wire:model="loginEmail" placeholder="@label('checkout.field_email_placeholder', 'you@example.com')" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
                                         @error('loginEmail') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
-                                        <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Password</label>
+                                        <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_password', 'Password')</label>
                                         <input type="password" wire:model="loginPassword" placeholder="••••••••" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
                                         @error('loginPassword') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
                                     </div>
@@ -64,7 +64,7 @@
                                 @enderror
 
                                 <button type="button" wire:click.prevent="loginUser" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl shadow-md transition duration-150">
-                                    Sign In & Continue
+                                    @label('checkout.sign_in_continue', 'Sign In & Continue')
                                 </button>
                             </div>
 
@@ -75,7 +75,7 @@
 
                             <!-- Social Buttons (Col 4) -->
                             <div class="md:col-span-4 space-y-4">
-                                <h3 class="text-sm font-bold text-slate-800">Or continue with</h3>
+                                <h3 class="text-sm font-bold text-slate-800">@label('checkout.or_continue_with', 'Or continue with')</h3>
                                 <div class="flex flex-col gap-2.5">
                                     <a href="{{ route('social.redirect', 'google') }}" class="flex items-center justify-center gap-2 border border-slate-200 bg-white hover:bg-slate-50 py-2.5 rounded-xl text-xs font-bold text-slate-700 shadow-sm transition">
                                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
@@ -108,55 +108,55 @@
                     <!-- Customer / Shipping details Card -->
                     <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm animate-fade-in">
                         <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 mb-6">
-                            {{ $requiresShipping ? 'Shipping Details' : 'Customer Info' }}
+                            @if($requiresShipping) @label('checkout.shipping_details', 'Shipping Details') @else @label('checkout.customer_info', 'Customer Info') @endif
                         </h2>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="md:col-span-2">
-                                <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider font-sans">Full Name</label>
+                                <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider font-sans">@label('checkout.field_full_name', 'Full Name')</label>
                                 <input type="text" wire:model="name" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                 @error('name') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                             </div>
 
                             <div class="md:col-span-2">
-                                <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Email Address</label>
+                                <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_email', 'Email Address')</label>
                                 <input type="email" wire:model="email" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                 @error('email') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                             </div>
 
                             <div class="md:col-span-2">
-                                <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Company (Optional)</label>
+                                <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_company', 'Company (Optional)')</label>
                                 <input type="text" wire:model="company" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                             </div>
 
                             @if($requiresShipping)
                                 <div class="md:col-span-2">
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Address Line 1</label>
+                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_address1', 'Address Line 1')</label>
                                     <input type="text" wire:model="shipping_address1" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                     @error('shipping_address1') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
                                 <div class="md:col-span-2">
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Address Line 2 (Optional)</label>
+                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_address2', 'Address Line 2 (Optional)')</label>
                                     <input type="text" wire:model="shipping_address2" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                 </div>
 
                                 <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">City</label>
+                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_city', 'City')</label>
                                     <input type="text" wire:model="shipping_city" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                     @error('shipping_city') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
                                 <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Postal / ZIP Code</label>
+                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_postal', 'Postal / ZIP Code')</label>
                                     <input type="text" wire:model="shopping_postalcode" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                     @error('shopping_postalcode') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
                                 <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Country</label>
+                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_country', 'Country')</label>
                                     <select wire:model.live="shipping_countrycode" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                        <option value="">Select Country</option>
+                                        <option value="">@label('checkout.field_country_placeholder', 'Select Country')</option>
                                         @foreach($countries as $c)
                                             <option value="{{ $c->code }}">{{ $c->name }}</option>
                                         @endforeach
@@ -167,10 +167,10 @@
                                 @if($shipping_countrycode === 'US' || $shipping_countrycode === 'CA')
                                     <div>
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">
-                                            {{ $shipping_countrycode === 'US' ? 'State' : 'Province / Territory' }}
+                                            @if($shipping_countrycode === 'US') @label('checkout.field_state', 'State') @else @label('checkout.field_province', 'Province / Territory') @endif
                                         </label>
                                         <select wire:model="shipping_state" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                            <option value="">Select {{ $shipping_countrycode === 'US' ? 'State' : 'Province' }}</option>
+                                            <option value="">@if($shipping_countrycode === 'US') @label('checkout.field_state_placeholder', 'Select State') @else @label('checkout.field_province_placeholder', 'Select Province') @endif</option>
                                             @foreach($states as $s)
                                                 <option value="{{ $s->code }}">{{ $s->name }}</option>
                                             @endforeach
@@ -179,8 +179,8 @@
                                     </div>
                                 @else
                                     <div>
-                                        <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">State / Region (Optional)</label>
-                                        <input type="text" wire:model="shipping_state" placeholder="e.g. London" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_region', 'State / Region (Optional)')</label>
+                                        <input type="text" wire:model="shipping_state" placeholder="@label('checkout.field_region_placeholder', 'e.g. London')" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                         @error('shipping_state') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                 @endif
@@ -188,16 +188,16 @@
 
                             @if(!auth()->check())
                                 <div class="md:col-span-2 border-t border-slate-100 pt-4 mt-2">
-                                    <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Create a Password (Optional)</label>
-                                    <p class="text-xs text-slate-400 mb-2">Provide a password if you want to register and speed through future purchases.</p>
+                                    <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">@label('checkout.field_password_optional', 'Create a Password (Optional)')</label>
+                                    <p class="text-xs text-slate-400 mb-2">@label('checkout.field_password_optional_message', 'Provide a password if you want to register and speed through future purchases.')</p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Password</label>
+                                            <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_password', 'Password')</label>
                                             <input type="password" wire:model="password" placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                             @error('password') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                         </div>
                                         <div>
-                                            <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Confirm Password</label>
+                                            <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_confirm_password', 'Confirm Password')</label>
                                             <input type="password" wire:model="password_confirmation" placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                         </div>
                                     </div>
@@ -233,7 +233,7 @@
                                             @elseif($cf->type === 'select')
                                                 <select wire:model="checkoutCustomData.{{ $idx }}"
                                                         class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
-                                                    <option value="">— Select —</option>
+                                                    <option value="">@label('checkout.select_placeholder', '— Select —')</option>
                                                     @foreach($cf->options ?? [] as $opt)
                                                         <option value="{{ $opt }}">{{ $opt }}</option>
                                                     @endforeach
@@ -286,7 +286,7 @@
 
                             <div class="md:col-span-2 mt-6 border-t border-slate-100 pt-6">
                                 <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-md hover:scale-[1.01] transition duration-150 flex items-center justify-center gap-2">
-                                    Continue to Review
+                                    @label('checkout.continue_to_review', 'Continue to Review')
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                     </svg>
@@ -299,7 +299,7 @@
 
             <!-- Right Side: Order Review -->
             <div class="lg:col-span-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-                <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 mb-6">Order Details</h2>
+                <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 mb-6">@label('checkout.order_details', 'Order Details')</h2>
 
                 <!-- Items list -->
                 <div class="space-y-4 max-h-60 overflow-y-auto">
@@ -307,11 +307,11 @@
                         <div class="flex items-center justify-between text-sm gap-4">
                             <div class="flex-1">
                                 <span class="font-semibold text-slate-800">{{ $item->item_name }}</span>
-                                <span class="text-xs text-slate-400 block">Qty: {{ number_format($item->item_qty, 0) }}</span>
+                                <span class="text-xs text-slate-400 block">@label('checkout.qty_label', 'Qty:') {{ number_format($item->item_qty, 0) }}</span>
                                 @if($item->item_shippable)
-                                    <span class="inline-block bg-indigo-50 text-indigo-700 text-[10px] px-1.5 py-0.5 rounded font-bold mt-1">Requires Shipping</span>
+                                    <span class="inline-block bg-indigo-50 text-indigo-700 text-[10px] px-1.5 py-0.5 rounded font-bold mt-1">@label('checkout.requires_shipping', 'Requires Shipping')</span>
                                 @else
-                                    <span class="inline-block bg-teal-50 text-teal-700 text-[10px] px-1.5 py-0.5 rounded font-bold mt-1">Digital Delivery</span>
+                                    <span class="inline-block bg-teal-50 text-teal-700 text-[10px] px-1.5 py-0.5 rounded font-bold mt-1">@label('checkout.digital_delivery', 'Digital Delivery')</span>
                                 @endif
                             </div>
                             <div class="text-right">
@@ -326,17 +326,17 @@
 
                 <!-- Coupon Entry Form -->
                 <div class="border-t border-slate-100 pt-6 mt-6 space-y-3">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Promo / Coupon Code</h3>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">@label('checkout.coupon_heading', 'Promo / Coupon Code')</h3>
                     @if($activeCoupon)
                         <div class="flex items-center justify-between bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-2 text-xs">
-                            <span class="font-bold text-emerald-800">Coupon Active: {{ $activeCoupon }}</span>
-                            <button type="button" wire:click="removeCoupon" class="text-rose-600 hover:text-rose-800 font-bold">Remove</button>
+                            <span class="font-bold text-emerald-800">@label('checkout.coupon_active', 'Coupon Active:') {{ $activeCoupon }}</span>
+                            <button type="button" wire:click="removeCoupon" class="text-rose-600 hover:text-rose-800 font-bold">@label('checkout.coupon_remove', 'Remove')</button>
                         </div>
                     @else
                         <div class="flex gap-2">
-                            <input type="text" wire:model="couponCode" placeholder="Enter coupon..." class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-xs">
+                            <input type="text" wire:model="couponCode" placeholder="@label('checkout.coupon_placeholder', 'Enter coupon...')" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-xs">
                             <button type="button" wire:click="applyCoupon" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow transition duration-150">
-                                Apply
+                                @label('checkout.coupon_apply', 'Apply')
                             </button>
                         </div>
                         @error('couponCode') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
@@ -346,26 +346,26 @@
                 <!-- Order Totals -->
                 <div class="border-t border-slate-100 pt-6 mt-6 space-y-4">
                     <div class="flex justify-between text-sm text-slate-500">
-                        <span>Subtotal</span>
+                        <span>@label('checkout.subtotal', 'Subtotal')</span>
                         <span class="font-semibold text-slate-850">${{ number_format($subtotal, 2) }}</span>
                     </div>
 
                     @if($total_discount > 0)
                         @foreach($discounts as $disc)
                             <div class="flex justify-between text-xs text-emerald-600 font-semibold">
-                                <span>Discount ({{ $disc['name'] }})</span>
+                                <span>@label('checkout.discount', 'Discount') ({{ $disc['name'] }})</span>
                                 <span>-${{ number_format($disc['amount'], 2) }}</span>
                             </div>
                         @endforeach
                     @endif
 
                     <div class="flex justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
-                        <span>Shipping</span>
-                        <span class="font-semibold text-emerald-600">Calculated at review</span>
+                        <span>@label('checkout.shipping', 'Shipping')</span>
+                        <span class="font-semibold text-emerald-600">@label('checkout.shipping_calculated', 'Calculated at review')</span>
                     </div>
 
                     <div class="border-t border-slate-100 pt-4 flex justify-between text-lg font-extrabold text-slate-900">
-                        <span>Total</span>
+                        <span>@label('checkout.total', 'Total')</span>
                         <span>${{ number_format($total, 2) }}</span>
                     </div>
                 </div>

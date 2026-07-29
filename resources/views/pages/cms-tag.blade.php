@@ -14,6 +14,11 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        {{-- Swiper 11 Bundle (Global Slider Engine for Display Plugins) --}}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+        {{-- flag-icons: CSS-based flag rendering for language switcher --}}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
     </head>
     <body class="antialiased font-sans bg-slate-50 text-slate-800 overflow-x-hidden selection:bg-indigo-500 selection:text-white">
         <!-- Background Glows -->
@@ -32,7 +37,7 @@
                     <!-- Tag Header Info -->
                     <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
                         <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-violet-50 text-violet-700 uppercase tracking-widest">
-                            Tag Archives
+                            @label('cms.tag_archives', 'Tag Archives')
                         </span>
                         <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">
                             #{{ $tag->name }}
@@ -114,7 +119,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2 2v2m0 0H2"/>
                                 </svg>
                             </div>
-                            <h3 class="text-lg font-bold text-slate-900">No content available</h3>
+                            <h3 class="text-lg font-bold text-slate-900">@label('cms.no_content', 'No content available')</h3>
                             <p class="text-sm text-slate-400 font-medium">There are currently no active or public posts tagged with #{{ $tag->name }}.</p>
                         </div>
                     @endif

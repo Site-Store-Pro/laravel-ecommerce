@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Services\LanguageService;
+use App\Services\SiteLabelService;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -12,6 +15,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Load global helper functions (siteLabel, etc.)
+        require_once app_path('helpers.php');
+
+        // LanguageService as a request-scoped singleton so the session-resolved
+        // language is consistent across SetLocale middleware, HasTranslations
+        // getAttribute(), LanguageSwitcher, and all other callers per request.
+        $this->app->singleton(LanguageService::class);
+
+        // SiteLabelService as a singleton so the runtime[] in-process map is
+        // populated once per request — subsequent @label() calls are O(1) array lookups.
+        $this->app->singleton(SiteLabelService::class);
+
         if (env('custom_login_security')) {
             $this->app->singleton('hash', function ($app) {
                 return new \App\Services\CustomHashManager($app);
@@ -25,6 +40,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // @label('key', 'fallback') — outputs HTML-escaped site label value.
+        // Used in all public-facing blades to replace hardcoded English strings.
+        Blade::directive('label', function (string $expression): string {
+            return "<?php echo e(siteLabel($expression)); ?>";
+        });
+
         // Load AI credentials as global variables
         $GLOBALS['AI_PROVIDER'] = env('AI_PROVIDER');
         $GLOBALS['AI_PROVIDER_API_KEY'] = env('AI_PROVIDER_API_KEY');

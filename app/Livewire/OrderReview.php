@@ -4,10 +4,13 @@ namespace App\Livewire;
 
 use App\Models\CheckoutCustomField;
 use App\Models\CmsSetting;
+use App\Models\CmsPage;
+use App\Models\ContentAccessToken;
 use App\Models\Order;
 use App\Models\OrderCheckoutOption;
 use App\Models\OrderDetail;
 use App\Models\OrderPayment;
+use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ShoppingCartLog;
 use App\Plugins\Support\PluginManager;
@@ -27,6 +30,7 @@ use Livewire\Component;
 class OrderReview extends Component
 {
     // Payment processor state
+    public int    $activeProcessorId  = 0;   // persisted across Livewire requests for randomized checkout
     public string $gatewayToken       = '';  // payment_intent_id (Stripe) or transaction_id (Paddle)
     public string $stripeClientSecret = ''; // returned to JS for stripe.confirmCardPayment()
     public string $paddleTransactionId = ''; // returned to JS to open Paddle.Checkout.open()
@@ -182,6 +186,17 @@ class OrderReview extends Component
         }
 
         $this->currencyCode = strtoupper(CurrencyService::code());
+        $this->getActiveProcessorId();
+    }
+
+    public function getActiveProcessorId(): int
+    {
+        if ($this->activeProcessorId <= 0) {
+            $manager = app(PaymentProcessorManager::class);
+            $this->activeProcessorId = $manager->activeProcessorId();
+        }
+
+        return $this->activeProcessorId;
     }
 
     private function calculateTotals(): array
@@ -336,12 +351,13 @@ class OrderReview extends Component
             return ['error' => 'Not authenticated'];
         }
 
-        $totals   = $this->calculateTotals();
-        $total    = $totals['total'];
-        $currency = strtolower(CurrencyService::code());
-        $manager  = app(PaymentProcessorManager::class);
-        $type     = $manager->activeProcessorType();
-        $user     = Auth::user();
+        $totals      = $this->calculateTotals();
+        $total       = $totals['total'];
+        $currency    = strtolower(CurrencyService::code());
+        $processorId = $this->getActiveProcessorId();
+        $manager     = app(PaymentProcessorManager::class);
+        $type        = $manager->activeProcessorType($processorId);
+        $user        = Auth::user();
 
         // Detect subscription variant in the current cart
         $subVariant = $this->resolveSubscriptionVariant();
@@ -349,7 +365,7 @@ class OrderReview extends Component
         try {
             if ($type === 'stripe') {
                 /** @var \App\Services\Payments\Processors\StripeProcessor $driver */
-                $driver = $manager->resolveActive();
+                $driver = $manager->resolveActive($processorId);
                 $isSandbox = $driver->isSandbox();
 
                 if ($subVariant) {
@@ -410,7 +426,7 @@ class OrderReview extends Component
 
             } elseif ($type === 'paddle') {
                 /** @var \App\Services\Payments\Processors\PaddleProcessor $driver */
-                $driver    = $manager->resolveActive();
+                $driver    = $manager->resolveActive($processorId);
                 $isSandbox = $driver->isSandbox();
 
                 // Validate that all dynamically created subscription items have the exact same interval and frequency
@@ -482,7 +498,7 @@ class OrderReview extends Component
 
             } elseif ($type === 'paypal') {
                 /** @var \App\Services\Payments\Processors\PayPalProcessor $driver */
-                $driver = $manager->resolveActive();
+                $driver = $manager->resolveActive($processorId);
                 $orderId = $driver->createOrder($total, $currency);
 
                 $this->paypalOrderId = $orderId;
@@ -582,12 +598,12 @@ class OrderReview extends Component
         }
 
         // Resolve active processor and charge / verify
+        $processorId = $this->getActiveProcessorId();
         $manager     = app(PaymentProcessorManager::class);
-        $processorId = $manager->activeProcessorId();
         $driver      = $manager->resolve($processorId);
         $currency    = strtoupper(CurrencyService::code());
 
-        $payload = match ($manager->activeProcessorType()) {
+        $payload = match ($manager->activeProcessorType($processorId)) {
             'stripe' => ['payment_intent_id' => $gatewayToken],
             'paddle' => ['transaction_id'    => $gatewayToken],
             'paypal' => ['order_id'          => $gatewayToken],
@@ -804,6 +820,20 @@ class OrderReview extends Component
                     $itemsHtml .= '<a href="' . e($downloadUrl) . '" target="_blank" style="background-color: #4f46e5; color: #ffffff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: 1px solid #4338ca;">Download File</a>';
                     $itemsHtml .= '</div>';
                 }
+                // View Content button — secure UUID token link, supports guest users
+                $itemProduct = $item->variant?->product ?? null;
+                if ($itemProduct) {
+                    $contentUrl   = Product::resolveCompletionUrl($itemProduct->completion_redirect);
+                    $contentLabel = $itemProduct->completionRedirectLabel();
+                    if ($contentUrl) {
+                        $recipientEmail = $order->user?->email ?? ($order->guest_email ?? '');
+                        $accessToken = ContentAccessToken::generateOrRefresh($item, $contentUrl, $recipientEmail);
+                        $tokenUrl    = route('content.access', $accessToken->token);
+                        $itemsHtml .= '<div style="margin-top: 8px;">';
+                        $itemsHtml .= '<a href="' . e($tokenUrl) . '" target="_blank" style="background-color: #7c3aed; color: #ffffff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: 1px solid #6d28d9;">' . e($contentLabel) . '</a>';
+                        $itemsHtml .= '</div>';
+                    }
+                }
                 $itemsHtml .= '</td>';
                 $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;" align="right">';
                 $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . CurrencyService::format($item->final_price * $item->item_qty) . '</strong>';
@@ -898,7 +928,7 @@ class OrderReview extends Component
                 $itemsHtml .= e($order->order_comments);
                 $itemsHtml .= '</div>';
             }
-            
+
             $itemsHtml .= '</div>';
 
             $sym = CurrencyService::symbol();
@@ -922,28 +952,58 @@ class OrderReview extends Component
         $this->dispatch('cart-updated');
         session()->flash('status', "Order {$order->order_invoice_no} has been successfully placed!");
 
+        return $this->resolveCompletionRedirect($order);
+    }
+
+    /**
+     * Resolve the post-order redirect destination.
+     *
+     * Checks each ordered item's product for a `completion_redirect` value.
+     * The first non-empty resolvable URL wins (priority: order of items).
+     * Falls back to the default order confirmation page if nothing is set.
+     */
+    protected function resolveCompletionRedirect(Order $order): mixed
+    {
+        $details = OrderDetail::where('order_id', $order->id)
+            ->with(['variant.product'])
+            ->get();
+
+        foreach ($details as $detail) {
+            $product = $detail->variant?->product ?? null;
+            if (!$product) {
+                continue;
+            }
+            $url = Product::resolveCompletionUrl($product->completion_redirect);
+            if ($url !== null) {
+                return redirect()->away($url);
+            }
+        }
+
+        // Default: standard order confirmation page
         return redirect()->route('shop.checkout-success', $order->order_external_id);
     }
 
     public function render(): View
     {
-        $totals  = $this->calculateTotals();
-        $manager = app(PaymentProcessorManager::class);
+        $totals      = $this->calculateTotals();
+        $processorId = $this->getActiveProcessorId();
+        $manager     = app(PaymentProcessorManager::class);
+        $activeType  = $manager->activeProcessorType($processorId);
 
-        if ($manager->activeProcessorType() === 'stripe') {
-            $this->stripePublishableKey = $manager->resolveActive()->getPublishableKey();
+        if ($activeType === 'stripe') {
+            $this->stripePublishableKey = $manager->resolveActive($processorId)->getPublishableKey();
         } else {
             $this->stripePublishableKey = '';
         }
 
-        if ($manager->activeProcessorType() === 'paddle') {
-            $this->paddleEnvironment = $manager->activeProcessorIsSandbox() ? 'sandbox' : 'production';
+        if ($activeType === 'paddle') {
+            $this->paddleEnvironment = $manager->activeProcessorIsSandbox($processorId) ? 'sandbox' : 'production';
         }
 
         $this->paypalClientId = '';
-        if ($manager->activeProcessorType() === 'paypal') {
+        if ($activeType === 'paypal') {
             /** @var \App\Services\Payments\Processors\PayPalProcessor $paypalDriver */
-            $paypalDriver = $manager->resolveActive();
+            $paypalDriver = $manager->resolveActive($processorId);
             $this->paypalClientId = $paypalDriver->getClientId();
         }
 
@@ -966,8 +1026,8 @@ class OrderReview extends Component
             'shippingOptions'      => $totals['options'],
             'user'                 => Auth::user(),
             // Payment processor context for the blade
-            'activeProcessorType'      => $manager->activeProcessorType(),
-            'activeProcessorIsSandbox' => $manager->activeProcessorIsSandbox(),
+            'activeProcessorType'      => $activeType,
+            'activeProcessorIsSandbox' => $manager->activeProcessorIsSandbox($processorId),
             'stripeAddressRequired'    => (bool) (\App\Models\OrderCheckoutOption::first()->stripe_address_required ?? false),
             'paypalClientId'           => $this->paypalClientId,
             'currencyCode'             => strtoupper(CurrencyService::code()),

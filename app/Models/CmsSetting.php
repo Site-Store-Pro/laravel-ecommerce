@@ -37,9 +37,10 @@ class CmsSetting extends Model
     {
         static::updateOrCreate(
             ['key' => $key],
-            ['value' => $value, 'label' => $key]
+            ['value' => (string) $value, 'label' => $key]
         );
         Cache::forget('cms_settings_all');
+        Cache::flush();
     }
 
     /**
@@ -50,10 +51,11 @@ class CmsSetting extends Model
         foreach ($data as $key => $value) {
             static::updateOrCreate(
                 ['key' => $key],
-                ['value' => $value, 'label' => $key]
+                ['value' => (string) $value, 'label' => $key]
             );
         }
         Cache::forget('cms_settings_all');
+        Cache::flush();
     }
 
     /**
@@ -63,6 +65,14 @@ class CmsSetting extends Model
     {
         $val = static::get($key, false);
         return in_array($val, ['1', 1, true, 'true'], true);
+    }
+
+    /**
+     * Check if Advanced Shop Search Filtering is enabled.
+     */
+    public static function isAdvancedSearchEnabled(): bool
+    {
+        return static::isEnabled('enable_advanced_shop_search');
     }
 
     /**

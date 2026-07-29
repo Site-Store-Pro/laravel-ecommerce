@@ -1,7 +1,7 @@
 <div 
     x-data="{ isOpen: @entangle('isOpen') }" 
     x-show="isOpen" 
-    class="fixed inset-0 z-50 overflow-hidden" 
+    class="fixed inset-0 z-[999999] overflow-hidden" 
     style="display: none;"
     role="dialog" 
     aria-modal="true"
@@ -19,7 +19,7 @@
         class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
     ></div>
 
-    <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+    <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex z-[999999]">
         <!-- Slide-over panel -->
         <div 
             x-show="isOpen"
@@ -39,7 +39,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
                     </span>
-                    <h2 class="text-lg font-bold text-slate-800">Shopping Cart</h2>
+                    <h2 class="text-lg font-bold text-slate-800">@label('cart.slide_heading', 'Shopping Cart')</h2>
                     <span class="px-2 py-0.5 text-xs font-bold text-white bg-indigo-600 rounded-full">{{ $cartCount }}</span>
                 </div>
                 <button wire:click="closeCart" type="button" class="text-slate-400 hover:text-slate-600 focus:outline-none">
@@ -75,8 +75,8 @@
                         <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
-                        <p class="text-sm font-semibold text-slate-700">Your cart is empty</p>
-                        <p class="text-xs text-slate-500">Add products to start shopping.</p>
+                        <p class="text-sm font-semibold text-slate-700">@label('cart.slide_empty_heading', 'Your cart is empty')</p>
+                        <p class="text-xs text-slate-500">@label('cart.slide_empty_message', 'Add products to start shopping.')</p>
                     </div>
                 @else
                     <div class="divide-y divide-slate-100">
@@ -113,11 +113,11 @@
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                                 </svg>
-                                                Locked (BOGO)
+                                                @label('cart.locked_bogo', 'Locked (BOGO)')
                                             </div>
                                         @elseif(isset($item['max_qty']) && $item['max_qty'] == 1)
                                             <div class="px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-500 whitespace-nowrap">
-                                                Qty: 1 (Max limit)
+                                                @label('cart.qty_max_limit', 'Qty: 1 (Max limit)')
                                             </div>
                                         @else
                                             <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1">
@@ -145,11 +145,11 @@
 
                                         @if(isset($item['item_discount_price']) && $item['item_discount_price'] > 0)
                                             <span class="text-xs font-semibold text-slate-500">
-                                                {{ $currencySymbol }}{{ number_format($item['item_price'], 2) }} <span class="line-through text-slate-400 text-[10px]">{{ $currencySymbol }}{{ number_format($item['item_price'] + $item['item_discount_price'], 2) }}</span> each
+                                                {{ $currencySymbol }}{{ number_format($item['item_price'], 2) }} <span class="line-through text-slate-400 text-[10px]">{{ $currencySymbol }}{{ number_format($item['item_price'] + $item['item_discount_price'], 2) }}</span> @label('cart.slide_each', 'each')
                                             </span>
                                         @else
                                             <span class="text-xs font-semibold text-slate-500">
-                                                {{ $currencySymbol }}{{ number_format($item['item_price'], 2) }} each
+                                                {{ $currencySymbol }}{{ number_format($item['item_price'], 2) }} @label('cart.slide_each', 'each')
                                             </span>
                                         @endif
                                     </div>
@@ -187,17 +187,17 @@
             @if(!empty($itemsData))
                 <div class="px-6 py-5 border-t border-slate-100 bg-slate-50 space-y-4">
                     <div class="flex items-center justify-between text-sm font-semibold text-slate-500">
-                        <span>Subtotal</span>
+                        <span>@label('cart.subtotal', 'Subtotal')</span>
                         <span class="text-slate-800 font-bold">{{ $currencySymbol }}{{ number_format($subtotal, 2) }}</span>
                     </div>
                     @if($subtotal - $total > 0)
                         <div class="flex items-center justify-between text-xs font-semibold text-emerald-600">
-                            <span>Promos / Discounts</span>
+                            <span>@label('cart.slide_promos', 'Promos / Discounts')</span>
                             <span>-{{ $currencySymbol }}{{ number_format($subtotal - $total, 2) }}</span>
                         </div>
                     @endif
                     <div class="flex items-center justify-between text-base font-bold text-slate-800 pt-2 border-t border-slate-200">
-                        <span>Total</span>
+                        <span>@label('cart.total', 'Total')</span>
                         <span class="text-indigo-600 text-lg">{{ $currencySymbol }}{{ number_format($total, 2) }}</span>
                     </div>
 
@@ -207,7 +207,7 @@
                             wire:navigate
                             class="w-full inline-flex items-center justify-center px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-indigo-100 transition duration-150"
                         >
-                            Proceed to Checkout
+                            @label('cart.proceed_to_checkout', 'Proceed to Checkout')
                         </a>
                     </div>
                 </div>

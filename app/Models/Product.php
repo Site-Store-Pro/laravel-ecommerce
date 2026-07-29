@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,6 +13,7 @@ use App\Models\ProductCrossSell;
 class Product extends Model
 {
     use HasFactory;
+    use HasTranslations;
 
     protected $table = 'products';
     protected $fillable = [
@@ -26,6 +28,8 @@ class Product extends Model
         'brand_id',
         'max_qty',
         'checkout_redirect',
+        'completion_redirect',
+        'completion_redirect_label',
         'standalone_purchase',
         'dependent_variants',
         'hide_inventory_levels',
@@ -33,6 +37,20 @@ class Product extends Model
         'reviews_enabled',
         'reviews_rating',
         'featured_item',
+        'product_search_index',
+        'product_search_index_locked',
+        'show_item_total',
+        'variant_label',
+        'product_video_embed',
+    ];
+
+    /** Fields automatically translated when translations relation is loaded. */
+    protected array $translatable = [
+        'title',
+        'short_description',
+        'long_description',
+        'meta_title',
+        'meta_description',
     ];
 
     protected $casts = [
@@ -45,7 +63,146 @@ class Product extends Model
         'reviews_enabled' => 'integer',
         'reviews_rating' => 'float',
         'featured_item' => 'integer',
+        'product_search_index_locked' => 'boolean',
+        'show_item_total' => 'integer',
+        'variant_label' => 'string',
+        'product_video_embed' => 'string',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Product $product) {
+            $product->rebuildSearchIndex();
+        });
+    }
+
+    /**
+     * Resolve a raw completion_redirect value (URL or [page:ID] shortcode) to
+     * an absolute URL string, or null if blank / unresolvable.
+     *
+     * This is the single source of truth used by email builders and OrderReview.
+     */
+    public static function resolveCompletionUrl(?string $raw): ?string
+    {
+        $raw = trim((string) $raw);
+        if ($raw === '') {
+            return null;
+        }
+
+        // [page:ID] or [page:ID label="..."] shortcode
+        if (preg_match('/^\[page:(\d+)(?:\s[^\]]*)?\]$/i', $raw, $m)) {
+            $page = \App\Models\CmsPage::find((int) $m[1]);
+            if ($page && !empty($page->slug)) {
+                return url('/' . ltrim($page->slug, '/'));
+            }
+            return null; // shortcode references a missing page
+        }
+
+        // Absolute URL or relative path — return as-is
+        return $raw;
+    }
+
+    /**
+     * Returns the button label for the completion redirect.
+     * Falls back to 'View Content' if the DB value is empty.
+     */
+    public function completionRedirectLabel(): string
+    {
+        return trim((string) $this->completion_redirect_label) ?: 'View Content';
+    }
+
+    public static function stripShortcodesAndHtml(?string $text): string
+    {
+        if (empty($text)) {
+            return '';
+        }
+
+        // Strip bracketed shortcodes e.g. [code-embed:12], [plugin:brands-2026], [plugin:live-search-2026]
+        $text = preg_replace('/\[[^\]]+\]/', ' ', $text);
+
+        // Strip HTML tags
+        $text = strip_tags($text);
+
+        // Normalize whitespace
+        return trim(preg_replace('/\s+/', ' ', $text));
+    }
+
+    public function rebuildSearchIndex(bool $force = false): string
+    {
+        if ($this->product_search_index_locked && !$force) {
+            return (string) $this->product_search_index;
+        }
+
+        $parts = [];
+
+        if (!empty($this->title)) {
+            $parts[] = $this->title;
+        }
+        if (!empty($this->seo_slug)) {
+            $parts[] = str_replace(['-', '_'], ' ', $this->seo_slug);
+        }
+        if (!empty($this->meta_title)) {
+            $parts[] = $this->meta_title;
+        }
+        if (!empty($this->meta_description)) {
+            $cleaned = static::stripShortcodesAndHtml($this->meta_description);
+            if ($cleaned !== '') $parts[] = $cleaned;
+        }
+        if (!empty($this->short_description)) {
+            $cleaned = static::stripShortcodesAndHtml($this->short_description);
+            if ($cleaned !== '') $parts[] = $cleaned;
+        }
+        if (!empty($this->long_description)) {
+            $cleaned = static::stripShortcodesAndHtml($this->long_description);
+            if ($cleaned !== '') $parts[] = $cleaned;
+        }
+
+        // Keywords for Download & Event items
+        if (!empty($this->download_item) || (int)$this->download_item === 1) {
+            $parts[] = 'download downloads digital downloadable file files pdf ebook software';
+        }
+        $fullTextCheck = strtolower($this->title . ' ' . $this->short_description . ' ' . $this->long_description);
+        if (str_contains($fullTextCheck, 'event') || str_contains($fullTextCheck, 'ticket') || str_contains($fullTextCheck, 'seminar') || str_contains($fullTextCheck, 'workshop')) {
+            $parts[] = 'event events ticket tickets experience seminar workshop admission registration';
+        }
+
+        // Brand
+        if ($this->brand_id) {
+            $brandName = $this->relationLoaded('brand') && $this->brand ? $this->brand->name : Brand::where('id', $this->brand_id)->value('name');
+            if ($brandName) {
+                $parts[] = $brandName;
+            }
+        }
+
+        // Categories
+        if ($this->relationLoaded('categories') && $this->categories) {
+            foreach ($this->categories as $cat) {
+                $parts[] = $cat->name;
+            }
+        }
+
+        // Variants (SKUs, title/name, attributes)
+        if ($this->relationLoaded('variants') && $this->variants) {
+            foreach ($this->variants as $variant) {
+                if (!empty($variant->sku)) {
+                    $parts[] = $variant->sku;
+                }
+                if (!empty($variant->variant_title)) {
+                    $parts[] = $variant->variant_title;
+                }
+                if (!empty($variant->attributes) && is_array($variant->attributes)) {
+                    foreach ($variant->attributes as $k => $v) {
+                        $parts[] = "{$k}: {$v}";
+                    }
+                }
+            }
+        }
+
+        $indexContent = implode(' ', array_filter(array_map('trim', $parts)));
+        $this->product_search_index = $indexContent;
+
+        return $indexContent;
+    }
 
     public function reviews(): HasMany
     {
@@ -102,6 +259,19 @@ class Product extends Model
     public function getParsedLongDescriptionAttribute(): string
     {
         return \App\Services\ContentParserService::parse($this->long_description);
+    }
+
+    /**
+     * Parse the product video embed field through ContentParserService so that
+     * CMS shortcodes (e.g. [code-embed:N]) are expanded AND raw <iframe> HTML
+     * is passed through unchanged. Returns an empty string when not set.
+     */
+    public function getParsedVideoEmbedAttribute(): string
+    {
+        if (empty($this->product_video_embed)) {
+            return '';
+        }
+        return \App\Services\ContentParserService::parse($this->product_video_embed);
     }
 
     public function getPriceRangeAttribute(): string

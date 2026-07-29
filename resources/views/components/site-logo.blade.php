@@ -18,7 +18,7 @@
             </svg>
         </span>
     @endif
-    <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-slate-800 via-indigo-800 to-violet-800 bg-clip-text text-transparent group-hover:from-indigo-600 group-hover:to-violet-600 transition-all duration-300">
+    <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-slate-800 via-indigo-800 to-violet-800 bg-clip-text text-transparent group-hover:from-indigo-600 group-hover:to-violet-600 transition-all duration-300 truncate max-w-[130px] xs:max-w-[180px] sm:max-w-none">
         {{ $siteName }}
     </span>
 </a>

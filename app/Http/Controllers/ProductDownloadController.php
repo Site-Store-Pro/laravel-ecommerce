@@ -58,6 +58,33 @@ class ProductDownloadController extends Controller
             'Associated product variant could not be found.'
         );
 
+        // 6.5 Direct URL Download Mode (Overrides any uploaded download files or S3 options)
+        if (!empty($variant->direct_download_url)) {
+            $directUrl = trim($variant->direct_download_url);
+            $filename = basename(parse_url($directUrl, PHP_URL_PATH)) ?: 'download-file';
+
+            if (!str_contains($filename, '.')) {
+                $filename .= '.bin';
+            }
+
+            try {
+                $httpResponse = \Illuminate\Support\Facades\Http::timeout(30)->get($directUrl);
+                if ($httpResponse->successful()) {
+                    $contentType = $httpResponse->header('Content-Type') ?: 'application/octet-stream';
+                    return response()->streamDownload(function () use ($httpResponse) {
+                        echo $httpResponse->body();
+                    }, $filename, [
+                        'Content-Type' => $contentType,
+                        'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Direct download URL stream failed for variant {$variant->id}: " . $e->getMessage());
+            }
+
+            return redirect()->away($directUrl);
+        }
+
         // 7. Resolve storage disk
         $diskName = 'public';
         if ($variant->download_s3 == 1) {

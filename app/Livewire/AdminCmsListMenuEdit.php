@@ -26,6 +26,11 @@ class AdminCmsListMenuEdit extends Component
     public string $searchQuery = '';
     public string $searchScope = 'all';
 
+    // Translation state
+    public int $tlLangId = 0;
+    public array $tlBuffer = [];
+    public bool $aiTranslating = false;
+
     public function mount(int $id): void
     {
         abort_unless(auth()->check() && auth()->user()->isAdmin(), 403);
@@ -149,6 +154,58 @@ class AdminCmsListMenuEdit extends Component
         $this->dispatch('toast', message: 'Items reordered successfully.', type: 'success');
     }
 
+    public function selectTlLang(int $id): void
+    {
+        $this->tlLangId = $id;
+        $this->tlBuffer = [];
+        $this->loadAllTl();
+    }
+
+    public function loadAllTl(): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        $translations = \App\Models\CmsListMenuItemTranslation::whereIn('cms_list_menu_item_id', array_keys($this->itemsData))
+            ->where('language_id', $this->tlLangId)
+            ->get();
+        foreach ($translations as $tl) {
+            $this->tlBuffer[$tl->cms_list_menu_item_id] = [
+                'list_item' => $tl->list_item,
+            ];
+        }
+    }
+
+    public function saveTlItem(int $itemId): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        
+        $data = $this->tlBuffer[$itemId] ?? [];
+        
+        \App\Models\CmsListMenuItemTranslation::updateOrCreate(
+            ['cms_list_menu_item_id' => $itemId, 'language_id' => $this->tlLangId],
+            array_merge($data, ['translation_status' => 'reviewed', 'translated_at' => now()])
+        );
+        $this->dispatch('toast', message: 'Translation saved.', type: 'success');
+    }
+
+    public function aiTlItem(int $itemId): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        $this->aiTranslating = true;
+        
+        $item = CmsListMenuItem::findOrFail($itemId);
+        $lang = \App\Models\Language::findOrFail($this->tlLangId);
+        try {
+            $svc = app(\App\Services\TranslationService::class);
+            if (!empty($item->list_item)) {
+                $this->tlBuffer[$itemId]['list_item'] = $svc->translateText($item->list_item, $lang->name, 'cms list menu item');
+            }
+            $this->dispatch('toast', message: 'AI translation ready — review and save.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
+        }
+        $this->aiTranslating = false;
+    }
+
     public function render(): View
     {
         abort_unless(auth()->check() && auth()->user()->isAdmin(), 403);
@@ -222,7 +279,8 @@ class AdminCmsListMenuEdit extends Component
         }
 
         return view('livewire.admin-cms-list-menu-edit', [
-            'searchResults' => $searchResults
+            'searchResults' => $searchResults,
+            'activeLanguages' => \App\Models\Language::active()->where('is_default', false)->get(),
         ]);
     }
 }

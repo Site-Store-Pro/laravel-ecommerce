@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             \App\Http\Middleware\ProcessShortcodes::class,
+            \App\Http\Middleware\SetLocale::class,
         ]);
 
         $middleware->alias([

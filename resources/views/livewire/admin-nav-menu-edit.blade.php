@@ -43,6 +43,10 @@
                 class="px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px {{ $activeTab === 'appearance' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
             Appearance
         </button>
+        <button wire:click="$set('activeTab','translations')"
+                class="px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px {{ $activeTab === 'translations' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300' }}">
+            Translations
+        </button>
     </div>
 
     {{-- ═══════════════════════════════════════════════════════════════════════ --}}
@@ -242,7 +246,7 @@
                                 class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <option value="">— Select a page —</option>
                             @foreach($cmsPages as $page)
-                                <option value="{{ $page->page_id }}">{{ $page->page_title }}</option>
+                                <option value="{{ $page->id }}">{{ $page->title }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -429,20 +433,41 @@
                     </label>
                     @endforeach
                 </div>
+            {{-- Menu Alignment --}}
+            <div>
+                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Menu Items Alignment</label>
+                <select wire:model="menuAlignment" class="w-full sm:w-72 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="left">Left aligned</option>
+                    <option value="center">Center aligned</option>
+                    <option value="right">Right aligned</option>
+                    <option value="even">Evenly distributed</option>
+                </select>
+                <p class="mt-1 text-xs text-slate-400">Controls how desktop menu items are aligned across the navigation bar.</p>
             </div>
 
             {{-- Options row --}}
-            <div class="flex flex-wrap gap-6">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input wire:model="menuSticky" type="checkbox"
-                           class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
-                    <span class="text-sm text-slate-700 dark:text-slate-300">Sticky nav (fixed on scroll)</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input wire:model="menuShowLogo" type="checkbox"
-                           class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
-                    <span class="text-sm text-slate-700 dark:text-slate-300">Show site logo in nav</span>
-                </label>
+            <div class="space-y-4">
+                <div class="flex flex-wrap gap-6">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input wire:model.live="menuSticky" type="checkbox"
+                               class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                        <span class="text-sm text-slate-700 dark:text-slate-300">Sticky nav (fixed on scroll)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input wire:model="menuShowLogo" type="checkbox"
+                               class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                        <span class="text-sm text-slate-700 dark:text-slate-300">Show site logo in nav</span>
+                    </label>
+                </div>
+
+                <div x-show="$wire.menuSticky" class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600 space-y-2">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
+                        Main Body Top Offset (Sticky Menu Compensation)
+                    </label>
+                    <input wire:model="stickyBodyOffset" type="text" placeholder="e.g. 70px, 4rem, 0px"
+                           class="w-full sm:w-72 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono" />
+                    <p class="text-xs text-slate-400">Specify an optional top padding/margin offset for main body content to prevent layout overlap under sticky navigation.</p>
+                </div>
             </div>
 
             {{-- Custom CSS --}}
@@ -457,12 +482,130 @@
                 <p class="mt-1 text-xs text-slate-400">CSS variables available: <code class="font-mono">--nav-bg</code>, <code class="font-mono">--nav-text</code>, <code class="font-mono">--nav-text-hover</code>, <code class="font-mono">--nav-dropdown-bg</code>, and more. See documentation.</p>
             </div>
 
-            <button wire:click="saveAppearance"
-                    class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors">
-                Save Appearance
-            </button>
+            {{-- Default CSS (Read-Only Reference) --}}
+            <div>
+                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                    Default Top Navigation CSS (Read-Only Reference)
+                </label>
+                <pre class="text-xs bg-slate-900 dark:bg-slate-950 text-slate-300 p-4 rounded-xl overflow-x-auto max-h-56 leading-relaxed font-mono"><code>{{ $this->defaultTopNavCss }}</code></pre>
+                <p class="mt-1 text-xs text-slate-400 italic">Reference only — edit the Custom CSS field above to customize.</p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button wire:click="saveAppearance"
+                        class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors">
+                    Save Appearance
+                </button>
+                @if($successMessage)
+                    <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        {{ $successMessage }}
+                    </span>
+                @endif
+            </div>
         </div>
     </div>
 
     @endif {{-- end appearance tab --}}
+
+    {{-- ═══════════════════════════════════════════════════════════════════════ --}}
+    {{-- TAB: TRANSLATIONS --}}
+    {{-- ═══════════════════════════════════════════════════════════════════════ --}}
+    @if($activeTab === 'translations')
+
+    <div class="max-w-4xl">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 space-y-6">
+            @if($activeLanguages->isEmpty())
+                <div class="text-center py-12 border border-dashed border-slate-300 dark:border-slate-600 rounded-xl">
+                    <p class="text-sm text-slate-500">No active secondary languages configured.</p>
+                </div>
+            @else
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Select Language</label>
+                    <select wire:model.live="translationLanguageId" class="w-full sm:w-72 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="0">— Select language to translate —</option>
+                        @foreach($activeLanguages as $lang)
+                            <option value="{{ $lang->id }}">{{ $lang->name }} ({{ $lang->code }})</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                @if($translationLanguageId > 0)
+                    <div class="overflow-x-auto border-t border-slate-200 dark:border-slate-700 pt-4">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide border-b border-slate-200 dark:border-slate-700">
+                                    <th class="py-3 px-4">Menu Item (Default)</th>
+                                    <th class="py-3 px-4">Translation</th>
+                                    <th class="py-3 px-4 w-48">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                @php
+                                    // Flatten the items tree for easy translation table rendering
+                                    $flatItems = [];
+                                    $flatten = function($items, $level = 0) use (&$flatten, &$flatItems) {
+                                        foreach($items as $item) {
+                                            $item->level = $level;
+                                            $flatItems[] = $item;
+                                            if($item->children && $item->children->isNotEmpty()) {
+                                                $flatten($item->children, $level + 1);
+                                            }
+                                        }
+                                    };
+                                    $flatten($items);
+                                @endphp
+                                @foreach($flatItems as $item)
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-750">
+                                        <td class="py-3 px-4">
+                                            <div class="text-sm font-medium text-slate-700 dark:text-slate-200" style="padding-left: {{ $item->level * 1.5 }}rem;">
+                                                {!! strip_tags($item->label) ?: '<em class="text-slate-400">No label</em>' !!}
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <input type="text" 
+                                                   wire:model.defer="translationBuffer.{{ $item->id }}" 
+                                                   placeholder="{{ $navTranslations[$item->id] ?? 'Translate label...' }}"
+                                                   class="w-full px-3 py-2 bg-white dark:bg-slate-800 border {{ isset($navTranslations[$item->id]) ? 'border-emerald-300 dark:border-emerald-700' : 'border-slate-200 dark:border-slate-600' }} rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <div class="flex flex-wrap gap-1.5">
+                                                {{-- AI Translate button --}}
+                                                <button wire:click="aiTranslateNavItem({{ $item->id }})"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="aiTranslateNavItem({{ $item->id }})"
+                                                        title="AI translate from default label"
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:hover:bg-violet-900/50 dark:text-violet-400 text-xs font-semibold rounded transition-colors disabled:opacity-60 disabled:cursor-wait">
+                                                    <span wire:loading.remove wire:target="aiTranslateNavItem({{ $item->id }})">
+                                                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.09 9.09 2 12l7.09 2.91L12 22l2.91-7.09L22 12l-7.09-2.91L12 2z"/></svg>
+                                                    </span>
+                                                    <span wire:loading wire:target="aiTranslateNavItem({{ $item->id }})" class="inline-flex">
+                                                        <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                                    </span>
+                                                    AI
+                                                </button>
+
+                                                {{-- Save button --}}
+                                                <button wire:click="saveNavTranslation({{ $item->id }})" class="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:text-indigo-400 text-xs font-semibold rounded transition-colors">
+                                                    Save
+                                                </button>
+
+                                                {{-- Clear button (only when translation exists) --}}
+                                                @if(isset($navTranslations[$item->id]))
+                                                <button wire:click="clearNavTranslation({{ $item->id }})" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:hover:bg-rose-900/50 dark:text-rose-400 text-xs font-semibold rounded transition-colors">
+                                                    Clear
+                                                </button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            @endif
+        </div>
+    </div>
+
+    @endif {{-- end translations tab --}}
 </div>

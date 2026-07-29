@@ -37,6 +37,8 @@
         @endphp
         {{-- file-icon-vectors: active pack driven by CMS setting --}}
         <link rel="stylesheet" href="{{ $fileIconCssMap[$fileIconPack] ?? $fileIconCssMap['vivid'] }}">
+        {{-- flag-icons: CSS-based flag rendering for language switcher --}}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
         @stack('styles')
         @livewireStyles
     <x-site-theme-styles />

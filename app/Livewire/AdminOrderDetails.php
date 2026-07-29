@@ -2,9 +2,11 @@
 
 namespace App\Livewire;
 
+use App\Models\ContentAccessToken;
 use App\Models\Order;
 use App\Models\OrderRefund;
 use App\Models\OrderPayment;
+use App\Models\Product;
 use App\Models\ProductInventory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -29,6 +31,16 @@ class AdminOrderDetails extends Component
 
     // Delete order confirm
     public bool $showDeleteConfirm = false;
+
+    // ── Payment CRUD ─────────────────────────────────────────────────────────
+    public bool $showPaymentModal = false;
+    public ?int $editingPaymentId = null;
+    public string $pmtDate = '';
+    public string $pmtAmount = '';
+    public string $pmtMethod = 'Manual';
+    public int $pmtStatus = 1;
+    public string $pmtAuthCode = '';
+    public string $pmtNotes = '';
 
     public function mount(int $id): void
     {
@@ -245,6 +257,20 @@ class AdminOrderDetails extends Component
                 $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . e($item->item_name) . '</strong>';
                 $itemsHtml .= '<span style="color: #64748b; font-size: 12px; display: block; margin-top: 2px;">Quantity: ' . number_format($item->item_qty, 0) . '</span>';
                 $itemsHtml .= $itemTypeBadge;
+                // View Content button — secure UUID token link, supports guest users
+                $itemProduct = $item->variant?->product ?? null;
+                if ($itemProduct) {
+                    $contentUrl   = Product::resolveCompletionUrl($itemProduct->completion_redirect);
+                    $contentLabel = $itemProduct->completionRedirectLabel();
+                    if ($contentUrl) {
+                        $recipientEmail = $this->order->user?->email ?? '';
+                        $accessToken = ContentAccessToken::generateOrRefresh($item, $contentUrl, $recipientEmail);
+                        $tokenUrl    = route('content.access', $accessToken->token);
+                        $itemsHtml .= '<div style="margin-top: 8px;">';
+                        $itemsHtml .= '<a href="' . e($tokenUrl) . '" target="_blank" style="background-color: #7c3aed; color: #ffffff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: 1px solid #6d28d9;">' . e($contentLabel) . '</a>';
+                        $itemsHtml .= '</div>';
+                    }
+                }
                 $itemsHtml .= '</td>';
                 $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;" align="right">';
                 $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px;">$' . number_format($item->final_price * $item->item_qty, 2) . '</strong>';
@@ -366,6 +392,20 @@ class AdminOrderDetails extends Component
                 $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . e($item->item_name) . '</strong>';
                 $itemsHtml .= '<span style="color: #64748b; font-size: 12px; display: block; margin-top: 2px;">Quantity: ' . number_format($item->item_qty, 0) . '</span>';
                 $itemsHtml .= $itemTypeBadge;
+                // View Content button — secure UUID token link, supports guest users
+                $itemProduct = $item->variant?->product ?? null;
+                if ($itemProduct) {
+                    $contentUrl   = Product::resolveCompletionUrl($itemProduct->completion_redirect);
+                    $contentLabel = $itemProduct->completionRedirectLabel();
+                    if ($contentUrl) {
+                        $recipientEmail = $this->order->user?->email ?? '';
+                        $accessToken = ContentAccessToken::generateOrRefresh($item, $contentUrl, $recipientEmail);
+                        $tokenUrl    = route('content.access', $accessToken->token);
+                        $itemsHtml .= '<div style="margin-top: 8px;">';
+                        $itemsHtml .= '<a href="' . e($tokenUrl) . '" target="_blank" style="background-color: #7c3aed; color: #ffffff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: 1px solid #6d28d9;">' . e($contentLabel) . '</a>';
+                        $itemsHtml .= '</div>';
+                    }
+                }
                 $itemsHtml .= '</td>';
                 $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;" align="right">';
                 $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px;">$' . number_format($item->final_price * $item->item_qty, 2) . '</strong>';
@@ -517,6 +557,20 @@ class AdminOrderDetails extends Component
                     $itemsHtml .= '<a href="' . e($downloadUrl) . '" target="_blank" style="background-color: #4f46e5; color: #ffffff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: 1px solid #4338ca;">Download File</a>';
                     $itemsHtml .= '</div>';
                 }
+                // View Content button — secure UUID token link, supports guest users
+                $itemProduct = $item->variant?->product ?? null;
+                if ($itemProduct) {
+                    $contentUrl   = Product::resolveCompletionUrl($itemProduct->completion_redirect);
+                    $contentLabel = $itemProduct->completionRedirectLabel();
+                    if ($contentUrl) {
+                        $recipientEmail = $this->order->user?->email ?? '';
+                        $accessToken = ContentAccessToken::generateOrRefresh($item, $contentUrl, $recipientEmail);
+                        $tokenUrl    = route('content.access', $accessToken->token);
+                        $itemsHtml .= '<div style="margin-top: 8px;">';
+                        $itemsHtml .= '<a href="' . e($tokenUrl) . '" target="_blank" style="background-color: #7c3aed; color: #ffffff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: 1px solid #6d28d9;">' . e($contentLabel) . '</a>';
+                        $itemsHtml .= '</div>';
+                    }
+                }
                 $itemsHtml .= '</td>';
                 $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;" align="right">';
                 $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . \App\Services\CurrencyService::format($item->final_price * $item->item_qty) . '</strong>';
@@ -635,6 +689,85 @@ class AdminOrderDetails extends Component
         }
 
         $this->showEmailConfirm = false;
+    }
+
+    // ── Payment CRUD ─────────────────────────────────────────────────────────
+
+    public function openAddPayment(): void
+    {
+        $this->editingPaymentId = null;
+        $this->pmtDate          = now()->format('Y-m-d');
+        $this->pmtAmount        = '';
+        $this->pmtMethod        = 'Manual';
+        $this->pmtStatus        = 1;
+        $this->pmtAuthCode      = '';
+        $this->pmtNotes         = '';
+        $this->showPaymentModal = true;
+    }
+
+    public function openEditPayment(int $id): void
+    {
+        $payment = OrderPayment::findOrFail($id);
+
+        $this->editingPaymentId = $id;
+        $this->pmtDate          = $payment->payment_date
+            ? $payment->payment_date->format('Y-m-d')
+            : now()->format('Y-m-d');
+        $this->pmtAmount        = (string) $payment->payment_amount;
+        $this->pmtMethod        = $payment->payment_method ?? 'Manual';
+        $this->pmtStatus        = (int) $payment->payment_status;
+        $this->pmtAuthCode      = $payment->authorization_code ?? '';
+        $this->pmtNotes         = $payment->processor_response ?? '';
+        $this->showPaymentModal = true;
+    }
+
+    public function savePayment(): void
+    {
+        $this->validate([
+            'pmtDate'   => 'required|date',
+            'pmtAmount' => 'required|numeric|min:0.01',
+            'pmtMethod' => 'required|string|max:100',
+            'pmtStatus' => 'required|integer|in:0,1',
+        ], [], [
+            'pmtDate'   => 'Payment Date',
+            'pmtAmount' => 'Amount',
+            'pmtMethod' => 'Method',
+        ]);
+
+        $data = [
+            'order_id'             => $this->orderId,
+            'payment_date'         => $this->pmtDate,
+            'payment_amount'       => (float) $this->pmtAmount,
+            'payment_method'       => $this->pmtMethod,
+            'payment_status'       => $this->pmtStatus,
+            'authorization_code'   => $this->pmtAuthCode ?: null,
+            'processor_response'   => $this->pmtNotes ?: null,
+        ];
+
+        if ($this->editingPaymentId) {
+            OrderPayment::findOrFail($this->editingPaymentId)->update($data);
+            $msg = 'Payment updated successfully.';
+        } else {
+            OrderPayment::create($data);
+            $msg = 'Payment added successfully.';
+        }
+
+        $this->showPaymentModal = false;
+        $this->loadOrder();
+        session()->flash('status', $msg);
+    }
+
+    public function deletePayment(int $id): void
+    {
+        OrderPayment::findOrFail($id)->delete();
+        $this->loadOrder();
+        session()->flash('status', 'Payment deleted successfully.');
+    }
+
+    public function getBalanceDueProperty(): float
+    {
+        $totalPaid = (float) $this->order->payments->sum('payment_amount');
+        return max(0.0, (float) $this->order->order_total - $totalPaid);
     }
 
     public function render(): View

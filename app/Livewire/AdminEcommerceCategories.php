@@ -3,22 +3,26 @@
 namespace App\Livewire;
 
 use App\Models\Category;
+use App\Models\Language;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 class AdminEcommerceCategories extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     // Category Form State
     public ?int $categoryId = null;
     public string $name = '';
     public string $slug = '';
     public string $description = '';
+    public string $category_image = '';
+    public $category_image_file = null;
     public ?int $parent_id = null;
     public int $sort_order = 0;
     public bool $is_visible_in_menu = true;
@@ -39,6 +43,10 @@ class AdminEcommerceCategories extends Component
     // Modes
     public bool $isEditing = false;
     public bool $isCreating = false;
+
+    // Translation state
+    public int $tlLangId = 0;
+    public array $tlBuffer = [];
 
     public function mount(): void
     {
@@ -83,6 +91,8 @@ class AdminEcommerceCategories extends Component
         $this->name = '';
         $this->slug = '';
         $this->description = '';
+        $this->category_image = '';
+        $this->category_image_file = null;
         $this->parent_id = null;
         $this->sort_order = 0;
         $this->is_visible_in_menu = true;
@@ -109,11 +119,59 @@ class AdminEcommerceCategories extends Component
         $this->name = $category->name;
         $this->slug = $category->slug;
         $this->description = $category->description ?? '';
+        $this->category_image = $category->category_image ?? '';
         $this->parent_id = $category->parent_id;
         $this->sort_order = $category->sort_order;
         $this->is_visible_in_menu = (bool) $category->is_visible_in_menu;
         
         $this->isEditing = true;
+        $this->loadTlFor($id);
+    }
+
+    public function selectTlLang(int $id): void
+    {
+        $this->tlLangId = $id;
+        $this->tlBuffer = [];
+        if ($this->categoryId) {
+            $this->loadTlFor($this->categoryId);
+        }
+    }
+
+    public function loadTlFor(int $modelId): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        $existing = \App\Models\CategoryTranslation::where('category_id', $modelId)
+            ->where('language_id', $this->tlLangId)
+            ->first();
+        $this->tlBuffer = $existing ? $existing->only(['name', 'description']) : [];
+    }
+
+    public function saveTlCategory(int $modelId): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        \App\Models\CategoryTranslation::updateOrCreate(
+            ['category_id' => $modelId, 'language_id' => $this->tlLangId],
+            array_merge($this->tlBuffer, ['translation_status' => 'reviewed', 'translated_at' => now()])
+        );
+        $this->dispatch('toast', message: 'Translation saved.', type: 'success');
+    }
+
+    public function aiTlCategory(int $modelId): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        $record = Category::findOrFail($modelId);
+        $lang = Language::findOrFail($this->tlLangId);
+        try {
+            $svc = app(\App\Services\TranslationService::class);
+            foreach (['name', 'description'] as $field) {
+                if (!empty($record->$field)) {
+                    $this->tlBuffer[$field] = $svc->translateText($record->$field, $lang->name, 'Category context');
+                }
+            }
+            $this->dispatch('toast', message: 'AI translation ready — review and save.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
+        }
     }
 
     public function saveCategory(): void
@@ -121,6 +179,8 @@ class AdminEcommerceCategories extends Component
         $rules = [
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:product_categories,slug,' . ($this->categoryId ?? 'NULL') . ',id',
+            'category_image' => 'nullable|string|max:2048',
+            'category_image_file' => 'nullable|image|max:4096',
             'parent_id' => 'nullable|integer|exists:product_categories,id',
             'sort_order' => 'required|integer',
             'is_visible_in_menu' => 'required|boolean',
@@ -134,12 +194,20 @@ class AdminEcommerceCategories extends Component
 
         $this->validate($rules);
 
+        $finalImagePath = $this->category_image;
+
+        if ($this->category_image_file) {
+            $path = $this->category_image_file->store('uploads/categories', 'public');
+            $finalImagePath = asset('storage/' . $path);
+        }
+
         if ($this->isEditing && $this->categoryId) {
             $category = Category::findOrFail($this->categoryId);
             $category->update([
                 'name'              => $this->name,
                 'slug'              => $this->slug,
                 'description'       => $this->description ?: null,
+                'category_image'    => $finalImagePath ?: null,
                 'parent_id'         => $this->parent_id,
                 'sort_order'        => $this->sort_order,
                 'is_visible_in_menu' => $this->is_visible_in_menu,
@@ -150,6 +218,7 @@ class AdminEcommerceCategories extends Component
                 'name'              => $this->name,
                 'slug'              => $this->slug,
                 'description'       => $this->description ?: null,
+                'category_image'    => $finalImagePath ?: null,
                 'parent_id'         => $this->parent_id,
                 'sort_order'        => $this->sort_order,
                 'is_visible_in_menu' => $this->is_visible_in_menu,
@@ -204,7 +273,8 @@ class AdminEcommerceCategories extends Component
         return view('livewire.admin-ecommerce-categories', [
             'categories' => $categories,
             'parentOptions' => $parentOptions,
-            'categoryTree' => $categoryTree
+            'categoryTree' => $categoryTree,
+            'activeLanguages' => Language::active()->where('is_default', false)->get(),
         ]);
     }
 }

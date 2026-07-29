@@ -13,6 +13,7 @@ class CmsTagPageController extends Controller
 
         // Only list pages that are active and NOT gated for security (no access code and no product purchase required)
         $pages = $tag->pages()
+            ->withCurrentTranslations()
             ->where('is_active', 1)
             ->where(function ($q) {
                 $q->whereNull('expires_at')

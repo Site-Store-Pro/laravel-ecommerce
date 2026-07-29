@@ -106,7 +106,7 @@ new class extends Component
                             <div class="inline-flex items-center relative z-20">
                                 <x-dropdown align="left" width="48">
                                     <x-slot name="trigger">
-                                        <button class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer h-full focus:outline-none {{ request()->routeIs('admin.cms-pages.*') || request()->routeIs('admin.cms-categories.*') || request()->routeIs('admin.cms-tags.*') || request()->routeIs('admin.kb.*') || request()->routeIs('admin.cms-downloads.*') || request()->routeIs('admin.cms-embeds.*') || request()->routeIs('admin.nav-builder.*') ? 'border-indigo-500 text-slate-900 dark:text-slate-100 focus:border-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 focus:text-slate-700 focus:border-slate-300' }}">
+                                        <button class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer h-full focus:outline-none {{ request()->routeIs('admin.cms-pages.*') || request()->routeIs('admin.cms-categories.*') || request()->routeIs('admin.cms-tags.*') || request()->routeIs('admin.cms-slideshows.*') || request()->routeIs('admin.cms-list-menus.*') || request()->routeIs('admin.cms-downloads.*') || request()->routeIs('admin.cms-embeds.*') || request()->routeIs('admin.cms-forms.*') || request()->routeIs('admin.kb.*') || request()->routeIs('admin.nav-builder.*') || request()->routeIs('admin.cms-header-footer.*') || request()->routeIs('admin.testimonials.*') || request()->routeIs('admin.site-labels.*') || request()->routeIs('admin.languages.*') ? 'border-indigo-500 text-slate-900 dark:text-slate-100 focus:border-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 focus:text-slate-700 focus:border-slate-300' }}">
                                             <span>{{ __('CMS') }}</span>
                                             <svg class="ms-1.5 h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -124,6 +124,9 @@ new class extends Component
                                         <x-dropdown-link :href="route('admin.cms-tags.index')" wire:navigate>
                                             {{ __('Tags') }}
                                         </x-dropdown-link>
+                                        <x-dropdown-link :href="route('admin.cms-slideshows.index')" wire:navigate>
+                                            {{ __('Slideshows') }}
+                                        </x-dropdown-link>
                                         <x-dropdown-link :href="route('admin.cms-list-menus.index')" wire:navigate>
                                             {{ __('List Menus') }}
                                         </x-dropdown-link>
@@ -133,11 +136,29 @@ new class extends Component
                                         <x-dropdown-link :href="route('admin.cms-embeds.index')" wire:navigate>
                                             {{ __('Code Embeds') }}
                                         </x-dropdown-link>
+                                        <x-dropdown-link :href="route('admin.cms-forms.index')" wire:navigate>
+                                            {{ __('Forms') }}
+                                        </x-dropdown-link>
                                         <x-dropdown-link :href="route('admin.kb.index')" wire:navigate>
                                             {{ __('KB Docs') }}
                                         </x-dropdown-link>
                                         <x-dropdown-link :href="route('admin.nav-builder.index')" wire:navigate>
                                             {{ __('Navigation Builder') }}
+                                        </x-dropdown-link>
+                                        <x-dropdown-link :href="route('admin.cms-header-footer.index')" wire:navigate>
+                                            {{ __('Header & Footer Builder') }}
+                                        </x-dropdown-link>
+                                        <x-dropdown-link :href="route('admin.testimonials.index')" wire:navigate>
+                                            {{ __('Testimonials') }}
+                                        </x-dropdown-link>
+                                        <x-dropdown-link :href="route('admin.site-labels.index')" wire:navigate>
+                                            {{ __('Page Labels') }}
+                                        </x-dropdown-link>
+                                        <x-dropdown-link :href="route('admin.languages.index')" wire:navigate>
+                                            {{ __('Languages') }}
+                                        </x-dropdown-link>
+                                        <x-dropdown-link :href="route('admin.languages.queue-monitor')" wire:navigate>
+                                            {{ __('Queue Monitor') }}
                                         </x-dropdown-link>
                                     </x-slot>
                                 </x-dropdown>
@@ -301,17 +322,41 @@ new class extends Component
                         <x-responsive-nav-link :href="route('admin.cms-tags.index')" :active="request()->routeIs('admin.cms-tags.*')" wire:navigate>
                             {{ __('Tags') }}
                         </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.cms-slideshows.index')" :active="request()->routeIs('admin.cms-slideshows.*')" wire:navigate>
+                            {{ __('Slideshows') }}
+                        </x-responsive-nav-link>
                         <x-responsive-nav-link :href="route('admin.cms-list-menus.index')" :active="request()->routeIs('admin.cms-list-menus.*')" wire:navigate>
                             {{ __('List Menus') }}
                         </x-responsive-nav-link>
-                        <x-responsive-nav-link :href="route('admin.kb.index')" :active="request()->routeIs('admin.kb.*')" wire:navigate>
-                            {{ __('KB Docs') }}
+                        <x-responsive-nav-link :href="route('admin.cms-downloads.index')" :active="request()->routeIs('admin.cms-downloads.*')" wire:navigate>
+                            {{ __('Downloads') }}
                         </x-responsive-nav-link>
                         <x-responsive-nav-link :href="route('admin.cms-embeds.index')" :active="request()->routeIs('admin.cms-embeds.*')" wire:navigate>
                             {{ __('Code Embeds') }}
                         </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.cms-forms.index')" :active="request()->routeIs('admin.cms-forms.*')" wire:navigate>
+                            {{ __('Forms') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.kb.index')" :active="request()->routeIs('admin.kb.*')" wire:navigate>
+                            {{ __('KB Docs') }}
+                        </x-responsive-nav-link>
                         <x-responsive-nav-link :href="route('admin.nav-builder.index')" :active="request()->routeIs('admin.nav-builder.*')" wire:navigate>
                             {{ __('Navigation Builder') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.cms-header-footer.index')" :active="request()->routeIs('admin.cms-header-footer.*')" wire:navigate>
+                            {{ __('Header & Footer Builder') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.testimonials.index')" :active="request()->routeIs('admin.testimonials.*')" wire:navigate>
+                            {{ __('Testimonials') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.site-labels.index')" :active="request()->routeIs('admin.site-labels.*')" wire:navigate>
+                            {{ __('Page Labels') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.languages.index')" :active="request()->routeIs('admin.languages.index')" wire:navigate>
+                            {{ __('Languages') }}
+                        </x-responsive-nav-link>
+                        <x-responsive-nav-link :href="route('admin.languages.queue-monitor')" :active="request()->routeIs('admin.languages.queue-monitor')" wire:navigate>
+                            {{ __('Queue Monitor') }}
                         </x-responsive-nav-link>
                     </div>
                 @endif

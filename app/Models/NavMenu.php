@@ -16,7 +16,9 @@ class NavMenu extends Model
         'color_scheme',
         'custom_css',
         'sticky',
+        'sticky_body_offset',
         'show_logo',
+        'alignment',
     ];
 
     protected $casts = [
@@ -48,13 +50,13 @@ class NavMenu extends Model
     // ─── Static helpers ───────────────────────────────────────────────────────
 
     /**
-     * Get the primary active menu, or null if none configured.
+     * Get the primary active menu, or fallback to first active or first menu if none configured.
      */
     public static function getPrimary(): ?NavMenu
     {
-        return static::where('is_primary', true)
-            ->where('is_active', true)
-            ->first();
+        return static::where('is_primary', true)->where('is_active', true)->first()
+            ?? static::where('is_active', true)->first()
+            ?? static::first();
     }
 
     /**

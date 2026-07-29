@@ -404,7 +404,134 @@
                                 <option value="1.5rem">Rounded 3XL (24px)</option>
                                 <option value="9999px">Pill / Full (9999px)</option>
                             </select>
-                            @error('theme_border_radius') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Secondary Button Styling Manager</p>
+                                <p class="text-xs text-slate-400">Configure secondary buttons (e.g. catalog list/grid display view toggles). Defaults to transparent background with text color matching the primary button.</p>
+                            </div>
+                            <button type="button"
+                                    class="btn-secondary !text-xs"
+                                    style="background-color: {{ $theme_secondary_bg_color }}; color: {{ $theme_secondary_text_color }}; border-color: {{ $theme_secondary_border_color }};">
+                                Preview Secondary Button
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            {{-- Secondary Text Color --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Text Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model="theme_secondary_text_color"
+                                           class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model="theme_secondary_text_color"
+                                           placeholder="#4f46e5"
+                                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+
+                            {{-- Secondary Background Color --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Background</label>
+                                <input type="text" wire:model="theme_secondary_bg_color"
+                                       placeholder="transparent"
+                                       class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono focus:outline-none">
+                            </div>
+
+                            {{-- Secondary Border Color --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Border Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model="theme_secondary_border_color"
+                                           class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model="theme_secondary_border_color"
+                                           placeholder="#4f46e5"
+                                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+
+                            {{-- Secondary Hover BG Color --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hover Background</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model="theme_secondary_hover_bg_color"
+                                           class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model="theme_secondary_hover_bg_color"
+                                           placeholder="#4f46e5"
+                                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+
+                            {{-- Secondary Hover Text Color --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hover Text Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model="theme_secondary_hover_text_color"
+                                           class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model="theme_secondary_hover_text_color"
+                                           placeholder="#ffffff"
+                                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Go to Top Button Styling Manager --}}
+                    <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Go to Top Button Colors</p>
+                                <p class="text-xs text-slate-400">Configure custom background and hover colors for the floating return-to-top button. If set, these values override the default theme accent colors.</p>
+                            </div>
+                            <div class="shrink-0 flex items-center gap-2">
+                                <button type="button" 
+                                        class="px-4 py-2 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                                        style="background-color: {{ !empty($backtop_bg_color) ? $backtop_bg_color : 'var(--primary-accent-color, #4f46e5)' }};">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                    <span>Preview Button</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {{-- Go to Top Background Color --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Background Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" 
+                                           value="{{ !empty($backtop_bg_color) ? $backtop_bg_color : '#4f46e5' }}"
+                                           onchange="this.nextElementSibling.value = this.value; this.nextElementSibling.dispatchEvent(new Event('input'))"
+                                           class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="backtop_bg_color"
+                                           placeholder="#4f46e5 (blank for theme default)"
+                                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                    @if(!empty($backtop_bg_color))
+                                        <button type="button" wire:click="$set('backtop_bg_color', '')" class="text-xs font-bold text-slate-400 hover:text-rose-500 px-1" title="Reset to default">Reset</button>
+                                    @endif
+                                </div>
+                                @error('backtop_bg_color') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            {{-- Go to Top Hover Background Color --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hover Background Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" 
+                                           value="{{ !empty($backtop_hover_bg_color) ? $backtop_hover_bg_color : '#4338ca' }}"
+                                           onchange="this.nextElementSibling.value = this.value; this.nextElementSibling.dispatchEvent(new Event('input'))"
+                                           class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="backtop_hover_bg_color"
+                                           placeholder="#4338ca (blank for theme default)"
+                                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                    @if(!empty($backtop_hover_bg_color))
+                                        <button type="button" wire:click="$set('backtop_hover_bg_color', '')" class="text-xs font-bold text-slate-400 hover:text-rose-500 px-1" title="Reset to default">Reset</button>
+                                    @endif
+                                </div>
+                                @error('backtop_hover_bg_color') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -757,9 +884,35 @@
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </span>
                             @endif
-                        </label>
-
                     </div>
+                </div>
+
+                {{-- Disable Shop Landing Page Toggle --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Disable Shop Landing Page</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, visitors navigating to the main shop landing page (<code class="px-1 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-300 font-mono text-[11px]">/shop</code>) without any active category, brand, or search filters will automatically be redirected to the home page.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="disable_shop_landing" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-violet-600"></div>
+                    </label>
+                </div>
+
+                {{-- Enable Advanced Search Filtering Panel Toggle --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Enable Advanced Search Filtering Panel</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, a slideout drawer and collapsible filter panel will appear on the shop page allowing multi-select filtering by Brands, Categories, Subcategories, Price Slider, and Dynamic JSON Variant Attributes (Size, Color, etc.). (OFF by default).
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="enable_advanced_shop_search" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
                 </div>
 
             </div>

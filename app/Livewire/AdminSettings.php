@@ -36,6 +36,15 @@ class AdminSettings extends Component
     public string $theme_hover_color = '#4338ca';
     public string $theme_text_color = '#ffffff';
     public string $theme_border_radius = '0.75rem';
+    public string $theme_secondary_bg_color = 'transparent';
+    public string $theme_secondary_text_color = '#4f46e5';
+    public string $theme_secondary_border_color = '#4f46e5';
+    public string $theme_secondary_hover_bg_color = '#4f46e5';
+    public string $theme_secondary_hover_text_color = '#ffffff';
+
+    // Go to Top Button
+    public string $backtop_bg_color = '';
+    public string $backtop_hover_bg_color = '';
 
     // Loaders
     public ?string $google_fonts_url = '';
@@ -54,6 +63,8 @@ class AdminSettings extends Component
 
     // Shop Display
     public string $product_image_orientation = '16:9'; // 16:9 | 1:1
+    public bool   $disable_shop_landing = false;
+    public bool   $enable_advanced_shop_search = false;
 
     public function mount(): void
     {
@@ -71,12 +82,21 @@ class AdminSettings extends Component
         $this->logo_s3_region  = $settings['logo_s3_region'] ?? 'us-east-1';
 
         // Appearance
-        $this->frontend_dark_mode  = (bool) ($settings['frontend_dark_mode']  ?? false);
-        $this->admin_dark_mode     = (bool) ($settings['admin_dark_mode']      ?? false);
-        $this->theme_primary_color = $settings['theme_primary_color'] ?? '#4f46e5';
-        $this->theme_hover_color   = $settings['theme_hover_color']   ?? '#4338ca';
-        $this->theme_text_color    = $settings['theme_text_color']    ?? '#ffffff';
-        $this->theme_border_radius = $settings['theme_border_radius'] ?? '0.75rem';
+        $this->frontend_dark_mode          = (bool) ($settings['frontend_dark_mode']  ?? false);
+        $this->admin_dark_mode             = (bool) ($settings['admin_dark_mode']      ?? false);
+        $this->theme_primary_color         = $settings['theme_primary_color'] ?? '#4f46e5';
+        $this->theme_hover_color           = $settings['theme_hover_color']   ?? '#4338ca';
+        $this->theme_text_color            = $settings['theme_text_color']    ?? '#ffffff';
+        $this->theme_border_radius         = $settings['theme_border_radius'] ?? '0.75rem';
+        $this->theme_secondary_bg_color    = $settings['theme_secondary_bg_color']    ?? 'transparent';
+        $this->theme_secondary_text_color  = $settings['theme_secondary_text_color']  ?? ($settings['theme_primary_color'] ?? '#4f46e5');
+        $this->theme_secondary_border_color = $settings['theme_secondary_border_color'] ?? ($settings['theme_primary_color'] ?? '#4f46e5');
+        $this->theme_secondary_hover_bg_color   = $settings['theme_secondary_hover_bg_color']   ?? ($settings['theme_primary_color'] ?? '#4f46e5');
+        $this->theme_secondary_hover_text_color = $settings['theme_secondary_hover_text_color'] ?? '#ffffff';
+
+        // Go to Top Button
+        $this->backtop_bg_color       = $settings['backtop_bg_color'] ?? '';
+        $this->backtop_hover_bg_color = $settings['backtop_hover_bg_color'] ?? '';
 
         // Loaders
         $this->google_fonts_url    = $settings['google_fonts_url']    ?? '';
@@ -94,7 +114,9 @@ class AdminSettings extends Component
         $this->file_icon_pack = $settings['file_icon_pack'] ?? 'vivid';
 
         // Shop Display
-        $this->product_image_orientation = $settings['product_image_orientation'] ?? '16:9';
+        $this->product_image_orientation    = $settings['product_image_orientation'] ?? '16:9';
+        $this->disable_shop_landing         = (bool) ($settings['disable_shop_landing'] ?? false);
+        $this->enable_advanced_shop_search  = (bool) ($settings['enable_advanced_shop_search'] ?? false);
     }
 
     public function save(): void
@@ -117,10 +139,14 @@ class AdminSettings extends Component
             'theme_hover_color'   => 'required|string|regex:/^#[0-9a-fA-F]{6}$/',
             'theme_text_color'    => 'required|string|regex:/^#[0-9a-fA-F]{6}$/',
             'theme_border_radius' => 'required|string|max:50',
+            'backtop_bg_color'       => 'nullable|string|regex:/^#[0-9a-fA-F]{6}$/',
+            'backtop_hover_bg_color' => 'nullable|string|regex:/^#[0-9a-fA-F]{6}$/',
             'enable_reviews'      => 'boolean',
             'third_party_reviews_js' => 'nullable|string',
             'file_icon_pack'      => 'required|string|in:vivid,classic,square',
             'product_image_orientation' => 'required|string|in:16:9,1:1',
+            'disable_shop_landing' => 'boolean',
+            'enable_advanced_shop_search' => 'boolean',
         ]);
 
         // Handle local logo file upload
@@ -145,6 +171,13 @@ class AdminSettings extends Component
             'theme_hover_color'   => $this->theme_hover_color,
             'theme_text_color'    => $this->theme_text_color,
             'theme_border_radius' => $this->theme_border_radius,
+            'theme_secondary_bg_color'         => $this->theme_secondary_bg_color,
+            'theme_secondary_text_color'       => $this->theme_secondary_text_color,
+            'theme_secondary_border_color'     => $this->theme_secondary_border_color,
+            'theme_secondary_hover_bg_color'   => $this->theme_secondary_hover_bg_color,
+            'theme_secondary_hover_text_color' => $this->theme_secondary_hover_text_color,
+            'backtop_bg_color'       => trim($this->backtop_bg_color),
+            'backtop_hover_bg_color' => trim($this->backtop_hover_bg_color),
             'google_fonts_url'   => trim($this->google_fonts_url ?? ''),
             'google_analytics_id'=> trim($this->google_analytics_id ?? ''),
             'custom_js_loader'   => trim($this->custom_js_loader ?? ''),
@@ -153,7 +186,11 @@ class AdminSettings extends Component
             'third_party_reviews_js' => trim($this->third_party_reviews_js),
             'file_icon_pack'     => $this->file_icon_pack,
             'product_image_orientation' => $this->product_image_orientation,
+            'disable_shop_landing'      => $this->disable_shop_landing ? '1' : '0',
+            'enable_advanced_shop_search' => $this->enable_advanced_shop_search ? '1' : '0',
         ]);
+
+        \App\Services\HeaderFooterCssManager::clearCompiledCssCache();
 
         // Explicitly clear the cache to ensure updates are visible on the next request
         Cache::forget('cms_settings_all');

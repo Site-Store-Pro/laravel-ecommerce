@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
+/**
+ * Plugin
+ *
+ * Core plugin registry model. Supports per-language setting overrides via the
+ * plugin_setting_translations table (see PluginSettingTranslation).
+ */
 class Plugin extends Model
 {
     protected $table = 'plugins';
@@ -42,6 +48,11 @@ class Plugin extends Model
     public function settings(): HasMany
     {
         return $this->hasMany(PluginSetting::class, 'plugin_id');
+    }
+
+    public function settingTranslations(): HasMany
+    {
+        return $this->hasMany(PluginSettingTranslation::class, 'plugin_id');
     }
 
     public function scopeActive(Builder $query): Builder
@@ -87,5 +98,57 @@ class Plugin extends Model
     public function getOptionsSchema(): Collection
     {
         return $this->options()->orderBy('sort_order')->get();
+    }
+
+    /**
+     * Returns [field_name => 'Human-Readable Label'] for settings that have
+     * per-language translations.  Add entries here as new translatable plugins
+     * are introduced.
+     */
+    public function getTranslatableFields(): array
+    {
+        $map = [
+            'live-search-2026' => [
+                'button_label' => 'Button Label',
+                'placeholder'  => 'Placeholder Text',
+            ],
+        ];
+
+        return $map[$this->shortcode] ?? [];
+    }
+
+    /**
+     * Returns the base settings array merged with translated overrides for
+     * the given language.  Empty/null translation values are ignored so the
+     * base setting acts as the fallback.
+     */
+    public function getSettingsForLanguage(int $langId): array
+    {
+        $base      = $this->getSettings();
+        $overrides = $this->settingTranslations()
+            ->where('language_id', $langId)
+            ->pluck('field_value', 'field_name')
+            ->filter(fn ($v) => $v !== null && $v !== '')
+            ->toArray();
+
+        return array_merge($base, $overrides);
+    }
+
+    /**
+     * Upserts translation values for a given language.  Only the fields
+     * present in $values are written; omitted fields are left unchanged.
+     */
+    public function saveSettingsForLanguage(int $langId, array $values): void
+    {
+        foreach ($values as $fieldName => $value) {
+            PluginSettingTranslation::updateOrCreate(
+                [
+                    'plugin_id'   => $this->id,
+                    'language_id' => $langId,
+                    'field_name'  => $fieldName,
+                ],
+                ['field_value' => $value]
+            );
+        }
     }
 }

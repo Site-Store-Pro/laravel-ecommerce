@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,8 @@ use Illuminate\Support\Collection;
 
 class NavItem extends Model
 {
+    use HasTranslations;
+
     protected $fillable = [
         'menu_id',
         'parent_id',
@@ -27,6 +30,9 @@ class NavItem extends Model
         'aria_label',
         'plugin_slug',
     ];
+
+    /** Fields automatically translated when translations relation is loaded. */
+    protected array $translatable = ['label'];
 
     protected $casts = [
         'is_active'       => 'boolean',
@@ -53,6 +59,7 @@ class NavItem extends Model
         'html_submenu' => 'Custom HTML Sub-menu',
         'separator'    => 'Separator / Divider',
         'plugin'       => 'Plugin Item',
+        'login_logout' => 'Login / Logout',
     ];
 
     // ─── Relationships ────────────────────────────────────────────────────────
@@ -130,5 +137,19 @@ class NavItem extends Model
             'wholesale_only' => !is_null($user) && method_exists($user, 'isWholesale') && $user->isWholesale(),
             default          => true, // 'all'
         };
+    }
+
+    // ─── Accessors ───────────────────────────────────────────────────────────
+
+    public function getComputedUrlAttribute(): string
+    {
+        $renderer = app(\App\Services\NavItemRenderer::class);
+        $resolved = $renderer->resolveLink($this, ['user' => auth()->user()]);
+        return $resolved['href'] ?? '#';
+    }
+
+    public function getTargetAttribute(): string
+    {
+        return $this->open_in_new_tab ? '_blank' : '_self';
     }
 }

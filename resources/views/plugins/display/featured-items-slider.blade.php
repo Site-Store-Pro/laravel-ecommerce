@@ -12,11 +12,6 @@
 @endphp
 
 {{-- Load Swiper only once per page — safe to use alongside the slideshow plugin --}}
-@once
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-@endonce
-
 <div class="featured-items-plugin-section py-8">
 
     {{-- Section Header --}}
@@ -162,9 +157,9 @@
                                               d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                     </svg>
                                 @endif
-                                <span class="fi-badge-featured">★ Featured</span>
+                                <span class="fi-badge-featured">@label('plugin.featured', '★ Featured')</span>
                                 @if($defaultVariant && $defaultVariant->on_sale)
-                                    <span class="fi-badge-sale">Sale</span>
+                                    <span class="fi-badge-sale">@label('plugin.sale', 'Sale')</span>
                                 @endif
                             </a>
 
@@ -180,21 +175,21 @@
                                 <div class="fi-footer">
                                     <div>
                                         @if($defaultVariant)
-                                            <div class="fi-price">{{ $isFromPrice ? 'From ' : '' }}${{ number_format($priceToShow, 2) }}</div>
+                                            <div class="fi-price">@if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}</div>
                                             @if($priceToShow < $originalPrice)
                                                 <div class="fi-price-orig">${{ number_format($originalPrice, 2) }}</div>
                                             @endif
                                         @else
-                                            <span style="font-size:12px;color:#94a3b8">Out of Stock</span>
+                                            <span style="font-size:12px;color:#94a3b8">@label('plugin.out_of_stock', 'Out of Stock')</span>
                                         @endif
                                     </div>
 
                                     @if($product->variants->count() === 1)
                                         @if(!$v->download_item && $avail <= 0)
-                                            <span class="fi-btn fi-btn-disabled">Out of Stock</span>
+                                            <span class="fi-btn fi-btn-disabled">@label('plugin.out_of_stock', 'Out of Stock')</span>
                                         @else
                                             <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-primary">
-                                                Buy Now
+                                                @label('plugin.buy_now', 'Buy Now')
                                                 <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                                 </svg>
@@ -202,7 +197,7 @@
                                         @endif
                                     @else
                                         <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-outline">
-                                            Options
+                                            @label('plugin.options', 'Options')
                                             <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                             </svg>

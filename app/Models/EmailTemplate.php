@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\HasTranslations;
 
 class EmailTemplate extends Model
 {
+    use HasTranslations;
+
     protected $fillable = [
         'email_type_id',
         'profile_name',

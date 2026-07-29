@@ -66,12 +66,15 @@
         activeVariantId: {{ $selectedVariant ? $selectedVariant->id : 0 }},
         activeColor: '{{ $selectedVariant ? $this->getVariantColor($selectedVariant) : '' }}',
         zooming: false,
+        zoomLocked: false,
         zoomX: '50%',
         zoomY: '50%',
         lightbox: false,
         get img() { return this.images[this.current] ?? null; },
         get hasZoom() { return this.img && this.img.zoom; },
         trackMouse(e) {
+            // Clear lock on first real mouse movement so zoom can activate naturally.
+            if (this.zoomLocked) { this.zoomLocked = false; }
             const rect = e.currentTarget.getBoundingClientRect();
             const x = ((e.clientX - rect.left) / rect.width  * 100).toFixed(2);
             const y = ((e.clientY - rect.top)  / rect.height * 100).toFixed(2);
@@ -82,6 +85,7 @@
         selectThumb(idx) {
             this.current = idx;
             this.zooming = false;
+            this.zoomLocked = false; // thumbnail clicks are deliberate — no need to lock
             const img = this.images[idx];
             if (img) {
                 const imgColor = img.color || '';
@@ -108,16 +112,21 @@
             idx = images.findIndex(i => i.color && i.color.toLowerCase() === $event.detail.color.toLowerCase());
         }
         if (idx !== -1) { current = idx; }
+        // Lock zoom: after a variant switch the browser re-fires mouseenter on the
+        // newly rendered image element because the cursor is already over it.
+        // zoomLocked prevents that phantom mouseenter from triggering zoom.
+        // It clears on the next real mousemove so hover-to-zoom works normally.
         zooming = false;
+        zoomLocked = true;
     "
 >
     {{-- ── Main image area ────────────────────────────────────── --}}
     <div
         class="{{ $aspectClass }} bg-gradient-to-br from-indigo-50/50 to-violet-50/50 rounded-2xl flex items-center justify-center relative overflow-hidden select-none"
         :class="hasZoom ? 'cursor-crosshair' : (img ? 'cursor-zoom-in' : '')"
-        @mouseenter="if(hasZoom) zooming = true"
-        @mouseleave="zooming = false"
-        @mousemove="if(hasZoom) trackMouse($event)"
+        @mouseenter="if(hasZoom && !zoomLocked) zooming = true"
+        @mouseleave="zooming = false; zoomLocked = false;"
+        @mousemove="if(hasZoom) { trackMouse($event); if(!zoomLocked) zooming = true; }"
         @click="openLightbox()"
     >
         {{-- No image fallback (Alpine-driven so it hides after variant swap) --}}
@@ -159,7 +168,7 @@
             class="absolute bottom-3 right-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/50 backdrop-blur-sm text-white text-[11px] font-semibold rounded-full pointer-events-none"
         >
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
-            Hover to zoom · Click to enlarge
+            @label('product.gallery_zoom_hint', 'Hover to zoom · Click to enlarge')
         </div>
 
         {{-- Click-to-enlarge hint when no zoom image --}}
@@ -172,7 +181,7 @@
     {{-- ── Thumbnail strip ───────────────────────────────── --}}
     {{-- Hidden when the product has only one image total across all variants --}}
     <template x-if="images.length > 1">
-        <div class="flex items-center justify-center gap-3 mt-4 overflow-x-auto py-1 px-0.5" style="scrollbar-width: thin;">
+        <div class="flex flex-wrap items-center justify-center gap-3 mt-4 py-1 px-0.5">
             <template x-for="(timg, idx) in images" :key="idx">
                 <button
                     @click="selectThumb(idx)"
@@ -197,7 +206,7 @@
             x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/85 backdrop-blur-md"
+            class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/85 backdrop-blur-md"
             @click.self="lightbox = false"
             style="display:none"
         >

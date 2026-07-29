@@ -34,17 +34,17 @@
 
         @if($page && $page->custom_css)
             @if(str_contains($page->custom_css, '<style') || str_contains($page->custom_css, '<link'))
-                {!! $page->custom_css !!}
+                {!! \App\Services\CssMinifierService::minify($page->custom_css) !!}
             @else
                 <style>
-                    {!! $page->custom_css !!}
+                    {!! \App\Services\CssMinifierService::minify($page->custom_css) !!}
                 </style>
             @endif
         @endif
 
         @if($page && $page->page_title_css)
             <style>
-                {!! $page->page_title_css !!}
+                {!! \App\Services\CssMinifierService::minify($page->page_title_css) !!}
             </style>
         @endif
 
@@ -66,12 +66,18 @@
         @endphp
         {{-- file-icon-vectors: active pack driven by CMS setting --}}
         <link rel="stylesheet" href="{{ $fileIconCssMap[$fileIconPack] ?? $fileIconCssMap['vivid'] }}">
+        {{-- Swiper 11 Bundle (Global Slider Engine for Display Plugins) --}}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+        {{-- flag-icons: CSS-based flag rendering for language switcher --}}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
         @stack('styles')
         @livewireStyles
         <x-site-theme-styles />
+        <x-header-footer-styles />
         <link rel="stylesheet" href="{{ asset('css/prose.css') }}">
     </head>
-    <body class="antialiased font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+    <body class="antialiased font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 overflow-x-hidden selection:bg-indigo-500 selection:text-white p-0 m-0">
         <!-- Background Glows / Background Image support -->
         @if($page && $page->background_image)
             <div class="fixed inset-0 overflow-hidden pointer-events-none bg-fixed bg-cover bg-center"
@@ -83,8 +89,8 @@
             </div>
         @endif
 
-        <div class="min-h-[100dvh] flex flex-col justify-between relative">
-            <livewire:public-navigation />
+        <div class="min-h-[100dvh] flex flex-col justify-between relative p-0 m-0 w-full">
+            <livewire:public-header />
 
             <!-- Slideshow Plugin full width block -->
             @if($page && !empty($page->include_slideshow))
@@ -106,7 +112,7 @@
                         @if($page->show_author || $page->show_date)
                             <div class="flex items-center gap-3 text-sm text-slate-300 font-medium {{ $classes['author_justify'] }}">
                                 @if($page->show_author)
-                                    <span class="bg-indigo-600/80 px-2.5 py-1 rounded-full text-xs text-white uppercase tracking-wider">Author</span>
+                                    <span class="bg-indigo-600/80 px-2.5 py-1 rounded-full text-xs text-white uppercase tracking-wider">@label('cms.author', 'Author')</span>
                                     <span>{{ $page->custom_author ?: ($page->author ? $page->author->name : 'System') }}</span>
                                 @endif
                                 @if($page->show_author && $page->show_date)
@@ -121,8 +127,8 @@
                 </div>
             @else
                 @if($page && ($page->show_title || $page->show_author || $page->show_date))
-                    <div class="max-w-5xl mx-auto px-6 pt-12 pb-6 w-full flex flex-col {{ $classes['horizontal'] }}">
-                        <div class="border-b border-slate-200/80 pb-6 mb-8 w-full flex flex-col {{ $classes['horizontal'] }} {{ $classes['text'] }}">
+                    <div class="max-w-5xl mx-auto px-6 pt-8 pb-0 w-full flex flex-col {{ $classes['horizontal'] }}">
+                        <div class="border-b border-slate-200/80 pb-0 mb-6 w-full flex flex-col {{ $classes['horizontal'] }} {{ $classes['text'] }}">
                             @if($page->show_title)
                                 <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent mb-4">
                                     {{ $page->alternate_page_title ?: $page->title }}
@@ -131,7 +137,7 @@
                             @if($page->show_author || $page->show_date)
                                 <div class="flex items-center justify-center md:justify-start gap-3 text-sm text-slate-500">
                                     @if($page->show_author)
-                                        <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider">Published By</span>
+                                        <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider">@label('cms.published_by', 'Published By')</span>
                                         <span class="font-semibold text-slate-700">{{ $page->custom_author ?: ($page->author ? $page->author->name : 'System') }}</span>
                                     @endif
                                     @if($page->show_author && $page->show_date)
@@ -147,86 +153,92 @@
                 @endif
             @endif
 
-            <!-- Main Layout Grid with Left / Right Sidebars -->
-           <main class="flex-1 pt-0 pb-12">
-                <div class="max-w-7xl mx-auto px-6">
-                    <div class="flex flex-col lg:flex-row gap-8 items-start">
-                        
-                        @if($page && in_array($page->layout_type, [2, 4]) && !empty($page->left_col))
-                            <!-- Left Sidebar -->
-                            <div class="w-full lg:w-1/4 space-y-6">
-                                <div class="bg-white/95 backdrop-blur-md border border-slate-100 rounded-3xl p-6 shadow-xl shadow-slate-100/40 ">
-                                    {!! $page->parsed_left_col !!}
+            <!-- Main Layout -->
+            <main class="flex-1 p-0 m-0 w-full">
+                @php
+                    $hasSidebars = $page && (
+                        (in_array($page->layout_type, [2, 4]) && !empty($page->left_col)) ||
+                        (in_array($page->layout_type, [3, 4]) && !empty($page->right_col))
+                    );
+                @endphp
+
+                @if($hasSidebars)
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+                        <div class="flex flex-col lg:flex-row gap-8 items-start">
+                            @if($page && in_array($page->layout_type, [2, 4]) && !empty($page->left_col))
+                                <!-- Left Sidebar -->
+                                <div class="w-full lg:w-1/4 space-y-6">
+                                    <div class="bg-white/95 backdrop-blur-md border border-slate-100 rounded-3xl p-6 shadow-xl shadow-slate-100/40">
+                                        {!! $page->parsed_left_col !!}
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Main Column -->
+                            <div class="w-full lg:flex-1 space-y-6">
+                                <div>
+                                    @if($page)
+                                        {!! $page->parsed_content !!}
+
+                                        @if($page->tags->count() > 0)
+                                            <div class="mt-8 pt-6 border-t border-slate-100/60 flex flex-wrap gap-2 items-center">
+                                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">@label('cms.tags', 'Tags:')</span>
+                                                @foreach($page->tags as $tag)
+                                                    <a href="{{ route('cms.tag', $tag->slug) }}" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer">
+                                                        #{{ $tag->name }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        @endif
+
+                                        @if(!$page->hide_page_ranking)
+                                            <livewire:cms-page-rating :pageId="$page->id" />
+                                        @endif
+                                    @endif
                                 </div>
                             </div>
-                        @endif
 
-                        <!-- Main Column -->
-                        <div class="w-full lg:flex-1 space-y-6">
-                            <div class="bg-white/95 backdrop-blur-md border border-slate-100 rounded-3xl p-8 md:p-12 shadow-xl shadow-slate-100/40 ">
-                                @if($page)
-                                    {!! $page->parsed_content !!}
+                            @if($page && in_array($page->layout_type, [3, 4]) && !empty($page->right_col))
+                                <!-- Right Sidebar -->
+                                <div class="w-full lg:w-1/4 space-y-6">
+                                    <div class="bg-white/95 backdrop-blur-md border border-slate-100 rounded-3xl p-6 shadow-xl shadow-slate-100/40">
+                                        {!! $page->parsed_right_col !!}
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @else
+                    {{-- Standard full-width page without sidebars (matches home page structure) --}}
+                    @if($page)
+                        {!! $page->parsed_content !!}
 
-                                    @if($page->tags->count() > 0)
-                                        <div class="mt-8 pt-6 border-t border-slate-100/60 flex flex-wrap gap-2 items-center">
-                                            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">Tags:</span>
-                                            @foreach($page->tags as $tag)
-                                                <a href="{{ route('cms.tag', $tag->slug) }}" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer">
-                                                    #{{ $tag->name }}
-                                                </a>
-                                            @endforeach
-                                        </div>
-                                    @endif
+                        @if($page->tags->count() > 0 || !$page->hide_page_ranking)
+                            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+                                @if($page->tags->count() > 0)
+                                    <div class="mt-4 pt-6 border-t border-slate-100/60 flex flex-wrap gap-2 items-center">
+                                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">@label('cms.tags', 'Tags:')</span>
+                                        @foreach($page->tags as $tag)
+                                            <a href="{{ route('cms.tag', $tag->slug) }}" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer">
+                                                #{{ $tag->name }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @endif
 
-                                    @if(!$page->hide_page_ranking)
-                                        <livewire:cms-page-rating :pageId="$page->id" />
-                                    @endif
+                                @if(!$page->hide_page_ranking)
+                                    <livewire:cms-page-rating :pageId="$page->id" />
                                 @endif
                             </div>
-                        </div>
-
-                        @if($page && in_array($page->layout_type, [3, 4]) && !empty($page->right_col))
-                            <!-- Right Sidebar -->
-                            <div class="w-full lg:w-1/4 space-y-6">
-                                <div class="bg-white/95 backdrop-blur-md border border-slate-100 rounded-3xl p-6 shadow-xl shadow-slate-100/40 ">
-                                    {!! $page->parsed_right_col !!}
-                                </div>
-                            </div>
                         @endif
-                        
-                    </div>
-                </div>
+                    @endif
+                @endif
             </main>
 
             <!-- Footer -->
-            @include('layouts.footer', ['theme' => $frontendDark ? 'dark' : 'light'])
+            <livewire:public-footer />
         </div>
 
-        @if($page && $page->custom_js)
-            @if(str_contains($page->custom_js, '<script'))
-                {!! $page->custom_js !!}
-            @else
-                <script>
-                    {!! $page->custom_js !!}
-                </script>
-            @endif
-        @endif
-
-        <!-- Livewire Dynamic Script Reloader to re-run embedded page script blocks -->
-        <script>
-            document.addEventListener('livewire:navigated', function () {
-                const containers = document.querySelectorAll('.prose');
-                containers.forEach(container => {
-                    const scripts = container.querySelectorAll('script');
-                    scripts.forEach(oldScript => {
-                        const newScript = document.createElement('script');
-                        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                        oldScript.parentNode.replaceChild(newScript, oldScript);
-                    });
-                });
-            });
-        </script>
         @if(auth()->check() && auth()->user()->isAdmin())
             <!-- Floating Admin Edit Button -->
             <div class="fixed bottom-6 right-6 z-50">
@@ -237,7 +249,7 @@
                     <svg class="w-4 h-4 text-indigo-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
-                    <span>Edit Page</span>
+                    <span>@label('cms.edit_page', 'Edit Page')</span>
                 </a>
             </div>
         @endif

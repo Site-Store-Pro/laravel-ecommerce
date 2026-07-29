@@ -361,43 +361,50 @@ class Checkout extends Component
             // Guest checkout: check if user exists by email
             $user = User::where('email', $this->email)->first();
             
-            // Password logic
+            // Password logic — if the customer provided a real password, hash it.
+            // If not, store the plain-text sentinel '[GUEST-USER]' so isGuest() can
+            // reliably detect this account and prompt them to set a password later.
             $hasProvidedPassword = !empty($this->password);
-            $userPassword = $hasProvidedPassword ? Hash::make($this->password) : Hash::make(Str::random(16));
+            $userPassword = $hasProvidedPassword ? Hash::make($this->password) : \App\Models\User::GUEST_PASSWORD;
 
             if (!$user) {
-                // Create a new user account (optional password or random password)
+                // Create a new user account
                 $user = User::create([
-                    'name' => $this->name,
-                    'email' => $this->email,
-                    'password' => $userPassword,
-                    'email_verified_at' => null,
-                    'role_id' => \App\Enums\UserRole::User->value,
-                    'company' => $this->company,
-                    'shipping_address1' => $this->shipping_address1,
-                    'shipping_address2' => $this->shipping_address2,
-                    'shipping_city' => $this->shipping_city,
+                    'name'                => $this->name,
+                    'email'               => $this->email,
+                    'password'            => $userPassword,
+                    'email_verified_at'   => null,
+                    'role_id'             => \App\Enums\UserRole::User->value,
+                    'company'             => $this->company,
+                    'shipping_address1'   => $this->shipping_address1,
+                    'shipping_address2'   => $this->shipping_address2,
+                    'shipping_city'       => $this->shipping_city,
                     'shopping_postalcode' => $this->shopping_postalcode,
-                    'shipping_country' => $this->shipping_country,
-                    'shipping_countrycode' => $this->shipping_countrycode,
-                    'shipping_state' => $this->shipping_state,
+                    'shipping_country'    => $this->shipping_country,
+                    'shipping_countrycode'=> $this->shipping_countrycode,
+                    'shipping_state'      => $this->shipping_state,
                 ]);
             } else {
-                // If existing user is non-verified, update details and password if provided
+                // If existing user is non-verified, update details
                 if ($user->email_verified_at === null) {
                     $updateData = [
-                        'name' => $this->name,
-                        'company' => $this->company,
-                        'shipping_address1' => $this->shipping_address1,
-                        'shipping_address2' => $this->shipping_address2,
-                        'shipping_city' => $this->shipping_city,
+                        'name'                => $this->name,
+                        'company'             => $this->company,
+                        'shipping_address1'   => $this->shipping_address1,
+                        'shipping_address2'   => $this->shipping_address2,
+                        'shipping_city'       => $this->shipping_city,
                         'shopping_postalcode' => $this->shopping_postalcode,
-                        'shipping_country' => $this->shipping_country,
-                        'shipping_countrycode' => $this->shipping_countrycode,
-                        'shipping_state' => $this->shipping_state,
+                        'shipping_country'    => $this->shipping_country,
+                        'shipping_countrycode'=> $this->shipping_countrycode,
+                        'shipping_state'      => $this->shipping_state,
                     ];
                     if ($hasProvidedPassword) {
+                        // Customer chose a real password this time — hash and save it
                         $updateData['password'] = $userPassword;
+                    } elseif ($user->isGuest()) {
+                        // Still a guest — keep the sentinel (already stored, no change needed)
+                        // but ensure it's set in case a legacy random-hash record is being reused
+                        $updateData['password'] = \App\Models\User::GUEST_PASSWORD;
                     }
                     $user->update($updateData);
                 }
@@ -406,6 +413,7 @@ class Checkout extends Component
             Auth::login($user);
             $userId = $user->id;
         }
+
 
         // Associate current shopping cart records with the resolved user ID
         $this->getCartQuery()->update([

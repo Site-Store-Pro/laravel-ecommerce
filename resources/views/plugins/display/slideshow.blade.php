@@ -1,14 +1,14 @@
-@once
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-@endonce
-
 <div id="{{ $swiperId }}_wrapper" class="slideshow-plugin-wrapper" style="position: relative;">
-    @if(!empty($liveCss))
+    @if(!empty($defaultCss) || !empty($customCss))
         <style>
-            #{{ $swiperId }}_wrapper {
-                {!! $liveCss !!}
-            }
+            @if(!empty($defaultCss))
+                {!! \App\Services\CssMinifierService::minify($defaultCss) !!}
+            @endif
+            @if(!empty($customCss))
+                #{{ $swiperId }}_wrapper {
+                    {!! \App\Services\CssMinifierService::minify($customCss) !!}
+                }
+            @endif
         </style>
     @endif
 

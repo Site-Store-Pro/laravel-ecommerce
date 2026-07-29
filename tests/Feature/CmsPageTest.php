@@ -351,7 +351,7 @@ class CmsPageTest extends TestCase
         $response->assertStatus(200);
         
         // Assert meta description from seed is present
-        $response->assertSee('Introducing Our E-Commerce & Support Platform', false);
+        $response->assertSee('Integrated E-Commerce &amp; Support Platform', false);
         $response->assertSee('Browse Store');
 
         // 2. Test Livewire components are rendered
@@ -515,8 +515,8 @@ class CmsPageTest extends TestCase
         $response->assertStatus(200);
 
         // Assert seeded post titles and authors are visible
-        $response->assertSee('Announcing Our New Support &amp; Shop Platform', false);
-        $response->assertSee('Getting Started with Livewire Components');
+        $response->assertSee('Platform Overview: What This Application Does');
+        $response->assertSee('CMS Shortcodes: How Pages and Products Share Content');
         $response->assertSee('Site Manager');
         $response->assertSee('#News');
     }
@@ -547,7 +547,7 @@ class CmsPageTest extends TestCase
         $response->assertStatus(200);
 
         // Should see the normal seeded post that has laravel tag
-        $response->assertSee('Announcing Our New Support &amp; Shop Platform', false);
+        $response->assertSee('Platform Overview: What This Application Does');
 
         // Should NOT see the gated page in the tags index listing
         $response->assertDontSee('Gated Page with Tag');
@@ -670,7 +670,7 @@ class CmsPageTest extends TestCase
                 }
                 return $hasSlideshow;
             })
-            ->assertSee('Display Plugins')
+            ->assertSee('Plugins')
             ->assertSee('[plugin:slideshow-2026]');
     }
 

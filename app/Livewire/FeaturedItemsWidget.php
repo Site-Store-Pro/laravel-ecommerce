@@ -22,6 +22,7 @@ class FeaturedItemsWidget extends Component
     public int     $slides     = 4;
     public int     $speed      = 4000;
     public string  $instanceId = '';
+    public string  $showBadge  = 'on';
 
     public function mount(
         string $display    = 'grid',
@@ -33,7 +34,8 @@ class FeaturedItemsWidget extends Component
         string $autoplay   = 'on',
         int    $slides     = 4,
         int    $speed      = 4000,
-        string $instanceId = ''
+        string $instanceId = '',
+        string $showBadge  = 'on'
     ): void {
         $this->display    = $display;
         $this->max        = $max;
@@ -45,6 +47,7 @@ class FeaturedItemsWidget extends Component
         $this->slides     = max(1, $slides);
         $this->speed      = max(500, $speed);
         $this->instanceId = $instanceId ?: 'fi_' . Str::random(8);
+        $this->showBadge  = $showBadge;
     }
 
     // ── Cart add ─────────────────────────────────────────────────────────────
@@ -90,7 +93,7 @@ class FeaturedItemsWidget extends Component
                 auth()->user()?->shipping_state
             );
             if ($available <= 0) {
-                session()->flash('error', 'Item is out of stock.');
+                $this->dispatch('show-cart-error', message: 'This item is currently out of stock.');
                 return;
             }
         }
@@ -131,7 +134,7 @@ class FeaturedItemsWidget extends Component
                 ->whereHas('product', fn($q) => $q->where('standalone_purchase', 1))
                 ->exists();
             if ($hasStandalone) {
-                session()->flash('error', 'Your cart contains a standalone item which cannot be purchased with other items.');
+                $this->dispatch('show-cart-error', message: 'Your cart contains a standalone item which cannot be purchased with other items.');
                 return;
             }
         }
@@ -139,11 +142,14 @@ class FeaturedItemsWidget extends Component
         if ($product && $product->standalone_purchase == 1 && $cartItems->isNotEmpty()) {
             $onlySame = collect($skusInCart)->every(fn($s) => $s === $variant->sku);
             if (!$onlySame) {
-                session()->flash('error', 'This standalone item cannot be purchased with other items. Please empty your cart first.');
+                $this->dispatch('show-cart-error', message: 'This standalone item cannot be purchased with other items. Please empty your cart first.');
                 return;
             }
         }
 
+        // IMPORTANT: must also filter by item_name (which encodes the SKU) so we only
+        // match THIS product's cart row — not any other simple product whose item_attributes
+        // is also an empty string ''.
         $cartItem = ShoppingCartLog::where(function ($q) use ($sessionId, $userId) {
             if ($userId > 0) {
                 $q->where('user_id', $userId);
@@ -151,12 +157,13 @@ class FeaturedItemsWidget extends Component
                 $q->where('cart_log_session', $sessionId)->where('user_id', 0);
             }
         })
+            ->where('item_name', 'like', '%(' . $variant->sku . ')')
             ->where('item_attributes', $variant->attributes)
             ->where('order_id', 0)
             ->first();
 
         if ($cartItem && $product && $product->max_qty == 1) {
-            session()->flash('error', 'You can only purchase a maximum of 1 unit of this item per order.');
+            $this->dispatch('show-cart-error', message: 'You can only purchase a maximum of 1 unit of this item per order.');
             if ($product->checkout_redirect == 1 || $product->standalone_purchase == 1) {
                 return redirect()->route('shop.checkout');
             }
@@ -203,6 +210,7 @@ class FeaturedItemsWidget extends Component
     public function render(): View
     {
         $query = Product::with(['variants.inventory', 'variants.images'])
+            ->withCurrentTranslations()
             ->where('featured_item', 1)
             ->whereHas('variants');
 
@@ -222,10 +230,11 @@ class FeaturedItemsWidget extends Component
         $slides     = $this->slides;
         $speed      = $this->speed;
         $instanceId = $this->instanceId;
+        $showBadge  = $this->showBadge === 'on';
 
         return view('livewire.featured-items-widget', compact(
             'products', 'display', 'header', 'cols',
-            'nav', 'autoplay', 'slides', 'speed', 'instanceId'
+            'nav', 'autoplay', 'slides', 'speed', 'instanceId', 'showBadge'
         ));
     }
 }

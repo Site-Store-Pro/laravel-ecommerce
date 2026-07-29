@@ -40,6 +40,8 @@
         @stack('styles')
         <x-site-theme-styles />
         <link rel="stylesheet" href="{{ asset('css/prose.css') }}">
+        {{-- flag-icons: renders country code flags (us, mx, fr…) as SVG images on all browsers/OS --}}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
     </head>
     <body class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white">
         <div class="min-h-screen bg-[#f8fafc] dark:bg-slate-900 relative overflow-hidden">

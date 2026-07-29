@@ -62,7 +62,7 @@
                     {{-- Featured badge --}}
                     <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 text-[9px] font-bold text-white bg-amber-400 rounded-full">★</span>
                     @if($defaultVariant && $defaultVariant->on_sale)
-                        <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 text-[10px] font-bold text-red-600 bg-red-50 rounded-full border border-red-100">Sale</span>
+                        <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 text-[10px] font-bold text-red-600 bg-red-50 rounded-full border border-red-100">@label('plugin.sale', 'Sale')</span>
                     @endif
                 </a>
 
@@ -77,7 +77,7 @@
                         </p>
                     @endif
                     @if($product->variants->count() > 1)
-                        <p class="mt-1.5 text-[11px] text-indigo-500 font-semibold">{{ $product->variants->count() }} variants available</p>
+                        <p class="mt-1.5 text-[11px] text-indigo-500 font-semibold">{{ $product->variants->count() }} @label('plugin.variants_available', 'variants available')</p>
                     @endif
                 </div>
 
@@ -86,13 +86,13 @@
                     <div class="text-right">
                         @if($defaultVariant)
                             <div class="text-base font-extrabold text-slate-900">
-                                {{ $isFromPrice ? 'From ' : '' }}${{ number_format($priceToShow, 2) }}
+                                @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
                             </div>
                             @if($priceToShow < $originalPrice)
                                 <div class="text-xs text-slate-400 line-through">${{ number_format($originalPrice, 2) }}</div>
                             @endif
                         @else
-                            <span class="text-xs text-slate-400">Out of Stock</span>
+                            <span class="text-xs text-slate-400">@label('plugin.out_of_stock', 'Out of Stock')</span>
                         @endif
                     </div>
 
@@ -103,18 +103,18 @@
                         @endphp
                         @if(!$v->download_item && $avail <= 0)
                             <button disabled class="px-4 py-2 text-xs font-bold text-slate-400 bg-slate-100 rounded-xl cursor-not-allowed whitespace-nowrap">
-                                Out of Stock
+                                @label('plugin.out_of_stock', 'Out of Stock')
                             </button>
                         @else
                             <a href="{{ route('shop.product', $product->seo_slug) }}"
                                class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition duration-150 shadow-sm whitespace-nowrap">
-                                Buy Now
+                                @label('plugin.buy_now', 'Buy Now')
                             </a>
                         @endif
                     @else
                         <a href="{{ route('shop.product', $product->seo_slug) }}"
                            class="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition duration-150 whitespace-nowrap">
-                            View Options
+                            @label('plugin.view_options', 'View Options')
                         </a>
                     @endif
                 </div>

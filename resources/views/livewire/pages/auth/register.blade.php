@@ -78,7 +78,7 @@ new #[Layout('layouts.guest')] class extends Component
 
     <div class="mb-7">
         <h1 class="text-xl font-bold text-slate-900">
-            Create your account
+            @label('auth.register_heading', 'Create your account')
         </h1>
     </div>
 
@@ -131,7 +131,7 @@ new #[Layout('layouts.guest')] class extends Component
         <div class="mb-4">
 
             <label for="name" class="auth-label">
-                Full Name
+                @label('auth.full_name', 'Full Name')
             </label>
 
 
@@ -140,7 +140,7 @@ new #[Layout('layouts.guest')] class extends Component
                 id="name"
                 type="text"
                 autocomplete="name"
-                placeholder="Jane Smith"
+                placeholder="@label('auth.full_name_placeholder', 'Jane Smith')"
                 class="auth-input block w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
             />
 
@@ -160,7 +160,7 @@ new #[Layout('layouts.guest')] class extends Component
         <div class="mb-4">
 
             <label for="email" class="auth-label">
-                Email Address
+                @label('auth.email', 'Email Address')
             </label>
 
 
@@ -169,7 +169,7 @@ new #[Layout('layouts.guest')] class extends Component
                 id="email"
                 type="email"
                 autocomplete="username"
-                placeholder="you@example.com"
+                placeholder="@label('auth.email_placeholder', 'you@example.com')"
                 class="auth-input block w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
             />
 
@@ -189,7 +189,7 @@ new #[Layout('layouts.guest')] class extends Component
         <div class="mb-4">
 
             <label for="password" class="auth-label">
-                Password
+                @label('auth.password', 'Password')
             </label>
 
 
@@ -198,7 +198,7 @@ new #[Layout('layouts.guest')] class extends Component
                 id="password"
                 type="password"
                 autocomplete="new-password"
-                placeholder="Strong Password Required (min 8 char)"
+                placeholder="@label('auth.password_placeholder', 'Strong Password Required (min 8 char)')"
                 class="auth-input block w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
             />
 
@@ -217,7 +217,7 @@ new #[Layout('layouts.guest')] class extends Component
         <div class="mb-5">
 
             <label for="password_confirmation" class="auth-label">
-                Confirm Password
+                @label('auth.confirm_password', 'Confirm Password')
             </label>
 
 
@@ -226,7 +226,7 @@ new #[Layout('layouts.guest')] class extends Component
                 id="password_confirmation"
                 type="password"
                 autocomplete="new-password"
-                placeholder="Repeat your password"
+                placeholder="@label('auth.repeat_password', 'Repeat your password')"
                 class="auth-input block w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none"
             />
 
@@ -245,7 +245,7 @@ new #[Layout('layouts.guest')] class extends Component
         <button type="submit" wire:loading.attr="disabled" class="auth-btn w-full mt-2">
 
             <span wire:loading.remove wire:target="register">
-                Create Account
+                @label('auth.create_account', 'Create Account')
             </span>
 
 
@@ -272,7 +272,7 @@ new #[Layout('layouts.guest')] class extends Component
 
                 </svg>
 
-                Creating account…
+                @label('auth.creating_account', 'Creating account…')
 
             </span>
 
@@ -291,7 +291,7 @@ new #[Layout('layouts.guest')] class extends Component
 
 @if($cols > 0)
   <!-- Divider -->
-    <div class="auth-divider my-6" style="padding: 15px 0;">or register with</div>
+    <div class="auth-divider my-6" style="padding: 15px 0;">@label('auth.or_register_with', 'or register with')</div>
 
     <!-- Social Buttons -->
     <div class="grid {{ $cols === 3 ? 'grid-cols-3' : ($cols === 2 ? 'grid-cols-2' : 'grid-cols-1') }} gap-3">
@@ -328,11 +328,11 @@ new #[Layout('layouts.guest')] class extends Component
 
     <p class="auth-footer">
 
-        Already have an account?
+        @label('auth.have_account', 'Already have an account?')
 
         <a href="{{ route('login') }}" class="auth-link font-medium ml-1">
 
-            Sign in
+            @label('auth.sign_in_link', 'Sign in')
 
         </a>
 

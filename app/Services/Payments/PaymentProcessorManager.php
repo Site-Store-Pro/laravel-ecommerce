@@ -17,6 +17,8 @@ class PaymentProcessorManager
     /** @var array<int, class-string<PaymentProcessorInterface>> */
     private array $registry;
 
+    private ?int $resolvedProcessorId = null;
+
     public function __construct()
     {
         $this->registry = config('payment_processors', [0 => TestProcessor::class]);
@@ -27,18 +29,17 @@ class PaymentProcessorManager
     // -------------------------------------------------------------------------
 
     /**
-     * Resolve the driver for the admin-selected primary processor.
+     * Resolve the driver for the active processor.
      * Falls back to the TestProcessor when:
-     *   - no primary processor is set (0)
+     *   - no primary/active processor is set (0)
      *   - the processor_id is not in the registry
      *   - the driver class does not exist
      */
-    public function resolveActive(): PaymentProcessorInterface
+    public function resolveActive(?int $processorId = null): PaymentProcessorInterface
     {
-        $opts = OrderCheckoutOption::first();
-        $processorId = (int) ($opts?->primary_processor ?? 0);
+        $id = $processorId ?? $this->activeProcessorId();
 
-        return $this->resolve($processorId);
+        return $this->resolve($id);
     }
 
     /**
@@ -71,37 +72,42 @@ class PaymentProcessorManager
      */
     public function activeProcessorId(): int
     {
+        if ($this->resolvedProcessorId !== null) {
+            return $this->resolvedProcessorId;
+        }
+
         $opts = OrderCheckoutOption::first();
         if (!$opts) {
-            return 0;
+            return $this->resolvedProcessorId = 0;
         }
 
         $randomize = (bool) ($opts->randomize_processor ?? false);
 
         if ($randomize) {
             // Gather all non-zero processor slots that are registered
-            $candidates = array_values(array_filter([
+            $candidates = array_values(array_unique(array_filter([
                 (int) ($opts->primary_processor   ?? 0),
                 (int) ($opts->secondary_processor ?? 0),
                 (int) ($opts->tertiary_processor  ?? 0),
-            ], fn(int $id) => $id > 0 && isset($this->registry[$id])));
+            ], fn(int $id) => $id > 0 && isset($this->registry[$id]))));
 
             if (!empty($candidates)) {
-                return $candidates[array_rand($candidates)];
+                return $this->resolvedProcessorId = $candidates[array_rand($candidates)];
             }
             // No real processors registered → fall through to primary
         }
 
-        return (int) ($opts->primary_processor ?? 0);
+        $primary = (int) ($opts->primary_processor ?? 0);
+        return $this->resolvedProcessorId = isset($this->registry[$primary]) ? $primary : 0;
     }
 
     /**
-     * True when the resolved active processor is running in sandbox/test mode.
+     * True when the specified or resolved active processor is running in sandbox/test mode.
      * Reads the `production` column from order_processors.
      */
-    public function activeProcessorIsSandbox(): bool
+    public function activeProcessorIsSandbox(?int $processorId = null): bool
     {
-        $id = $this->activeProcessorId();
+        $id = $processorId ?? $this->activeProcessorId();
         if ($id === 0) {
             return true; // Test processor is always sandbox
         }
@@ -111,11 +117,13 @@ class PaymentProcessorManager
 
     /**
      * Return the processor type string used by the frontend to select the
-     * appropriate JS integration. Returns 'test', 'stripe', or 'paddle'.
+     * appropriate JS integration. Returns 'test', 'stripe', 'paddle', or 'paypal'.
      */
-    public function activeProcessorType(): string
+    public function activeProcessorType(?int $processorId = null): string
     {
-        return match ($this->activeProcessorId()) {
+        $id = $processorId ?? $this->activeProcessorId();
+
+        return match ($id) {
             1       => 'stripe',
             2       => 'paddle',
             3       => 'paypal',

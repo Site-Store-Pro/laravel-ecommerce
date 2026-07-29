@@ -151,6 +151,13 @@
                         Activation
                     </button>
                     @endif
+                    @php $translatableFields = $selectedPlugin->getTranslatableFields(); @endphp
+                    @if(!empty($translatableFields))
+                    <button wire:click="setTab('translations')"
+                        class="px-4 py-2 text-xs font-bold rounded-t-xl transition-colors {{ $activeTab === 'translations' ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200' }}">
+                        🌐 Translations
+                    </button>
+                    @endif
                 </div>
 
                 <div class="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
@@ -263,7 +270,7 @@
 
                                         @elseif($option->field_type === 'text-only')
                                             <pre class="text-xs bg-slate-900 dark:bg-slate-950 text-slate-300 p-4 rounded-xl overflow-x-auto max-h-56 leading-relaxed font-mono"><code>{{ $option->field_default_value }}</code></pre>
-                                            <p class="text-xs text-slate-400 dark:text-slate-500 italic">Reference only — edit the Live CSS field above to customise.</p>
+                                            <p class="text-xs text-slate-400 dark:text-slate-500 italic">Reference only — edit the Custom CSS field above to customize.</p>
 
                                         @else
                                             <input
@@ -374,6 +381,88 @@
                                     Activate Plugin
                                 </button>
                             </div>
+                        @endif
+                    @endif
+
+                    {{-- ════════════════════════════════════════════════ --}}
+                    {{-- TRANSLATIONS TAB                                  --}}
+                    {{-- ════════════════════════════════════════════════ --}}
+                    @if($activeTab === 'translations')
+                        @php
+                            $tlFields   = $selectedPlugin->getTranslatableFields();
+                            $tlLanguages = \App\Models\Language::where('is_default', false)
+                                              ->where('is_active', true)
+                                              ->orderBy('sort_order')
+                                              ->get();
+                            $tlDefaults = $selectedPlugin->getSettings();
+                        @endphp
+
+                        {{-- Language pill selector --}}
+                        @if($tlLanguages->isEmpty())
+                            <p class="text-sm text-slate-400 dark:text-slate-500 py-4">No additional languages are active. Enable languages in the Language Manager first.</p>
+                        @else
+                            <div class="space-y-1.5">
+                                <p class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Select Language</p>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach($tlLanguages as $lang)
+                                        <button
+                                            wire:click="selectTlLang({{ $lang->id }})"
+                                            class="px-3 py-1.5 text-xs font-bold rounded-lg border transition-colors
+                                                {{ $tlLangId === $lang->id
+                                                    ? 'bg-indigo-600 text-white border-indigo-600'
+                                                    : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-indigo-400 hover:text-indigo-600' }}"
+                                        >
+                                            {{ $lang->flag_emoji ?? '' }} {{ $lang->name }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            @if($tlLangId)
+                                <div class="mt-4 space-y-4">
+                                    @foreach($tlFields as $fieldName => $fieldLabel)
+                                        <div class="space-y-1.5">
+                                            <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{{ $fieldLabel }}</label>
+
+                                            {{-- Default value reference (read-only) --}}
+                                            @if(!empty($tlDefaults[$fieldName]))
+                                                <p class="text-xs text-slate-400 dark:text-slate-500">
+                                                    <span class="font-semibold text-slate-500">Default:</span>
+                                                    <span class="font-mono">{{ $tlDefaults[$fieldName] }}</span>
+                                                </p>
+                                            @endif
+
+                                            {{-- Translation input --}}
+                                            <input
+                                                type="text"
+                                                wire:model="tlSettings.{{ $fieldName }}"
+                                                placeholder="Translation for {{ $fieldLabel }}…"
+                                                class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
+                                            >
+                                        </div>
+
+                                        @if(!$loop->last)
+                                            <hr class="border-slate-100 dark:border-slate-700">
+                                        @endif
+                                    @endforeach
+
+                                    <div class="pt-2">
+                                        <button
+                                            wire:click="saveTlSettings"
+                                            wire:loading.attr="disabled"
+                                            class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm flex items-center gap-2"
+                                        >
+                                            <svg wire:loading wire:target="saveTlSettings" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                                            </svg>
+                                            Save Translations
+                                        </button>
+                                    </div>
+                                </div>
+                            @else
+                                <p class="text-sm text-slate-400 dark:text-slate-500 py-2">Select a language above to begin editing translations.</p>
+                            @endif
                         @endif
                     @endif
 

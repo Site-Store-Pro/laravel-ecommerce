@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Storage;
 
 class CmsDownloadController extends Controller
 {
-    public function serve(int $id): mixed
+    public function serve(string $uuid): mixed
     {
-        $download = CmsDownload::find($id);
+        $download = CmsDownload::where('uuid', $uuid)->first();
 
         // 404 — not found or inactive
         if (!$download || !$download->is_active) {

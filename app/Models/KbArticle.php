@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class KbArticle extends Model
 {
     use HasFactory;
+    use HasTranslations;
 
     protected $table = 'kb_articles';
 
@@ -23,6 +25,13 @@ class KbArticle extends Model
         'date_modified',
         'sort_order',
         'kb_rating',
+    ];
+
+    /** Fields automatically translated when translations relation is loaded. */
+    protected array $translatable = [
+        'title',
+        'article_content',
+        'meta_description',
     ];
 
     protected $casts = [

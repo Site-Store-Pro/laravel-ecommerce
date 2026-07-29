@@ -33,21 +33,21 @@
                 </div>
 
                 <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    Based on {{ $reviews->count() }} {{ Str::plural('customer review', $reviews->count()) }}.
+                    @label('reviews.based_on', 'Based on') {{ $reviews->count() }} {{ Str::plural('customer review', $reviews->count()) }}.
                 </p>
             </div>
 
             {{-- Sort Filters --}}
             <div class="flex items-center gap-3">
-                <label for="review-sort" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Sort Reviews</label>
+                <label for="review-sort" class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">@label('reviews.sort', 'Sort Reviews')</label>
                 <select
                     id="review-sort"
                     wire:model.live="sort"
                     class="px-4 py-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-850 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-xs font-bold shadow-sm"
                 >
-                    <option value="recent">Most Recent</option>
-                    <option value="highest">Highest Rated</option>
-                    <option value="lowest">Lowest Rated</option>
+                    <option value="recent">@label('reviews.most_recent', 'Most Recent')</option>
+                    <option value="highest">@label('reviews.highest_rated', 'Highest Rated')</option>
+                    <option value="lowest">@label('reviews.lowest_rated', 'Lowest Rated')</option>
                 </select>
             </div>
         </div>
@@ -61,8 +61,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                 </svg>
             </span>
-            <h3 class="text-sm font-bold text-slate-750 dark:text-white">No reviews yet</h3>
-            <p class="text-xs text-slate-450 dark:text-slate-400 mt-1">Be the first to share your thoughts by filling out the form below.</p>
+            <h3 class="text-sm font-bold text-slate-750 dark:text-white">@label('reviews.no_reviews', 'No reviews yet')</h3>
+            <p class="text-xs text-slate-450 dark:text-slate-400 mt-1">@label('reviews.no_reviews_message', 'Be the first to share your thoughts by filling out the form below.')</p>
         </div>
     @else
         <div class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -105,8 +105,8 @@
     {{-- Review Submission Form Card --}}
     <div class="bg-white dark:bg-slate-800/30 border border-slate-150 dark:border-slate-850 rounded-3xl p-8 shadow-sm space-y-6">
             <div>
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Leave a Review</h3>
-                <p class="text-xs text-slate-400 mt-0.5">Share your feedback regarding your purchase with other customers.</p>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">@label('reviews.leave_review', 'Leave a Review')</h3>
+                <p class="text-xs text-slate-400 mt-0.5">@label('reviews.leave_review_message', 'Share your feedback regarding your purchase with other customers.')</p>
             </div>
 
             <form
@@ -130,7 +130,7 @@
 
                 {{-- Interactive Star Selector using Alpine --}}
                 <div class="space-y-1.5" x-data="{ hoverRating: 0, currentRating: @entangle('rating') }">
-                    <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Your Rating</label>
+                    <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">@label('reviews.your_rating', 'Your Rating')</label>
                     <div class="flex items-center gap-1.5">
                         @for($s = 1; $s <= 5; $s++)
                             <button
@@ -155,12 +155,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {{-- Name (Required) --}}
                     <div class="space-y-1.5">
-                        <label for="reviewer-name" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Your Name (Required)</label>
+                        <label for="reviewer-name" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">@label('reviews.your_name', 'Your Name (Required)')</label>
                         <input
                             type="text"
                             id="reviewer-name"
                             wire:model="name"
-                            placeholder="e.g. John Doe"
+                            placeholder="@label('reviews.name_placeholder', 'e.g. John Doe')"
                             class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-750 text-slate-850 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-xs font-semibold"
                         >
                         @error('name') <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p> @enderror
@@ -168,12 +168,12 @@
 
                     {{-- Location (Optional) --}}
                     <div class="space-y-1.5">
-                        <label for="reviewer-location" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Location (Optional)</label>
+                        <label for="reviewer-location" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">@label('reviews.location', 'Location (Optional)')</label>
                         <input
                             type="text"
                             id="reviewer-location"
                             wire:model="location"
-                            placeholder="e.g. New York, NY"
+                            placeholder="@label('reviews.location_placeholder', 'e.g. New York, NY')"
                             class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-750 text-slate-850 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-xs font-semibold"
                         >
                         @error('location') <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p> @enderror
@@ -182,12 +182,12 @@
 
                 {{-- Comments (Optional) --}}
                 <div class="space-y-1.5">
-                    <label for="reviewer-comments" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Comments (Optional)</label>
+                    <label for="reviewer-comments" class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">@label('reviews.comments', 'Comments (Optional)')</label>
                     <textarea
                         id="reviewer-comments"
                         wire:model="comments"
                         rows="4"
-                        placeholder="Describe your experience with this product..."
+                        placeholder="@label('reviews.comments_placeholder', 'Describe your experience with this product...')"
                         class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-750 text-slate-850 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-xs font-semibold"
                     ></textarea>
                     @error('comments') <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p> @enderror
@@ -198,7 +198,7 @@
                         type="submit"
                         class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs shadow-md shadow-indigo-100 dark:shadow-none hover:opacity-90 active:scale-95 transition duration-150"
                     >
-                        Submit Review
+                        @label('reviews.submit', 'Submit Review')
                     </button>
                 </div>
             </form>

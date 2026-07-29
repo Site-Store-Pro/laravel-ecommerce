@@ -114,6 +114,46 @@
                                         <span class="text-xs font-bold text-slate-700">USPS carrier rates</span>
                                     </label>
                                 </div>
+
+                                <!-- Installed Shipping Plugins (Read-Only) -->
+                                <div class="space-y-3 pt-3 border-t border-slate-100 mt-4">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Installed Shipping Plugins (Read-Only)</span>
+                                        <a href="{{ route('admin.plugins.index', ['type' => 'shipping']) }}" wire:navigate class="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold hover:underline flex items-center gap-1">
+                                            Manage Plugins &rarr;
+                                        </a>
+                                    </div>
+
+                                    @if(empty($shippingPlugins) || $shippingPlugins->isEmpty())
+                                        <div class="text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                                            No shipping carrier plugins installed.
+                                        </div>
+                                    @else
+                                        <div class="space-y-2">
+                                            @foreach($shippingPlugins as $plugin)
+                                                <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                                    <div class="min-w-0 pr-2">
+                                                        <a href="{{ route('admin.plugins.index', ['type' => 'shipping']) }}" wire:navigate class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline block truncate" title="Click to view in Plugin Manager">
+                                                            {{ $plugin->name }}
+                                                        </a>
+                                                        <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mt-0.5">Type: {{ ucfirst($plugin->type) }}</span>
+                                                    </div>
+                                                    <div>
+                                                        @if($plugin->activation_status)
+                                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                                                            </span>
+                                                        @else
+                                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200">
+                                                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Inactive
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
 

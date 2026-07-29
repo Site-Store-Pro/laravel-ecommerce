@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Enums\TicketStatus;
+use App\Livewire\Actions\Logout;
 use App\Models\Ticket;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -10,13 +11,13 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-#[Layout('layouts.app')]
+#[Layout('layouts.public')]
 class UserDashboard extends Component
 {
     use WithPagination;
 
     #[Url(keep: true)]
-    public string $tab = 'tickets';
+    public string $tab = 'orders';
 
     public ?int $selectedOrderId = null;
 
@@ -28,13 +29,33 @@ class UserDashboard extends Component
                 return redirect()->route('admin.dashboard');
             } elseif ($user->isTicketManager()) {
                 return redirect()->route('admin.tickets');
+            } elseif ($user->isGuest() && !$user->hasVerifiedEmail()) {
+                // Step 1 of guest conversion: verify email ownership first.
+                // Setting url.intended ensures that after clicking the verification link
+                // the user lands on /account/set-password (not /dashboard).
+                // This prevents someone from guessing a guest email and hijacking the account.
+                session(['url.intended' => route('guest.set-password')]);
+                $user->sendEmailVerificationNotification();
+                return redirect()->route('verification.notice');
+            } elseif ($user->isGuest() && $user->hasVerifiedEmail()) {
+                // Step 2: email proved — now let them set a real password.
+                return redirect()->route('guest.set-password');
+            } elseif (!$user->hasVerifiedEmail()) {
+                // Regular registered users who haven't verified yet.
+                return redirect()->route('verification.notice');
             }
         }
 
-        if (!in_array($this->tab, ['tickets', 'orders', 'downloads'])) {
-            $this->tab = 'tickets';
+        if (!in_array($this->tab, ['orders', 'downloads', 'tickets'])) {
+            $this->tab = 'orders';
         }
         return null;
+    }
+
+    public function logout(Logout $logout): void
+    {
+        $logout();
+        $this->redirect('/', navigate: false);
     }
 
     public function viewOrderDetails(int $orderId): void

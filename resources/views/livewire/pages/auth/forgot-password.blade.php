@@ -57,9 +57,9 @@ new #[Layout('layouts.guest')] class extends Component
 <div>
     <!-- Page heading -->
     <div class="mb-7">
-        <h1 class="text-xl font-bold text-slate-900">Reset your password</h1>
+        <h1 class="text-xl font-bold text-slate-900">@label('auth.forgot_heading', 'Reset your password')</h1>
         <p class="text-sm text-slate-505 mt-1">
-            Enter your email and we'll send you a secure reset link.
+            @label('auth.forgot_message', 'Enter your email and we\'ll send you a secure reset link.')
         </p>
     </div>
 
@@ -127,7 +127,7 @@ new #[Layout('layouts.guest')] class extends Component
         <input type="hidden" wire:model="recaptchaToken">
 
         <div>
-            <label for="email" class="auth-label">Email Address</label>
+            <label for="email" class="auth-label">@label('auth.email', 'Email Address')</label>
 
             <input wire:model="email"
                    id="email"
@@ -136,7 +136,7 @@ new #[Layout('layouts.guest')] class extends Component
                    required
                    autofocus
                    autocomplete="email"
-                   placeholder="you@example.com"
+                   placeholder="@label('auth.email_placeholder', 'you@example.com')"
                    class="auth-input block w-full rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
 
             @error('email')
@@ -150,7 +150,7 @@ new #[Layout('layouts.guest')] class extends Component
         <button type="submit" class="auth-btn w-full">
 
             <span wire:loading.remove wire:target="sendPasswordResetLink">
-                Send Reset Link
+                @label('auth.send_reset', 'Send Reset Link')
             </span>
 
             <span wire:loading wire:target="sendPasswordResetLink"
@@ -175,7 +175,7 @@ new #[Layout('layouts.guest')] class extends Component
 
                 </svg>
 
-                Sending…
+                @label('auth.sending', 'Sending…')
             </span>
 
         </button>
@@ -184,10 +184,10 @@ new #[Layout('layouts.guest')] class extends Component
 
 
     <p class="auth-footer">
-        Remember your password?
+        @label('auth.remember_password', 'Remember your password?')
         <a href="{{ route('login') }}"
            class="auth-link font-medium ml-1">
-            Sign in
+            @label('auth.sign_in_link', 'Sign in')
         </a>
     </p>
 

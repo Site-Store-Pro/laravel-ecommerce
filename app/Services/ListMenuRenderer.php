@@ -18,7 +18,7 @@ class ListMenuRenderer
     public static function render(int $id): string
     {
         $menu = CmsListMenu::with(['items' => function ($query) {
-            $query->orderBy('sort_val');
+            $query->withCurrentTranslations()->orderBy('sort_val');
         }])->find($id);
 
         if (!$menu) {
@@ -27,7 +27,7 @@ class ListMenuRenderer
 
         $html = '';
         if (!empty($menu->custom_css)) {
-            $html .= "<style>\n" . $menu->custom_css . "\n</style>\n";
+            $html .= "<style>\n" . \App\Services\CssMinifierService::minify($menu->custom_css) . "\n</style>\n";
         }
 
         $html .= '<ul id="cms-menu-' . $menu->id . '" class="cms-list-menu">';
@@ -63,14 +63,14 @@ class ListMenuRenderer
 
             switch ($type) {
                 case 'page':
-                    $page = CmsPage::find($id);
+                    $page = CmsPage::withCurrentTranslations()->find($id);
                     if ($page) {
                         return '<a href="' . e(route('page.show', $page->slug)) . '">' . e($label ?: $page->title) . '</a>';
                     }
                     return '<span class="text-slate-400 font-semibold">' . e($label ?: "Page #{$id}") . '</span>';
 
                 case 'product':
-                    $product = Product::find($id);
+                    $product = Product::withCurrentTranslations()->find($id);
                     if ($product) {
                         return '<a href="' . e(route('shop.product', $product->seo_slug)) . '">' . e($label ?: $product->title) . '</a>';
                     }

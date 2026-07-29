@@ -19,40 +19,48 @@ class DatabaseSeeder extends Seeder
         // Users
         // Admin
         // ---------------------------------------------------------------
-        $admin = User::factory()->create([
-            'name'              => 'Support Admin',
-            'email'             => 'admin@support.local',
-            'password'          => Hash::make('SampleUser12345#'),
-            'role_id'           => UserRole::Admin->value,
-            'email_verified_at' => now(),
-        ]);
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@support.local'],
+            [
+                'name'              => 'Support Admin',
+                'password'          => Hash::make('SampleUser12345#'),
+                'role_id'           => UserRole::Admin->value,
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Order processor / ticket manager
-        $agent = User::factory()->create([
-            'name'              => 'Order Processor',
-            'email'             => 'orders@support.local',
-            'password'          => Hash::make('SampleUser12345#'),
-            'role_id'           => UserRole::OrderProcessor->value,
-            'email_verified_at' => now(),
-        ]);
+        $agent = User::firstOrCreate(
+            ['email' => 'orders@support.local'],
+            [
+                'name'              => 'Order Processor',
+                'password'          => Hash::make('SampleUser12345#'),
+                'role_id'           => UserRole::OrderProcessor->value,
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Sample retail customer
-        $customer = User::factory()->create([
-            'name'              => 'Sample Customer',
-            'email'             => 'customer@example.local',
-            'password'          => Hash::make('SampleUser12345#'),
-            'role_id'           => UserRole::User->value,
-            'email_verified_at' => now(),
-        ]);
+        $customer = User::firstOrCreate(
+            ['email' => 'customer@example.local'],
+            [
+                'name'              => 'Sample Customer',
+                'password'          => Hash::make('SampleUser12345#'),
+                'role_id'           => UserRole::User->value,
+                'email_verified_at' => now(),
+            ]
+        );
 
         // Sample wholesale customer
-        $wholesale = User::factory()->create([
-            'name'              => 'Wholesale Buyer',
-            'email'             => 'wholesale@example.local',
-            'password'          => Hash::make('SampleUser12345#'),
-            'role_id'           => UserRole::Wholesale->value,
-            'email_verified_at' => now(),
-        ]);
+        $wholesale = User::firstOrCreate(
+            ['email' => 'wholesale@example.local'],
+            [
+                'name'              => 'Wholesale Buyer',
+                'password'          => Hash::make('SampleUser12345#'),
+                'role_id'           => UserRole::Wholesale->value,
+                'email_verified_at' => now(),
+            ]
+        );
 
         // ---------------------------------------------------------------
         // Sample support tickets (attached to sample customer)
@@ -97,6 +105,8 @@ class DatabaseSeeder extends Seeder
             ShippingSeeder::class,
             PluginSeeder::class,
             CmsFormSeeder::class,
+            CmsBuilderBlockSeeder::class,
+            TestimonialSeeder::class,
         ]);
 
         // ---------------------------------------------------------------
@@ -124,75 +134,90 @@ class DatabaseSeeder extends Seeder
         DB::table('cms_pages')->insert([
             [
                 'id'               => 1,
-                'title'            => 'Welcome',
+                'title'            => 'Home',
                 'slug'             => 'home',
-                'content'          => '<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-12">
-                    <div class="space-y-6">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-100 bg-indigo-50/50 text-xs font-semibold text-indigo-600">
-                            <span class="flex h-2 w-2 relative">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                            </span>
-                            Integrated E-Commerce &amp; Support Platform
-                        </div>
-                        <h1 class="text-4xl font-extrabold tracking-tight text-slate-950 sm:text-6xl max-w-4xl mx-auto leading-tight">
-                            {{ $heroTitle }}
-                        </h1>
-                        <div class="mt-6 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                            {!! $heroContent !!}
-                        </div>
-                    </div>
+                'content'          => '[plugin:slideshow-2026]
 
-                    <!-- CTA Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        <a href="{{ route(\'shop.index\') }}" class="inline-flex items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 px-8 py-4 text-base font-semibold text-white shadow-xl shadow-indigo-100 hover:opacity-95 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                            Browse Store
-                            <svg class="w-5 h-5 ms-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                        </a>
-                        @auth
-                            <a href="{{ route(\'dashboard\') }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-8 py-4 text-base font-semibold text-slate-700 hover:bg-slate-50 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                                My Support Tickets
-                                <svg class="w-5 h-5 ms-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                            </a>
-                        @else
-                            <a href="{{ route(\'register\') }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-8 py-4 text-base font-semibold text-slate-700 hover:bg-slate-50 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                                Create Account
-                            </a>
-                        @endauth
-                    </div>
+<div class="py-12 bg-white dark:bg-slate-800/80 border-y border-slate-100 dark:border-slate-700/60 shadow-sm mb-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-900 bg-indigo-50/80 dark:bg-indigo-950/50 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+            <span class="flex h-2 w-2 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+            </span>
+            Premier E-Commerce Storefront &amp; Customer Support Platform
+        </div>
+        
+        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight">
+            Discover Quality Products &amp; Unmatched Customer Care
+        </h1>
+        
+        <p class="text-slate-600 dark:text-slate-300 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
+            Welcome to our digital storefront! Explore our curated catalog of physical goods, digital downloads, exclusive wholesale pricing, and instant multi-channel customer assistance.
+        </p>
 
-                    <!-- Feature grid -->
-                    <div class="pt-20 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto text-left">
-                        <div class="rounded-2xl border border-slate-200 bg-white p-6 hover:bg-slate-50/50 transition-colors shadow-sm group">
-                            <span class="inline-flex items-center justify-center p-3 rounded-xl bg-indigo-50 text-indigo-600 mb-4 group-hover:scale-110 transition-transform">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                            </span>
-                            <h3 class="text-lg font-bold text-slate-900 mb-2">Integrated Shop</h3>
-                            <p class="text-slate-600 text-sm leading-relaxed">Sell physical and digital products with variants, wholesale pricing, inventory tracking, and multi-processor checkout.</p>
-                        </div>
-                        <div class="rounded-2xl border border-slate-200 bg-white p-6 hover:bg-slate-50/50 transition-colors shadow-sm group">
-                            <span class="inline-flex items-center justify-center p-3 rounded-xl bg-indigo-50 text-indigo-600 mb-4 group-hover:scale-110 transition-transform">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            </span>
-                            <h3 class="text-lg font-bold text-slate-900 mb-2">Reply via Email</h3>
-                            <p class="text-slate-600 text-sm leading-relaxed">Respond to support ticket updates directly from your email client — no login required.</p>
-                        </div>
-                        <div class="rounded-2xl border border-slate-200 bg-white p-6 hover:bg-slate-50/50 transition-colors shadow-sm group">
-                            <span class="inline-flex items-center justify-center p-3 rounded-xl bg-indigo-50 text-indigo-600 mb-4 group-hover:scale-110 transition-transform">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            </span>
-                            <h3 class="text-lg font-bold text-slate-900 mb-2">Secure Downloads</h3>
-                            <p class="text-slate-600 text-sm leading-relaxed">Deliver digital files securely via local storage, CDN URL, or S3 — with Video.js inline playback and force-download support.</p>
-                        </div>
-                        <div class="rounded-2xl border border-slate-200 bg-white p-6 hover:bg-slate-50/50 transition-colors shadow-sm group">
-                            <span class="inline-flex items-center justify-center p-3 rounded-xl bg-indigo-50 text-indigo-600 mb-4 group-hover:scale-110 transition-transform">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-                            </span>
-                            <h3 class="text-lg font-bold text-slate-900 mb-2">Powerful CMS</h3>
-                            <p class="text-slate-600 text-sm leading-relaxed">Build pages with a flexible shortcode system, reusable code embeds, list menus, and a full knowledge base — all TinyMCE powered.</p>
-                        </div>
-                    </div>
-                </div>',
+        <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+            <a href="/shop" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all">
+                <span>Explore Catalog</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+            <a href="#categories" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-extrabold text-sm transition-all">
+                <span>Browse Categories</span>
+            </a>
+        </div>
+
+        <div class="pt-8 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto text-left">
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v1a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100">Fast Shipping</h4>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Reliable fulfillment</p>
+                </div>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100">100% Quality</h4>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Guaranteed products</p>
+                </div>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100">Instant Access</h4>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Digital downloads</p>
+                </div>
+            </div>
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100">Dedicated Support</h4>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">24/7 Ticketing Help</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+    [plugin:brands-2026 display=slider header="Featured Manufacturing Brands" cols=5 autoplay=on]
+</div>
+
+<div id="categories" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+    [plugin:categories-2026 display=grid header="Shop By Top Categories" cols=4]
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+    [plugin:featured-items display=slider header="Featured Products &amp; Best Sellers" max=8]
+</div>',
                 'meta_title'       => 'Welcome',
                 'meta_description' => 'An integrated e-commerce and customer support platform with secure downloads, a CMS, shortcodes, and a knowledge base.',
                 'author_id'        => 1,
@@ -278,6 +303,22 @@ class DatabaseSeeder extends Seeder
                 'author_id'        => 1,
                 'layout_type'      => 1,
                 'show_title'       => 1,
+                'show_author'      => 0,
+                'show_date'        => 0,
+                'is_active'        => 1,
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ],
+            [
+                'id'               => 7,
+                'title'            => 'Search Results',
+                'slug'             => 'search',
+                'content'          => '[plugin:live-search-2026 mode=results]',
+                'meta_title'       => 'Search Results',
+                'meta_description' => 'Multi-content search results across products, CMS pages, knowledge base articles, and customer testimonials.',
+                'author_id'        => 1,
+                'layout_type'      => 1,
+                'show_title'       => 0,
                 'show_author'      => 0,
                 'show_date'        => 0,
                 'is_active'        => 1,

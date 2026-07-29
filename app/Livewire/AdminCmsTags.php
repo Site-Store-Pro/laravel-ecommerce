@@ -24,6 +24,50 @@ class AdminCmsTags extends Component
         'slug' => 'required|string|max:255',
     ];
 
+    public int $tlLangId = 0;
+    public array $tlBuffer = [];
+
+    public function selectTlLang(int $id): void
+    {
+        $this->tlLangId = $id;
+        $this->tlBuffer = [];
+    }
+
+    public function loadTlFor(int $id): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        $existing = \App\Models\CmsPagesTagTranslation::where('cms_pages_tag_id', $id)
+            ->where('language_id', $this->tlLangId)
+            ->first();
+        $this->tlBuffer = $existing ? $existing->only(['name']) : [];
+    }
+
+    public function saveTlTag(int $id): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        \App\Models\CmsPagesTagTranslation::updateOrCreate(
+            ['cms_pages_tag_id' => $id, 'language_id' => $this->tlLangId],
+            array_merge($this->tlBuffer, ['translation_status' => 'reviewed', 'translated_at' => now()])
+        );
+        $this->dispatch('toast', message: 'Translation saved.', type: 'success');
+    }
+
+    public function aiTlTag(int $id): void
+    {
+        if ($this->tlLangId === 0) { return; }
+        $record = CmsPagesTag::findOrFail($id);
+        $lang = \App\Models\Language::findOrFail($this->tlLangId);
+        try {
+            $svc = app(\App\Services\TranslationService::class);
+            if (!empty($record->name)) {
+                $this->tlBuffer['name'] = $svc->translateText($record->name, $lang->name, 'cms pages tag translation');
+            }
+            $this->dispatch('toast', message: 'AI translation ready — review and save.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
+        }
+    }
+
     public function openForm(?int $id = null): void
     {
         $this->resetValidation();
@@ -32,6 +76,7 @@ class AdminCmsTags extends Component
             $this->tagId = $id;
             $this->name = $tag->name;
             $this->slug = $tag->slug;
+            $this->loadTlFor($id);
         } else {
             $this->tagId = null;
             $this->name = '';
@@ -88,6 +133,7 @@ class AdminCmsTags extends Component
     {
         abort_unless(auth()->check() && auth()->user()->isEcommerceAdmin(), 403);
         $tags = CmsPagesTag::orderBy('name', 'asc')->paginate(25);
-        return view('livewire.admin-cms-tags', compact('tags'));
+        $activeLanguages = \App\Models\Language::active()->where('is_default', false)->get();
+        return view('livewire.admin-cms-tags', compact('tags', 'activeLanguages'));
     }
 }

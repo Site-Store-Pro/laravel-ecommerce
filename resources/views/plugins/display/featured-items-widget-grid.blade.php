@@ -69,12 +69,14 @@
                     @endif
 
                     {{-- Featured badge --}}
+                    @if($showBadge ?? true)
                     <span class="absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-400 text-white shadow-sm">
-                        ★ Featured
+                        @label('plugin.featured', '★ Featured')
                     </span>
+                    @endif
 
                     @if($defaultVariant && $defaultVariant->on_sale)
-                        <span class="absolute top-3 right-3 px-2.5 py-1 text-xs font-bold text-red-600 bg-red-50 rounded-full border border-red-100">Sale</span>
+                        <span class="absolute top-3 right-3 px-2.5 py-1 text-xs font-bold text-red-600 bg-red-50 rounded-full border border-red-100">@label('plugin.sale', 'Sale')</span>
                     @endif
                 </a>
 
@@ -97,14 +99,14 @@
                             @if($defaultVariant)
                                 <div class="flex items-baseline gap-1.5">
                                     <span class="text-lg font-extrabold text-slate-900">
-                                        {{ $isFromPrice ? 'From ' : '' }}${{ number_format($priceToShow, 2) }}
+                                        @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
                                     </span>
                                     @if($priceToShow < $originalPrice)
                                         <span class="text-xs text-slate-400 line-through">${{ number_format($originalPrice, 2) }}</span>
                                     @endif
                                 </div>
                             @else
-                                <span class="text-sm text-slate-400">Out of Stock</span>
+                                <span class="text-sm text-slate-400">@label('plugin.out_of_stock', 'Out of Stock')</span>
                             @endif
                         </div>
 
@@ -117,15 +119,15 @@
                             @endphp
                             @if(!$v->download_item && $avail <= 0)
                                 <button disabled class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-400 bg-slate-100 rounded-xl cursor-not-allowed whitespace-nowrap">
-                                    Out of Stock
+                                    @label('plugin.out_of_stock', 'Out of Stock')
                                 </button>
                             @else
                                 <button wire:click="buyNow({{ $v->id }})"
                                         wire:loading.attr="disabled"
                                         wire:target="buyNow({{ $v->id }})"
                                         class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition duration-150 shadow-sm whitespace-nowrap">
-                                    <span wire:loading.remove wire:target="buyNow({{ $v->id }})">Buy Now</span>
-                                    <span wire:loading wire:target="buyNow({{ $v->id }})">Adding...</span>
+                                    <span wire:loading.remove wire:target="buyNow({{ $v->id }})">@label('plugin.buy_now', 'Buy Now')</span>
+                                    <span wire:loading wire:target="buyNow({{ $v->id }})">@label('plugin.adding', 'Adding...')</span>
                                     <svg wire:loading.remove wire:target="buyNow({{ $v->id }})" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                     </svg>
@@ -134,7 +136,7 @@
                         @else
                             <a href="{{ route('shop.product', $product->seo_slug) }}"
                                class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition duration-150 whitespace-nowrap">
-                                View Options
+                                @label('plugin.view_options', 'View Options')
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>

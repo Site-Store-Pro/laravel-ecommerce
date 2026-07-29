@@ -190,8 +190,6 @@
                                         <td class="px-4 py-3.5">
                                             @if($detail->download_item)
                                                 <span class="inline-block bg-teal-50 text-teal-700 text-[10px] px-2 py-0.5 rounded font-bold border border-teal-150">Instant Download</span>
-                                            @else
-                                                <span class="inline-block bg-indigo-50 text-indigo-700 text-[10px] px-2 py-0.5 rounded font-bold border border-indigo-150">Shipped Product</span>
                                             @endif
                                         </td>
                                         <td class="px-4 py-3.5 text-right">
@@ -462,45 +460,229 @@
                     </div>
                 @endif
 
-                <!-- Payment History Card -->
-                <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-4 mt-8">
-                    <h3 class="text-lg font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center gap-2">
-                        <span class="w-1.5 h-6 bg-indigo-600 rounded"></span> Payment History
-                    </h3>
+                {{-- ── Payment History Card (with CRUD) ──────────────────────────────── --}}
+                <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl p-8 shadow-sm space-y-4 mt-8">
+                    <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="w-1.5 h-6 bg-indigo-600 rounded"></span> Payment History
+                        </h3>
+                        <button
+                            wire:click="openAddPayment"
+                            class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition"
+                        >
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                            Add Payment
+                        </button>
+                    </div>
+
                     @if($order->payments->isNotEmpty())
-                        <div class="space-y-4">
-                            @foreach($order->payments as $payment)
-                                <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between text-sm gap-4">
-                                    <div>
-                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Payment Date</span>
-                                        <span class="font-semibold text-slate-700">{{ $payment->payment_date ? $payment->payment_date->format('Y-m-d h:i A') : '-' }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Method</span>
-                                        <span class="font-bold text-slate-700">{{ $payment->payment_method ?: '-' }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Status</span>
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border {{ strtolower($payment->payment_status) === 'success' || strtolower($payment->payment_status) === 'completed' || strtolower($payment->payment_status) === 'paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200' }}">
-                                            {{ $payment->payment_status ?: 'Unknown' }}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Auth Code</span>
-                                        <span class="font-mono text-xs text-slate-600">{{ $payment->authorization_code ?: '-' }}</span>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Amount</span>
-                                        <span class="font-extrabold text-slate-900">${{ number_format($payment->payment_amount, 2) }}</span>
-                                    </div>
-                                </div>
-                            @endforeach
+                        <div class="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-700">
+                            <table class="w-full text-sm">
+                                <thead class="bg-slate-50 dark:bg-slate-900/50 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left">Date</th>
+                                        <th class="px-4 py-3 text-left">Method</th>
+                                        <th class="px-4 py-3 text-left">Auth / Ref Code</th>
+                                        <th class="px-4 py-3 text-left">Status</th>
+                                        <th class="px-4 py-3 text-right">Amount</th>
+                                        <th class="px-4 py-3 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
+                                    @foreach($order->payments as $payment)
+                                        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-900/30 transition">
+                                            <td class="px-4 py-3 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                                                {{ $payment->payment_date ? $payment->payment_date->format('M j, Y g:i A') : '—' }}
+                                            </td>
+                                            <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">
+                                                {{ $payment->payment_method ?: '—' }}
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <span class="font-mono text-xs text-slate-500 dark:text-slate-400">
+                                                    {{ $payment->authorization_code ?: '—' }}
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                @if($payment->payment_status == 1)
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Paid</span>
+                                                @else
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Pending</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-3 text-right font-extrabold text-slate-900 dark:text-white whitespace-nowrap">
+                                                ${{ number_format($payment->payment_amount, 2) }}
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <button
+                                                        wire:click="openEditPayment({{ $payment->id }})"
+                                                        class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                                                        title="Edit payment"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                    </button>
+                                                    <button
+                                                        x-on:click="if(confirm('Delete this payment of ${{ number_format($payment->payment_amount, 2) }}?')) $wire.deletePayment({{ $payment->id }})"
+                                                        class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                                                        title="Delete payment"
+                                                    >
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- Balance Summary --}}
+                        <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-1.5">
+                            <div class="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                                <span class="font-medium">Order Total</span>
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">${{ number_format($order->order_total, 2) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                                <span class="font-medium">Total Paid</span>
+                                <span class="font-semibold text-emerald-600 dark:text-emerald-400">${{ number_format($order->payments->sum('payment_amount'), 2) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm font-bold border-t border-slate-200 dark:border-slate-700 pt-2 mt-2">
+                                <span class="text-slate-700 dark:text-slate-300">Balance Due</span>
+                                @php $balanceDue = max(0, (float)$order->order_total - (float)$order->payments->sum('payment_amount')); @endphp
+                                <span class="{{ $balanceDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }} text-base">
+                                    ${{ number_format($balanceDue, 2) }}
+                                    @if($balanceDue <= 0)
+                                        <span class="ml-1 text-xs font-bold px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-full">Paid in Full</span>
+                                    @endif
+                                </span>
+                            </div>
                         </div>
                     @else
-                        <p class="text-sm text-slate-500 italic">No payments recorded for this order.</p>
+                        <div class="py-8 text-center">
+                            <svg class="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                            <p class="text-sm text-slate-400 dark:text-slate-500 font-medium">No payments recorded for this order.</p>
+                            <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Balance Due: <span class="font-bold text-rose-500">${{ number_format($order->order_total, 2) }}</span></p>
+                        </div>
                     @endif
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    {{-- ── Add / Edit Payment Modal ─────────────────────────────────────── --}}
+    <div
+        x-show="$wire.showPaymentModal"
+        x-transition:enter="ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+        x-cloak
+    >
+        <div
+            x-show="$wire.showPaymentModal"
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700"
+            @click.away="$wire.set('showPaymentModal', false)"
+        >
+            <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                <h2 class="text-base font-bold text-slate-900 dark:text-white">
+                    {{ $editingPaymentId ? 'Edit Payment' : 'Add Payment' }}
+                </h2>
+                <button
+                    wire:click="$set('showPaymentModal', false)"
+                    class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                {{-- Row 1: Date + Amount --}}
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Payment Date <span class="text-rose-500">*</span></label>
+                        <input type="date" wire:model="pmtDate"
+                            class="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition" />
+                        @error('pmtDate') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Amount <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">$</span>
+                            <input type="number" wire:model="pmtAmount" step="0.01" min="0.01" placeholder="0.00"
+                                class="w-full pl-7 pr-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition" />
+                        </div>
+                        @error('pmtAmount') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+
+                {{-- Row 2: Method + Status --}}
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Method <span class="text-rose-500">*</span></label>
+                        <select wire:model="pmtMethod"
+                            class="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition">
+                            <option value="Manual">Manual</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Check">Check</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Stripe">Stripe</option>
+                            <option value="PayPal">PayPal</option>
+                            <option value="Paddle">Paddle</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        @error('pmtMethod') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Status</label>
+                        <select wire:model="pmtStatus"
+                            class="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition">
+                            <option value="1">Paid</option>
+                            <option value="0">Pending</option>
+                        </select>
+                    </div>
+                </div>
+
+                {{-- Auth Code --}}
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Auth / Reference Code <span class="text-slate-400 font-normal">(optional)</span></label>
+                    <input type="text" wire:model="pmtAuthCode" placeholder="e.g. ch_3xyz, TXN123, CHK-0042..."
+                        class="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition font-mono" />
+                </div>
+
+                {{-- Notes --}}
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Notes / Response <span class="text-slate-400 font-normal">(optional)</span></label>
+                    <textarea wire:model="pmtNotes" rows="2" placeholder="Additional notes, gateway response message..."
+                        class="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition resize-none"></textarea>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-3">
+                <button
+                    wire:click="$set('showPaymentModal', false)"
+                    class="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition"
+                >
+                    Cancel
+                </button>
+                <button
+                    wire:click="savePayment"
+                    wire:loading.attr="disabled"
+                    wire:target="savePayment"
+                    class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-bold rounded-xl transition flex items-center gap-2"
+                >
+                    <span wire:loading.remove wire:target="savePayment">{{ $editingPaymentId ? 'Update Payment' : 'Add Payment' }}</span>
+                    <span wire:loading wire:target="savePayment">Saving...</span>
+                </button>
             </div>
         </div>
     </div>

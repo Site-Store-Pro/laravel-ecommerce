@@ -1,6 +1,6 @@
 <div class="pt-4 pb-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-12">Your Shopping Cart</h1>
+        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-12">@label('cart.page_heading', 'Your Shopping Cart')</h1>
 
         @if(session()->has('status'))
             <div class="mb-8 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3 text-emerald-800 text-sm font-semibold">
@@ -25,11 +25,11 @@
                 <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                 </svg>
-                <h3 class="mt-4 text-sm font-semibold text-slate-900">Your cart is empty</h3>
-                <p class="mt-1 text-sm text-slate-500">Add products to your cart to see them here.</p>
+                <h3 class="mt-4 text-sm font-semibold text-slate-900">@label('cart.empty_heading', 'Your cart is empty')</h3>
+                <p class="mt-1 text-sm text-slate-500">@label('cart.empty_message', 'Add products to your cart to see them here.')</p>
                 <div class="mt-6">
                     <a href="{{ route('shop.index') }}" wire:navigate class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-2xl hover:opacity-90 shadow-md shadow-indigo-100 transition duration-150">
-                        Continue Shopping
+                        @label('cart.continue_shopping', 'Continue Shopping')
                     </a>
                 </div>
             </div>
@@ -94,11 +94,11 @@
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                         </svg>
-                                        Locked (BOGO)
+                                        @label('cart.locked_bogo', 'Locked (BOGO)')
                                     </div>
                                 @elseif($item->max_qty == 1)
                                     <div class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-500 whitespace-nowrap">
-                                        Qty: 1 (Max limit)
+                                        @label('cart.qty_max_limit', 'Qty: 1 (Max limit)')
                                     </div>
                                 @else
                                     <div class="flex items-center gap-2">
@@ -128,11 +128,11 @@
 
                 <!-- Order Summary Sidebar -->
                 <div class="lg:col-span-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-                    <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 mb-6">Order Summary</h2>
+                    <h2 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 mb-6">@label('cart.order_summary', 'Order Summary')</h2>
 
                     <div class="space-y-4">
                         <div class="flex justify-between text-sm text-slate-500">
-                            <span>Subtotal</span>
+                            <span>@label('cart.subtotal', 'Subtotal')</span>
                             <span class="font-semibold text-slate-800">{{ $currencySymbol }}{{ number_format($subtotal, 2) }}</span>
                         </div>
 
@@ -140,7 +140,7 @@
                             <div class="border-t border-slate-100 pt-3 space-y-2">
                                 @foreach($discounts as $disc)
                                     <div class="flex justify-between text-xs text-emerald-600 font-semibold">
-                                        <span>Discount: {{ $disc['name'] }}</span>
+                                        <span>@label('cart.discount', 'Discount:') {{ $disc['name'] }}</span>
                                         <span>-{{ $currencySymbol }}{{ number_format($disc['amount'], 2) }}</span>
                                     </div>
                                 @endforeach
@@ -148,18 +148,18 @@
                         @endif
 
                         <div class="flex justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
-                            <span>Shipping</span>
-                            <span class="font-semibold text-emerald-600">Calculated at checkout</span>
+                            <span>@label('cart.shipping', 'Shipping')</span>
+                            <span class="font-semibold text-emerald-600">@label('cart.shipping_calculated', 'Calculated at checkout')</span>
                         </div>
                         <div class="border-t border-slate-100 pt-4 flex justify-between text-lg font-extrabold text-slate-900">
-                            <span>Total</span>
+                            <span>@label('cart.total', 'Total')</span>
                             <span>{{ $currencySymbol }}{{ number_format($total, 2) }}</span>
                         </div>
                     </div>
 
                     <div class="mt-8">
                         <a href="{{ route('shop.checkout') }}" wire:navigate class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-md hover:scale-[1.01] transition duration-150 flex items-center justify-center gap-2">
-                            Proceed to Checkout
+                            @label('cart.proceed_to_checkout', 'Proceed to Checkout')
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                             </svg>

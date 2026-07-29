@@ -107,6 +107,7 @@ class SlideCart extends Component
 
         $this->subtotal = (float) $discountResult['subtotal'];
         $this->total = (float) $discountResult['adjusted_subtotal'];
+
     }
 
     public function updateQty(int $itemId, float $qty): void

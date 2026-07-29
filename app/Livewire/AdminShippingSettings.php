@@ -424,12 +424,19 @@ class AdminShippingSettings extends Component
         // 5. Fetch Warehouse Locations
         $warehouseLocations = DB::table('warehouse_locations')->orderBy('id', 'asc')->get();
 
+        // 6. Fetch Installed Shipping Plugins
+        $shippingPlugins = \App\Models\Plugin::where(function($q) {
+            $q->where('type', 'shipping')
+              ->orWhere('type', 'Shipping');
+        })->orderBy('name')->get();
+
         return view('livewire.admin-shipping-settings', [
             'states' => $states,
             'countries' => $countries,
             'flatRates' => $flatRates,
             'handlingCharges' => $handlingCharges,
             'warehouseLocations' => $warehouseLocations,
+            'shippingPlugins' => $shippingPlugins,
         ])->layout('layouts.app');
     }
 }

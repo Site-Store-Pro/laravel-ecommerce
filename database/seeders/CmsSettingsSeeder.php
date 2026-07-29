@@ -56,6 +56,14 @@ class CmsSettingsSeeder extends Seeder
 
             // General
             [
+                'key'        => 'site_name',
+                'value'      => config('app.name', 'Support Tickets'),
+                'label'      => 'Site Name',
+                'type'       => 'text',
+                'group'      => 'general',
+                'sort_order' => 5,
+            ],
+            [
                 'key'        => 'timezone',
                 'value'      => 'America/New_York',
                 'label'      => 'Site Timezone',

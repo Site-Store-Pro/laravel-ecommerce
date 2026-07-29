@@ -15,7 +15,8 @@ class KbArticleShow extends Component
 
     public function mount(string $seo_link): void
     {
-        $article = KbArticle::where('seo_link', $seo_link)
+        $article = KbArticle::withCurrentTranslations()
+            ->where('seo_link', $seo_link)
             ->where('article_active', 1)
             ->first();
 

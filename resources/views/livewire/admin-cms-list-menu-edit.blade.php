@@ -159,6 +159,75 @@
                         </div>
                     </div>
 
+                    {{-- ─── Translations Section ──────────────────────────────────────────────── --}}
+                    @if(isset($activeLanguages) && $activeLanguages->isNotEmpty() && !empty($itemsData))
+                    <div x-data="{ tlOpen: false }" class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                        <button type="button" @click="tlOpen = !tlOpen"
+                                class="flex items-center justify-between w-full text-left bg-white/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700/80 shadow-sm transition-all hover:bg-white dark:hover:bg-slate-800">
+                            <span class="text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                                Translations for Menu Items
+                            </span>
+                            <svg class="w-5 h-5 text-slate-400 transition-transform" :class="tlOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+
+                        <div x-show="tlOpen" x-cloak class="mt-4 space-y-6">
+                            {{-- Language selector pills --}}
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($activeLanguages as $lang)
+                                    <button type="button"
+                                            wire:click="selectTlLang({{ $lang->id }})"
+                                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border transition
+                                                {{ $tlLangId === $lang->id
+                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400' }}">
+                                        <span class="fi fi-{{ strtolower($lang->flag_emoji) }}" style="width:1em;height:0.75em;font-size:1.1rem;"></span>
+                                        {{ $lang->name }}
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            @if($tlLangId > 0)
+                                <div class="grid gap-4">
+                                    @foreach($itemsData as $itemId => $item)
+                                        <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl p-5 border border-slate-200/60 dark:border-slate-700/80 shadow-sm" wire:key="tl-item-{{ $itemId }}">
+                                            <div class="mb-4">
+                                                <span class="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-1">Default Label</span>
+                                                <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">{{ $item['list_item'] ?? '(Empty)' }}</div>
+                                            </div>
+
+                                            <div>
+                                                <label class="text-xs font-bold text-indigo-500 uppercase tracking-wider block mb-2">Translation (List Item)</label>
+                                                <input type="text" wire:model="tlBuffer.{{ $itemId }}.list_item"
+                                                       placeholder="Enter translated text..."
+                                                       class="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 text-sm rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                                            </div>
+
+                                            <div class="flex items-center gap-3 pt-4 mt-4 border-t border-slate-100 dark:border-slate-700">
+                                                <button type="button" wire:click="aiTlItem({{ $itemId }})"
+                                                        wire:loading.attr="disabled" wire:target="aiTlItem({{ $itemId }})"
+                                                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 dark:hover:bg-violet-900/50 text-xs font-bold rounded-xl transition disabled:opacity-60">
+                                                    <span wire:loading.remove wire:target="aiTlItem({{ $itemId }})">
+                                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.09 9.09 2 12l7.09 2.91L12 22l2.91-7.09L22 12l-7.09-2.91L12 2z"/></svg>
+                                                    </span>
+                                                    <span wire:loading wire:target="aiTlItem({{ $itemId }})" class="inline-flex">
+                                                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                                    </span>
+                                                    AI Translate
+                                                </button>
+                                                <button type="button" wire:click="saveTlItem({{ $itemId }})"
+                                                        class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all">
+                                                    Save Translation
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
+
                     <!-- Slide out Panel / Search tool (Sticky container on desktop) -->
                     <div 
                         x-show="sidebarOpen"

@@ -7,12 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Models\ProductVariantEvent;
+use App\Traits\HasTranslations;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ProductVariant extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTranslations;
+
+    /** Fields returned in the active language when translations are eager-loaded. */
+    protected array $translatable = [
+        'personalization_label',
+        'personalization_details_label',
+        'personalization_placeholder',
+    ];
+
 
     protected $table = 'product_variants';
 
@@ -32,6 +41,8 @@ class ProductVariant extends Model
         'download_item',
         'charge_tax',
         'download_location',
+        'direct_download_url',
+        'download_label',
         'download_expiration',
         'downloads_max_allowed',
         'download_s3',

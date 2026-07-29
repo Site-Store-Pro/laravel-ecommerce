@@ -40,22 +40,52 @@ class NavItemRenderer
         $user = $context['user'] ?? null;
 
         return match ($item->item_type) {
-            'home'         => ['href' => url('/'),                     'label' => $item->label, 'skip' => false],
-            'shop'         => ['href' => route('shop.index'),          'label' => $item->label, 'skip' => false],
-            'cart'         => ['href' => route('shop.cart'),           'label' => $item->label, 'skip' => false],
-            'account'      => ['href' => route('dashboard'),           'label' => $item->label, 'skip' => false],
+            'home'         => ['href' => url('/'),            'label' => $this->resolveLabel($item, 'nav.home', 'Home'), 'skip' => false],
+            'shop'         => ['href' => route('shop.index'), 'label' => $this->resolveLabel($item, 'nav.shop', 'Shop'), 'skip' => false],
+            'cart'         => ['href' => route('shop.cart'),  'label' => $this->resolveLabel($item, 'nav.cart', 'Cart'), 'skip' => false],
+            'account'      => ['href' => route('dashboard'),  'label' => $this->resolveLabel($item, 'nav.my_account', 'My Account'), 'skip' => false],
+            'categories'   => ['href' => '#',                 'label' => $this->resolveLabel($item, 'nav.categories_fallback', 'Categories'), 'skip' => false],
+            'brands'       => ['href' => '#',                 'label' => $this->resolveLabel($item, 'nav.brands_fallback', 'Brands'), 'skip' => false],
             'link'         => $this->resolveCustomLink($item),
             'cms_page'     => $this->resolveCmsPage($item),
+            'login_logout' => $this->resolveLoginLogout($item, $user),
             'parent',
             'no_link',
             'mega_menu',
             'html_submenu',
-            'categories',
-            'brands',
             'separator',
-            'plugin'       => ['href' => '#', 'label' => $item->label, 'skip' => false],
-            default        => ['href' => '#', 'label' => $item->label, 'skip' => false],
+            'plugin'       => ['href' => '#',                 'label' => $this->resolveLabel($item), 'skip' => false],
+            default        => ['href' => '#',                 'label' => $this->resolveLabel($item), 'skip' => false],
         };
+    }
+
+    /**
+     * Resolve translated label for a NavItem.
+     */
+    public function resolveLabel(NavItem $item, ?string $siteLabelKey = null, string $defaultFallback = ''): string
+    {
+        $langService = app(\App\Services\LanguageService::class);
+        $translatedLabel = (string) $item->label;
+
+        if (!$langService->isDefault()) {
+            if ($item->relationLoaded('translations')) {
+                $trans = $item->translations->firstWhere('language_id', $langService->currentId());
+                if ($trans && !empty($trans->label)) {
+                    return $trans->label;
+                }
+            } else {
+                $transLabel = $item->getTranslated('label');
+                if ($transLabel !== '' && $transLabel !== $item->getRawOriginal('label')) {
+                    return $transLabel;
+                }
+            }
+        }
+
+        if ($siteLabelKey !== null) {
+            return siteLabel($siteLabelKey, $translatedLabel !== '' ? $translatedLabel : $defaultFallback);
+        }
+
+        return $translatedLabel;
     }
 
     /**
@@ -83,32 +113,57 @@ class NavItemRenderer
         if ($url !== '#' && !str_contains($url, '//')) {
             $url = url('/' . ltrim($url, '/'));
         }
-        return ['href' => $url, 'label' => $item->label, 'skip' => false];
+        return ['href' => $url, 'label' => $this->resolveLabel($item), 'skip' => false];
     }
 
     protected function resolveCmsPage(NavItem $item): array
     {
         if (!$item->cms_page_id) {
-            return ['href' => '#', 'label' => $item->label, 'skip' => false];
+            return ['href' => '#', 'label' => $this->resolveLabel($item), 'skip' => false];
         }
 
         try {
-            $page = CmsPage::select('page_seo_link', 'page_active')
+            $page = CmsPage::withCurrentTranslations()
+                ->select('id', 'title', 'slug', 'is_active')
                 ->find($item->cms_page_id);
 
-            if (!$page || !$page->page_active) {
-                return ['href' => '#', 'label' => $item->label, 'skip' => true];
+            if (!$page || !$page->is_active) {
+                return ['href' => '#', 'label' => $this->resolveLabel($item), 'skip' => true];
+            }
+
+            $label = $this->resolveLabel($item);
+            $rawItemLabel = $item->getRawOriginal('label');
+            $rawPageTitle = $page->getRawOriginal('title');
+            if (empty($rawItemLabel) || $rawItemLabel === $rawPageTitle) {
+                $label = $page->title;
             }
 
             return [
-                'href'  => route('page.show', $page->page_seo_link),
-                'label' => $item->label,
+                'href'  => route('page.show', $page->slug),
+                'label' => $label,
                 'skip'  => false,
             ];
         } catch (\Throwable $e) {
             Log::warning("[NavItemRenderer] CMS page lookup failed: " . $e->getMessage());
-            return ['href' => '#', 'label' => $item->label, 'skip' => false];
+            return ['href' => '#', 'label' => $this->resolveLabel($item), 'skip' => false];
         }
+    }
+
+    protected function resolveLoginLogout(NavItem $item, ?object $user): array
+    {
+        if ($user) {
+            return [
+                'href'  => '#',
+                'label' => siteLabel('nav.log_out', 'Logout'),
+                'skip'  => false,
+            ];
+        }
+
+        return [
+            'href'  => route('login'),
+            'label' => $this->resolveLabel($item, 'nav.sign_in', 'Sign In'),
+            'skip'  => false,
+        ];
     }
 
     // ─── Sub-menu renderers ───────────────────────────────────────────────────
@@ -116,36 +171,25 @@ class NavItemRenderer
     protected function renderCategories(NavItem $item, array $context): string
     {
         try {
-            // Load categories that are active and included in menu
-            $categories = Category::where('active', 1)
-                ->where('include_in_menu', 1)
-                ->orderBy('menu_order')
+            $categories = Category::whereNull('parent_id')
+                ->with('children')
+                ->orderBy('sort_order', 'asc')
                 ->get();
 
             if ($categories->isEmpty()) return '';
 
-            $html = '<ul class="nav-dropdown">';
+            $html = '<ul class="nav-dropdown nav-categories-dropdown">';
             foreach ($categories as $cat) {
-                $url = route('shop.category', $cat->seo_link ?? \Str::slug($cat->name));
+                $url = route('shop.category', $cat->slug);
                 $html .= '<li><a href="' . e($url) . '">' . e($cat->name) . '</a>';
 
-                // Sub-categories (second level)
-                if ($cat->relationLoaded('subcategories') || method_exists($cat, 'subcategories')) {
-                    try {
-                        $subs = $cat->subcategories()
-                            ->where('active', 1)
-                            ->where('include_in_menu', 1)
-                            ->orderBy('menu_order')
-                            ->get();
-                        if ($subs->isNotEmpty()) {
-                            $html .= '<ul class="nav-dropdown">';
-                            foreach ($subs as $sub) {
-                                $subUrl = route('shop.category', $sub->seo_link ?? \Str::slug($sub->name));
-                                $html .= '<li><a href="' . e($subUrl) . '">' . e($sub->name) . '</a></li>';
-                            }
-                            $html .= '</ul>';
-                        }
-                    } catch (\Throwable) {}
+                if ($cat->children && $cat->children->isNotEmpty()) {
+                    $html .= '<ul class="nav-dropdown">';
+                    foreach ($cat->children as $sub) {
+                        $subUrl = route('shop.category', $sub->slug);
+                        $html .= '<li><a href="' . e($subUrl) . '">' . e($sub->name) . '</a></li>';
+                    }
+                    $html .= '</ul>';
                 }
 
                 $html .= '</li>';
@@ -161,16 +205,15 @@ class NavItemRenderer
     protected function renderBrands(NavItem $item, array $context): string
     {
         try {
-            $brands = Brand::where('active', 1)
-                ->where('include_in_menu', 1)
-                ->orderBy('menu_order')
+            $brands = Brand::orderBy('sort_order', 'asc')
+                ->orderBy('name', 'asc')
                 ->get();
 
             if ($brands->isEmpty()) return '';
 
-            $html = '<ul class="nav-dropdown">';
+            $html = '<ul class="nav-dropdown nav-brands-dropdown min-w-[200px] py-1">';
             foreach ($brands as $brand) {
-                $url = route('shop.brand', $brand->seo_link ?? \Str::slug($brand->name));
+                $url = route('shop.brand', $brand->slug);
                 $html .= '<li><a href="' . e($url) . '">' . e($brand->name) . '</a></li>';
             }
             $html .= '</ul>';

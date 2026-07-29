@@ -15,7 +15,8 @@ class AdminCmsDownloadEdit extends Component
     use WithFileUploads;
 
     // Record identity
-    public ?int $downloadId = null;
+    public ?int    $downloadId   = null;
+    public ?string $downloadUuid = null;
 
     // Basic info
     public string $internal_name = '';
@@ -88,6 +89,7 @@ class AdminCmsDownloadEdit extends Component
         if ($id) {
             $download = CmsDownload::findOrFail($id);
             $this->downloadId             = $download->id;
+            $this->downloadUuid           = $download->uuid;
             $this->internal_name          = $download->internal_name ?? '';
             $this->link_label             = $download->link_label ?? '';
             $this->is_active              = (bool) $download->is_active;
@@ -169,10 +171,13 @@ class AdminCmsDownloadEdit extends Component
             $download = CmsDownload::findOrFail($this->downloadId);
             $download->update($data);
             session()->flash('status', 'Download updated successfully.');
+            $this->dispatch('cms-download-saved', message: 'Download updated successfully.');
         } else {
             $download = CmsDownload::create($data);
-            $this->downloadId = $download->id;
+            $this->downloadId   = $download->id;
+            $this->downloadUuid = $download->uuid;
             session()->flash('status', 'Download created successfully.');
+            $this->dispatch('cms-download-saved', message: 'Download created successfully.');
         }
     }
 
@@ -186,6 +191,7 @@ class AdminCmsDownloadEdit extends Component
         }
         $this->file_path = '';
         session()->flash('status', 'File removed.');
+        $this->dispatch('cms-download-saved', message: 'File removed.');
     }
 
     public function deletePosterImage(): void

@@ -72,6 +72,74 @@
                                 @endif
                             </div>
 
+                            {{-- ── Personalization Label Translations ──────────────────────── --}}
+                            @if($personalization_active && isset($activeLanguages) && $activeLanguages->count() > 0)
+                            <div class="mt-4 border border-indigo-200 bg-indigo-50/40 rounded-2xl p-5 space-y-4">
+                                <div class="flex items-center gap-2 pb-2 border-b border-indigo-100">
+                                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                                    </svg>
+                                    <h4 class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Personalization Label Translations</h4>
+                                    <span class="ml-auto text-[10px] text-slate-400 hidden sm:block">Translate the storefront personalization prompts</span>
+                                </div>
+
+                                {{-- Language pills --}}
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach($activeLanguages as $lang)
+                                        @php
+                                            $vTrans   = \App\Models\ProductVariantTranslation::where('product_variant_id', $selectedVariantId)
+                                                            ->where('language_id', $lang->id)->first();
+                                            $vHasData = $vTrans && ($vTrans->personalization_label || $vTrans->personalization_details_label || $vTrans->personalization_placeholder);
+                                        @endphp
+                                        <button type="button"
+                                                wire:click="selectVariantTranslationLang('{{ $lang->code }}', {{ $lang->id }})"
+                                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition
+                                                       {{ $variantTransLangCode === $lang->code
+                                                              ? 'bg-indigo-600 text-white border-indigo-600'
+                                                              : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300' }}">
+                                            <span>{{ $lang->flag_emoji }}</span>
+                                            {{ $lang->native_name }}
+                                            @if($vHasData)
+                                                <span class="text-[9px] px-1.5 py-0.5 rounded-full
+                                                             {{ $variantTransLangCode === $lang->code ? 'bg-white/30 text-white' : 'bg-emerald-200 text-emerald-800' }}">✓</span>
+                                            @endif
+                                        </button>
+                                    @endforeach
+                                </div>
+
+                                @if($variantTransLangCode)
+                                    <div class="space-y-3 bg-white rounded-xl p-4 border border-indigo-100">
+                                        <div>
+                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Personalization Label</label>
+                                            <input type="text" wire:model="trans_personalization_label"
+                                                   placeholder="Translated label, e.g. 'Añadir texto personalizado'…"
+                                                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Details / Message Label</label>
+                                            <input type="text" wire:model="trans_personalization_details_label"
+                                                   placeholder="Translated details label…"
+                                                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Placeholder Text</label>
+                                            <input type="text" wire:model="trans_personalization_placeholder"
+                                                   placeholder="Translated placeholder text…"
+                                                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
+                                        </div>
+                                        <div class="flex justify-end pt-1">
+                                            <button type="button" wire:click="saveVariantTranslation" wire:loading.attr="disabled"
+                                                    class="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition">
+                                                <span wire:loading wire:target="saveVariantTranslation"
+                                                      class="animate-spin w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full inline-block"></span>
+                                                Save Translation
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                            @endif
+
                             <!-- Quantity Discount breaks -->
                             <div class="bg-indigo-50/30 border border-indigo-100 rounded-3xl p-5 space-y-4">
                                 <div class="flex items-center justify-between pb-2 border-b border-indigo-100">
@@ -167,12 +235,18 @@
                                         <option value="g">g</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Requires Shipping</label>
-                                    <select wire:model="shipping" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                        <option value="1">Yes</option>
-                                        <option value="0">No (Digital Item)</option>
-                                    </select>
+                                {{-- Requires Shipping Toggle --}}
+                                <div class="flex flex-col justify-end pb-1">
+                                    <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">Requires Shipping</label>
+                                    <label class="flex items-center gap-2.5 cursor-pointer group">
+                                        <div class="relative">
+                                            <input type="checkbox" wire:model.number="shipping" class="sr-only peer" true-value="1" false-value="0">
+                                            <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-indigo-400 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+                                        </div>
+                                        <span class="text-sm font-bold {{ $shipping ? 'text-indigo-700' : 'text-slate-400' }} transition-colors">
+                                            {{ $shipping ? 'Shipping Required' : 'No Shipping (Digital)' }}
+                                        </span>
+                                    </label>
                                 </div>
                                 {{-- Charge Tax Toggle --}}
                                 <div class="flex flex-col justify-end pb-1">
@@ -682,6 +756,24 @@
                                                             <option value="1">Global S3 Storage (.env config)</option>
                                                             <option value="2">Custom S3 Credentials</option>
                                                         </select>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">
+                                                            Direct Download URL <span class="text-indigo-600 font-extrabold normal-case">(Overrides Uploaded File)</span>
+                                                        </label>
+                                                        <input type="url" wire:model="direct_download_url" placeholder="https://example.com/downloads/file.zip" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-xs font-mono">
+                                                        @error('direct_download_url') <span class="text-xs text-red-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                                        <p class="text-[10px] text-slate-400 font-medium mt-1">If entered, order download links will force-download directly from this URL and override local/S3 uploaded files.</p>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">
+                                                            Digital Item Label / Badge Text
+                                                        </label>
+                                                        <input type="text" wire:model="download_label" placeholder="Digital Item (Instant Download)" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-xs font-medium">
+                                                        @error('download_label') <span class="text-xs text-red-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                                        <p class="text-[10px] text-slate-400 font-medium mt-1">Custom text displayed on item view page for digital download variants (defaults to &ldquo;Digital Item (Instant Download)&rdquo;).</p>
                                                     </div>
 
                                                     <div>
@@ -1599,6 +1691,24 @@
                                                     </div>
 
                                                     <div>
+                                                        <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">
+                                                            Direct Download URL <span class="text-indigo-600 font-extrabold normal-case">(Overrides Uploaded File)</span>
+                                                        </label>
+                                                        <input type="url" wire:model="direct_download_url" placeholder="https://example.com/downloads/file.zip" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-xs font-mono">
+                                                        @error('direct_download_url') <span class="text-xs text-red-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                                        <p class="text-[10px] text-slate-400 font-medium mt-1">If entered, order download links will force-download directly from this URL and override local/S3 uploaded files.</p>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">
+                                                            Digital Item Label / Badge Text
+                                                        </label>
+                                                        <input type="text" wire:model="download_label" placeholder="Digital Item (Instant Download)" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-xs font-medium">
+                                                        @error('download_label') <span class="text-xs text-red-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                                        <p class="text-[10px] text-slate-400 font-medium mt-1">Custom text displayed on item view page for digital download variants (defaults to &ldquo;Digital Item (Instant Download)&rdquo;).</p>
+                                                    </div>
+
+                                                    <div>
                                                         <label class="text-xs font-bold text-slate-550 block mb-1 uppercase tracking-wider">Upload Product File</label>
                                                         <input type="file" wire:model="downloadFile" class="w-full text-xs text-slate-550 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                                                         @error('downloadFile') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
@@ -1732,6 +1842,43 @@
                             Add New Price | Variant
                         </button>
                     </div>
+
+                    {{-- Variant Selector Label --}}
+                    <div class="flex items-end gap-3 py-3 border-b border-slate-100">
+                        <div class="flex-1">
+                            <label for="variant_label_input" class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                                Variant Selector Label
+                                <span class="ml-1.5 text-[10px] font-normal text-slate-400 normal-case tracking-normal">Shown above the variant options on the product page (only when 2+ variants exist)</span>
+                            </label>
+                            <input
+                                id="variant_label_input"
+                                type="text"
+                                wire:model="variant_label"
+                                placeholder="Select Option:"
+                                maxlength="255"
+                                class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm font-medium transition"
+                            >
+                            @error('variant_label')
+                                <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <button
+                            wire:click="updateVariantLabel"
+                            wire:loading.attr="disabled"
+                            wire:target="updateVariantLabel"
+                            class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl shadow-sm transition duration-150 shrink-0"
+                        >
+                            <svg wire:loading.remove wire:target="updateVariantLabel" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <svg wire:loading wire:target="updateVariantLabel" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                            </svg>
+                            Save Label
+                        </button>
+                    </div>
+
                     @if($product->variants->isEmpty())
                         <p class="text-sm text-slate-500 text-center py-6">No variants created for this product yet.</p>
                     @else
@@ -1890,12 +2037,24 @@
                                                         @endif
                                                     </div>
                                                     {{-- Personalization --}}
-                                                    <div class="flex items-center gap-1.5">
-                                                        <span class="text-slate-400 w-24 shrink-0">Personalization:</span>
+                                                    <div class="flex items-[flex-start] gap-1.5">
+                                                        <span class="text-slate-400 w-24 shrink-0 mt-0.5">Personalization:</span>
                                                         @if($variant->personalization_active)
-                                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100">
-                                                                <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span> Yes
-                                                            </span>
+                                                            <div class="flex flex-col gap-0.5">
+                                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span> Active ({{ $variant->personalization_fee > 0 ? '+$' . number_format($variant->personalization_fee, 2) : 'Free' }})
+                                                                </span>
+                                                                @if($variant->personalization_label)
+                                                                    <span class="text-[10px] font-semibold text-slate-700 truncate max-w-[180px]" title="{{ $variant->personalization_label }}">
+                                                                        Label: {{ $variant->personalization_label }}
+                                                                    </span>
+                                                                @endif
+                                                                @if($variant->personalization_details_label)
+                                                                    <span class="text-[9px] text-slate-400 truncate max-w-[180px]" title="{{ $variant->personalization_details_label }}">
+                                                                        Details: {{ $variant->personalization_details_label }}
+                                                                    </span>
+                                                                @endif
+                                                            </div>
                                                         @else
                                                             <span class="text-slate-400">No</span>
                                                         @endif

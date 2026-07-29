@@ -8,9 +8,12 @@ use Livewire\Component;
 
 class PublicBrandsMenu extends Component
 {
+    public ?string $label = 'Brands';
+
     public function render(): View
     {
-        $brands = Brand::orderBy('sort_order')
+        $brands = Brand::visibleInMenu()
+            ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 

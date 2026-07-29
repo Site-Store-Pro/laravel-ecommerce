@@ -1,3 +1,4 @@
+<div class="{{ ($navMenu ? $navMenu->sticky : true) ? 'sticky top-0 z-50' : '' }}">
 {{-- Dynamic top navigation (renders when a primary menu is configured in Navigation Builder) --}}
 @if($navMenu && $navItems)
     <x-nav-dynamic :menu="$navMenu" :items="$navItems" :cartCount="$cartCount" :user="auth()->user()" />
@@ -17,18 +18,18 @@
                 @if(in_array(auth()->user()->role_id?->value, [1, 2]))
                     <!-- Full shop nav + account tabs for customers/wholesale -->
                     <a href="{{ route('shop.index') }}" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
-                        {{ __('Shop') }}
+                        @label('nav.shop', 'Shop')
                     </a>
                     <livewire:category-menu-widget />
                     <livewire:public-brands-menu />
                     <button wire:click.prevent="$dispatch('open-cart')" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors flex items-center gap-1.5 focus:outline-none">
-                        {{ __('Cart') }}
+                        @label('nav.cart', 'Cart')
                         @if($cartCount > 0)
                             <span class="px-2 py-0.5 text-xs font-bold text-white bg-indigo-600 rounded-full">{{ number_format($cartCount, 0) }}</span>
                         @endif
                     </button>
                     <a href="{{ route('kb.index') }}" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
-                        {{ __('Knowledge Base') }}
+                        @label('nav.knowledge_base', 'Knowledge Base')
                     </a>
                     <div class="w-48 lg:w-60">
                         <livewire:kb-search-bar />
@@ -36,29 +37,29 @@
                     <!-- Account separator -->
                     <span class="h-5 w-px bg-slate-200"></span>
                     <a href="{{ route('dashboard', ['tab' => 'tickets']) }}" class="text-sm font-semibold {{ request()->get('tab', 'tickets') === 'tickets' ? 'text-indigo-600' : 'text-slate-600' }} hover:text-indigo-600 transition-colors">
-                        {{ __('Tickets') }}
+                        @label('nav.tickets', 'Tickets')
                     </a>
                     <a href="{{ route('dashboard', ['tab' => 'orders']) }}" class="text-sm font-semibold {{ request()->get('tab') === 'orders' ? 'text-indigo-600' : 'text-slate-600' }} hover:text-indigo-600 transition-colors">
-                        {{ __('Orders') }}
+                        @label('nav.orders', 'Orders')
                     </a>
                     <a href="{{ route('dashboard', ['tab' => 'downloads']) }}" class="text-sm font-semibold {{ request()->get('tab') === 'downloads' ? 'text-indigo-600' : 'text-slate-600' }} hover:text-indigo-600 transition-colors">
-                        {{ __('Downloads') }}
+                        @label('nav.downloads', 'Downloads')
                     </a>
                 @else
                     <!-- Admin / Staff / Other public navigation -->
                     <a href="{{ route('shop.index') }}" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
-                        {{ __('Shop') }}
+                        @label('nav.shop', 'Shop')
                     </a>
                     <livewire:category-menu-widget />
                     <livewire:public-brands-menu />
                     <button wire:click.prevent="$dispatch('open-cart')" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors flex items-center gap-1.5 focus:outline-none">
-                        {{ __('Cart') }}
+                        @label('nav.cart', 'Cart')
                         @if($cartCount > 0)
                             <span class="px-2 py-0.5 text-xs font-bold text-white bg-indigo-600 rounded-full">{{ number_format($cartCount, 0) }}</span>
                         @endif
                     </button>
                     <a href="{{ route('kb.index') }}" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
-                        {{ __('Knowledge Base') }}
+                        @label('nav.knowledge_base', 'Knowledge Base')
                     </a>
                     <div class="w-48 lg:w-60">
                         <livewire:kb-search-bar />
@@ -67,18 +68,18 @@
             @else
                 <!-- Guest public navigation -->
                 <a href="{{ route('shop.index') }}" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
-                    {{ __('Shop') }}
+                    @label('nav.shop', 'Shop')
                 </a>
                 <livewire:category-menu-widget />
                 <livewire:public-brands-menu />
                 <button wire:click.prevent="$dispatch('open-cart')" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors flex items-center gap-1.5 focus:outline-none">
-                    {{ __('Cart') }}
+                    @label('nav.cart', 'Cart')
                     @if($cartCount > 0)
                         <span class="px-2 py-0.5 text-xs font-bold text-white bg-indigo-600 rounded-full">{{ number_format($cartCount, 0) }}</span>
                     @endif
                 </button>
                 <a href="{{ route('kb.index') }}" class="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-colors">
-                    {{ __('Knowledge Base') }}
+                    @label('nav.knowledge_base', 'Knowledge Base')
                 </a>
                 <div class="w-48 lg:w-60">
                     <livewire:kb-search-bar />
@@ -94,17 +95,17 @@
                                 {{ auth()->user()->name }}
                             </a>
                             <button wire:click="logout" class="text-sm font-semibold text-red-600 hover:text-red-800 transition-colors focus:outline-none">
-                                {{ __('Log Out') }}
+                                @label('nav.log_out', 'Log Out')
                             </button>
                         </div>
                     @else
                         <a href="{{ route('dashboard') }}" class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-100 hover:bg-indigo-500 transition-all hover:scale-105 active:scale-95">
-                            Dashboard
+                            @label('nav.dashboard', 'Dashboard')
                         </a>
                     @endif
                 @else
                     <a href="{{ route('login') }}" class="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
-                        Sign In
+                        @label('nav.sign_in', 'Sign In')
                     </a>
                 @endauth
             @endif
@@ -144,7 +145,7 @@
                     @if(in_array(auth()->user()->role_id->value, [1, 2]))
                         <!-- Full shop nav mobile -->
                         <a href="{{ route('shop.index') }}" class="block px-3 py-2 rounded-xl text-base font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition duration-150">
-                            {{ __('Shop') }}
+                            @label('nav.shop', 'Shop')
                         </a>
                         <div class="px-3">
                             <livewire:category-menu-widget />
@@ -153,24 +154,24 @@
                             <livewire:public-brands-menu />
                         </div>
                         <a href="{{ route('kb.index') }}" class="block px-3 py-2 rounded-xl text-base font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition duration-150">
-                            {{ __('Knowledge Base') }}
+                            @label('nav.knowledge_base', 'Knowledge Base')
                         </a>
                         <div class="border-t border-slate-100 pt-2 mt-1">
-                            <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-3 pb-1">My Account</div>
+                            <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-3 pb-1">@label('nav.my_account', 'My Account')</div>
                             <a href="{{ route('dashboard', ['tab' => 'tickets']) }}" class="block px-3 py-2 rounded-xl text-base font-bold {{ request()->get('tab', 'tickets') === 'tickets' ? 'text-indigo-600' : 'text-slate-700' }} hover:bg-slate-50 hover:text-indigo-600 transition duration-150">
-                                {{ __('Tickets') }}
+                                @label('nav.tickets', 'Tickets')
                             </a>
                             <a href="{{ route('dashboard', ['tab' => 'orders']) }}" class="block px-3 py-2 rounded-xl text-base font-bold {{ request()->get('tab') === 'orders' ? 'text-indigo-600' : 'text-slate-700' }} hover:bg-slate-50 hover:text-indigo-600 transition duration-150">
-                                {{ __('Orders') }}
+                                @label('nav.orders', 'Orders')
                             </a>
                             <a href="{{ route('dashboard', ['tab' => 'downloads']) }}" class="block px-3 py-2 rounded-xl text-base font-bold {{ request()->get('tab') === 'downloads' ? 'text-indigo-600' : 'text-slate-700' }} hover:bg-slate-50 hover:text-indigo-600 transition duration-150">
-                                {{ __('Downloads') }}
+                                @label('nav.downloads', 'Downloads')
                             </a>
                         </div>
                     @else
                         <!-- Staff public mobile links -->
                         <a href="{{ route('shop.index') }}" class="block px-3 py-2 rounded-xl text-base font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition duration-150">
-                            {{ __('Shop') }}
+                            @label('nav.shop', 'Shop')
                         </a>
                         <div class="px-3">
                             <livewire:category-menu-widget />
@@ -179,13 +180,13 @@
                             <livewire:public-brands-menu />
                         </div>
                         <a href="{{ route('kb.index') }}" class="block px-3 py-2 rounded-xl text-base font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition duration-150">
-                            {{ __('Knowledge Base') }}
+                            @label('nav.knowledge_base', 'Knowledge Base')
                         </a>
                     @endif
                 @else
                     <!-- Guest public mobile links -->
                     <a href="{{ route('shop.index') }}" class="block px-3 py-2 rounded-xl text-base font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition duration-150">
-                        {{ __('Shop') }}
+                        @label('nav.shop', 'Shop')
                     </a>
                     <div class="px-3">
                         <livewire:category-menu-widget />
@@ -194,7 +195,7 @@
                         <livewire:public-brands-menu />
                     </div>
                     <a href="{{ route('kb.index') }}" class="block px-3 py-2 rounded-xl text-base font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition duration-150">
-                        {{ __('Knowledge Base') }}
+                        @label('nav.knowledge_base', 'Knowledge Base')
                     </a>
                 @endauth
             </div>
@@ -216,17 +217,17 @@
                                     {{ auth()->user()->name }}
                                 </a>
                                 <button wire:click="logout" class="text-sm font-semibold text-red-650 hover:text-red-800 transition-colors focus:outline-none">
-                                    {{ __('Log Out') }}
+                                    @label('nav.log_out', 'Log Out')
                                 </button>
                             </div>
                         @else
                             <a href="{{ route('dashboard') }}" class="w-full text-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-100 hover:bg-indigo-500 transition duration-150">
-                                Dashboard
+                                @label('nav.dashboard', 'Dashboard')
                             </a>
                         @endif
                     @else
                         <a href="{{ route('login') }}" class="w-full text-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition duration-150">
-                            Sign In
+                            @label('nav.sign_in', 'Sign In')
                         </a>
                     @endauth
                 @endif
@@ -235,3 +236,4 @@
     @endif
 </header>
 @endif {{-- end @else fallback nav --}}
+</div>

@@ -77,6 +77,75 @@
                         </div>
                     </div>
 
+                    {{-- ─── Translations Section ──────────────────────────────────────────────── --}}
+                    @if($activeLanguages->isNotEmpty() && $editingId)
+                    <div x-data="{ tlOpen: false }" class="border-t border-slate-100 mt-6 pt-4">
+                        <button type="button" @click="tlOpen = !tlOpen"
+                                class="flex items-center justify-between w-full text-left">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                                Translations
+                            </span>
+                            <svg class="w-4 h-4 text-slate-400 transition-transform" :class="tlOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+
+                        <div x-show="tlOpen" x-cloak class="mt-4 space-y-4">
+                            {{-- Language selector pills --}}
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($activeLanguages as $lang)
+                                    <button type="button"
+                                            wire:click="selectTlLang({{ $lang->id }})"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition
+                                                {{ $tlLangId === $lang->id
+                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow'
+                                                    : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400' }}">
+                                        <span class="fi fi-{{ strtolower($lang->flag_emoji) }}" style="width:1em;height:0.75em;font-size:1rem;"></span>
+                                        {{ $lang->name }}
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            @if($tlLangId > 0)
+                                <div class="space-y-3 bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                    {{-- per-field inputs --}}
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Name (Default: "{{ $name }}")</label>
+                                        <input type="text" wire:model="tlBuffer.name"
+                                               placeholder="Translation..."
+                                               class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                    </div>
+
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Description</label>
+                                        <textarea wire:model="tlBuffer.description"
+                                                  placeholder="Translation..."
+                                                  rows="2"
+                                                  class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500"></textarea>
+                                    </div>
+
+                                    <div class="flex gap-2 pt-1">
+                                        <button type="button" wire:click="aiTlCategory({{ $editingId }})"
+                                                wire:loading.attr="disabled" wire:target="aiTlCategory({{ $editingId }})"
+                                                class="inline-flex items-center gap-1 px-3 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-600 text-xs font-bold rounded-lg transition disabled:opacity-60">
+                                            <span wire:loading.remove wire:target="aiTlCategory({{ $editingId }})">
+                                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.09 9.09 2 12l7.09 2.91L12 22l2.91-7.09L22 12l-7.09-2.91L12 2z"/></svg>
+                                            </span>
+                                            <span wire:loading wire:target="aiTlCategory({{ $editingId }})" class="inline-flex">
+                                                <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                            </span>
+                                            AI Translate All
+                                        </button>
+                                        <button type="button" wire:click="saveTlCategory({{ $editingId }})"
+                                                class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition">
+                                            Save Translation
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
+
                     <div class="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
                         <button wire:click="cancelForm" type="button"
                                 class="text-sm text-slate-500 hover:text-slate-700 font-medium transition-colors">

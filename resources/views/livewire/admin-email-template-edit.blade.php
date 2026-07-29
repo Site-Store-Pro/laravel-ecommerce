@@ -22,7 +22,193 @@
 
     <!-- Form container -->
     <div class="max-w-4xl">
-        <form wire:submit="save" class="space-y-8">
+        {{-- ── Language Translation Panel ─────────────────────────────────────── --}}
+        @php $languages = \App\Models\Language::getAllActive(); @endphp
+        @if($languages->count() > 1)
+        <div class="mb-6 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mr-2">Editing Language:</span>
+                {{-- Default language pill --}}
+                <button
+                    wire:click="setEditingLanguage(null)"
+                    type="button"
+                    class="px-3 py-1.5 rounded-full text-xs font-semibold transition-all {{ $editingLanguageId === null ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-indigo-300' }}"
+                >
+                    🇺🇸 English (Default)
+                </button>
+                {{-- Non-default language pills --}}
+                @foreach($languages->where('is_default', false) as $lang)
+                    @php
+                        $hasTranslation = $template?->translations->contains('language_id', $lang->id) ?? false;
+                        $xlat = $template?->translations->firstWhere('language_id', $lang->id);
+                        $xlatStatus = $xlat?->translation_status ?? 'pending';
+                    @endphp
+                    <button
+                        wire:click="setEditingLanguage({{ $lang->id }})"
+                        type="button"
+                        class="px-3 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 {{ $editingLanguageId === $lang->id ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:border-indigo-300' }}"
+                    >
+                        {{ $lang->flag_emoji }} {{ $lang->native_name }}
+                        @if($hasTranslation)
+                            <span class="w-1.5 h-1.5 rounded-full {{ $xlatStatus === 'reviewed' ? 'bg-emerald-400' : ($xlatStatus === 'ai_translated' ? 'bg-amber-400' : 'bg-slate-300') }}"></span>
+                        @endif
+                    </button>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- ── Translation Editing Panel (shown when non-default language selected) ── --}}
+        @if($editingLanguageId !== null)
+            @php
+                $editLang = $languages->firstWhere('id', $editingLanguageId);
+                $existingXlat = $template?->translations->firstWhere('language_id', $editingLanguageId);
+                $xlatData = $translationData[$editingLanguageId] ?? [];
+            @endphp
+            <div class="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <div>
+                        <h3 class="text-base font-bold text-amber-900 dark:text-amber-200">{{ $editLang?->flag_emoji }} {{ $editLang?->name }} Translation</h3>
+                        <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5">Editing translated fields. Default English values shown as placeholders.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        @if($existingXlat)
+                            <span class="px-2 py-1 text-xs font-semibold rounded-lg
+                                {{ $existingXlat->translation_status === 'reviewed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : ($existingXlat->translation_status === 'ai_translated' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400') }}">
+                                {{ ucfirst(str_replace('_', ' ', $existingXlat->translation_status)) }}
+                            </span>
+                        @endif
+                        <button
+                            wire:click="aiTranslateEmail"
+                            wire:loading.attr="disabled"
+                            wire:target="aiTranslateEmail"
+                            type="button"
+                            class="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition flex items-center gap-2"
+                        >
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <span wire:loading.remove wire:target="aiTranslateEmail">AI Translate</span>
+                            <span wire:loading wire:target="aiTranslateEmail">Translating...</span>
+                        </button>
+                        <button
+                            wire:click="saveTranslation"
+                            type="button"
+                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition"
+                        >
+                            Save Translation
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4">
+                    {{-- Subject --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1">Subject</label>
+                        <input type="text"
+                            wire:model="translationData.{{ $editingLanguageId }}.subject"
+                            class="w-full border border-amber-200 dark:border-amber-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                            placeholder="{{ $template->subject }}" />
+                    </div>
+
+                    {{-- Salutation & Greeting (2-col) --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1">Salutation</label>
+                            <input type="text"
+                                wire:model="translationData.{{ $editingLanguageId }}.salutation"
+                                class="w-full border border-amber-200 dark:border-amber-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                                placeholder="{{ $template->salutation }}" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1">Greeting</label>
+                            <input type="text"
+                                wire:model="translationData.{{ $editingLanguageId }}.greeting"
+                                class="w-full border border-amber-200 dark:border-amber-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                                placeholder="{{ $template->greeting }}" />
+                        </div>
+                    </div>
+
+                    {{-- Body --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1">Body</label>
+                        <textarea
+                            wire:model="translationData.{{ $editingLanguageId }}.body"
+                            rows="8"
+                            class="w-full border border-amber-200 dark:border-amber-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-amber-400 focus:outline-none font-mono"
+                            placeholder="{{ Str::limit(strip_tags($template->body ?? ''), 120) }}"></textarea>
+                    </div>
+
+                    {{-- Sign Off & Signature (2-col) --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1">Sign Off</label>
+                            <input type="text"
+                                wire:model="translationData.{{ $editingLanguageId }}.sign_off"
+                                class="w-full border border-amber-200 dark:border-amber-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                                placeholder="{{ $template->sign_off }}" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1">Signature</label>
+                            <input type="text"
+                                wire:model="translationData.{{ $editingLanguageId }}.signature"
+                                class="w-full border border-amber-200 dark:border-amber-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                                placeholder="{{ $template->signature }}" />
+                        </div>
+                    </div>
+
+                    {{-- Disclaimer & Copyright (2-col) --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1">Disclaimer</label>
+                            <textarea
+                                wire:model="translationData.{{ $editingLanguageId }}.disclaimer"
+                                rows="3"
+                                class="w-full border border-amber-200 dark:border-amber-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                                placeholder="{{ Str::limit($template->disclaimer ?? '', 120) }}"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1">Copyright</label>
+                            <input type="text"
+                                wire:model="translationData.{{ $editingLanguageId }}.copyright"
+                                class="w-full border border-amber-200 dark:border-amber-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-900 dark:text-white focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                                placeholder="{{ $template->copyright }}" />
+                        </div>
+                    </div>
+
+                    {{-- Header HTML & Footer HTML (collapsible accordions) --}}
+                    <div x-data="{ openHeader: false, openFooter: false }" class="space-y-3">
+                        <div class="border border-amber-200 dark:border-amber-700 rounded-xl overflow-hidden">
+                            <button @click="openHeader = !openHeader" type="button" class="w-full flex items-center justify-between px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition">
+                                <span>Header HTML</span>
+                                <svg class="w-4 h-4 transition-transform" :class="openHeader ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div x-show="openHeader" x-collapse>
+                                <textarea
+                                    wire:model="translationData.{{ $editingLanguageId }}.header_html"
+                                    rows="5"
+                                    class="w-full border-0 border-t border-amber-200 dark:border-amber-700 px-4 py-3 text-sm bg-white dark:bg-slate-900 dark:text-white focus:ring-0 focus:outline-none font-mono"
+                                    placeholder="{{ Str::limit($template->header_html ?? '', 120) }}"></textarea>
+                            </div>
+                        </div>
+                        <div class="border border-amber-200 dark:border-amber-700 rounded-xl overflow-hidden">
+                            <button @click="openFooter = !openFooter" type="button" class="w-full flex items-center justify-between px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition">
+                                <span>Footer HTML</span>
+                                <svg class="w-4 h-4 transition-transform" :class="openFooter ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div x-show="openFooter" x-collapse>
+                                <textarea
+                                    wire:model="translationData.{{ $editingLanguageId }}.footer_html"
+                                    rows="5"
+                                    class="w-full border-0 border-t border-amber-200 dark:border-amber-700 px-4 py-3 text-sm bg-white dark:bg-slate-900 dark:text-white focus:ring-0 focus:outline-none font-mono"
+                                    placeholder="{{ Str::limit($template->footer_html ?? '', 120) }}"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+
+        <form wire:submit="save" class="space-y-8" @if($editingLanguageId !== null) style="display: none;" @endif>
             <!-- 1. Profile Settings -->
             <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
                 <h3 class="text-sm font-bold text-slate-800 dark:text-white pb-3 border-b border-slate-100 dark:border-slate-700 uppercase tracking-wider">Profile Information</h3>

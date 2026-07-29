@@ -30,6 +30,26 @@ class LoginForm extends Form
     {
         $this->ensureIsNotRateLimited();
 
+        // Block guest checkout users from logging in via the standard login form.
+        // Their password column holds the plain-text sentinel '[GUEST-USER]' instead of a
+        // bcrypt/argon2 hash. We auto-log them in and route them through the secure
+        // two-step conversion: verify email first → then set password.
+        $maybeGuest = \App\Models\User::where('email', $this->email)->first();
+        if ($maybeGuest && $maybeGuest->isGuest()) {
+            Auth::login($maybeGuest);
+            if (!$maybeGuest->hasVerifiedEmail()) {
+                // Step 1: must prove email ownership before setting a password.
+                // url.intended ensures the verification link lands on set-password, not dashboard.
+                session(['url.intended' => route('guest.set-password')]);
+                $maybeGuest->sendEmailVerificationNotification();
+                session()->flash('guest_redirect', route('verification.notice'));
+            } else {
+                // Already verified — skip straight to set-password.
+                session()->flash('guest_redirect', route('guest.set-password'));
+            }
+            return;
+        }
+
         \App\Services\CustomHashContext::$currentEmail = $this->email;
         try {
             $attempt = Auth::attempt($this->only(['email', 'password']), $this->remember);

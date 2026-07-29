@@ -9,7 +9,7 @@
          x-transition:leave-end="translate-x-full" 
          x-on:click.outside="showLinkGenerator = false"
          class="fixed inset-y-0 right-0 w-85 bg-white border-l border-slate-200 z-50 shadow-2xl flex flex-col justify-between"
-         x-data="{ searchTab: 'product' }">
+         x-data="{ searchTab: 'product', selectedRecord: null }">
         <!-- Header -->
         <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div>

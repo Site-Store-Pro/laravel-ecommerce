@@ -1,6 +1,6 @@
 @if($selectedVariant && $selectedVariant->video_preview)
     <div class="w-full">
-        <h2 class="text-xl font-bold text-slate-900 mb-4">Video Preview</h2>
+        <h2 class="text-xl font-bold text-slate-900 mb-4">@label('product.video_preview', 'Video Preview')</h2>
         @php
             $videoUrl = $selectedVariant->video_preview;
             $embedUrl = null;
@@ -23,7 +23,7 @@
             <video src="{{ $videoUrl }}" controls class="w-full rounded-3xl shadow-sm border border-slate-100 bg-black aspect-video object-contain"></video>
         @else
             <div class="aspect-video w-full rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-slate-950 flex items-center justify-center text-white p-4">
-                <span class="text-slate-400">Watch video: <a href="{{ $videoUrl }}" target="_blank" class="text-indigo-400 hover:underline ml-1 font-semibold">{{ $videoUrl }}</a></span>
+                <span class="text-slate-400">@label('product.watch_video', 'Watch video:') <a href="{{ $videoUrl }}" target="_blank" class="text-indigo-400 hover:underline ml-1 font-semibold">{{ $videoUrl }}</a></span>
             </div>
         @endif
     </div>

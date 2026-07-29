@@ -8,6 +8,9 @@
             @else
                 <span class="w-4 block"></span>
             @endif
+            @if($node->category_image)
+                <img src="{{ $node->category_image }}" alt="{{ $node->name }}" class="w-6 h-6 object-cover rounded shadow-sm border border-slate-200 shrink-0">
+            @endif
             <span class="font-bold text-slate-800 text-sm">{{ $node->name }}</span>
             <a href="{{ route('shop.category', ['category_slug' => $node->slug]) }}" target="_blank" class="text-slate-400 hover:text-slate-600 transition" title="View Category on Storefront">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -8,15 +8,18 @@ use Livewire\Component;
 
 class CategoryMenuWidget extends Component
 {
+    public ?string $label = 'Categories';
+
     public function render(): View
     {
         // Fetch top-level categories visible in menu, including their children recursively
         $categories = Category::whereNull('parent_id')
             ->where('is_visible_in_menu', true)
+            ->withCurrentTranslations()
             ->with([
                 'products',
                 'children' => function ($query) {
-                    $query->where('is_visible_in_menu', true)->orderBy('sort_order');
+                    $query->withCurrentTranslations()->where('is_visible_in_menu', true)->orderBy('sort_order');
                 },
                 'children.products',
                 'children.children',

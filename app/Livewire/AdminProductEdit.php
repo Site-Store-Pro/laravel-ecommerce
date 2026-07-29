@@ -31,14 +31,51 @@ class AdminProductEdit extends Component
     public array $selectedCategories = [];
     public ?int $brand_id = null;
 
+    // Search Index Keywords & Locking
+    public string $product_search_index = '';
+    public bool $product_search_index_locked = false;
+
+    // AI Content Generator
+    public string $aiPrompt = '';
+    public string $aiResponse = '';
+
     // Advanced Product Options
-    public int $max_qty = 0;
-    public int $checkout_redirect = 0;
-    public int $standalone_purchase = 0;
-    public int $dependent_variants = 0;
-    public int $hide_inventory_levels = 0;
-    public int $layout_type = 1;
-    public int $featured_item = 0;
+    public int    $max_qty              = 0;
+    public int    $checkout_redirect    = 0;
+    public string $completion_redirect  = '';  // Post-order redirect: raw URL or [page:ID] shortcode
+    public string $completion_redirect_label = ''; // Button label; displayed as 'View Content' if blank
+    public int    $standalone_purchase  = 0;
+    public int    $dependent_variants   = 0;
+    public int    $hide_inventory_levels = 0;
+    public int    $layout_type          = 1;
+    public int    $featured_item        = 0;
+    public int    $show_item_total      = 0;  // Show live item total (price × qty) below Add to Cart
+    public string $variant_label        = 'Select Option:';  // Label above variant selector on storefront
+    public string $product_video_embed  = '';               // Embed code/shortcode for layout types 3 & 5
+
+    // Translation Management
+    public string $activeLangCode = '';
+    public ?int $activeLangId = null;
+    public string $trans_title = '';
+    public string $trans_short_description = '';
+    public string $trans_long_description = '';
+    public string $trans_meta_title = '';
+    public string $trans_meta_description = '';
+    public string $trans_status = 'pending';
+    public ?string $trans_translated_at = null;
+
+    // Variant Personalization Translation
+    public string $variantTransLangCode = '';
+    public ?int $variantTransLangId = null;
+    public string $trans_personalization_label = '';
+    public string $trans_personalization_details_label = '';
+    public string $trans_personalization_placeholder = '';
+
+    // Field & Option Translation
+    public string $fieldTransLangCode = '';
+    public ?int $fieldTransLangId = null;
+    public string $trans_field_label = '';
+    public array $trans_field_options = []; // [option_id => translated_value]
 
     // Reviews Management
     public bool $reviews_enabled = true;
@@ -105,6 +142,8 @@ class AdminProductEdit extends Component
     // Files & S3 Configuration
     public int $download_item = 0;
     public string $download_location = '';
+    public string $direct_download_url = '';
+    public string $download_label = '';
     public int $download_s3 = 0;
     public string $download_s3_region = '';
     public string $download_s3_bucket_name = '';
@@ -213,6 +252,13 @@ class AdminProductEdit extends Component
         $this->layout_type = (int) ($this->product->layout_type ?? 1);
         $this->reviews_enabled = (bool) ($this->product->reviews_enabled ?? true);
         $this->featured_item = (int) ($this->product->featured_item ?? 0);
+        $this->show_item_total = (int) ($this->product->show_item_total ?? 0);
+        $this->variant_label = (string) ($this->product->variant_label ?? 'Select Option:');
+        $this->product_video_embed = (string) ($this->product->product_video_embed ?? '');
+        $this->completion_redirect = (string) ($this->product->completion_redirect ?? '');
+        $this->completion_redirect_label = (string) ($this->product->completion_redirect_label ?? '');
+        $this->product_search_index = $this->product->product_search_index ?? '';
+        $this->product_search_index_locked = (bool) ($this->product->product_search_index_locked ?? false);
     }
 
     public function updateProduct(): void
@@ -233,6 +279,9 @@ class AdminProductEdit extends Component
             'meta_description' => $this->meta_description ?: $this->short_description,
             'seo_slug' => $this->seo_slug ?: Str::slug($this->title),
             'brand_id' => $this->brand_id,
+            'product_search_index' => $this->product_search_index,
+            'product_search_index_locked' => $this->product_search_index_locked,
+            'variant_label' => trim($this->variant_label) ?: 'Select Option:',
         ]);
 
         $this->product->categories()->sync($this->selectedCategories);
@@ -241,31 +290,87 @@ class AdminProductEdit extends Component
         $this->loadProduct();
     }
 
-    public function updateAdvancedSettings(): void
+    public function rebuildIndexKeywords(): void
+    {
+        $this->product->loadMissing(['brand', 'categories', 'variants']);
+        $this->product->fill([
+            'title' => $this->title,
+            'short_description' => $this->short_description,
+            'long_description' => $this->long_description,
+            'meta_title' => $this->meta_title,
+            'meta_description' => $this->meta_description,
+            'seo_slug' => $this->seo_slug,
+            'product_search_index_locked' => false,
+        ]);
+        $this->product_search_index = $this->product->rebuildSearchIndex(force: true);
+        $this->dispatch('toast', type: 'info', message: 'Product search index keywords generated.');
+    }
+
+    /**
+     * Dedicated save for the variant selector label.
+     * Called by the inline save button above the variant list in the admin.
+     */
+    public function updateVariantLabel(): void
+    {
+        $this->validate(['variant_label' => 'nullable|string|max:255']);
+
+        $this->product->update([
+            'variant_label' => trim($this->variant_label) ?: 'Select Option:',
+        ]);
+
+        $this->dispatch('toast', type: 'success', message: 'Variant selector label saved.');
+        $this->loadProduct();
+    }
+
+    /**
+     * Save layout type and video embed. Separated from updateAdvancedSettings()
+     * so it has its own dedicated save button in the Layout & Video section card.
+     */
+    public function updateLayoutSettings(): void
     {
         $this->validate([
-            'max_qty' => 'nullable|boolean',
-            'checkout_redirect' => 'nullable|boolean',
-            'standalone_purchase' => 'nullable|boolean',
-            'dependent_variants' => 'nullable|boolean',
-            'hide_inventory_levels' => 'nullable|boolean',
-            'layout_type' => 'required|integer|in:1,2,3,4,5',
-            'reviews_enabled' => 'boolean',
-            'featured_item' => 'nullable|boolean',
+            'layout_type'         => 'required|integer|in:1,2,3,4,5',
+            'product_video_embed' => 'nullable|string|max:10000',
         ]);
 
         $this->product->update([
-            'max_qty' => (int) $this->max_qty,
-            'checkout_redirect' => (int) $this->checkout_redirect,
-            'standalone_purchase' => (int) $this->standalone_purchase,
-            'dependent_variants' => (int) $this->dependent_variants,
-            'hide_inventory_levels' => (int) $this->hide_inventory_levels,
-            'layout_type' => (int) $this->layout_type,
-            'reviews_enabled' => (int) $this->reviews_enabled,
-            'featured_item' => (int) $this->featured_item,
+            'layout_type'         => (int) $this->layout_type,
+            'product_video_embed' => trim($this->product_video_embed) ?: null,
         ]);
 
-        session()->flash('status', 'Advanced settings updated successfully.');
+        $this->dispatch('toast', type: 'success', message: 'Layout settings saved.');
+        $this->loadProduct();
+    }
+
+    public function updateAdvancedSettings(): void
+    {
+        $this->validate([
+            'max_qty'               => 'nullable|boolean',
+            'checkout_redirect'     => 'nullable|boolean',
+            'completion_redirect'         => 'nullable|string|max:1000',
+            'completion_redirect_label'   => 'nullable|string|max:255',
+            'standalone_purchase'   => 'nullable|boolean',
+            'dependent_variants'    => 'nullable|boolean',
+            'hide_inventory_levels' => 'nullable|boolean',
+            'reviews_enabled'       => 'boolean',
+            'featured_item'         => 'nullable|boolean',
+            'show_item_total'       => 'nullable|boolean',
+        ]);
+
+        $this->product->update([
+            'max_qty'               => (int) $this->max_qty,
+            'checkout_redirect'     => (int) $this->checkout_redirect,
+            'completion_redirect'         => trim($this->completion_redirect) ?: null,
+            'completion_redirect_label'   => trim($this->completion_redirect_label) ?: null,
+            'standalone_purchase'   => (int) $this->standalone_purchase,
+            'dependent_variants'    => (int) $this->dependent_variants,
+            'hide_inventory_levels' => (int) $this->hide_inventory_levels,
+            'reviews_enabled'       => (int) $this->reviews_enabled,
+            'featured_item'         => (int) $this->featured_item,
+            'show_item_total'       => (int) $this->show_item_total,
+        ]);
+
+        $this->dispatch('toast', type: 'success', message: 'Advanced settings saved.');
         $this->loadProduct();
     }
 
@@ -375,6 +480,8 @@ class AdminProductEdit extends Component
 
         $this->downloadFile = null;
         $this->current_download_location = null;
+        $this->direct_download_url = '';
+        $this->download_label = '';
         $this->download_expiration = now()->addYear()->format('Y-m-d\TH:i');
         $this->downloads_max_allowed = 100;
 
@@ -470,6 +577,8 @@ class AdminProductEdit extends Component
             'attributes' => $original->attributes,
             'download_item' => $original->download_item,
             'download_location' => $original->download_location,
+            'direct_download_url' => $original->direct_download_url,
+            'download_label' => $original->download_label,
             'download_expiration' => $original->download_expiration,
             'downloads_max_allowed' => $original->downloads_max_allowed,
             'download_s3' => $original->download_s3,
@@ -582,8 +691,8 @@ class AdminProductEdit extends Component
             'event_label'      => $this->is_event ? 'required|string|max:255' : 'nullable',
         ]);
 
-        if ($this->download_item && !$this->downloadFile) {
-            $this->addError('downloadFile', 'A download file is required when Downloadable Item is enabled.');
+        if ($this->download_item && !$this->downloadFile && !$this->direct_download_url) {
+            $this->addError('downloadFile', 'A download file or direct download URL is required when Digital Product is enabled.');
             return;
         }
 
@@ -651,6 +760,8 @@ class AdminProductEdit extends Component
             'weight_type' => $this->weight_type,
             'attributes' => $this->variantAttributes,
             'download_item' => $this->download_item,
+            'direct_download_url' => $this->direct_download_url ?: null,
+            'download_label' => $this->download_label ?: null,
             'download_s3' => $this->download_s3,
             'download_s3_region' => $this->download_s3_region,
             'download_s3_bucket_name' => $this->download_s3_bucket_name,
@@ -769,6 +880,8 @@ class AdminProductEdit extends Component
         
         $this->download_item = $variant->download_item;
         $this->download_location = $variant->download_location ?? '';
+        $this->direct_download_url = $variant->direct_download_url ?? '';
+        $this->download_label = $variant->download_label ?? '';
         $this->download_s3 = $variant->download_s3;
         $this->download_s3_region = $variant->download_s3_region ?? '';
         $this->download_s3_bucket_name = $variant->download_s3_bucket_name ?? '';
@@ -900,8 +1013,8 @@ class AdminProductEdit extends Component
             'event_label'      => $this->is_event ? 'required|string|max:255' : 'nullable',
         ]);
 
-        if ($this->download_item && !$this->downloadFile && !$this->current_download_location) {
-            $this->addError('downloadFile', 'A download file is required when Downloadable Item is enabled.');
+        if ($this->download_item && !$this->downloadFile && !$this->current_download_location && !$this->direct_download_url) {
+            $this->addError('downloadFile', 'A download file or direct download URL is required when Digital Product is enabled.');
             return;
         }
 
@@ -964,6 +1077,8 @@ class AdminProductEdit extends Component
             'weight_type' => $this->weight_type,
             'attributes' => $this->variantAttributes,
             'download_item' => $this->download_item,
+            'direct_download_url' => $this->direct_download_url ?: null,
+            'download_label' => $this->download_label ?: null,
             'download_s3' => $this->download_s3,
             'download_s3_region' => $this->download_s3_region,
             'download_s3_bucket_name' => $this->download_s3_bucket_name,
@@ -1743,8 +1858,38 @@ class AdminProductEdit extends Component
         $this->reviewApproved = false;
     }
 
+    public function generateAiContent(): void
+    {
+        $this->resetErrorBag('ai_content_error');
+
+        $apiKey = config('ai.openai_api_key');
+        if (empty($apiKey) || !function_exists('ai_product_description_content')) {
+            return;
+        }
+
+        $categoryNames = [];
+        if (!empty($this->selectedCategories)) {
+            $categoryNames = \App\Models\Category::whereIn('id', $this->selectedCategories)->pluck('name')->toArray();
+        }
+
+        $contextLines = [];
+        $contextLines[] = "Product Title: " . ($this->title ?: 'N/A');
+        $contextLines[] = "Categories: " . (!empty($categoryNames) ? implode(', ', $categoryNames) : 'N/A');
+        $contextLines[] = "Short Description: " . ($this->short_description ?: 'N/A');
+        $contextLines[] = "Current Long Description: " . ($this->long_description ?: 'N/A');
+
+        $context = implode("\n", $contextLines);
+
+        $res = ai_product_description_content($context, $this->aiPrompt);
+        if (function_exists('wrap_prose_content')) {
+            $res = wrap_prose_content($res);
+        }
+        $this->aiResponse = $res;
+    }
+
     public function render(): View
     {
+        $showAiButton = !empty(config('ai.openai_api_key')) && function_exists('ai_product_description_content');
         $categoryTree   = \App\Models\Category::whereNull('parent_id')->with('children')->orderBy('sort_order')->get();
         $brands         = \App\Models\Brand::orderBy('name')->get();
         $displayPlugins = \App\Models\Plugin::active()->ofType('display')->orderBy('name', 'asc')->get();
@@ -1855,7 +2000,7 @@ class AdminProductEdit extends Component
                         'id'         => $d->id,
                         'title'      => $d->internal_name,
                         'badgeColor' => 'bg-teal-100 text-teal-800 border-teal-200',
-                        'shortcode'  => '[download:' . $d->id . ' label="' . e($label) . '"]',
+                        'shortcode'  => '[download:' . $d->uuid . ' label="' . e($label) . '"]',
                     ];
                 }
             }
@@ -1874,6 +2019,8 @@ class AdminProductEdit extends Component
             'searchedCategories'    => $searchedCategories,
             'searchedPages'         => $searchedPages,
             'shortcodeSearchResults'=> $shortcodeSearchResults,
+            'showAiButton'          => $showAiButton,
+            'activeLanguages'       => \App\Models\Language::getAllActive()->where('is_default', false)->values(),
         ]);
     }
 
@@ -2003,5 +2150,216 @@ class AdminProductEdit extends Component
             ->where('product_id', $this->productId)
             ->update(['sort_order' => $order]);
         $this->loadProduct();
+    }
+
+    // ── Translation Management ─────────────────────────────────────────────────
+
+    public function selectTranslationLang(string $code, int $langId): void
+    {
+        $this->activeLangCode = $code;
+        $this->activeLangId = $langId;
+        $this->loadProductTranslationData();
+    }
+
+    protected function loadProductTranslationData(): void
+    {
+        if (!isset($this->productId) || !$this->activeLangId) return;
+
+        $trans = \App\Models\ProductTranslation::where('product_id', $this->productId)
+            ->where('language_id', $this->activeLangId)
+            ->first();
+
+        $this->trans_title             = $trans?->title ?? '';
+        $this->trans_short_description = $trans?->short_description ?? '';
+        $this->trans_long_description  = $trans?->long_description ?? '';
+        $this->trans_meta_title        = $trans?->meta_title ?? '';
+        $this->trans_meta_description  = $trans?->meta_description ?? '';
+        $this->trans_status            = $trans?->translation_status ?? 'pending';
+        $this->trans_translated_at     = $trans?->translated_at?->format('M j, Y g:i A');
+    }
+
+    public function saveProductTranslation(): void
+    {
+        if (!isset($this->productId) || !$this->activeLangId) return;
+
+        \App\Models\ProductTranslation::updateOrCreate(
+            ['product_id' => $this->productId, 'language_id' => $this->activeLangId],
+            [
+                'title'             => $this->trans_title ?: null,
+                'short_description' => $this->trans_short_description ?: null,
+                'long_description'  => $this->trans_long_description ?: null,
+                'meta_title'        => $this->trans_meta_title ?: null,
+                'meta_description'  => $this->trans_meta_description ?: null,
+                'translation_status'=> 'reviewed',
+                'translated_at'     => now(),
+            ]
+        );
+
+        $this->trans_status        = 'reviewed';
+        $this->trans_translated_at = now()->format('M j, Y g:i A');
+        session()->flash('success', 'Translation saved.');
+    }
+
+    public function autoTranslateProduct(): void
+    {
+        if (!isset($this->productId) || !$this->activeLangId) return;
+
+        \App\Jobs\TranslateContentJob::dispatch(
+            \App\Models\Product::class,
+            $this->productId,
+            $this->activeLangId
+        );
+
+        session()->flash('success', 'Translation job queued. Refresh in a moment to see the results.');
+    }
+
+    /**
+     * Inline AI translation — calls OpenAI synchronously and pre-fills all
+     * product translation fields so the admin can review before saving.
+     * The existing autoTranslateProduct() bulk queue method is unchanged.
+     */
+    public function aiTranslateProductInline(): void
+    {
+        if (!isset($this->productId) || !$this->activeLangId) return;
+
+        $product = \App\Models\Product::find($this->productId);
+        $lang    = \App\Models\Language::find($this->activeLangId);
+
+        if (!$product || !$lang) return;
+
+        try {
+            $svc      = app(\App\Services\TranslationService::class);
+            $langName = $lang->name;
+
+            if (!empty($product->title)) {
+                $this->trans_title = $svc->translateText($product->title, $langName, 'product name / title');
+            }
+            if (!empty($product->short_description)) {
+                $this->trans_short_description = $svc->translateText($product->short_description, $langName, 'product short description');
+            }
+            if (!empty($product->long_description)) {
+                $this->trans_long_description = $svc->translateText($product->long_description, $langName, 'product long description HTML — preserve HTML tags');
+            }
+            if (!empty($product->meta_title)) {
+                $this->trans_meta_title = $svc->translateText($product->meta_title, $langName, 'SEO meta title');
+            }
+            if (!empty($product->meta_description)) {
+                $this->trans_meta_description = $svc->translateText($product->meta_description, $langName, 'SEO meta description');
+            }
+
+            $this->trans_status = 'ai_translated';
+            $this->dispatch('toast', message: 'AI translation ready — review all fields and click Save Translation.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
+        }
+    }
+
+    // ── Variant Personalization Translation ───────────────────────────────────
+
+    /**
+     * Select a language for editing variant personalization label translations.
+     * Loads any existing translation into the trans_personalization_* properties.
+     */
+    public function selectVariantTranslationLang(string $code, int $langId): void
+    {
+        $this->variantTransLangCode = $code;
+        $this->variantTransLangId   = $langId;
+
+        if ($code && $langId && $this->selectedVariantId) {
+            $trans = \App\Models\ProductVariantTranslation::where('product_variant_id', $this->selectedVariantId)
+                ->where('language_id', $langId)
+                ->first();
+
+            $this->trans_personalization_label         = $trans?->personalization_label ?? '';
+            $this->trans_personalization_details_label = $trans?->personalization_details_label ?? '';
+            $this->trans_personalization_placeholder   = $trans?->personalization_placeholder ?? '';
+        } else {
+            $this->trans_personalization_label         = '';
+            $this->trans_personalization_details_label = '';
+            $this->trans_personalization_placeholder   = '';
+        }
+    }
+
+    /**
+     * Persist the variant personalization label translations for the selected language.
+     */
+    public function saveVariantTranslation(): void
+    {
+        if (!$this->variantTransLangId || !$this->selectedVariantId) return;
+
+        \App\Models\ProductVariantTranslation::updateOrCreate(
+            [
+                'product_variant_id' => $this->selectedVariantId,
+                'language_id'        => $this->variantTransLangId,
+            ],
+            [
+                'personalization_label'         => $this->trans_personalization_label ?: null,
+                'personalization_details_label' => $this->trans_personalization_details_label ?: null,
+                'personalization_placeholder'   => $this->trans_personalization_placeholder ?: null,
+            ]
+        );
+
+        $this->dispatch('toast', type: 'success', message: 'Variant translation saved.');
+    }
+
+    // ── Field & Option Translation ─────────────────────────────────────────────
+
+    /**
+     * Select a language for editing field label / option value translations.
+     * Loads any existing translations into trans_field_label and trans_field_options.
+     */
+    public function selectFieldTranslationLang(string $code, int $langId): void
+    {
+        $this->fieldTransLangCode = $code;
+        $this->fieldTransLangId   = $langId;
+
+        if ($code && $langId && $this->selectedFieldId) {
+            $trans = \App\Models\ProductFieldTranslation::where('product_field_id', $this->selectedFieldId)
+                ->where('language_id', $langId)
+                ->first();
+
+            $this->trans_field_label   = $trans?->label ?? '';
+            $this->trans_field_options = [];
+
+            foreach ($this->fieldOptions as $opt) {
+                if (!empty($opt['id'])) {
+                    $optTrans = \App\Models\ProductFieldOptionTranslation::where('product_field_option_id', $opt['id'])
+                        ->where('language_id', $langId)
+                        ->first();
+                    $this->trans_field_options[$opt['id']] = $optTrans?->option_value ?? '';
+                }
+            }
+        } else {
+            $this->trans_field_label   = '';
+            $this->trans_field_options = [];
+        }
+    }
+
+    /**
+     * Persist the field label and all option value translations for the selected language.
+     */
+    public function saveFieldTranslation(): void
+    {
+        if (!$this->fieldTransLangId || !$this->selectedFieldId) return;
+
+        \App\Models\ProductFieldTranslation::updateOrCreate(
+            [
+                'product_field_id' => $this->selectedFieldId,
+                'language_id'      => $this->fieldTransLangId,
+            ],
+            ['label' => $this->trans_field_label ?: null]
+        );
+
+        foreach ($this->trans_field_options as $optionId => $translatedValue) {
+            \App\Models\ProductFieldOptionTranslation::updateOrCreate(
+                [
+                    'product_field_option_id' => $optionId,
+                    'language_id'             => $this->fieldTransLangId,
+                ],
+                ['option_value' => $translatedValue ?: null]
+            );
+        }
+
+        $this->dispatch('toast', type: 'success', message: 'Field translation saved.');
     }
 }

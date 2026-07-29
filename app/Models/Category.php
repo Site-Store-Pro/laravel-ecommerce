@@ -5,17 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Staudenmeir\LaravelAdjacencyList\Eloquent\HasRecursiveRelationships;
+use App\Traits\HasTranslations;
 
 class Category extends Model
 {
-    use HasRecursiveRelationships;
+    use HasRecursiveRelationships, HasTranslations;
 
     protected $table = 'product_categories';
+
+    protected array $translatable = ['name', 'description'];
+
+    protected function translationForeignKey(): string
+    {
+        return 'category_id';
+    }
 
     protected $fillable = [
         'name',
         'slug',
         'description',
+        'category_image',
         'parent_id',
         'sort_order',
         'is_visible_in_menu'

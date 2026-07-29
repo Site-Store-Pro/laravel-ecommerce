@@ -1,4 +1,13 @@
-<div class="py-12" x-data="{ sourceType: @entangle('source_type').live }">
+<div class="py-12"
+     x-data="{
+         sourceType: @entangle('source_type').live,
+         toast: { show: false, message: '' },
+         showToast(msg) {
+             this.toast = { show: true, message: msg };
+             setTimeout(() => { this.toast.show = false; }, 3500);
+         }
+     }"
+     x-on:cms-download-saved.window="showToast($event.detail.message)">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
         @push('styles')
@@ -20,16 +29,21 @@
                     </h1>
                 </div>
                 <p class="text-sm text-slate-500 dark:text-slate-400 ml-8">
-                    {{ $downloadId ? 'Update this download's settings and file source.' : 'Configure a new downloadable file for use in CMS page shortcodes.' }}
+                    {{ $downloadId ? "Update this download's settings and file source." : 'Configure a new downloadable file for use in CMS page shortcodes.' }}
                 </p>
             </div>
 
-            <button wire:click="save"
-                    class="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold px-6 py-2.5 rounded-2xl shadow-md shadow-teal-100 hover:shadow-lg transition-all inline-flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button wire:click="save" wire:loading.attr="disabled"
+                    class="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold px-6 py-2.5 rounded-2xl shadow-md shadow-teal-100 hover:shadow-lg transition-all inline-flex items-center gap-2 disabled:opacity-70">
+                <svg wire:loading.remove wire:target="save" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
-                Save Download
+                <svg wire:loading wire:target="save" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span wire:loading.remove wire:target="save">Save Download</span>
+                <span wire:loading wire:target="save">Saving…</span>
             </button>
         </div>
 
@@ -44,7 +58,7 @@
         @endif
 
         {{-- Shortcode Preview (shown after save) --}}
-        @if($downloadId)
+        @if($downloadId && $downloadUuid)
             <div class="mb-6 bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800/50 rounded-2xl p-5">
                 <div class="flex items-center gap-2 mb-2">
                     <svg class="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,10 +67,10 @@
                     <span class="text-xs font-extrabold text-teal-700 dark:text-teal-400 uppercase tracking-wider">Your Shortcode</span>
                 </div>
                 <code class="block font-mono text-sm text-teal-800 dark:text-teal-300 select-all cursor-text bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-800/60 rounded-xl px-4 py-3">
-                    [download:{{ $downloadId }}{{ $link_label ? ' label="' . $link_label . '"' : '' }}]
+                    [download:{{ $downloadUuid }}{{ $link_label ? ' label="' . $link_label . '"' : '' }}]
                 </code>
                 <p class="text-xs text-teal-600/70 dark:text-teal-500 mt-2">
-                    Paste into any CMS page. Override the label inline: <code class="font-mono bg-teal-100/60 dark:bg-teal-900/30 px-1 rounded">[download:{{ $downloadId }} label="Custom Label"]</code>
+                    Paste into any CMS page. Override the label inline: <code class="font-mono bg-teal-100/60 dark:bg-teal-900/30 px-1 rounded">[download:{{ $downloadUuid }} label="Custom Label"]</code>
                 </p>
             </div>
         @endif
@@ -387,16 +401,51 @@
             </div>
 
             {{-- Save Button (bottom) --}}
-            <div class="flex justify-end pb-8">
-                <button wire:click="save"
-                        class="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold px-8 py-3 rounded-2xl shadow-md shadow-teal-100 hover:shadow-lg transition-all inline-flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex flex-col items-end gap-3 pb-8">
+
+                {{-- Inline success banner (visible after save when scrolled down) --}}
+                @if(session()->has('status'))
+                    <div class="w-full flex items-center gap-3 px-5 py-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl text-emerald-800 dark:text-emerald-300 text-sm font-semibold shadow-sm">
+                        <svg class="w-5 h-5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        {{ session('status') }}
+                    </div>
+                @endif
+
+                <button wire:click="save" wire:loading.attr="disabled"
+                        class="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold px-8 py-3 rounded-2xl shadow-md shadow-teal-100 hover:shadow-lg transition-all inline-flex items-center gap-2 disabled:opacity-70">
+                    <svg wire:loading.remove wire:target="save" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Save Download
+                    <svg wire:loading wire:target="save" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span wire:loading.remove wire:target="save">Save Download</span>
+                    <span wire:loading wire:target="save">Saving…</span>
                 </button>
             </div>
 
         </div>
     </div>
+
+    {{-- ── Fixed Toast Notification (always visible regardless of scroll) ── --}}
+    <div x-show="toast.show"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-4"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-4"
+         x-cloak
+         class="fixed bottom-6 right-6 z-50 flex items-center gap-3 pl-4 pr-5 py-3.5 bg-emerald-600 text-white rounded-2xl shadow-2xl shadow-emerald-900/30 text-sm font-semibold max-w-sm pointer-events-none">
+        <span class="flex-shrink-0 w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+        </span>
+        <span x-text="toast.message"></span>
+    </div>
+
 </div>

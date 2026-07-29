@@ -122,6 +122,33 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->isAdmin();
     }
 
+    /**
+     * The plain-text sentinel stored in the password column for guest checkout users.
+     * It is intentionally NOT hashed so it can be compared with a simple string equality
+     * check. Laravel's Auth::attempt() will fail to verify this against any bcrypt/argon2
+     * hash, so guest users cannot log in through the standard login form.
+     */
+    public const GUEST_PASSWORD = '[GUEST-USER]';
+
+    /**
+     * Returns true for guest-checkout users: a user record created during checkout
+     * where the customer did not choose a password.
+     *
+     * Detection is based on the plain-text sentinel '[GUEST-USER]' stored in the password
+     * column — NOT on empty($this->password), because an empty column is ambiguous.
+     *
+     * Social login users are NEVER guests: SocialAuthController always assigns a real
+     * hashed random password AND sets the provider column, so this check never fires for them.
+     *
+     * Regular registered users are NEVER guests: they supply their own password at
+     * registration, which is always stored as a bcrypt/argon2 hash.
+     */
+    public function isGuest(): bool
+    {
+        return $this->password === self::GUEST_PASSWORD;
+    }
+
+
     public function isAdmin(): bool
     {
         return $this->role_id === UserRole::Admin;

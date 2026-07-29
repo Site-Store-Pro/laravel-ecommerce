@@ -11,9 +11,9 @@
 return [
 
     'default' => [
-        '--nav-bg'               => 'rgba(255,255,255,0.85)',
-        '--nav-backdrop'         => 'blur(12px)',
-        '--nav-border'           => 'rgba(226,232,240,0.8)',    // slate-200/80
+        '--nav-bg'               => 'transparent',
+        '--nav-backdrop'         => 'none',
+        '--nav-border'           => 'transparent',
         '--nav-text'             => '#475569',                  // slate-600
         '--nav-text-hover'       => '#4f46e5',                  // indigo-600
         '--nav-logo-filter'      => 'none',

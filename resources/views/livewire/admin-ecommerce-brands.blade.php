@@ -127,6 +127,11 @@
                                                     <button type="button" wire:click="showProducts({{ $brand->id }}, '{{ addslashes($brand->name) }}')" class="text-[10px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-100 font-bold transition focus:outline-none" title="View products under this brand">
                                                         {{ $brand->products_count }} {{ Str::plural('product', $brand->products_count) }}
                                                     </button>
+                                                    @if($brand->is_visible_in_menu)
+                                                        <span class="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">Visible in Menu</span>
+                                                    @else
+                                                        <span class="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded-full font-bold">Hidden from Menu</span>
+                                                    @endif
                                                 </h3>
                                                 <p class="text-xs text-slate-400 font-medium">Slug: {{ $brand->slug }} | Sort: {{ $brand->sort_order }}</p>
                                                 @if($brand->description)
@@ -225,6 +230,13 @@
                                             <option value="1">Default S3 Storage</option>
                                         </select>
                                     </div>
+                                </div>
+
+                                <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <input type="checkbox" id="is_visible_in_menu" wire:model="is_visible_in_menu" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                                    <label for="is_visible_in_menu" class="text-xs font-bold text-slate-700 cursor-pointer">
+                                        Visible in Menus & Shop Filters
+                                    </label>
                                 </div>
 
                                 <div>

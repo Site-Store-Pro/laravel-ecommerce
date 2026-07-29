@@ -28,4 +28,31 @@ class PluginApiController extends Controller
 
         return response()->json($plugins);
     }
+
+    /**
+     * Live search — translation-aware JSON endpoint (web route, session available).
+     *
+     * The SetLocale middleware resolves the visitor's active language and stores
+     * it in the service container under 'current.language' before this action runs,
+     * so language detection from session works correctly here.
+     */
+    public function liveSearchApi(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $q = trim($request->query('q', ''));
+        if (strlen($q) < 2) {
+            return response()->json([]);
+        }
+
+        // Resolve active and default language IDs.
+        // 'current.language' is bound by the SetLocale middleware on every web request.
+        $currentLang   = app()->bound('current.language') ? app('current.language') : null;
+        $defaultLang   = \App\Models\Language::getDefault();
+        $langId        = $currentLang?->id ?? $defaultLang->id;
+        $defaultLangId = $defaultLang->id;
+
+        $results = (new \App\Services\LiveSearchService())->search($q, $langId, $defaultLangId);
+
+        // Limit the inline dropdown to 15 entries
+        return response()->json(array_slice($results, 0, 15));
+    }
 }

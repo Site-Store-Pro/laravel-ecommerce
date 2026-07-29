@@ -7,7 +7,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                     </svg>
-                    Shop
+                    @label('product.breadcrumb_shop', 'Shop')
                 </a>
                 @foreach($breadcrumbs as $bc)
                     <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -24,13 +24,13 @@
                     {{ $product->title }}
                 </span>
             </div>
-            @if(auth()->check() && auth()->user()->role_id === 3)
+            @if(auth()->check() && auth()->user()->isAdmin())
                 <a href="{{ route('admin.ecommerce.product-edit', ['id' => $product->id]) }}" target="admin_product_edit"
                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-md transition duration-150">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
-                    Edit Product (Admin)
+                    @label('product.admin_edit_button', 'Edit Product (Admin)')
                 </a>
             @endif
         </div>
@@ -90,9 +90,16 @@
                             @include('livewire.partials.product-gallery')
                         </div>
                     </div>
-                    @if($selectedVariant && $selectedVariant->video_preview)
-                        <div class="bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm">
-                            @include('livewire.partials.product-video-player')
+                    @if($product->product_video_embed || ($selectedVariant && $selectedVariant->video_preview))
+                        <div class="bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm space-y-8">
+                            @if($product->product_video_embed)
+                                <div class="w-full">
+                                    {!! $product->parsed_video_embed !!}
+                                </div>
+                            @endif
+                            @if($selectedVariant && $selectedVariant->video_preview)
+                                @include('livewire.partials.product-video-player')
+                            @endif
                         </div>
                     @endif
                     {{-- Full-width description below --}}
@@ -125,9 +132,16 @@
                 {{-- Centered Layout With Large Video Player On Top, description full-width below --}}
                 <div class="space-y-8">
                     <div class="bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm space-y-12">
-                        @if($selectedVariant && $selectedVariant->video_preview)
-                            <div class="max-w-4xl mx-auto">
-                                @include('livewire.partials.product-video-player')
+                        @if($product->product_video_embed || ($selectedVariant && $selectedVariant->video_preview))
+                            <div class="max-w-4xl mx-auto space-y-6">
+                                @if($product->product_video_embed)
+                                    <div class="w-full">
+                                        {!! $product->parsed_video_embed !!}
+                                    </div>
+                                @endif
+                                @if($selectedVariant && $selectedVariant->video_preview)
+                                    @include('livewire.partials.product-video-player')
+                                @endif
                             </div>
                         @endif
                         <div class="max-w-3xl mx-auto flex flex-col items-stretch">
@@ -220,7 +234,7 @@
             {{-- Section header --}}
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h2 class="text-2xl font-extrabold tracking-tight text-slate-900">Product recommendations for you</h2>
+                    <h2 class="text-2xl font-extrabold tracking-tight text-slate-900">@label('product.recommendations', 'Product recommendations for you')</h2>
                     
                 </div>
                 {{-- Prev / Next arrows --}}
@@ -287,7 +301,7 @@
                             <div class="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
                                 <span class="text-sm font-extrabold text-slate-900" x-text="card.price"></span>
                                 <span class="text-[11px] font-bold text-indigo-600 group-hover:text-indigo-700 flex items-center gap-0.5">
-                                    View
+                                    @label('product.view', 'View')
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
                                 </span>
                             </div>

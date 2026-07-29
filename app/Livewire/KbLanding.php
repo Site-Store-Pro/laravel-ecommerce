@@ -33,6 +33,7 @@ class KbLanding extends Component
     public function render(): View
     {
         $articles = KbArticle::query()
+            ->withCurrentTranslations()
             ->where('article_active', 1)
             ->when($this->search, function ($query) {
                 $query->where(function ($inner) {
@@ -47,8 +48,8 @@ class KbLanding extends Component
         $categories = collect();
         if (! $this->search) {
             $categories = \App\Models\KbCategory::with(['articles' => function($q) {
-                $q->where('article_active', 1)->orderBy('sort_order', 'asc');
-            }])->orderBy('sort_order', 'asc')->get();
+                $q->withCurrentTranslations()->where('article_active', 1)->orderBy('sort_order', 'asc');
+            }])->withCurrentTranslations()->orderBy('sort_order', 'asc')->get();
         }
 
         return view('livewire.kb-landing', [

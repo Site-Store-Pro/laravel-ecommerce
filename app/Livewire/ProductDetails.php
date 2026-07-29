@@ -26,12 +26,19 @@ class ProductDetails extends Component
 
     public function mount(string $seo_link): void
     {
+        $langService = app(\App\Services\LanguageService::class);
+        $langIds = array_unique([$langService->currentId(), $langService->defaultId()]);
+
         $this->product = Product::where('seo_slug', $seo_link)
+            ->withCurrentTranslations()
             ->with([
                 'variants.inventory',
                 'variants.images',
+                'variants.translations'              => fn ($q) => $q->whereIn('language_id', $langIds),
                 'categories',
                 'fields.options',
+                'fields.translations'                => fn ($q) => $q->whereIn('language_id', $langIds),
+                'fields.options.translations'        => fn ($q) => $q->whereIn('language_id', $langIds),
                 'crossSells.crossSellProduct.variants.images',
             ])
             ->firstOrFail();
@@ -68,6 +75,30 @@ class ProductDetails extends Component
     public function updatedQuantity(): void
     {
         $this->validateOnly('quantity', $this->validationRules(), $this->validationMessages());
+    }
+
+    /**
+     * True when an item-based quantity-discount tier is actively applied at the current qty.
+     * Used by the blade to show "/each" next to the unit price.
+     */
+    public function getHasQtyDiscountProperty(): bool
+    {
+        $variant = $this->selectedVariant;
+        if (!$variant) {
+            return false;
+        }
+
+        $qty = max(1, (int) filter_var($this->quantity, FILTER_VALIDATE_INT));
+
+        $config = \App\Models\DiscountConfiguration::first();
+        if (!$config || !$config->quantity_based) {
+            return false;
+        }
+
+        return $variant->quantityDiscounts
+            ->where('qty_min', '<=', $qty)
+            ->where('qty_max', '>=', $qty)
+            ->isNotEmpty();
     }
 
     public function getCalculatedPriceProperty(): float
@@ -409,7 +440,7 @@ class ProductDetails extends Component
             $price += $variant->personalization_fee;
             $selectedCustomizations[] = [
                 'field_id' => 'personalization',
-                'label' => 'Gift Wrapping / Personalization',
+                'label' => $variant->personalization_label ?: 'Gift Wrapping / Personalization',
                 'value' => $this->personalization_text ?: 'Yes',
                 'price_modifier' => $variant->personalization_fee
             ];
@@ -453,7 +484,9 @@ class ProductDetails extends Component
                 ->exists();
 
             if ($hasStandaloneInCart) {
-                session()->flash('error', "Your cart contains a standalone item which cannot be purchased with other items.");
+                $msg = "Your cart contains a standalone item which cannot be purchased with other items.";
+                $this->cartError = $msg;
+                session()->flash('error', $msg);
                 return;
             }
         }
@@ -468,7 +501,9 @@ class ProductDetails extends Component
                 }
             }
             if (!$onlySameSku) {
-                session()->flash('error', "This standalone item cannot be purchased with other items. Please empty your cart first.");
+                $msg = "This standalone item cannot be purchased with other items. Please empty your cart first.";
+                $this->cartError = $msg;
+                session()->flash('error', $msg);
                 return;
             }
         }
@@ -496,16 +531,23 @@ class ProductDetails extends Component
             }
 
             if ($newItemIsSubscription && $cartHasRegular) {
-                session()->flash('error', 'Subscription items cannot be combined with regular items. Please remove existing cart items before adding a subscription.');
+                $msg = 'Subscription items cannot be combined with regular items. Please remove existing cart items before adding a subscription.';
+                $this->cartError = $msg;
+                session()->flash('error', $msg);
                 return;
             }
             if (!$newItemIsSubscription && $cartHasSubscription) {
-                session()->flash('error', 'Regular items cannot be combined with subscription items. Please remove the subscription item from your cart first.');
+                $msg = 'Regular items cannot be combined with subscription items. Please remove the subscription item from your cart first.';
+                $this->cartError = $msg;
+                session()->flash('error', $msg);
                 return;
             }
         }
 
-        // Check if item is already in cart
+        // Check if THIS specific item is already in cart.
+        // IMPORTANT: must also filter by item_name (which encodes the SKU) so we only
+        // match THIS product's cart row — not any other simple product whose item_attributes
+        // is also an empty string ''.
         $cartItem = ShoppingCartLog::where(function($query) use ($sessionId, $userId) {
             if ($userId > 0) {
                 $query->where('user_id', $userId);
@@ -514,13 +556,16 @@ class ProductDetails extends Component
                       ->where('user_id', 0);
             }
         })
+        ->where('item_name', 'like', '%(' . $variant->sku . ')')
         ->where('item_attributes', $attributesJson)
         ->where('order_id', 0)
         ->first();
 
         // C. If max_qty = 1, prevent adding it again if it exists
         if ($cartItem && $product && $product->max_qty == 1) {
-            session()->flash('error', "You can only purchase a maximum of 1 unit of this item per order.");
+            $msg = "You can only purchase a maximum of 1 unit of this item per order.";
+            $this->cartError = $msg;
+            session()->flash('error', $msg);
             if ($product->checkout_redirect == 1 || $product->standalone_purchase == 1) {
                 return redirect()->route('shop.checkout');
             }
@@ -588,7 +633,7 @@ class ProductDetails extends Component
         }
 
         $category = $this->product->categories->first();
-        $breadcrumbs = $category ? $category->ancestorsAndSelf()->get()->reverse() : collect();
+        $breadcrumbs = $category ? $category->ancestorsAndSelf()->withCurrentTranslations()->get()->reverse() : collect();
 
         // ── Related / recommended products — cross-sells with display_on_item_view ──
         $relatedProducts = collect();
@@ -601,6 +646,16 @@ class ProductDetails extends Component
         }
 
         $metaTitle = $this->product->meta_title ?: $this->product->title;
+
+        // Load translations for current language (enables automatic attribute translation)
+        try {
+            $this->product->loadMissing([
+                'translations' => fn($q) => $q->where(
+                    'language_id',
+                    app(\App\Services\LanguageService::class)->currentId()
+                )
+            ]);
+        } catch (\Throwable) {}
 
         return view('livewire.product-details', [
             'selectedVariant'  => $selectedVariant,

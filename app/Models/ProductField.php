@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProductField extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTranslations;
+
+    /** Fields returned in the active language when translations are eager-loaded. */
+    protected array $translatable = ['label'];
 
     protected $fillable = [
         'product_id',

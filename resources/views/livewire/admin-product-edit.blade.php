@@ -86,6 +86,11 @@
                         </svg>
                         <span class="truncate">Inventory</span>
                     </a>
+                    
+                    <a href="javascript:void(0)" wire:click="selectTranslationLang('', 0)" @click="document.querySelector('#translations-section').scrollIntoView({behavior: 'smooth'})" class="flex items-center gap-2.5 px-3 py-2 rounded-xl font-bold text-xs text-slate-600 hover:bg-slate-50 transition duration-150">
+                        <svg class="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                        <span class="truncate">Translations</span>
+                    </a>
                 </div>
             </div>
 
@@ -112,6 +117,16 @@
                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 hover:border-indigo-400 hover:text-indigo-600 text-xs font-semibold rounded-xl shadow-sm transition duration-150">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             Advanced Settings
+                        </a>
+                        <a href="#section-layout"
+                           class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 hover:border-violet-400 hover:text-violet-600 text-xs font-semibold rounded-xl shadow-sm transition duration-150">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.87V15.13a1 1 0 01-1.447.9L15 14M3 8h12a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V9a1 1 0 011-1z"/></svg>
+                            Layout &amp; Video
+                        </a>
+                        <a href="#section-customizations"
+                           class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 hover:border-amber-400 hover:text-amber-600 text-xs font-semibold rounded-xl shadow-sm transition duration-150">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            Customization &amp; Personalization
                         </a>
                         <a href="#section-cross-selling"
                            class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 hover:border-rose-400 hover:text-rose-600 text-xs font-semibold rounded-xl shadow-sm transition duration-150">
@@ -151,6 +166,66 @@
 
                         <div>
                             <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Long Description</label>
+
+                            @if ($showAiButton)
+                                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 mb-4 space-y-3 animate-fade-in">
+                                    <div>
+                                        <x-input-label for="aiPrompt" :value="__('AI Instruction Prompt')" class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1" />
+                                        <input type="text" wire:model="aiPrompt" id="aiPrompt"
+                                               class="block w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 text-sm shadow-sm"
+                                               placeholder="e.g. Please write a high-converting, detailed product description highlighting key features and benefits" />
+                                        <p class="text-slate-400 text-[10px] mt-1.5 leading-relaxed">
+                                            The 'Generate with OPENAI' button will send your prompt, product title, category, short &amp; long description context to OpenAI to return AI-generated content.
+                                        </p>
+                                        <x-input-error :messages="$errors->get('ai_content_error')" class="mt-2 text-xs" />
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button type="button" wire:click="generateAiContent" wire:loading.attr="disabled"
+                                                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-sm">
+                                            <span wire:loading.remove wire:target="generateAiContent" class="flex items-center gap-1.5">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                                </svg>
+                                                Generate with OPENAI
+                                            </span>
+                                            <span wire:loading wire:target="generateAiContent" class="flex items-center gap-1.5">
+                                                <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Processing...
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if (!empty($aiResponse))
+                                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 mb-4 space-y-2 animate-fade-in"
+                                     x-data="{
+                                         copyToEditor() {
+                                             let content = @js($aiResponse);
+                                             let editor = tinymce.get('long_description_editor');
+                                             if (editor) {
+                                                 editor.setContent(content);
+                                                 editor.triggerSave();
+                                             }
+                                             $wire.set('long_description', content);
+                                         }
+                                     }">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                            AI Suggested Content
+                                        </span>
+                                        <button type="button" @click="copyToEditor()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors border border-indigo-150 shadow-sm">
+                                            Copy to Editor
+                                        </button>
+                                    </div>
+                                    <textarea readonly rows="6" class="block w-full rounded-xl border-slate-200 bg-white text-sm text-slate-600 shadow-sm focus:ring-0 focus:border-slate-200">{{ $aiResponse }}</textarea>
+                                </div>
+                            @endif
+
                             <div wire:ignore 
                                  x-data="{
                                      long_description: @entangle('long_description'),
@@ -349,6 +424,69 @@
                                 </div>
                             </label>
 
+                            {{-- ── Completion Redirect (post-order) ── --}}
+                            <div class="pt-4 border-t border-slate-100 space-y-2">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-violet-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <label for="completion_redirect" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Post-Order Completion Redirect</label>
+                                </div>
+                                <p class="text-xs text-slate-400 leading-relaxed">
+                                    When set, the customer will be redirected to this destination <strong class="text-slate-600">instead of the default order confirmation page</strong> after successfully completing checkout.
+                                    Enter a full URL (e.g. <code class="font-mono bg-slate-100 px-1 rounded">https://example.com/thank-you</code>) or a CMS page shortcode (e.g. <code class="font-mono bg-slate-100 px-1 rounded">[page:5]</code>).
+                                    Leave blank to use the default order confirmation page.
+                                </p>
+                                <div class="relative">
+                                    <input type="text"
+                                           id="completion_redirect"
+                                           wire:model="completion_redirect"
+                                           placeholder="https://… or [page:ID]"
+                                           class="w-full px-4 py-2.5 pr-10 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent font-mono text-xs placeholder:font-sans placeholder:text-slate-400 transition">
+                                    <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                                        @if(trim($completion_redirect))
+                                            <span class="w-2 h-2 rounded-full bg-violet-500 animate-pulse"></span>
+                                        @else
+                                            <span class="w-2 h-2 rounded-full bg-slate-200"></span>
+                                        @endif
+                                    </div>
+                                </div>
+                                @error('completion_redirect') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+                                @if(trim($completion_redirect))
+                                    <div class="flex items-center gap-2 px-3 py-2 bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800/40 rounded-xl text-xs text-violet-700 dark:text-violet-300 font-medium">
+                                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        Redirect active — customers will be sent to: <span class="font-mono ml-1 truncate max-w-xs">{{ $completion_redirect }}</span>
+                                    </div>
+
+                                    {{-- Button Label field (only shown when a redirect URL is set) --}}
+                                    <div class="flex flex-col gap-1 pt-1">
+                                        <label for="completion_redirect_label" class="text-xs font-semibold text-slate-600">
+                                            Button Label
+                                            <span class="ml-1 font-normal text-slate-400">(shown in order emails next to this item)</span>
+                                        </label>
+                                        <input type="text"
+                                               id="completion_redirect_label"
+                                               wire:model="completion_redirect_label"
+                                               placeholder="View Content"
+                                               maxlength="255"
+                                               class="w-full px-3.5 py-2 bg-white border border-violet-200 dark:border-violet-700 text-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-xs transition">
+                                        @error('completion_redirect_label') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+                                        <p class="text-xs text-slate-400">
+                                            Leave blank to use the default label: <strong class="text-violet-600">"View Content"</strong>
+                                        </p>
+                                        {{-- Live button preview --}}
+                                        <div class="flex items-center gap-2 pt-1">
+                                            <span class="text-xs text-slate-400">Preview:</span>
+                                            <span class="inline-block bg-violet-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
+                                                {{ trim($completion_redirect_label) ?: 'View Content' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
                             <label class="flex items-start gap-3 cursor-pointer">
                                 <input type="checkbox" wire:model="standalone_purchase" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
                                 <div class="flex flex-col">
@@ -395,16 +533,51 @@
                                 </div>
                             </label>
 
-                            <div class="pt-4 border-t border-slate-100 space-y-2">
-                                <label class="text-xs font-bold text-slate-700 block uppercase tracking-wider">Product Page Layout Option</label>
-                                <select wire:model="layout_type" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-medium text-xs">
-                                    <option value="1">Right Side Images (Default)</option>
-                                    <option value="2">Left Side Images</option>
-                                    <option value="3">Right Side Images With Large Video Player Space Below</option>
-                                    <option value="4">Centered Layout With Images On Top</option>
-                                    <option value="5">Centered Layout With Large Video Player On Top</option>
-                                </select>
-                                @error('layout_type') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+                            {{-- Show Item Total Toggle --}}
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model="show_item_total" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold {{ $show_item_total ? 'text-indigo-600' : 'text-slate-700' }} transition-colors">
+                                        Show Live Item Total Below Add to Cart
+                                        @if($show_item_total)
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700 ml-1">Active</span>
+                                        @endif
+                                    </span>
+                                    <span class="text-xs text-slate-400">When enabled, a live <strong class="text-slate-600">Item Total</strong> (unit price × quantity) is displayed below the Add to Cart button on the product detail page. Updates automatically as the customer changes their quantity.</span>
+                                </div>
+                            </label>
+
+                            <!-- Search Index & Lock Control Card -->
+                            <div class="pt-6 border-t border-slate-100 space-y-4">
+                                <div class="flex items-center justify-between flex-wrap gap-3">
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                            Search Index Keywords &amp; Lock Control
+                                        </h4>
+                                        <p class="text-xs text-slate-400 mt-0.5">Collated keywords used by Live Search to index this product. When locked, saving this product will not overwrite custom admin keywords.</p>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <button type="button" wire:click="rebuildIndexKeywords" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                            Rebuild Index
+                                        </button>
+                                        <label class="relative inline-flex items-center cursor-pointer select-none">
+                                             <input type="checkbox" wire:model="product_search_index_locked" class="sr-only peer">
+                                             <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                                             <span class="ml-2.5 px-2.5 py-1 rounded-lg text-2xs font-black uppercase tracking-wider transition-all inline-flex items-center gap-1 shadow-xs"
+                                                   :class="$wire.product_search_index_locked ? 'bg-amber-500 text-white ring-2 ring-amber-400/40 shadow-amber-500/20' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'">
+                                                 <svg class="w-3 h-3" x-show="$wire.product_search_index_locked" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                                 <svg class="w-3 h-3" x-show="!$wire.product_search_index_locked" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+                                                 <span x-text="$wire.product_search_index_locked ? 'Locked' : 'Unlocked'"></span>
+                                             </span>
+                                         </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-600 mb-1">Collated Search Index (Editable)</label>
+                                    <textarea wire:model="product_search_index" rows="4" placeholder="Add custom search keywords, synonyms, promo codes, misspellings..." class="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                                </div>
                             </div>
                         </div>
 
@@ -415,6 +588,84 @@
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
                                 <span>Save Advanced Settings</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ═══════ Layout & Video Section ═══════ -->
+                <div id="section-layout" class="rounded-3xl shadow-md overflow-hidden border border-violet-200/70">
+
+                    {{-- Header gradient --}}
+                    <div class="bg-gradient-to-r from-violet-600 to-purple-600 px-8 py-5 flex items-center gap-4">
+                        <div class="p-2.5 bg-white/20 rounded-2xl backdrop-blur-sm">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.87V15.13a1 1 0 01-1.447.9L15 14M3 8h12a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V9a1 1 0 011-1z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-extrabold text-white tracking-tight">Layout &amp; Video Embed</h3>
+                            <p class="text-violet-200 text-xs mt-0.5">Choose the product page layout and optionally embed a video for layouts 3 &amp; 5.</p>
+                        </div>
+                    </div>
+
+                    <form wire:submit.prevent="updateLayoutSettings" class="bg-white p-8 space-y-6">
+
+                        {{-- Layout Type --}}
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-700 block uppercase tracking-wider flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10-3a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z"/></svg>
+                                Product Page Layout
+                            </label>
+                            <select wire:model.live="layout_type" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-violet-500 font-medium text-sm">
+                                <option value="1">Layout 1 — Right Side Images (Default)</option>
+                                <option value="2">Layout 2 — Left Side Images</option>
+                                <option value="3">Layout 3 — Right Side Images + Large Video Player Below</option>
+                                <option value="4">Layout 4 — Centered Layout With Images On Top</option>
+                                <option value="5">Layout 5 — Centered Layout + Large Video Player On Top</option>
+                            </select>
+                            @error('layout_type') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+                        </div>
+
+                        {{-- Video Embed (only for layouts 3 & 5) --}}
+                        @if($layout_type == 3 || $layout_type == 5)
+                            <div class="space-y-3 p-5 bg-violet-50 border border-violet-200 rounded-2xl">
+                                <div class="flex items-start gap-2">
+                                    <svg class="w-4 h-4 text-violet-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <div>
+                                        <label class="text-xs font-bold text-violet-800 block uppercase tracking-wider">Video Embed for Layout {{ $layout_type }}</label>
+                                        <p class="text-[11px] text-violet-600 mt-0.5">Enter a CMS code embed shortcode <strong>[code-embed:ID]</strong> — or paste raw <strong>&lt;iframe&gt;</strong> / HTML embed code directly.</p>
+                                    </div>
+                                </div>
+                                <textarea
+                                    wire:model="product_video_embed"
+                                    rows="5"
+                                    placeholder="e.g.  [code-embed:12]   OR   <iframe src=&quot;https://www.youtube.com/embed/...&quot; ...></iframe>"
+                                    class="w-full px-4 py-3 bg-white border border-violet-200 text-slate-800 rounded-xl focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 text-xs font-mono resize-y"
+                                ></textarea>
+                                @error('product_video_embed') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+                                @if($product_video_embed)
+                                    <p class="text-[10px] text-violet-500 font-medium">
+                                        ✓ Video embed set &mdash; will render in the video area of layout {{ $layout_type }} on the product page.
+                                    </p>
+                                @endif
+                            </div>
+                        @else
+                            <div class="flex items-center gap-2 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-400">
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Video embed is only available for <strong class="text-slate-600 mx-1">Layout 3</strong> and <strong class="text-slate-600 mx-1">Layout 5</strong>. Select one of those layouts above to enable this field.
+                            </div>
+                        @endif
+
+                        <div class="pt-4 border-t border-slate-100 flex justify-end">
+                            <button type="submit"
+                                    wire:loading.attr="disabled"
+                                    wire:target="updateLayoutSettings"
+                                    class="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold rounded-2xl shadow-md hover:shadow-violet-500/30 flex items-center gap-2 transition-all duration-200">
+                                <svg wire:loading.remove wire:target="updateLayoutSettings" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <svg wire:loading wire:target="updateLayoutSettings" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                                Save Layout Settings
                             </button>
                         </div>
                     </form>
@@ -580,6 +831,85 @@
                                 <span>{{ $isEditingField ? 'Update Field' : 'Save Field' }}</span>
                             </button>
                         </div>
+
+                        {{-- ── Field & Option Translations (only when editing an existing field) ── --}}
+                        @if($isEditingField && isset($activeLanguages) && $activeLanguages->count() > 0)
+                        <div class="mt-2 border border-violet-200 bg-violet-50/40 rounded-2xl p-5 space-y-4">
+                            <div class="flex items-center gap-2 pb-2 border-b border-violet-100">
+                                <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                                </svg>
+                                <h4 class="text-xs font-bold text-violet-700 uppercase tracking-wider">Field &amp; Option Translations</h4>
+                                <span class="ml-auto text-[10px] text-slate-400 hidden sm:block">Translate the field label and option values shown on the storefront</span>
+                            </div>
+
+                            {{-- Language pills --}}
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($activeLanguages as $lang)
+                                    @php
+                                        $fTrans   = \App\Models\ProductFieldTranslation::where('product_field_id', $selectedFieldId)
+                                                        ->where('language_id', $lang->id)->first();
+                                        $fHasData = $fTrans && $fTrans->label;
+                                    @endphp
+                                    <button type="button"
+                                            wire:click="selectFieldTranslationLang('{{ $lang->code }}', {{ $lang->id }})"
+                                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition
+                                                   {{ $fieldTransLangCode === $lang->code
+                                                          ? 'bg-violet-600 text-white border-violet-600'
+                                                          : 'bg-white text-slate-600 border-slate-200 hover:border-violet-300' }}">
+                                        <span>{{ $lang->flag_emoji }}</span>
+                                        {{ $lang->native_name }}
+                                        @if($fHasData)
+                                            <span class="text-[9px] px-1.5 py-0.5 rounded-full
+                                                         {{ $fieldTransLangCode === $lang->code ? 'bg-white/30 text-white' : 'bg-emerald-200 text-emerald-800' }}">✓</span>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            @if($fieldTransLangCode)
+                                <div class="space-y-4 bg-white rounded-xl p-4 border border-violet-100">
+                                    {{-- Field Label Translation --}}
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Field Label / Prompt</label>
+                                        <input type="text" wire:model="trans_field_label"
+                                               placeholder="Translated field label…"
+                                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-400">
+                                    </div>
+
+                                    {{-- Option Value Translations (only for choice-based fields with saved options) --}}
+                                    @if(!empty($fieldOptions) && in_array($customFieldType, ['select', 'radio', 'checkbox', 'multiselect_checkbox']))
+                                        @php $hasOptionIds = collect($fieldOptions)->filter(fn($o) => !empty($o['id']))->isNotEmpty(); @endphp
+                                        @if($hasOptionIds)
+                                            <div class="pt-3 border-t border-slate-100 space-y-2">
+                                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Option Value Translations</p>
+                                                @foreach($fieldOptions as $opt)
+                                                    @if(!empty($opt['id']))
+                                                        <div class="flex items-center gap-3">
+                                                            <span class="text-xs text-slate-500 font-medium min-w-[130px] truncate" title="{{ $opt['option_value'] }}">{{ $opt['option_value'] }}</span>
+                                                            <svg class="w-3.5 h-3.5 text-slate-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                                                            <input type="text" wire:model="trans_field_options.{{ $opt['id'] }}"
+                                                                   placeholder="Translated value…"
+                                                                   class="flex-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-400">
+                                                        </div>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    @endif
+
+                                    <div class="flex justify-end pt-1">
+                                        <button type="button" wire:click="saveFieldTranslation" wire:loading.attr="disabled"
+                                                class="flex items-center gap-2 px-5 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold shadow transition">
+                                            <span wire:loading wire:target="saveFieldTranslation"
+                                                  class="animate-spin w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full inline-block"></span>
+                                            Save Field Translation
+                                        </button>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                        @endif
                     </div>
                 </div>
                 <!-- Cross-Selling Section -->
@@ -701,6 +1031,110 @@
                     @endif
                 </div>
             </div>
+
+        {{-- ── Translations Section ───────────────────────────────────────── --}}
+        @if(isset($activeLanguages) && $activeLanguages->count() > 0)
+        <div id="translations-section" class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            <div x-data="{ open: false }">
+                <button @click="open = !open" type="button"
+                        class="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                        <span class="font-bold text-slate-800 text-sm">Translations</span>
+                        <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">{{ $activeLanguages->count() }} language(s)</span>
+                    </div>
+                    <svg class="w-4 h-4 text-slate-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+
+                <div x-show="open" class="border-t border-slate-100 p-6 space-y-5" style="display:none">
+                    {{-- Flash --}}
+                    @if(session()->has('success'))
+                        <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-sm font-semibold">{{ session('success') }}</div>
+                    @endif
+
+                    {{-- Language pills --}}
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($activeLanguages as $lang)
+                            @php $tRecord = \App\Models\ProductTranslation::where('product_id', $productId)->where('language_id', $lang->id)->first(); @endphp
+                            <button wire:click="selectTranslationLang('{{ $lang->code }}', {{ $lang->id }})" type="button"
+                                    class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition
+                                           {{ $activeLangCode === $lang->code ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300' }}">
+                                <span>{{ $lang->flag_emoji }}</span>
+                                {{ $lang->native_name }}
+                                @if($tRecord)
+                                    <span class="text-[10px] px-1.5 py-0.5 rounded-full {{ $tRecord->translation_status === 'reviewed' ? 'bg-emerald-200 text-emerald-800' : 'bg-amber-200 text-amber-800' }}">{{ $tRecord->translation_status === 'reviewed' ? '✓' : 'AI' }}</span>
+                                @endif
+                            </button>
+                        @endforeach
+                    </div>
+
+                    @if($activeLangCode)
+                    <div class="space-y-4 bg-slate-50 rounded-2xl p-5 border border-slate-200">
+                        {{-- Status + auto-translate --}}
+                        <div class="flex items-center justify-between flex-wrap gap-3">
+                            <span class="px-3 py-1 rounded-lg text-xs font-bold {{ $trans_status === 'reviewed' ? 'bg-emerald-100 text-emerald-800' : ($trans_status === 'ai_translated' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600') }}">
+                                {{ $trans_status === 'reviewed' ? 'Reviewed' : ($trans_status === 'ai_translated' ? 'AI Translated' : 'Pending') }}
+                                @if($trans_translated_at) &nbsp;· {{ $trans_translated_at }}@endif
+                            </span>
+                        <div class="flex items-center flex-wrap gap-2">
+                            <button wire:click="aiTranslateProductInline" wire:loading.attr="disabled" type="button"
+                                    title="Generate a fresh AI translation now. Results fill the fields below for your review before saving."
+                                    class="flex items-center gap-2 px-4 py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-xl text-xs font-bold transition">
+                                <span wire:loading wire:target="aiTranslateProductInline" class="animate-spin w-3.5 h-3.5 border-2 border-violet-400 border-t-transparent rounded-full inline-block"></span>
+                                <svg class="w-4 h-4" wire:loading.remove wire:target="aiTranslateProductInline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                ✦ Generate Translation
+                            </button>
+                            <button wire:click="autoTranslateProduct" type="button" wire:loading.attr="disabled"
+                                    title="Queue a background translation job. Page will refresh with AI-translated content."
+                                    class="flex items-center gap-2 px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold transition">
+                                <span wire:loading wire:target="autoTranslateProduct" class="animate-spin w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full inline-block"></span>
+                                Queue Bulk Job
+                            </button>
+                        </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Product Title</label>
+                            <input type="text" wire:model="trans_title" placeholder="Translated product name..."
+                                   class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Short Description</label>
+                            <textarea wire:model="trans_short_description" rows="3" placeholder="Translated short description..."
+                                      class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Long Description (HTML)</label>
+                            <textarea wire:model="trans_long_description" rows="10" placeholder="Translated full description (HTML supported)..."
+                                      class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:border-indigo-400"></textarea>
+                            <p class="text-xs text-slate-400 mt-1">Plugin shortcodes [plugin:...] are preserved automatically during AI translation.</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Meta Title</label>
+                                <input type="text" wire:model="trans_meta_title" placeholder="Translated SEO title..."
+                                       class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Meta Description</label>
+                                <input type="text" wire:model="trans_meta_description" placeholder="Translated SEO description..."
+                                       class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
+                            </div>
+                        </div>
+                        <div class="flex justify-end pt-2">
+                            <button wire:click="saveProductTranslation" type="button" wire:loading.attr="disabled"
+                                    class="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow transition">
+                                <span wire:loading wire:target="saveProductTranslation" class="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full inline-block"></span>
+                                Save Translation
+                            </button>
+                        </div>
+                    </div>
+                    @else
+                        <p class="text-slate-400 text-sm text-center py-4">Select a language above to view or edit its translation.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
         </div>
     </div>
 
@@ -759,25 +1193,10 @@
     <script src="{{ asset('build/node_modules/tinymce/tinymce.min.js') }}"></script>
     <script>
         window.ensureProseWrapper = function (html) {
-            // The TinyMCE editor body itself has body_class='prose prose-slate max-w-none',
-            // so content should NOT be wrapped in an additional prose div — that causes
-            // double-wrapping which re-introduces the 65ch max-width on the front-end.
-            // Just return the raw html; if empty, return a single placeholder paragraph.
             if (!html || !html.trim()) {
                 return '<p>&nbsp;</p>';
             }
-            // Strip any legacy outer prose wrapper div that may have been saved previously
-            const trimmed = html.trim();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(trimmed, 'text/html');
-            const body = doc.body;
-            // If the entire content is a single top-level div with prose class, unwrap it
-            if (body.children.length === 1) {
-                const first = body.children[0];
-                if (first.tagName === 'DIV' && first.className && first.className.includes('prose')) {
-                    return first.innerHTML;
-                }
-            }
+            // Preserve prose wrapper markup intact on page load
             return html;
         };
 

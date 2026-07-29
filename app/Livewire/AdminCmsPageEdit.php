@@ -36,6 +36,7 @@ class AdminCmsPageEdit extends Component
     public ?string $header_image_path = null;
     public ?string $background_image_path = null;
     public bool $is_active = true;
+    public bool $exclude_from_search = false;
     public int $layout_type = 1;
     public string $left_col = '';
     public string $right_col = '';
@@ -44,17 +45,28 @@ class AdminCmsPageEdit extends Component
     public bool $show_title = true;
     public bool $show_date = true;
 
+    // Search Index Keywords & Locking
+    public string $cms_search_index = '';
+    public bool $cms_search_index_locked = false;
+
     // New Custom Settings
     public string $alternate_page_title = '';
     public string $page_title_alignment = 'middle-center';
     public string $page_title_css = '';
     public string $include_slideshow = '';
     public string $min_header_height = '320px';
+    // AI Content Generator
+    public string $aiPrompt = '';
+    public string $aiResponse = '';
+
     // Live Search for Link Generator
     public string $searchProduct = '';
     public string $searchBrand = '';
     public string $searchCategory = '';
     public string $searchPage = '';
+
+    // Live Search for Gating Product Selector
+    public string $gatingProductSearch = '';
 
     // Live Search for Shortcode Generator
     public string $shortcodeSearchQuery = '';
@@ -65,6 +77,17 @@ class AdminCmsPageEdit extends Component
     public int $page_ranking = 0;
     public bool $hide_page_ranking = true;
     public float $custom_sorting = 0.0;
+
+    // Translation Management
+    public string $activeLangCode = '';
+    public ?int $activeLangId = null;
+    public string $trans_title = '';
+    public string $trans_content = '';
+    public string $trans_meta_title = '';
+    public string $trans_meta_description = '';
+    public string $trans_alternate_page_title = '';
+    public string $trans_status = 'pending';
+    public ?string $trans_translated_at = null;
 
     // Categories and Tags selection
     public ?int $selected_category_id = null;
@@ -114,6 +137,9 @@ class AdminCmsPageEdit extends Component
             $this->header_image_path = $this->page->header_image;
             $this->background_image_path = $this->page->background_image;
             $this->is_active = $this->page->is_active;
+            $this->exclude_from_search = (bool) ($this->page->exclude_from_search ?? false);
+            $this->cms_search_index = $this->page->cms_search_index ?? '';
+            $this->cms_search_index_locked = (bool) ($this->page->cms_search_index_locked ?? false);
             $this->layout_type = $this->page->layout_type ?? 1;
             $this->left_col = $this->page->left_col ?? '';
             $this->right_col = $this->page->right_col ?? '';
@@ -337,6 +363,9 @@ class AdminCmsPageEdit extends Component
             'featured_image_secret_access_key' => $this->featured_image_secret_access_key,
             'featured_image_cdn_url' => $this->featured_image_cdn_url ?: null,
             'is_active' => $this->is_active,
+            'exclude_from_search' => $this->exclude_from_search,
+            'cms_search_index' => $this->cms_search_index,
+            'cms_search_index_locked' => $this->cms_search_index_locked,
             'layout_type' => $this->layout_type,
             'left_col' => $this->left_col,
             'right_col' => $this->right_col,
@@ -398,6 +427,22 @@ class AdminCmsPageEdit extends Component
 
         // Redirect back to list
         return;
+    }
+
+    public function rebuildIndexKeywords(): void
+    {
+        $dummy = new CmsPage([
+            'title' => $this->title,
+            'slug' => $this->slug,
+            'meta_title' => $this->meta_title,
+            'meta_description' => $this->meta_description,
+            'content' => $this->content,
+            'left_col' => $this->left_col,
+            'right_col' => $this->right_col,
+            'cms_search_index_locked' => false,
+        ]);
+        $this->cms_search_index = $dummy->rebuildSearchIndex(force: true);
+        $this->dispatch('toast', type: 'info', message: 'Search index keywords generated from page content.');
     }
 
     public function saveAutoSaveRevision(): void
@@ -518,9 +563,30 @@ class AdminCmsPageEdit extends Component
         $this->dispatch('toast', type: 'success', message: 'Revision data restored into editor. Save to commit.');
     }
 
+    public function generateAiContent(): void
+    {
+        $this->resetErrorBag('ai_content_error');
+
+        $apiKey = config('ai.openai_api_key');
+        if (empty($apiKey) || !function_exists('ai_cms_page_content')) {
+            return;
+        }
+
+        if (blank($this->content)) {
+            $this->addError('ai_content_error', 'Please write some content in the page body editor first.');
+            return;
+        }
+
+        $res = ai_cms_page_content($this->content, $this->aiPrompt);
+        if (function_exists('wrap_prose_content')) {
+            $res = wrap_prose_content($res);
+        }
+        $this->aiResponse = $res;
+    }
+
     public function render(): View
     {
-        $products = Product::orderBy('title', 'asc')->get();
+        $showAiButton = !empty(config('ai.openai_api_key')) && function_exists('ai_cms_page_content');
         $layouts = \Illuminate\Support\Facades\DB::table('cms_layouts')->orderBy('id', 'asc')->get();
         $pageTypes = \Illuminate\Support\Facades\DB::table('cms_page_types')->orderBy('id', 'asc')->get();
         $categoriesList = \App\Models\CmsPagesCategory::orderBy('name', 'asc')->get();
@@ -534,6 +600,27 @@ class AdminCmsPageEdit extends Component
                 ->limit(25)
                 ->get();
         }
+
+        // Gating product live search (max 15 results; also matches direct numeric ID entry)
+        $gatingProductResults = collect();
+        $q = trim($this->gatingProductSearch);
+        if (strlen($q) >= 1) {
+            $gatingQuery = Product::orderBy('title');
+            if (is_numeric($q)) {
+                // Direct ID entry: exact match first, then title fallback
+                $gatingQuery->where('id', (int) $q)
+                            ->orWhere('title', 'like', '%' . $q . '%');
+            } else {
+                $gatingQuery->where('title', 'like', '%' . $q . '%')
+                            ->orWhere('seo_slug', 'like', '%' . $q . '%');
+            }
+            $gatingProductResults = $gatingQuery->limit(15)->get();
+        }
+
+        // Resolve the currently selected gating product title for display
+        $selectedGatingProduct = $this->required_product_id
+            ? Product::find($this->required_product_id)
+            : null;
 
         $searchedBrands = [];
         if (strlen($this->searchBrand) >= 2) {
@@ -636,7 +723,7 @@ class AdminCmsPageEdit extends Component
                         'id'         => $d->id,
                         'title'      => $d->internal_name,
                         'badgeColor' => 'bg-teal-100 text-teal-800 border-teal-200',
-                        'shortcode'  => '[download:' . $d->id . ' label="' . e($label) . '"]'
+                        'shortcode'  => '[download:' . $d->uuid . ' label="' . e($label) . '"]'
                     ];
                 }
             }
@@ -646,9 +733,114 @@ class AdminCmsPageEdit extends Component
             }
         }
 
+        $activeLanguages = \App\Models\Language::getAllActive()->where('is_default', false)->values();
+
         return view('livewire.admin-cms-page-edit', compact(
-            'products', 'layouts', 'pageTypes', 'categoriesList', 'tagsList', 'displayPlugins',
-            'searchedProducts', 'searchedBrands', 'searchedCategories', 'searchedPages', 'shortcodeSearchResults'
+            'layouts', 'pageTypes', 'categoriesList', 'tagsList', 'displayPlugins',
+            'searchedProducts', 'searchedBrands', 'searchedCategories', 'searchedPages', 'shortcodeSearchResults', 'showAiButton',
+            'gatingProductResults', 'selectedGatingProduct', 'activeLanguages'
         ));
+    }
+
+    // ── Translation Management ─────────────────────────────────────────────────
+
+    public function selectTranslationLang(string $code, int $langId): void
+    {
+        $this->activeLangCode = $code;
+        $this->activeLangId = $langId;
+        $this->loadTranslationData();
+    }
+
+    protected function loadTranslationData(): void
+    {
+        if (!$this->pageId || !$this->activeLangId) return;
+
+        $trans = \App\Models\CmsPageTranslation::where('cms_page_id', $this->pageId)
+            ->where('language_id', $this->activeLangId)
+            ->first();
+
+        $this->trans_title                = $trans?->title ?? '';
+        $this->trans_content              = $trans?->content ?? '';
+        $this->trans_meta_title           = $trans?->meta_title ?? '';
+        $this->trans_meta_description     = $trans?->meta_description ?? '';
+        $this->trans_alternate_page_title = $trans?->alternate_page_title ?? '';
+        $this->trans_status               = $trans?->translation_status ?? 'pending';
+        $this->trans_translated_at        = $trans?->translated_at?->format('M j, Y g:i A');
+    }
+
+    public function saveTranslation(): void
+    {
+        if (!$this->pageId || !$this->activeLangId) return;
+
+        \App\Models\CmsPageTranslation::updateOrCreate(
+            ['cms_page_id' => $this->pageId, 'language_id' => $this->activeLangId],
+            [
+                'title'                 => $this->trans_title ?: null,
+                'content'               => $this->trans_content ?: null,
+                'meta_title'            => $this->trans_meta_title ?: null,
+                'meta_description'      => $this->trans_meta_description ?: null,
+                'alternate_page_title'  => $this->trans_alternate_page_title ?: null,
+                'translation_status'    => 'reviewed',
+                'translated_at'         => now(),
+            ]
+        );
+
+        $this->trans_status        = 'reviewed';
+        $this->trans_translated_at = now()->format('M j, Y g:i A');
+        session()->flash('success', 'Translation saved successfully.');
+    }
+
+    public function autoTranslatePage(): void
+    {
+        if (!$this->pageId || !$this->activeLangId) return;
+
+        \App\Jobs\TranslateContentJob::dispatch(
+            \App\Models\CmsPage::class,
+            $this->pageId,
+            $this->activeLangId
+        );
+
+        session()->flash('success', 'Translation job queued. Refresh in a moment to see the results.');
+    }
+
+    /**
+     * Inline AI translation — calls OpenAI synchronously and pre-fills all
+     * translation fields so the admin can review before saving.
+     * The existing autoTranslatePage() bulk queue method is unchanged.
+     */
+    public function aiTranslatePageInline(): void
+    {
+        if (!$this->pageId || !$this->activeLangId) return;
+
+        $page = \App\Models\CmsPage::find($this->pageId);
+        $lang = \App\Models\Language::find($this->activeLangId);
+
+        if (!$page || !$lang) return;
+
+        try {
+            $svc      = app(\App\Services\TranslationService::class);
+            $langName = $lang->name;
+
+            if (!empty($page->title)) {
+                $this->trans_title = $svc->translateText($page->title, $langName, 'page title');
+            }
+            if (!empty($page->alternate_page_title)) {
+                $this->trans_alternate_page_title = $svc->translateText($page->alternate_page_title, $langName, 'page heading');
+            }
+            if (!empty($page->meta_title)) {
+                $this->trans_meta_title = $svc->translateText($page->meta_title, $langName, 'SEO meta title');
+            }
+            if (!empty($page->meta_description)) {
+                $this->trans_meta_description = $svc->translateText($page->meta_description, $langName, 'SEO meta description');
+            }
+            if (!empty($page->content)) {
+                $this->trans_content = $svc->translateText($page->content, $langName, 'page content body HTML — preserve all HTML tags and shortcodes');
+            }
+
+            $this->trans_status = 'ai_translated';
+            $this->dispatch('toast', message: 'AI translation ready — review all fields and click Save Translation.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
+        }
     }
 }
