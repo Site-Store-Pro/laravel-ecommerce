@@ -250,9 +250,11 @@
         </p>
     </div>
 
-    {{-- ── Polling heartbeat (only while running) ─────────────────────────── --}}
+    {{-- ── Polling heartbeat (3s while running, 15s while idle) ─────────────── --}}
     @if($isRunning)
-    <div wire:poll.3000ms="refreshStatus" class="sr-only" aria-hidden="true"></div>
+        <div wire:poll.3000ms="refreshStatus" class="sr-only" aria-hidden="true"></div>
+    @else
+        <div wire:poll.15000ms="refreshStatus" class="sr-only" aria-hidden="true"></div>
     @endif
 
 </div>

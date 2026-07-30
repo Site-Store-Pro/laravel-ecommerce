@@ -149,7 +149,7 @@ class HeaderFooterParserService
 
         $titleHtml = '<span class="site-logo-title text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors truncate max-w-[130px] xs:max-w-[180px] sm:max-w-none">' . e($siteName) . '</span>';
 
-        return '<a href="' . e(url('/')) . '" class="site-logo-link group inline-flex items-center gap-3 hover:opacity-95 transition-opacity" title="' . e($siteName) . '">'
+        return '<a href="' . e(url('/')) . '" class="site-logo-link group inline-flex items-center gap-3 hover:opacity-95 transition-opacity w-auto max-w-max min-w-0 shrink-0 my-auto py-0.5" title="' . e($siteName) . '">'
             . $logoMediaHtml
             . $titleHtml
             . '</a>';
@@ -160,17 +160,7 @@ class HeaderFooterParserService
      */
     public static function renderSearchBar(): string
     {
-        return '
-        <form action="' . e(route('shop.index')) . '" method="GET" class="header-search-form relative w-full max-w-md mx-auto">
-            <div class="relative flex items-center">
-                <input type="text" name="search" placeholder="Search catalog..." 
-                       class="online-store-quick-search-field w-full pl-3.5 pr-10 py-2 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
-                       value="' . e(request()->query('search', '')) . '" />
-                <button type="submit" aria-label="Search" class="absolute right-1.5 p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                </button>
-            </div>
-        </form>';
+        return ContentParserService::parse('[plugin:live-search-2026]');
     }
 
     /**

@@ -198,9 +198,8 @@ Layout wrappers are **not pages** — they are HTML shells that Livewire injects
 
 | File | Livewire Attribute | Used By |
 |---|---|---|
-| `layouts/public.blade.php` | `#[Layout('layouts.public')]` | All public storefront components: ShopCatalog, ProductDetails, KbLanding, KbArticleShow, ShoppingCart, Checkout, CheckoutSuccess, OrderReview, UserDashboard, PublicTicketView, PostCartCrossSell, GuestSetPassword |
+| `layouts/public.blade.php` | `#[Layout('layouts.public')]` | All public storefront & auth components: ShopCatalog, ProductDetails, KbLanding, KbArticleShow, ShoppingCart, Checkout, CheckoutSuccess, OrderReview, UserDashboard, PublicTicketView, PostCartCrossSell, GuestSetPassword, Login, Register, ForgotPassword, ResetPassword, VerifyEmail, ConfirmPassword, CollectEmail |
 | `layouts/app.blade.php` | `#[Layout('layouts.app')]` | All admin components: AdminProducts, AdminCmsPageEdit, AdminLanguages, AdminSettings, AdminUsers, etc. |
-| `layouts/guest.blade.php` | `#[Layout('layouts.guest')]` | Unauthenticated auth forms: login, register, forgot/reset password, email verification |
 
 **`layouts/public.blade.php`** includes:
 - Google Fonts loader (`<x-site-google-fonts-loader />`)
@@ -243,7 +242,7 @@ resources/views/components/
 | New authenticated user page returned from a route | `resources/views/user/` |
 | New Livewire component on the public storefront | `resources/views/livewire/` + `#[Layout('layouts.public')]` |
 | New Livewire component in the admin panel | `resources/views/livewire/` + `#[Layout('layouts.app')]` |
-| New auth form (login, register, etc.) | `resources/views/livewire/pages/auth/` + `#[Layout('layouts.guest')]` |
+| New auth form (login, register, etc.) | `resources/views/livewire/pages/auth/` + `#[Layout('layouts.public')]` |
 | New reusable snippet used via `<x-name />` | `resources/views/components/` |
 | Modifying public site chrome (header/footer/meta/CDN) | `resources/views/layouts/public.blade.php` |
 | Modifying admin panel chrome (sidebar/topbar) | `resources/views/layouts/app.blade.php` |

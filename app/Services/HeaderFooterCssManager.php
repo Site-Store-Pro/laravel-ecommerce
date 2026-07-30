@@ -59,6 +59,9 @@ class HeaderFooterCssManager
             'header_padding_top'                             => '5px',
             'header_padding_bottom'                          => '5px',
             'nav_inside_main_header'                         => '0',
+            'search_placement_desktop'                       => 'main_header',
+            'search_placement_tablet'                        => 'main_header',
+            'mobile_search_position'                         => 'top',
             'header_custom_css'                              => '',
             'footer_custom_css'                              => '',
             'backtop_bg_color'                               => '',
@@ -351,16 +354,34 @@ class HeaderFooterCssManager
 }
 .header_logo {
     position: relative;
-    max-width: 295px;
-    width: 100%;
+    width: auto !important;
+    max-width: max-content !important;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
-.header_col1 { align-items: center; position: relative; }
+.header-search-form {
+    min-width: 120px;
+    flex-shrink: 1;
+    max-width: 448px;
+    width: 100%;
+}
+.online-store-quick-search-field {
+    min-width: 100px;
+    width: 100%;
+}
+.header_col1 { align-items: center; position: relative; min-width: 0; flex-shrink: 1; z-index: 1; }
 .header_col2 {
     align-items: center;
     position: relative;
     width: 100%;
+    min-width: 0;
+    flex-shrink: 1;
     vertical-align: middle;
+    z-index: 1;
 }
 
 .header_row2 {
@@ -369,7 +390,26 @@ class HeaderFooterCssManager
 }
 
 @media only screen and (max-width: 600px) {
-    .header_logo { max-width: 200px; }
+    .header_logo {
+        width: auto !important;
+        max-width: max-content !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        margin-top: auto !important;
+        margin-bottom: auto !important;
+        margin-right: auto !important;
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+    }
+    #header_features_bar {
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
+    }
+    .header_mobile_toggle {
+        margin-left: 4px !important;
+        flex-shrink: 0 !important;
+    }
     .header_row2 {
         display: block;
         width: 100%;
@@ -378,9 +418,13 @@ class HeaderFooterCssManager
         border-top: 1px solid var(--top-nav-menu-borders-color);
     }
     .site_header_contents {
-        justify-content: space-between;
-        flex-wrap: nowrap;
-        padding: 5px;
+        justify-content: space-between !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
     }
     #header_features {
         height: 45px;
@@ -394,6 +438,11 @@ class HeaderFooterCssManager
     list-style-type: none;
     margin: 0;
     padding: 0;
+}
+.nav-dropdown {
+    max-height: 22rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 #header_features { flex-grow: 0; }
 .header-pre-load { display: none; }

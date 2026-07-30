@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.guest')] class extends Component
+new #[Layout('layouts.public')] class extends Component
 {
     public string $email = '';
 
@@ -51,10 +51,11 @@ new #[Layout('layouts.guest')] class extends Component
     }
 }; ?>
 
-<div>
+<div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center min-h-[65vh]">
+    <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 space-y-6">
     <!-- Page heading -->
     <div class="mb-7">
-        <h1 class="text-xl font-bold text-white">@label('auth.collect_email_heading', 'Provide your email address')</h1>
+        <h1 class="text-xl font-bold text-slate-900 dark:text-white">@label('auth.collect_email_heading', 'Provide your email address')</h1>
         <p class="text-sm text-slate-400 mt-1">@label('auth.collect_email_message', 'We couldn\'t retrieve an email from your provider. Please enter one to complete your registration.')</p>
     </div>
 
@@ -95,4 +96,5 @@ new #[Layout('layouts.guest')] class extends Component
     <p class="auth-footer mt-6">
         <a href="{{ route('login') }}" class="auth-link font-medium" wire:navigate>@label('auth.cancel_go_back', 'Cancel and go back')</a>
     </p>
+    </div>
 </div>

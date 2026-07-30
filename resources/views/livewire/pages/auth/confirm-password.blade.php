@@ -5,7 +5,7 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.guest')] class extends Component
+new #[Layout('layouts.public')] class extends Component
 {
     public string $password = '';
 
@@ -33,8 +33,9 @@ new #[Layout('layouts.guest')] class extends Component
     }
 }; ?>
 
-<div>
-    <div class="mb-4 text-sm text-gray-600">
+<div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center min-h-[65vh]">
+    <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 space-y-6">
+    <div class="mb-4 text-sm text-gray-600 dark:text-gray-300">
         @label('auth.confirm_area', 'This is a secure area of the application. Please confirm your password before continuing.')
     </div>
 
@@ -59,4 +60,5 @@ new #[Layout('layouts.guest')] class extends Component
             </x-primary-button>
         </div>
     </form>
+    </div>
 </div>

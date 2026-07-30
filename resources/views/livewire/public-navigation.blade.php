@@ -200,13 +200,6 @@
                 @endauth
             </div>
 
-            <!-- Search Bar inside mobile menu -->
-            @if(true)
-                <div class="px-3 py-2">
-                    <livewire:kb-search-bar />
-                </div>
-            @endif
-
             <!-- Auth Buttons inside mobile menu -->
             <div class="border-t border-slate-100 pt-4 px-3 flex flex-col gap-2">
                 @if (Route::has('login'))

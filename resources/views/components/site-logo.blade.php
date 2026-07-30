@@ -3,7 +3,7 @@
     $siteName = \App\Models\CmsSetting::getSiteName();
 @endphp
 
-<a href="/" class="flex items-center gap-2 group">
+<a href="/" class="inline-flex items-center gap-2 group w-auto max-w-max min-w-0 shrink-0 my-auto py-0.5">
     @if($logo['type'] === 'url')
         <img src="{{ $logo['value'] }}" alt="{{ $siteName }} Logo"
              class="h-8 w-auto object-contain group-hover:opacity-90 transition-opacity">

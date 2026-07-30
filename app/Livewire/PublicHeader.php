@@ -6,6 +6,7 @@ use App\Models\CmsBuilderBlock;
 use App\Models\NavItem;
 use App\Models\NavMenu;
 use App\Models\ShoppingCartLog;
+use App\Services\HeaderFooterCssManager;
 use App\Services\HeaderFooterParserService;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Attributes\On;
@@ -102,6 +103,7 @@ class PublicHeader extends Component
 
         // Check if sticky navigation is enabled for full header
         $isSticky = $this->navMenu ? (bool) $this->navMenu->sticky : \App\Models\CmsSetting::isEnabled('top_nav_sticky');
+        $cssVars  = HeaderFooterCssManager::getActiveVariables();
 
         return view('livewire.public-header', [
             'headerBlocks' => $headerBlocks,
@@ -110,6 +112,7 @@ class PublicHeader extends Component
             'navMenu'      => $this->navMenu,
             'navItems'     => $this->navItems,
             'isSticky'     => $isSticky,
+            'cssVars'      => $cssVars,
         ]);
     }
 }

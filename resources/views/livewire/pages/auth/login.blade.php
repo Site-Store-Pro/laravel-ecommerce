@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.guest')] class extends Component
+new #[Layout('layouts.public')] class extends Component
 {
     public LoginForm $form;
 
@@ -39,7 +39,8 @@ new #[Layout('layouts.guest')] class extends Component
     }
 }; ?>
 
-<div>
+<div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center min-h-[65vh]">
+    <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 space-y-6">
     <!-- Page heading -->
     <div class="mb-7">
         <h1 class="text-xl font-bold text-slate-900">@label('auth.login_heading', 'Welcome back')</h1>
@@ -197,4 +198,5 @@ new #[Layout('layouts.guest')] class extends Component
         @label('auth.no_account', 'Don\'t have an account?')
         <a href="{{ route('register') }}" class="auth-link font-medium ml-1">@label('auth.create_one', 'Create one free')</a>
     </p>
+    </div>
 </div>

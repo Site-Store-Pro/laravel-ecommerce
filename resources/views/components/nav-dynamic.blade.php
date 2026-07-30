@@ -142,7 +142,7 @@
 
         {{-- Logo --}}
         @if($menu->show_logo)
-        <div class="shrink-0" style="filter: var(--nav-logo-filter, none)">
+        <div class="shrink-0 w-auto max-w-max flex items-center min-w-0" style="filter: var(--nav-logo-filter, none)">
             <x-site-logo />
         </div>
         @endif
@@ -231,7 +231,7 @@
                 </a>
                 {{-- Mobile children (flat, indented) --}}
                 @if($item->children->isNotEmpty())
-                    <div class="ml-4 space-y-0.5">
+                    <div class="ml-4 space-y-0.5 max-h-[14rem] overflow-y-auto pr-1 scrollbar-thin scroll-smooth overscroll-contain">
                         @foreach($item->children as $child)
                             @if(!$child->isVisibleFor($context['user'])) @continue @endif
                             @if($child->hide_on_mobile) @continue @endif

@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.guest')] class extends Component
+new #[Layout('layouts.public')] class extends Component
 {
     public string $email = '';
 
@@ -53,8 +53,8 @@ new #[Layout('layouts.guest')] class extends Component
         session()->flash('status', __($status));
     }
 }; ?>
-
-<div>
+<div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center min-h-[65vh]">
+    <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 space-y-6">
     <!-- Page heading -->
     <div class="mb-7">
         <h1 class="text-xl font-bold text-slate-900">@label('auth.forgot_heading', 'Reset your password')</h1>
@@ -191,4 +191,5 @@ new #[Layout('layouts.guest')] class extends Component
         </a>
     </p>
 
+    </div>
 </div>

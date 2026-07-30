@@ -29,7 +29,7 @@
         @if($brands->isEmpty())
             <div class="text-xs text-slate-400 dark:text-slate-500 py-2">@label('nav.brands_empty', 'No brands registered.')</div>
         @else
-            <div class="grid grid-cols-2 gap-4 max-h-[24rem] overflow-y-auto pr-1 scrollbar-thin">
+            <div class="grid grid-cols-2 gap-4 max-h-[20rem] overflow-y-auto pr-1 scrollbar-thin scroll-smooth overscroll-contain">
                 @foreach($brands as $brand)
                     @php
                         $logoUrl = $brand->brand_icon
@@ -70,7 +70,7 @@
         @if($brands->isEmpty())
             <div class="text-xs text-slate-400 dark:text-slate-500 py-1 px-3">@label('nav.brands_empty', 'No brands registered.')</div>
         @else
-            <div class="grid grid-cols-1 gap-2 max-h-[16rem] overflow-y-auto pr-1">
+            <div class="grid grid-cols-1 gap-2 max-h-[14rem] overflow-y-auto pr-1 scrollbar-thin scroll-smooth overscroll-contain">
                 @foreach($brands as $brand)
                     @php
                         $logoUrl = $brand->brand_icon

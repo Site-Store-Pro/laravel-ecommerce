@@ -4,7 +4,7 @@
 /** @var \App\Services\NavItemRenderer $renderer */
 /** @var array $context */
 @endphp
-<ul class="nav-dropdown" role="menu">
+<ul class="nav-dropdown max-h-[22rem] overflow-y-auto overscroll-contain scrollbar-thin" role="menu">
     @foreach($children as $child)
         @if(!$child->isVisibleFor($context['user'] ?? null)) @continue @endif
         @if($child->hide_on_desktop) @continue @endif

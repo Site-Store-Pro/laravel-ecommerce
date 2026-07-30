@@ -16,8 +16,8 @@
         @endif
         {{-- FLOATING CATALOG ERROR MODAL --}}
         <div x-data="{
-                showErrorModal: @json(session()->has('error') || !empty($catalogError)),
-                errorMessage: @json(session('error') ?? $catalogError ?? ''),
+                showErrorModal: {{ \Illuminate\Support\Js::from((bool)(session()->has('error') || !empty($catalogError))) }},
+                errorMessage: {{ \Illuminate\Support\Js::from((string)(session('error') ?? $catalogError ?? '')) }},
                 open(msg) {
                     this.errorMessage = msg || this.errorMessage;
                     this.showErrorModal = true;

@@ -34,6 +34,11 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        @if(config('services.recaptcha.site_key'))
+        <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
+        <script>window.recaptchaSiteKey = "{{ config('services.recaptcha.site_key') }}";</script>
+        @endif
         @php
             $fileIconPack = App\Models\CmsSetting::get('file_icon_pack', 'vivid');
             $fileIconCssMap = [

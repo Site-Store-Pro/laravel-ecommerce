@@ -10,7 +10,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.guest')] class extends Component
+new #[Layout('layouts.public')] class extends Component
 {
     #[Locked]
     public string $token = '';
@@ -69,7 +69,12 @@ new #[Layout('layouts.guest')] class extends Component
     }
 }; ?>
 
-<div>
+<div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center min-h-[65vh]">
+    <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 space-y-6">
+        <div class="mb-5">
+            <h1 class="text-xl font-bold text-slate-900 dark:text-white">@label('auth.reset_heading', 'Set New Password')</h1>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Please enter your new password to restore account access.</p>
+        </div>
     <form wire:submit="resetPassword">
         <!-- Email Address -->
         <div>
@@ -102,4 +107,5 @@ new #[Layout('layouts.guest')] class extends Component
             </x-primary-button>
         </div>
     </form>
+    </div>
 </div>

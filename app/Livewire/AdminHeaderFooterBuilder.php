@@ -102,6 +102,24 @@ class AdminHeaderFooterBuilder extends Component
                     'is_active_mobile'  => true,
                 ]
             );
+
+            CmsBuilderBlock::firstOrCreate(
+                ['target_element' => 'header_search', 'section_type' => 'header'],
+                [
+                    'title'             => 'Header & Mobile Search Bar',
+                    'type'              => 2,
+                    'is_placeholder'    => false,
+                    'sort_desktop'      => 99,
+                    'sort_tablet'       => 99,
+                    'sort_mobile'       => 99,
+                    'content_desktop'   => '[plugin:live-search-2026]',
+                    'content_tablet'    => '[plugin:live-search-2026]',
+                    'content_mobile'    => '[plugin:live-search-2026]',
+                    'is_active_desktop' => true,
+                    'is_active_tablet'  => true,
+                    'is_active_mobile'  => true,
+                ]
+            );
         }
     }
 

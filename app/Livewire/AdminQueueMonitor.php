@@ -26,7 +26,9 @@ class AdminQueueMonitor extends Component
     {
         $this->logFile      = storage_path('app/queue_worker.log');
         $this->pidFile      = storage_path('app/queue_worker.pid');
-        $this->runnerScript = storage_path('app/queue_runner.php');
+        $this->runnerScript = file_exists(app_path('Console/queue_runner.php'))
+            ? app_path('Console/queue_runner.php')
+            : storage_path('app/queue_runner.php');
     }
 
     public function mount(): void
@@ -121,31 +123,31 @@ class AdminQueueMonitor extends Component
             . "  |  max-jobs: {$this->maxJobs}  |  queue: {$this->queueName} ===\n"
         );
 
+        $phpCli  = $this->getPhpCliBinary();
         $runner  = $this->runnerScript;
         $maxJobs = (int) $this->maxJobs;
         $queue   = $this->queueName;
 
         if (PHP_OS_FAMILY === 'Windows') {
-            // Windows: start /B opens a new cmd window in the background.
-            // We cannot reliably get the PID, but the runner writes its own PID.
+            // Windows: start /B "" "PHP_BINARY" "runnerScript" maxJobs queue
             $cmd = sprintf(
-                'start /B "%s" %s %d %s',
-                PHP_BINARY,
+                'start /B "" %s %s %d %s',
+                escapeshellarg($phpCli),
                 escapeshellarg($runner),
                 $maxJobs,
                 escapeshellarg($queue)
             );
-            popen($cmd, 'r');
+            pclose(popen($cmd, 'r'));
         } else {
-            // Linux / macOS: nohup + & so the process survives the HTTP request.
+            // Linux / Amazon Linux 2023: nohup + & using PHP CLI binary
             $cmd = sprintf(
                 'nohup %s %s %d %s > /dev/null 2>&1 &',
-                escapeshellarg(PHP_BINARY),
+                escapeshellarg($phpCli),
                 escapeshellarg($runner),
                 $maxJobs,
                 escapeshellarg($queue)
             );
-            shell_exec($cmd);
+            exec($cmd);
         }
 
         // Give the runner a moment to write its PID file before we check
@@ -153,6 +155,33 @@ class AdminQueueMonitor extends Component
 
         $this->isRunning = $this->checkIfRunning();
         $this->flash('Queue worker started — processing jobs in the background.', 'success');
+    }
+
+    /** Resolve the CLI PHP binary path (prevents using php-fpm or php-cgi under web servers). */
+    private function getPhpCliBinary(): string
+    {
+        $bin = PHP_BINARY;
+        $basename = strtolower(basename($bin));
+        if ($bin && !str_contains($basename, 'fpm') && !str_contains($basename, 'cgi')) {
+            return $bin;
+        }
+
+        $candidates = [
+            '/usr/bin/php',
+            '/usr/bin/php8.5',
+            '/usr/bin/php8.4',
+            '/usr/bin/php8.3',
+            '/usr/bin/php8.2',
+            '/usr/local/bin/php',
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (file_exists($candidate) && is_executable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return 'php';
     }
 
     /** Send SIGTERM to the running worker (graceful stop). */

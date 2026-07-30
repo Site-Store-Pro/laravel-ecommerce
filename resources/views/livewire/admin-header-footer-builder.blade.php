@@ -217,6 +217,39 @@
                             Mimicking the exact layout geometry of the {{ $activeTab }}. Dashed outlined elements sit in their true layout positions with Edit and Remove buttons.
                         </p>
                     </div>
+
+                    {{-- Search Placement Toolbar Control --}}
+                    @if($activeTab === 'header')
+                        <div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 flex-wrap">
+                            @if($deviceView === 'desktop')
+                                <div class="flex items-center gap-2">
+                                    <span class="text-indigo-600 dark:text-indigo-400 font-extrabold uppercase text-2xs tracking-wider">Desktop Search Bar Placement:</span>
+                                    <select wire:model.live="cssVars.search_placement_desktop" wire:change="saveCssVars" class="text-xs font-bold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1 text-slate-800 dark:text-white">
+                                        <option value="main_header">Main Header Bar (Center/Embedded)</option>
+                                        <option value="header_col1">Header Column #1</option>
+                                        <option value="header_col2">Header Column #2</option>
+                                    </select>
+                                </div>
+                            @elseif($deviceView === 'tablet')
+                                <div class="flex items-center gap-2">
+                                    <span class="text-indigo-600 dark:text-indigo-400 font-extrabold uppercase text-2xs tracking-wider">Tablet Search Bar Placement:</span>
+                                    <select wire:model.live="cssVars.search_placement_tablet" wire:change="saveCssVars" class="text-xs font-bold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1 text-slate-800 dark:text-white">
+                                        <option value="main_header">Main Header Bar (Center/Embedded)</option>
+                                        <option value="header_col1">Header Column #1</option>
+                                        <option value="header_col2">Header Column #2</option>
+                                    </select>
+                                </div>
+                            @else
+                                <div class="flex items-center gap-2">
+                                    <span class="text-indigo-600 dark:text-indigo-400 font-extrabold uppercase text-2xs tracking-wider">Mobile Menu Search Position:</span>
+                                    <select wire:model.live="cssVars.mobile_search_position" wire:change="saveCssVars" class="text-xs font-bold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1 text-slate-800 dark:text-white">
+                                        <option value="top">Top of Mobile Menu</option>
+                                        <option value="bottom">Bottom of Mobile Menu</option>
+                                    </select>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
                 </div>
 
                 @if($activeTab === 'header')
@@ -232,6 +265,14 @@
                             ->sortBy(fn($b) => $b->{$sortCol})
                             ->values();
                         $isNavEmbedded = !empty($cssVars['nav_inside_main_header']);
+                        $searchPlacementDesktop = $cssVars['search_placement_desktop'] ?? 'main_header';
+                        $searchPlacementTablet  = $cssVars['search_placement_tablet'] ?? 'main_header';
+                        $mobileSearchPosition   = $cssVars['mobile_search_position'] ?? 'top';
+                        $activeSearchPlacement  = match($deviceView) {
+                            'tablet' => $searchPlacementTablet,
+                            'mobile' => 'mobile_menu',
+                            default  => $searchPlacementDesktop,
+                        };
                     @endphp
 
                     <div x-data="{ draggingIndex: null, targetIndex: null }" class="header-wireframe-mockup rounded-2xl border-2 border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 p-4 space-y-4 shadow-inner">
@@ -299,6 +340,55 @@
                                                     </div>
                                                 @endif
                                             @endforeach
+
+                                             {{-- Header Search Bar --}}
+                                             @php $bSearch = $headerBlocks->firstWhere('target_element', 'header_search'); @endphp
+                                             @if($activeSearchPlacement === 'main_header' && $bSearch && $bSearch->isActiveForDevice($deviceView))
+                                                 <div class="flex-1 min-w-[180px] max-w-xs rounded-lg border-2 border-dashed border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 p-3 transition-all duration-300">
+                                                     <div class="flex items-center justify-between gap-2">
+                                                         <div>
+                                                             <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100 block">{{ $bSearch->title }}</span>
+                                                             <span class="text-2xs text-slate-400 block font-mono">header_search</span>
+                                                         </div>
+                                                         <div class="flex items-center gap-1 shrink-0">
+                                                             <button wire:click="editBlock({{ $bSearch->id }})" class="px-2 py-1 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition flex items-center gap-1" title="Edit Search Bar Block">
+                                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                                 <span>Edit</span>
+                                                             </button>
+                                                             <button wire:click="toggleActive({{ $bSearch->id }})" class="px-2 py-1 rounded-lg bg-rose-500 text-white text-xs font-medium hover:bg-rose-600 transition flex items-center gap-1" title="Remove Search Bar">
+                                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                 <span>Remove</span>
+                                                             </button>
+                                                         </div>
+                                                     </div>
+                                                     <div class="mt-2 p-1.5 bg-slate-100 dark:bg-slate-700 rounded text-2xs font-mono text-slate-600 dark:text-slate-300 truncate">
+                                                         {!! e($bSearch->getContentForDevice($deviceView)) !!}
+                                                     </div>
+                                                 </div>
+                                             @endif
+
+                                             {{-- Removable Cart / Account Features Bar --}}
+                                             @php $bFeatures = $headerBlocks->firstWhere('target_element', 'header_features'); @endphp
+                                             @if($featuresPlacement === 'main_header' && $bFeatures && $bFeatures->isActiveForDevice($deviceView))
+                                                 <div class="shrink-0 rounded-lg border-2 border-dashed border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 p-3 min-w-[150px]">
+                                                     <div class="flex items-center justify-between gap-2">
+                                                         <div>
+                                                             <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100 block">{{ $bFeatures->title }}</span>
+                                                             <span class="text-2xs text-slate-400 block font-mono">header_features</span>
+                                                         </div>
+                                                         <div class="flex items-center gap-1 shrink-0">
+                                                             <button wire:click="editBlock({{ $bFeatures->id }})" class="px-2 py-1 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition flex items-center gap-1" title="Edit Features Block">
+                                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                                 <span>Edit</span>
+                                                             </button>
+                                                             <button wire:click="toggleActive({{ $bFeatures->id }})" class="px-2 py-1 rounded-lg bg-rose-500 text-white text-xs font-medium hover:bg-rose-600 transition flex items-center gap-1" title="Remove Features Bar">
+                                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                                 <span>Remove</span>
+                                                             </button>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             @endif
                                         </div>
                                     </div>
 
@@ -701,6 +791,54 @@
                                     The shopping cart badge, account menu, and sign-in features are dynamic interactive elements managed automatically by the e-commerce engine. Manual HTML editing for this features block is locked to ensure cart count updates and authentication state function correctly. You can toggle feature bar visibility on desktop, tablet, and mobile using the device toggles in the wireframe editor.
                                 </p>
                             </div>
+                        </div>
+                    @elseif($editTargetElement === 'header_search')
+                        <div class="p-6 bg-indigo-50 dark:bg-indigo-950/40 border-2 border-indigo-300 dark:border-indigo-700 rounded-2xl space-y-4 text-indigo-900 dark:text-indigo-200">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-900 dark:text-indigo-100 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    Search Bar Viewport Placement &amp; Position Configuration
+                                </h4>
+                                <span class="px-2.5 py-0.5 rounded-full text-2xs font-extrabold bg-indigo-200 dark:bg-indigo-800 text-indigo-900 dark:text-indigo-100 font-mono">SEARCH BAR PLACEMENT</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                {{-- Desktop Placement --}}
+                                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-indigo-200 dark:border-indigo-800">
+                                    <label class="block text-xs font-extrabold text-slate-800 dark:text-slate-100 mb-1">Desktop View Placement</label>
+                                    <p class="text-2xs text-slate-500 dark:text-slate-400 mb-2">Choose where the search bar embeds in desktop view.</p>
+                                    <select wire:model.live="cssVars.search_placement_desktop" wire:change="saveCssVars" class="w-full text-xs font-bold bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-white">
+                                        <option value="main_header">Main Header Bar (Center/Embedded)</option>
+                                        <option value="header_col1">Header Column #1</option>
+                                        <option value="header_col2">Header Column #2</option>
+                                    </select>
+                                </div>
+
+                                {{-- Tablet Placement --}}
+                                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-indigo-200 dark:border-indigo-800">
+                                    <label class="block text-xs font-extrabold text-slate-800 dark:text-slate-100 mb-1">Tablet View Placement</label>
+                                    <p class="text-2xs text-slate-500 dark:text-slate-400 mb-2">Choose where the search bar embeds in tablet view.</p>
+                                    <select wire:model.live="cssVars.search_placement_tablet" wire:change="saveCssVars" class="w-full text-xs font-bold bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-white">
+                                        <option value="main_header">Main Header Bar (Center/Embedded)</option>
+                                        <option value="header_col1">Header Column #1</option>
+                                        <option value="header_col2">Header Column #2</option>
+                                    </select>
+                                </div>
+
+                                {{-- Mobile Position --}}
+                                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-indigo-200 dark:border-indigo-800">
+                                    <label class="block text-xs font-extrabold text-slate-800 dark:text-slate-100 mb-1">Mobile Menu Position</label>
+                                    <p class="text-2xs text-slate-500 dark:text-slate-400 mb-2">Select top or bottom of the mobile drawer menu.</p>
+                                    <select wire:model.live="cssVars.mobile_search_position" wire:change="saveCssVars" class="w-full text-xs font-bold bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-white">
+                                        <option value="top">Top of Mobile Menu</option>
+                                        <option value="bottom">Bottom of Mobile Menu</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-indigo-700 dark:text-indigo-300 font-medium pt-1">
+                                Shortcode Default Content: <code class="font-mono bg-indigo-100 dark:bg-indigo-900 px-2 py-0.5 rounded text-indigo-800 dark:text-indigo-200">[plugin:live-search-2026]</code>
+                            </p>
                         </div>
                     @else
                         {{-- TinyMCE Editor Container --}}

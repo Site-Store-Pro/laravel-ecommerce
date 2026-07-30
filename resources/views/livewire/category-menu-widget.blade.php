@@ -29,7 +29,7 @@
         @if($categories->isEmpty())
             <div class="px-4 py-2 text-xs text-slate-400">@label('nav.categories_empty', 'No categories found.')</div>
         @else
-            <div class="space-y-1 max-h-[28rem] overflow-y-auto px-2 scrollbar-thin">
+            <div class="space-y-1 max-h-[22rem] overflow-y-auto px-2 scrollbar-thin scroll-smooth overscroll-contain">
                 @foreach($categories as $category)
                     <div class="group/item py-0.5">
                         <!-- Top-level Category Link -->
@@ -66,7 +66,7 @@
         @if($categories->isEmpty())
             <div class="text-xs text-slate-400 py-1 px-3">@label('nav.categories_empty', 'No categories found.')</div>
         @else
-            <div class="space-y-1 max-h-[20rem] overflow-y-auto pr-1">
+            <div class="space-y-1 max-h-[16rem] overflow-y-auto pr-1 scrollbar-thin scroll-smooth overscroll-contain">
                 @foreach($categories as $category)
                     <div class="py-1">
                         <a href="{{ route('shop.category', ['category_slug' => $category->slug]) }}" wire:navigate class="block px-3 py-1.5 rounded-lg text-sm font-bold text-slate-800 dark:text-slate-100 hover:text-indigo-600">
