@@ -41,7 +41,7 @@
                         @php
                             $attrs = json_decode($item->item_attributes, true) ?: [];
                             $customizations = $attrs['customizations'] ?? [];
-                            $baseAttrs = collect($attrs)->except('customizations')->toArray();
+                            $baseAttrs = collect($attrs)->except(['customizations', 'is_donation_or_bill_pay', 'custom_amount'])->toArray();
                             $attrStr = collect($baseAttrs)->map(fn($v, $k) => "$k: $v")->implode(', ');
                         @endphp
                         <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">

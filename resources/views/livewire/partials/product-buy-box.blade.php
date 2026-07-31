@@ -22,10 +22,10 @@
             @if($product->allow_custom_amount)
                 <div class="space-y-2">
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-lg font-bold text-slate-500">{{ $currencySymbol }}</span>
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-lg font-bold text-slate-500 z-10 pointer-events-none">{{ $currencySymbol }}</span>
                         <input type="number" step="0.01" min="0.01" wire:model.live="custom_amount"
                                placeholder="0.00"
-                               class="w-full pl-8 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-2xl font-extrabold text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+                               class="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-2xl font-extrabold text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
                     </div>
                     @if($product->custom_amount_min || $product->custom_amount_max)
                         <p class="text-xs text-slate-600 font-semibold flex items-center gap-2">
@@ -56,10 +56,10 @@
                     </div>
                 @else
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-lg font-bold text-slate-500">{{ $currencySymbol }}</span>
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-lg font-bold text-slate-500 z-10 pointer-events-none">{{ $currencySymbol }}</span>
                         <input type="number" step="0.01" min="0.01" wire:model.live="custom_amount"
                                placeholder="0.00"
-                               class="w-full pl-8 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-2xl font-extrabold text-slate-900 focus:outline-none focus:border-indigo-500">
+                               class="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-2xl font-extrabold text-slate-900 focus:outline-none focus:border-indigo-500">
                     </div>
                 @endif
             @endif

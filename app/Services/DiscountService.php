@@ -69,6 +69,16 @@ class DiscountService
             $product = $variant->product;
             if (!$product) continue;
             
+            $attrs = json_decode($item->item_attributes, true) ?: [];
+            if (!empty($attrs['is_donation_or_bill_pay']) || $product->is_donation_or_bill_pay) {
+                if (isset($attrs['custom_amount'])) {
+                    $item->item_price = (float) $attrs['custom_amount'];
+                }
+                $item->item_discount_price = 0.00;
+                $item->save();
+                continue;
+            }
+
             // Base price is the public price (standard retail base)
             $basePrice = (float) $variant->public_price;
             $finalPrice = $basePrice;

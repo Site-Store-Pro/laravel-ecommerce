@@ -84,7 +84,7 @@
                             @php
                                 $attrs = json_decode($item['item_attributes'], true) ?: [];
                                 $customizations = $attrs['customizations'] ?? [];
-                                $baseAttrs = collect($attrs)->except('customizations')->toArray();
+                                $baseAttrs = collect($attrs)->except(['customizations', 'is_donation_or_bill_pay', 'custom_amount'])->toArray();
                                 $attrStr = collect($baseAttrs)->map(fn($v, $k) => "$k: $v")->implode(', ');
                             @endphp
                             <div class="py-4 flex gap-4 items-start justify-between">
