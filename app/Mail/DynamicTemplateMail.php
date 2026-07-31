@@ -18,10 +18,10 @@ class DynamicTemplateMail extends Mailable
     public string $renderedBody;
     public string $renderedSubject;
 
-    public function __construct(public EmailTemplate $tpl, public array $vars)
+    public function __construct(public EmailTemplate $tpl, public array $vars, ?int $languageId = null)
     {
-        $this->renderedSubject = EmailTemplateService::replaceVariables($tpl->subject, $vars);
-        $this->renderedBody = EmailTemplateService::renderBody($tpl, $vars);
+        $this->renderedSubject = EmailTemplateService::renderSubject($tpl, $vars, $languageId);
+        $this->renderedBody = EmailTemplateService::renderBody($tpl, $vars, $languageId);
     }
 
     public function envelope(): Envelope

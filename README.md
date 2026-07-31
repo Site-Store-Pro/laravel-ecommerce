@@ -422,6 +422,7 @@ Each typography element supports its own independent `font-family` property (e.g
   - *Cart & Discount Calculation*: Preserves the customer's specified custom donation amount in `DiscountService` during cart recalculations and order subtotal evaluation.
   - *Catalog & Plugin Results behavior*: Disables price display and direct "Buy Now" cart actions across all product card listings (shop catalog grid/list views, featured items plugin, cross-selling plugin, and related products carousel), forcing the **Select Options** / **View Options** link so customers configure their custom donation amount on the product details page.
 - **Product Page Layout 6 (`No Images | Video On Page`)**: Generic layout based on the centered layout template without the top image gallery space. Supports optional video embed shortcodes/iframes and variant video player previews below/above the buy box while keeping the buy box and full-width description centered.
+- **Multilingual Email Template Delivery**: Dynamic email templates (`EmailTemplate`) automatically eager-load active session language translations (`email_template_translations`) and render translated fields (subject, salutation, greeting, body, sign-off, footer, etc.) when an order is placed while browsing in Spanish or any secondary site language. Order item tables, subtotal/shipping labels, and product titles in confirmation emails automatically match the active language via `siteLabel()`.
 
 ---
 

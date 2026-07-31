@@ -800,28 +800,30 @@ class OrderReview extends Component
             $itemsHtml .= '</div>';
 
             // Items Ordered section
-            $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Items Ordered</h3>';
+            $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">' . e(siteLabel('email.items_ordered', 'Items Ordered')) . '</h3>';
             $itemsHtml .= '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 24px; padding: 16px;">';
             $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">';
             
             foreach ($order->details as $item) {
+                $itemProduct = $item->variant?->product ?? null;
+                $itemTitle   = ($itemProduct ? $itemProduct->getTranslated('title') : null) ?: $item->item_name;
+
                 $itemTypeBadge = $item->download_item 
-                    ? '<span style="background-color: #f0fdf4; color: #15803d; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bbf7d0; display: inline-block; margin-top: 4px;">Digital Download</span>'
-                    : '<span style="background-color: #e0f2fe; color: #0369a1; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bae6fd; display: inline-block; margin-top: 4px;">Shippable Item</span>';
+                    ? '<span style="background-color: #f0fdf4; color: #15803d; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bbf7d0; display: inline-block; margin-top: 4px;">' . e(siteLabel('email.digital_download', 'Digital Download')) . '</span>'
+                    : '<span style="background-color: #e0f2fe; color: #0369a1; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bae6fd; display: inline-block; margin-top: 4px;">' . e(siteLabel('email.shippable_item', 'Shippable Item')) . '</span>';
 
                 $itemsHtml .= '<tr style="border-bottom: 1px solid #f1f5f9;">';
                 $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;">';
-                $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . e($item->item_name) . '</strong>';
-                $itemsHtml .= '<span style="color: #64748b; font-size: 12px; display: block; margin-top: 2px;">Quantity: ' . number_format($item->item_qty, 0) . '</span>';
+                $itemsHtml .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . e($itemTitle) . '</strong>';
+                $itemsHtml .= '<span style="color: #64748b; font-size: 12px; display: block; margin-top: 2px;">' . e(siteLabel('email.quantity', 'Quantity')) . ': ' . number_format($item->item_qty, 0) . '</span>';
                 $itemsHtml .= $itemTypeBadge;
                 if ($item->download_item) {
                     $downloadUrl = route('products.download', [$item->id, $order->order_external_id]);
                     $itemsHtml .= '<div style="margin-top: 8px;">';
-                    $itemsHtml .= '<a href="' . e($downloadUrl) . '" target="_blank" style="background-color: #4f46e5; color: #ffffff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: 1px solid #4338ca;">Download File</a>';
+                    $itemsHtml .= '<a href="' . e($downloadUrl) . '" target="_blank" style="background-color: #4f46e5; color: #ffffff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: 1px solid #4338ca;">' . e(siteLabel('email.download_file', 'Download File')) . '</a>';
                     $itemsHtml .= '</div>';
                 }
                 // View Content button — secure UUID token link, supports guest users
-                $itemProduct = $item->variant?->product ?? null;
                 if ($itemProduct) {
                     $contentUrl   = Product::resolveCompletionUrl($itemProduct->completion_redirect);
                     $contentLabel = $itemProduct->completionRedirectLabel();
@@ -849,13 +851,13 @@ class OrderReview extends Component
             $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">';
             
             $itemsHtml .= '<tr>';
-            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Subtotal</td>';
+            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e(siteLabel('email.subtotal', 'Subtotal')) . '</td>';
             $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format((float)$order->order_subtotal) . '</td>';
             $itemsHtml .= '</tr>';
 
             if ($order->order_discounts > 0) {
                 $itemsHtml .= '<tr>';
-                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #16a34a; padding-bottom: 8px;">Promotional Discount</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #16a34a; padding-bottom: 8px;">' . e(siteLabel('email.promotional_discount', 'Promotional Discount')) . '</td>';
                 $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #16a34a; padding-bottom: 8px;" align="right">-$' . number_format($order->order_discounts, 2) . '</td>';
                 $itemsHtml .= '</tr>';
             }
@@ -870,7 +872,7 @@ class OrderReview extends Component
                 $emailVatRate   = CurrencyService::merchantVatRate();
                 $emailVatAmount = CurrencyService::extractVat((float)$order->order_subtotal, $emailVatRate);
                 $itemsHtml .= '<tr>';
-                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Includes ' . e($emailTaxLabel) . '</td>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e(siteLabel('email.includes', 'Includes')) . ' ' . e($emailTaxLabel) . '</td>';
                 $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format($emailVatAmount) . '</td>';
                 $itemsHtml .= '</tr>';
             } elseif (!$emailVatInclusive || ($emailVatInclusive && $emailCrossBorder)) {
@@ -882,19 +884,19 @@ class OrderReview extends Component
             }
 
             $itemsHtml .= '<tr>';
-            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Shipping (' . e($totals['shippingMethodName']) . ')</td>';
+            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e(siteLabel('email.shipping', 'Shipping')) . ' (' . e($totals['shippingMethodName']) . ')</td>';
             $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format((float)$order->order_shipping) . '</td>';
             $itemsHtml .= '</tr>';
 
             if ($order->order_handling > 0) {
                 $itemsHtml .= '<tr>';
-                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Handling Surcharge</td>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e(siteLabel('email.handling_surcharge', 'Handling Surcharge')) . '</td>';
                 $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format((float)$order->order_handling) . '</td>';
                 $itemsHtml .= '</tr>';
             }
 
             $itemsHtml .= '<tr style="border-top: 1px solid #e2e8f0;">';
-            $itemsHtml .= '<td style="font-size: 16px; font-weight: 800; color: #0f172a; padding-top: 12px;">Total Charged</td>';
+            $itemsHtml .= '<td style="font-size: 16px; font-weight: 800; color: #0f172a; padding-top: 12px;">' . e(siteLabel('email.total_charged', 'Total Charged')) . '</td>';
             $itemsHtml .= '<td style="font-size: 16px; font-weight: 800; color: #0f172a; padding-top: 12px;" align="right">' . CurrencyService::format((float)$order->order_total) . '</td>';
             $itemsHtml .= '</tr>';
             
@@ -906,7 +908,7 @@ class OrderReview extends Component
 
             // Shipping Address section if required
             if ($order->order_shipping_method == 1 && $order->user) {
-                $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Shipping Address</h3>';
+                $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">' . e(siteLabel('email.shipping_address', 'Shipping Address')) . '</h3>';
                 $itemsHtml .= '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 14px; color: #334155; line-height: 1.5; margin-bottom: 24px;">';
                 $itemsHtml .= '<strong style="color: #0f172a; display: block; margin-bottom: 4px;">' . e($order->user->name) . '</strong>';
                 if ($order->user->company) {
@@ -923,7 +925,7 @@ class OrderReview extends Component
             }
 
             if (!empty($order->order_comments)) {
-                $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Order Comments</h3>';
+                $itemsHtml .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">' . e(siteLabel('email.order_comments', 'Order Comments')) . '</h3>';
                 $itemsHtml .= '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 14px; color: #334155; line-height: 1.5; margin-bottom: 24px; white-space: pre-wrap;">';
                 $itemsHtml .= e($order->order_comments);
                 $itemsHtml .= '</div>';

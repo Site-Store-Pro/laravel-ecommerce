@@ -43,6 +43,19 @@ class EmailTemplate extends Model
         'is_active' => 'boolean',
     ];
 
+    protected array $translatable = [
+        'subject',
+        'header_html',
+        'salutation',
+        'greeting',
+        'body',
+        'sign_off',
+        'signature',
+        'disclaimer',
+        'copyright',
+        'footer_html',
+    ];
+
     public function type(): BelongsTo
     {
         return $this->belongsTo(EmailTemplateType::class, 'email_type_id');
