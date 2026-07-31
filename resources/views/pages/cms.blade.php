@@ -77,11 +77,34 @@
         <x-header-footer-styles />
         <link rel="stylesheet" href="{{ asset('css/prose.css') }}">
     </head>
-    <body class="antialiased font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 overflow-x-hidden selection:bg-indigo-500 selection:text-white p-0 m-0">
-        <!-- Background Glows / Background Image support -->
-        @if($page && $page->background_image)
+    @php
+        $cmsPageVidUrl  = $page?->resolveBackgroundVideoUrl();
+        $globalBgVidUrl = \App\Models\CmsSetting::resolvePageBgVideoUrl();
+        $globalBgMode   = \App\Models\CmsSetting::get('page_bg_mode', 'default');
+        $overlayColor   = \App\Models\CmsSetting::get('page_bg_overlay_color', '#000000');
+        $overlayOpacity = \App\Models\CmsSetting::get('page_bg_overlay_opacity', '0');
+
+        $activeVidUrl = $cmsPageVidUrl ?: ($globalBgMode === 'video' ? $globalBgVidUrl : null);
+        $activeMode   = $activeVidUrl ? 'video' : ($page?->background_image ? 'image' : $globalBgMode);
+    @endphp
+    <body class="antialiased font-sans {{ $activeMode === 'default' ? 'bg-slate-50 dark:bg-slate-900' : 'bg-transparent' }} text-slate-800 dark:text-slate-100 overflow-x-clip selection:bg-indigo-500 selection:text-white p-0 m-0">
+        <!-- Background Video / Background Glows / Background Image support -->
+        @if($activeVidUrl)
+            <div class="fixed inset-0 overflow-hidden -z-20 pointer-events-none">
+                <video src="{{ $activeVidUrl }}" autoplay loop muted playsinline class="w-full h-full object-cover">
+                    <source src="{{ $activeVidUrl }}" type="video/mp4">
+                    <source src="{{ $activeVidUrl }}" type="video/webm">
+                </video>
+            </div>
+            @if(floatval($overlayOpacity) > 0)
+                <div class="fixed inset-0 -z-10 pointer-events-none" style="background-color: {{ $overlayColor }}; opacity: {{ $overlayOpacity }};"></div>
+            @endif
+        @elseif($page && $page->background_image)
             <div class="fixed inset-0 overflow-hidden pointer-events-none bg-fixed bg-cover bg-center"
                  style="background-image: url('{{ $page->backgroundImageUrl() }}');"></div>
+            @if(floatval($overlayOpacity) > 0)
+                <div class="fixed inset-0 -z-10 pointer-events-none" style="background-color: {{ $overlayColor }}; opacity: {{ $overlayOpacity }};"></div>
+            @endif
         @else
             <div class="fixed inset-0 overflow-hidden pointer-events-none">
                 <div class="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-tr from-indigo-200/30 to-violet-200/20 blur-3xl opacity-60"></div>

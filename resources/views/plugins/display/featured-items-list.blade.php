@@ -84,19 +84,24 @@
                 {{-- Price + Action --}}
                 <div class="shrink-0 flex items-center gap-4 pr-5">
                     <div class="text-right">
-                        @if($defaultVariant)
+                        @if(!$product->is_donation_or_bill_pay && $defaultVariant)
                             <div class="text-base font-extrabold text-slate-900">
                                 @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
                             </div>
                             @if($priceToShow < $originalPrice)
                                 <div class="text-xs text-slate-400 line-through">${{ number_format($originalPrice, 2) }}</div>
                             @endif
-                        @else
+                        @elseif(!$product->is_donation_or_bill_pay)
                             <span class="text-xs text-slate-400">@label('plugin.out_of_stock', 'Out of Stock')</span>
                         @endif
                     </div>
 
-                    @if($product->variants->count() === 1)
+                    @if($product->is_donation_or_bill_pay || $product->variants->count() > 1)
+                        <a href="{{ route('shop.product', $product->seo_slug) }}"
+                           class="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition duration-150 whitespace-nowrap">
+                            @label('plugin.view_options', 'View Options')
+                        </a>
+                    @else
                         @php
                             $v = $product->variants->first();
                             $avail = ($v->inventory ? $v->inventory->quantity_available - $v->inventory->reserved_stock : 999);
@@ -111,11 +116,6 @@
                                 @label('plugin.buy_now', 'Buy Now')
                             </a>
                         @endif
-                    @else
-                        <a href="{{ route('shop.product', $product->seo_slug) }}"
-                           class="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition duration-150 whitespace-nowrap">
-                            @label('plugin.view_options', 'View Options')
-                        </a>
                     @endif
                 </div>
             </div>

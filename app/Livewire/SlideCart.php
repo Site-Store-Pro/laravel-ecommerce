@@ -99,6 +99,7 @@ class SlideCart extends Component
             $attrs = json_decode($item->item_attributes, true) ?: [];
             $item->is_bogo_target = $attrs['is_bogo_target'] ?? false;
             $item->bogo_cart_text = $attrs['bogo_cart_text'] ?? null;
+            $item->is_donation_or_bill_pay = $attrs['is_donation_or_bill_pay'] ?? false;
             return $item;
         });
 
@@ -119,11 +120,17 @@ class SlideCart extends Component
 
         $item = $this->getCartQuery()->findOrFail($itemId);
 
-        // Block manual quantity adjustments on BOGO target items
+        // Block manual quantity adjustments on BOGO target items and donation/bill pay items
         $attrs = json_decode($item->item_attributes, true) ?: [];
         if (!empty($attrs['is_bogo_target'])) {
             session()->flash('error', $attrs['bogo_cart_text'] ?? 'Quantity of promotional package items cannot be edited manually.');
             return;
+        }
+        if (!empty($attrs['is_donation_or_bill_pay'])) {
+            if ($qty > 1) {
+                session()->flash('error', 'Quantity for donation/bill pay items is fixed at 1.');
+                return;
+            }
         }
 
         // Find associated variant from item name (which has the SKU inside parentheses)

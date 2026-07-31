@@ -22,7 +22,25 @@ class ProductDetails extends Component
     public bool $personalization_selected = false;
     public string $personalization_text = '';
     public string $cartError = ''; // inline error shown next to Add to Cart button
+    public string $custom_amount = ''; // Customer entered or selected donation/bill pay amount
 
+
+    public function getParsedCustomAmountOptionsProperty(): array
+    {
+        if (!$this->product || !$this->product->custom_amount_options) {
+            return [];
+        }
+
+        $parts = explode(',', $this->product->custom_amount_options);
+        $options = [];
+        foreach ($parts as $part) {
+            $clean = trim($part);
+            if (is_numeric($clean) && floatval($clean) > 0) {
+                $options[] = floatval($clean);
+            }
+        }
+        return array_values(array_unique($options));
+    }
 
     public function mount(string $seo_link): void
     {
@@ -47,6 +65,13 @@ class ProductDetails extends Component
             $this->selectedVariantId = $this->product->variants->first()->id;
             $this->initializeSelectedImageSet();
             $this->initializeSelectedAttributes();
+        }
+
+        if ($this->product->is_donation_or_bill_pay && !$this->product->allow_custom_amount) {
+            $options = $this->parsed_custom_amount_options;
+            if (!empty($options)) {
+                $this->custom_amount = (string) $options[0];
+            }
         }
     }
 
@@ -322,11 +347,42 @@ class ProductDetails extends Component
         $sessionId = $this->getCartSessionId();
         $userId = auth()->id() ?? 0;
 
-        // Force quantity to 1 if max_qty = 1
-        $qtyToAdd = ($product && $product->max_qty == 1) ? 1 : $this->quantity;
+        // Donation / Bill Pay validation & price overriding
+        if ($product && $product->is_donation_or_bill_pay) {
+            $rawAmount = trim($this->custom_amount);
+            if ($rawAmount === '' || !is_numeric($rawAmount) || floatval($rawAmount) <= 0) {
+                $this->cartError = 'Please enter or select a valid positive donation/bill pay amount.';
+                return;
+            }
+
+            $enteredAmount = round(floatval($rawAmount), 2);
+
+            if ($product->allow_custom_amount) {
+                if ($product->custom_amount_min !== null && $enteredAmount < $product->custom_amount_min) {
+                    $this->cartError = 'Amount must be at least $' . number_format($product->custom_amount_min, 2) . '.';
+                    return;
+                }
+                if ($product->custom_amount_max !== null && $enteredAmount > $product->custom_amount_max) {
+                    $this->cartError = 'Amount cannot exceed $' . number_format($product->custom_amount_max, 2) . '.';
+                    return;
+                }
+            } else {
+                $allowedOptions = $this->parsed_custom_amount_options;
+                if (!empty($allowedOptions) && !in_array($enteredAmount, $allowedOptions)) {
+                    $this->cartError = 'Please select a valid amount option from the menu.';
+                    return;
+                }
+            }
+
+            // Force quantity to 1 for donation/bill pay items
+            $qtyToAdd = 1;
+        } else {
+            // Force quantity to 1 if max_qty = 1
+            $qtyToAdd = ($product && $product->max_qty == 1) ? 1 : $this->quantity;
+        }
 
         // Check inventory
-        if (!$variant->download_item && $variant->inventory) {
+        if (!$variant->download_item && $variant->inventory && !$product->is_donation_or_bill_pay) {
             $available = $variant->getStockForFulfillment(
                 auth()->user()?->shipping_countrycode,
                 auth()->user()?->shipping_state
@@ -427,33 +483,42 @@ class ProductDetails extends Component
             }
         }
 
-        // Fetch user type & base prices
-        $price = $userType == 2 ? $variant->wholesale_price : $variant->public_price;
-        $discountPrice = 0;
-        if ($userType != 2 && $variant->on_sale && $variant->sale_price > 0) {
-            $discountPrice = $price - $variant->sale_price;
-            $price = $variant->sale_price;
-        }
+        if ($product && $product->is_donation_or_bill_pay) {
+            $price = round(floatval($this->custom_amount), 2);
+            $discountPrice = 0.00;
+        } else {
+            // Fetch user type & base prices
+            $price = $userType == 2 ? $variant->wholesale_price : $variant->public_price;
+            $discountPrice = 0;
+            if ($userType != 2 && $variant->on_sale && $variant->sale_price > 0) {
+                $discountPrice = $price - $variant->sale_price;
+                $price = $variant->sale_price;
+            }
 
-        // Add personalization if selected
-        if ($this->personalization_selected && $variant->personalization_active) {
-            $price += $variant->personalization_fee;
-            $selectedCustomizations[] = [
-                'field_id' => 'personalization',
-                'label' => $variant->personalization_label ?: 'Gift Wrapping / Personalization',
-                'value' => $this->personalization_text ?: 'Yes',
-                'price_modifier' => $variant->personalization_fee
-            ];
-        }
+            // Add personalization if selected
+            if ($this->personalization_selected && $variant->personalization_active) {
+                $price += $variant->personalization_fee;
+                $selectedCustomizations[] = [
+                    'field_id' => 'personalization',
+                    'label' => $variant->personalization_label ?: 'Gift Wrapping / Personalization',
+                    'value' => $this->personalization_text ?: 'Yes',
+                    'price_modifier' => $variant->personalization_fee
+                ];
+            }
 
-        // Add variant fees
-        $variantFee = $userType == 2 ? $variant->wholesale_variant_fee : $variant->variant_fee;
-        $price += $variantFee + $customizationSurcharges;
+            // Add variant fees
+            $variantFee = $userType == 2 ? $variant->wholesale_variant_fee : $variant->variant_fee;
+            $price += $variantFee + $customizationSurcharges;
+        }
 
         // Build unique attributes JSON for cart matching
         $attributesData = json_decode($variant->attributes, true) ?: [];
         if (!empty($selectedCustomizations)) {
             $attributesData['customizations'] = $selectedCustomizations;
+        }
+        if ($product && $product->is_donation_or_bill_pay) {
+            $attributesData['is_donation_or_bill_pay'] = true;
+            $attributesData['custom_amount'] = round(floatval($this->custom_amount), 2);
         }
         $attributesJson = json_encode($attributesData);
 

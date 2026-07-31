@@ -1,11 +1,100 @@
 <div class="py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8 font-sans">
-    <!-- Alert Message Area (Hidden)
-    <!--
-    <div class="bg-indigo-50 border border-indigo-100 rounded-3xl p-4 text-sm text-indigo-700">
-        Admin Home Dashboard
-        Hello, {{ auth()->user()->name }}. Here is a real-time overview of your e-commerce platform performance.
+    <x-toast-alert />
+
+    {{-- DEMO STORE CONTENT BANNER --}}
+    @if(auth()->check() && (auth()->user()->role_id == 3 || auth()->user()->isAdmin()) && $this->hasDemoContent)
+    <div class="rounded-2xl border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-600/50 overflow-hidden shadow-sm">
+        <div class="px-6 py-4 flex items-start gap-4">
+            {{-- Icon --}}
+            <div class="shrink-0 mt-0.5">
+                <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-800/50 text-amber-600 dark:text-amber-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347a3.5 3.5 0 00-1.025 2.475V19a2 2 0 11-4 0v-.47a3.5 3.5 0 00-1.024-2.476l-.348-.347z"/>
+                    </svg>
+                </span>
+            </div>
+            {{-- Content --}}
+            <div class="flex-1 min-w-0">
+                <h3 class="text-sm font-bold text-amber-800 dark:text-amber-300">Demo Store Content is Active</h3>
+                <p class="mt-1 text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                    Your store currently contains <strong>demo products, brands, categories, variants, and images</strong> seeded by the
+                    <code class="px-1 py-0.5 bg-amber-100 dark:bg-amber-800/60 rounded text-amber-800 dark:text-amber-300 font-mono text-xs">DemoStoreSeeder</code>.
+                    When you're ready to go live, use the button below to permanently remove all demo content in one click.
+                </p>
+                <p class="mt-2 text-xs text-amber-600 dark:text-amber-500">
+                    ⚠️ If you have made edits to any demo products, those edits will also be deleted — the system cannot distinguish your modifications from the original demo data.
+                </p>
+            </div>
+            {{-- Action --}}
+            <div class="shrink-0">
+                <button type="button"
+                        wire:click="$set('confirmingDemoPurge', true)"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-xs font-bold transition-all shadow-sm whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Purge Demo Content
+                </button>
+            </div>
+        </div>
     </div>
-    -->
+
+    {{-- Confirmation Modal --}}
+    @if($confirmingDemoPurge)
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+         x-data x-init="$el.focus()"
+         @keydown.escape.window="$wire.set('confirmingDemoPurge', false)">
+        <div class="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+             @click.stop>
+
+            {{-- Modal Header --}}
+            <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </span>
+                <div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Confirm Demo Content Deletion</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">This action cannot be undone</p>
+                </div>
+            </div>
+
+            {{-- Modal Content --}}
+            <div class="p-6 space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p>You are about to permanently delete all demo-seeded data from the database, including:</p>
+                <ul class="list-disc pl-5 space-y-1 font-medium text-slate-700 dark:text-slate-200">
+                    <li>All demo products &amp; product variants</li>
+                    <li>All demo images &amp; variant attachments</li>
+                    <li>All demo categories &amp; category assignments</li>
+                    <li>All demo brands &amp; cross-selling rules</li>
+                    <li>All demo inventory records &amp; event logs</li>
+                </ul>
+                <div class="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300">
+                    <strong>Warning:</strong> Any customized titles, prices, descriptions, or images added to demo products will also be permanently deleted.
+                </div>
+            </div>
+
+            {{-- Modal Actions --}}
+            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-700/50 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-3">
+                <button type="button"
+                        wire:click="$set('confirmingDemoPurge', false)"
+                        class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                    Cancel
+                </button>
+                <button type="button"
+                        wire:click="purgeDemoContent"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Yes, Permanently Delete Demo Content
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
+    @endif
     <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
         <!-- Quick Nav actions for admins -->
         <div class="flex flex-wrap items-center gap-2.5">

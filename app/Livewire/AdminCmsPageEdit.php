@@ -111,6 +111,18 @@ class AdminCmsPageEdit extends Component
     public ?string $media_image_secret_access_key = null;
     public ?string $media_image_cdn_url = null;
 
+    // Per-Page Background Video Settings
+    public $background_video_upload = null;
+    public ?string $background_video_path = null;
+    public ?string $background_video_url = null;
+    public string $background_video_type = 'local';
+    public int $background_video_s3 = 0;
+    public ?string $background_video_region = null;
+    public ?string $background_video_bucket_name = null;
+    public ?string $background_video_access_key_id = null;
+    public ?string $background_video_secret_access_key = null;
+    public ?string $background_video_cdn_url = null;
+
     // Revisions lists
     public $revisionsList = [];
     public ?CmsPageRevision $previewingRevision = null;
@@ -118,6 +130,9 @@ class AdminCmsPageEdit extends Component
     public function mount(?int $id = null): void
     {
         abort_unless(auth()->check() && auth()->user()->isEcommerceAdmin(), 403);
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('cms_pages', 'background_video')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        }
 
         if ($id) {
             $this->pageId = $id;
@@ -174,6 +189,16 @@ class AdminCmsPageEdit extends Component
             $this->media_image_access_key_id = $this->page->media_image_access_key_id;
             $this->media_image_secret_access_key = $this->page->media_image_secret_access_key;
             $this->media_image_cdn_url = $this->page->media_image_cdn_url;
+
+            $this->background_video_path = $this->page->background_video;
+            $this->background_video_url = $this->page->background_video_url;
+            $this->background_video_type = $this->page->background_video_type ?: 'local';
+            $this->background_video_s3 = (int) ($this->page->background_video_s3 ?? 0);
+            $this->background_video_region = $this->page->background_video_region;
+            $this->background_video_bucket_name = $this->page->background_video_bucket_name;
+            $this->background_video_access_key_id = $this->page->background_video_access_key_id;
+            $this->background_video_secret_access_key = $this->page->background_video_secret_access_key;
+            $this->background_video_cdn_url = $this->page->background_video_cdn_url;
 
             $this->loadRevisions();
         } else {
@@ -275,6 +300,15 @@ class AdminCmsPageEdit extends Component
             'media_image_access_key_id' => 'nullable|required_if:media_image_s3,2|string|max:255',
             'media_image_secret_access_key' => 'nullable|required_if:media_image_s3,2|string|max:255',
             'media_image_cdn_url' => 'nullable|url|max:255',
+            'background_video_upload' => 'nullable|file|mimes:mp4,webm,ogg,mov|max:51200',
+            'background_video_url' => 'nullable|string|max:255',
+            'background_video_type' => 'nullable|string|max:50',
+            'background_video_s3' => 'required|integer|in:0,1,2',
+            'background_video_region' => 'nullable|required_if:background_video_s3,2|string|max:255',
+            'background_video_bucket_name' => 'nullable|required_if:background_video_s3,2|string|max:255',
+            'background_video_access_key_id' => 'nullable|required_if:background_video_s3,2|string|max:255',
+            'background_video_secret_access_key' => 'nullable|required_if:background_video_s3,2|string|max:255',
+            'background_video_cdn_url' => 'nullable|string|max:255',
         ]);
 
         // Custom validation check for unique slug across CMS tables
@@ -308,6 +342,26 @@ class AdminCmsPageEdit extends Component
             if ($this->background_image_upload) {
                 $this->background_image_path = $this->background_image_upload->store('cms', $mediaDisk);
             }
+        }
+
+        if ($this->background_video_upload) {
+            $vidDisk = 'public';
+            if ($this->background_video_s3 == 1) {
+                $vidDisk = 's3';
+            } elseif ($this->background_video_s3 == 2) {
+                $vidDisk = 'custom_s3_cms_vid_' . ($this->pageId ?: 'new');
+                config([
+                    "filesystems.disks.{$vidDisk}" => [
+                        'driver' => 's3',
+                        'key' => $this->background_video_access_key_id,
+                        'secret' => $this->background_video_secret_access_key,
+                        'region' => $this->background_video_region,
+                        'bucket' => $this->background_video_bucket_name,
+                        'use_path_style_endpoint' => false,
+                    ]
+                ]);
+            }
+            $this->background_video_path = $this->background_video_upload->store('cms_videos', $vidDisk);
         }
 
         if ($this->featured_image_upload) {
@@ -355,6 +409,15 @@ class AdminCmsPageEdit extends Component
             'media_image_access_key_id' => $this->media_image_access_key_id,
             'media_image_secret_access_key' => $this->media_image_secret_access_key,
             'media_image_cdn_url' => $this->media_image_cdn_url ?: null,
+            'background_video' => $this->background_video_path,
+            'background_video_url' => $this->background_video_url ?: null,
+            'background_video_type' => $this->background_video_type ?: 'local',
+            'background_video_s3' => $this->background_video_s3,
+            'background_video_region' => $this->background_video_region ?: null,
+            'background_video_bucket_name' => $this->background_video_bucket_name ?: null,
+            'background_video_access_key_id' => $this->background_video_access_key_id ?: null,
+            'background_video_secret_access_key' => $this->background_video_secret_access_key ?: null,
+            'background_video_cdn_url' => $this->background_video_cdn_url ?: null,
             'featured_image' => $this->featured_image_path,
             'featured_image_s3' => $this->featured_image_s3,
             'featured_image_region' => $this->featured_image_region,
@@ -842,5 +905,19 @@ class AdminCmsPageEdit extends Component
         } catch (\Throwable $e) {
             $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
         }
+    }
+
+    public function clearBackgroundVideo(): void
+    {
+        $this->background_video_upload = null;
+        $this->background_video_path = null;
+        $this->background_video_url = null;
+        if ($this->pageId && $this->page) {
+            $this->page->background_video = null;
+            $this->page->background_video_url = null;
+            $this->page->save();
+        }
+        $this->dispatch('toast', message: 'Per-page background video settings reset.', type: 'info');
+        session()->flash('status', 'Per-page background video settings reset.');
     }
 }

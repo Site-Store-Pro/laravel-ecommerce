@@ -98,6 +98,110 @@
         background-color: var(--theme-secondary-hover-bg) !important;
         color: var(--theme-secondary-hover-text) !important;
     }";
+
+    $bodyFontFamily = \App\Models\CmsSetting::get('theme_body_font_family');
+    $bodyFontSize   = \App\Models\CmsSetting::get('theme_body_font_size');
+    $bodyFontColor  = \App\Models\CmsSetting::get('theme_body_font_color');
+
+    $pFontFamily    = \App\Models\CmsSetting::get('theme_paragraph_font_family');
+    $pFontSize      = \App\Models\CmsSetting::get('theme_paragraph_font_size');
+    $pFontColor     = \App\Models\CmsSetting::get('theme_paragraph_font_color');
+
+    $h1FontFamily   = \App\Models\CmsSetting::get('theme_h1_font_family');
+    $h1FontSize     = \App\Models\CmsSetting::get('theme_h1_font_size');
+    $h1FontColor    = \App\Models\CmsSetting::get('theme_h1_font_color');
+
+    $h2FontFamily   = \App\Models\CmsSetting::get('theme_h2_font_family');
+    $h2FontSize     = \App\Models\CmsSetting::get('theme_h2_font_size');
+    $h2FontColor    = \App\Models\CmsSetting::get('theme_h2_font_color');
+
+    $h3FontFamily   = \App\Models\CmsSetting::get('theme_h3_font_family');
+    $h3FontSize     = \App\Models\CmsSetting::get('theme_h3_font_size');
+    $h3FontColor    = \App\Models\CmsSetting::get('theme_h3_font_color');
+
+    $contentBgColor = \App\Models\CmsSetting::get('theme_content_bg_color');
+    $cardBgColor    = \App\Models\CmsSetting::get('theme_card_bg_color');
+    $cardBorderColor= \App\Models\CmsSetting::get('theme_card_border_color');
+    $cardShadow     = \App\Models\CmsSetting::get('theme_card_shadow');
+
+    $pageBgMode     = \App\Models\CmsSetting::get('page_bg_mode', 'default');
+    $pageBgColor    = \App\Models\CmsSetting::get('page_bg_color');
+    $pageBgImageUrl = \App\Models\CmsSetting::resolvePageBgImageUrl();
+
+    if ($bodyFontFamily) {
+        $rawStyles .= "\nbody, html, input, button, select, textarea { font-family: {$bodyFontFamily} !important; }";
+    }
+    if ($bodyFontSize) {
+        $rawStyles .= "\nbody { font-size: {$bodyFontSize} !important; }";
+    }
+    if ($bodyFontColor) {
+        $rawStyles .= "\nbody { color: {$bodyFontColor} !important; }";
+    }
+    if ($pFontFamily) {
+        $rawStyles .= "\np { font-family: {$pFontFamily} !important; }";
+    }
+    if ($pFontSize) {
+        $rawStyles .= "\np { font-size: {$pFontSize} !important; }";
+    }
+    if ($pFontColor) {
+        $rawStyles .= "\np { color: {$pFontColor} !important; }";
+    }
+    if ($h1FontFamily) {
+        $rawStyles .= "\nh1 { font-family: {$h1FontFamily} !important; }";
+    }
+    if ($h1FontSize) {
+        $rawStyles .= "\nh1 { font-size: {$h1FontSize} !important; }";
+    }
+    if ($h1FontColor) {
+        $rawStyles .= "\nh1 { color: {$h1FontColor} !important; }";
+    }
+    if ($h2FontFamily) {
+        $rawStyles .= "\nh2 { font-family: {$h2FontFamily} !important; }";
+    }
+    if ($h2FontSize) {
+        $rawStyles .= "\nh2 { font-size: {$h2FontSize} !important; }";
+    }
+    if ($h2FontColor) {
+        $rawStyles .= "\nh2 { color: {$h2FontColor} !important; }";
+    }
+    if ($h3FontFamily) {
+        $rawStyles .= "\nh3 { font-family: {$h3FontFamily} !important; }";
+    }
+    if ($h3FontSize) {
+        $rawStyles .= "\nh3 { font-size: {$h3FontSize} !important; }";
+    }
+    if ($h3FontColor) {
+        $rawStyles .= "\nh3 { color: {$h3FontColor} !important; }";
+    }
+    if ($contentBgColor) {
+        $rawStyles .= "\nmain, .site-content-area, .public-content { background-color: {$contentBgColor} !important; }";
+    }
+    if ($cardBgColor) {
+        $rawStyles .= "\n.card, .bg-white { background-color: {$cardBgColor} !important; }";
+    }
+    if ($cardBorderColor) {
+        $rawStyles .= "\n.card, .border-slate-200, .border-slate-100 { border-color: {$cardBorderColor} !important; }";
+    }
+    if ($cardShadow && $cardShadow !== 'default') {
+        $shadowMap = [
+            'none' => 'none !important',
+            'sm'   => '0 1px 2px 0 rgb(0 0 0 / 0.05) !important',
+            'md'   => '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important',
+            'lg'   => '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important',
+            'xl'   => '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important',
+            '2xl'  => '0 25px 50px -12px rgb(0 0 0 / 0.25) !important',
+        ];
+        if (isset($shadowMap[$cardShadow])) {
+            $rawStyles .= "\n.card, .rounded-2xl, .rounded-3xl { box-shadow: {$shadowMap[$cardShadow]}; }";
+        }
+    }
+    if ($pageBgMode === 'color' && $pageBgColor) {
+        $rawStyles .= "\nbody, .min-h-screen { background-color: {$pageBgColor} !important; background-image: none !important; }";
+    } elseif ($pageBgMode === 'image' && $pageBgImageUrl) {
+        $rawStyles .= "\nbody, .min-h-screen { background-image: url('{$pageBgImageUrl}') !important; background-size: cover !important; background-position: center center !important; background-attachment: fixed !important; }";
+    } elseif ($pageBgMode === 'video') {
+        $rawStyles .= "\nbody, .min-h-screen { background-color: transparent !important; background-image: none !important; }";
+    }
 @endphp
 <style id="site-theme-customizer-styles">
 {!! \App\Services\CssMinifierService::minify($rawStyles) !!}

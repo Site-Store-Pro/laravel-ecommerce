@@ -52,6 +52,11 @@ class AdminProductEdit extends Component
     public int    $show_item_total      = 0;  // Show live item total (price × qty) below Add to Cart
     public string $variant_label        = 'Select Option:';  // Label above variant selector on storefront
     public string $product_video_embed  = '';               // Embed code/shortcode for layout types 3 & 5
+    public bool   $is_donation_or_bill_pay = false;
+    public bool   $allow_custom_amount = false;
+    public ?float $custom_amount_min   = null;
+    public ?float $custom_amount_max   = null;
+    public string $custom_amount_options = '';
 
     // Translation Management
     public string $activeLangCode = '';
@@ -219,6 +224,9 @@ class AdminProductEdit extends Component
     public function mount(int $id): void
     {
         abort_unless(auth()->check() && auth()->user()->isStaff(), 403, 'Unauthorized staff access.');
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('products', 'is_donation_or_bill_pay')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        }
         $this->productId = $id;
         $this->loadProduct();
 
@@ -256,9 +264,13 @@ class AdminProductEdit extends Component
         $this->variant_label = (string) ($this->product->variant_label ?? 'Select Option:');
         $this->product_video_embed = (string) ($this->product->product_video_embed ?? '');
         $this->completion_redirect = (string) ($this->product->completion_redirect ?? '');
-        $this->completion_redirect_label = (string) ($this->product->completion_redirect_label ?? '');
         $this->product_search_index = $this->product->product_search_index ?? '';
         $this->product_search_index_locked = (bool) ($this->product->product_search_index_locked ?? false);
+        $this->is_donation_or_bill_pay = (bool) ($this->product->is_donation_or_bill_pay ?? false);
+        $this->allow_custom_amount = (bool) ($this->product->allow_custom_amount ?? false);
+        $this->custom_amount_min = $this->product->custom_amount_min !== null ? (float) $this->product->custom_amount_min : null;
+        $this->custom_amount_max = $this->product->custom_amount_max !== null ? (float) $this->product->custom_amount_max : null;
+        $this->custom_amount_options = (string) ($this->product->custom_amount_options ?? '');
     }
 
     public function updateProduct(): void
@@ -329,7 +341,7 @@ class AdminProductEdit extends Component
     public function updateLayoutSettings(): void
     {
         $this->validate([
-            'layout_type'         => 'required|integer|in:1,2,3,4,5',
+            'layout_type'         => 'required|integer|in:1,2,3,4,5,6',
             'product_video_embed' => 'nullable|string|max:10000',
         ]);
 
@@ -355,7 +367,24 @@ class AdminProductEdit extends Component
             'reviews_enabled'       => 'boolean',
             'featured_item'         => 'nullable|boolean',
             'show_item_total'       => 'nullable|boolean',
+            'is_donation_or_bill_pay' => 'boolean',
+            'allow_custom_amount'    => 'boolean',
+            'custom_amount_min'      => 'nullable|numeric|min:0',
+            'custom_amount_max'      => 'nullable|numeric|min:0',
+            'custom_amount_options'  => 'nullable|string|max:500',
         ]);
+
+        // Validate preset options format when custom amount entry is disabled
+        if ($this->is_donation_or_bill_pay && !$this->allow_custom_amount && !empty(trim($this->custom_amount_options))) {
+            $parts = explode(',', $this->custom_amount_options);
+            foreach ($parts as $part) {
+                $clean = trim($part);
+                if ($clean !== '' && (!is_numeric($clean) || floatval($clean) <= 0)) {
+                    $this->addError('custom_amount_options', "Preset amounts must contain valid positive numbers separated by commas (e.g. '10, 25, 50, 100'). Invalid value: '{$clean}'");
+                    return;
+                }
+            }
+        }
 
         $this->product->update([
             'max_qty'               => (int) $this->max_qty,
@@ -368,6 +397,11 @@ class AdminProductEdit extends Component
             'reviews_enabled'       => (int) $this->reviews_enabled,
             'featured_item'         => (int) $this->featured_item,
             'show_item_total'       => (int) $this->show_item_total,
+            'is_donation_or_bill_pay' => (bool) $this->is_donation_or_bill_pay,
+            'allow_custom_amount'    => (bool) $this->allow_custom_amount,
+            'custom_amount_min'      => $this->custom_amount_min !== null && $this->custom_amount_min !== '' ? (float) $this->custom_amount_min : null,
+            'custom_amount_max'      => $this->custom_amount_max !== null && $this->custom_amount_max !== '' ? (float) $this->custom_amount_max : null,
+            'custom_amount_options'  => trim($this->custom_amount_options) ?: null,
         ]);
 
         $this->dispatch('toast', type: 'success', message: 'Advanced settings saved.');

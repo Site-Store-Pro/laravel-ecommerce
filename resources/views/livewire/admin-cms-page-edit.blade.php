@@ -973,8 +973,60 @@ rightCol: @entangle('right_col'),
                                         @endif
                                     </div>
                                 @endif
-                                <input type="file" wire:model="background_image_upload" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                                 <input type="file" wire:model="background_image_upload" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
                                 @error('background_image_upload') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <!-- Per-Page Background Video Settings -->
+                        <div class="border-t border-slate-100 pt-6 space-y-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-800">Background Video Settings</h4>
+                                    <p class="text-xs text-slate-400 mt-0.5">Configuring a background video for this page will override the global video background and page background image.</p>
+                                </div>
+                                <span class="px-2.5 py-1 bg-violet-50 text-violet-700 text-xs font-extrabold rounded-full border border-violet-150">
+                                    📹 Per-Page Video
+                                </span>
+                            </div>
+
+                            <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-200 dark:border-slate-600 space-y-4">
+                                {{-- Direct URL Override --}}
+                                <div class="p-3 bg-violet-50/50 dark:bg-violet-950/30 rounded-xl border border-violet-200 dark:border-violet-800 space-y-1.5">
+                                    <label class="block text-[11px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">Direct Video URL Override (Highest Priority)</label>
+                                    <input type="text" wire:model="background_video_url" placeholder="https://cdn.example.com/background.mp4" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-violet-300 dark:border-violet-700 rounded-xl text-xs font-medium focus:outline-none focus:border-violet-500">
+                                    <p class="text-[11px] text-violet-600 dark:text-violet-400">Entering a direct video URL here overrides all other video upload sources below and overrides global background video.</p>
+                                    @error('background_video_url') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="space-y-3">
+                                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Upload Video File (Local or S3 Bucket — MP4/WebM)</label>
+                                    <input type="file" wire:model="background_video_upload" accept="video/mp4,video/webm" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700">
+                                    @error('background_video_upload') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                    @if($background_video_path)
+                                        <p class="text-xs text-emerald-600 mt-1">✓ Active path: <code>{{ $background_video_path }}</code></p>
+                                    @endif
+                                </div>
+
+                                @php
+                                    $resolvedPageBgVid = $page ? $page->resolveBackgroundVideoUrl() : ($background_video_url ?: null);
+                                @endphp
+                                @if($resolvedPageBgVid)
+                                    <div class="mt-2 p-3 bg-white dark:bg-slate-800 rounded-xl border flex items-center gap-3">
+                                        <video src="{{ $resolvedPageBgVid }}" class="h-14 w-24 object-cover rounded-lg" autoplay loop muted playsinline></video>
+                                        <span class="text-xs text-slate-500 break-all flex-1">{{ $resolvedPageBgVid }}</span>
+                                        <button type="button" wire:click="clearBackgroundVideo" class="px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all">
+                                            Clear
+                                        </button>
+                                    </div>
+                                @else
+                                    <div class="pt-2 flex justify-end">
+                                        <button type="button" wire:click="clearBackgroundVideo" class="px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            Reset / Clear Page Background Video
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 

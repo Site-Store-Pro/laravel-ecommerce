@@ -187,7 +187,7 @@ new class extends Component
 
                         @if (auth()->user()->isAdmin())
                             <x-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings')" wire:navigate class="text-sm font-semibold transition-all">
-                                {{ __('Settings') }}
+                                {{ __('Global Settings') }}
                             </x-nav-link>
                         @endif   
                     @endauth
@@ -383,7 +383,7 @@ new class extends Component
 
                 @if (auth()->user()->isAdmin())
                     <x-responsive-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings')" wire:navigate>
-                        {{ __('Settings') }}
+                        {{ __('Global Settings') }}
                     </x-responsive-nav-link>
                 @endif
             @endauth

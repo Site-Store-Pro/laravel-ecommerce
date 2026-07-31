@@ -55,17 +55,46 @@ class HeaderFooterCssManager
             'footer_bg_size'                                 => 'cover',
             'footer_bg_position'                             => 'center center',
             'site_max_width'                                 => '1400px',
-            'header_min_height'                              => '201px',
-            'header_padding_top'                             => '5px',
-            'header_padding_bottom'                          => '5px',
+            'header_min_height'                              => '75px',
+            'header_padding_top'                             => '14px',
+            'header_padding_bottom'                          => '14px',
             'nav_inside_main_header'                         => '0',
+            'top_nav_sticky'                                 => '1',
             'search_placement_desktop'                       => 'main_header',
             'search_placement_tablet'                        => 'main_header',
             'mobile_search_position'                         => 'top',
-            'header_custom_css'                              => '',
-            'footer_custom_css'                              => '',
             'backtop_bg_color'                               => '',
             'backtop_hover_bg_color'                         => '',
+            'backtop_icon_color'                             => '#ffffff',
+            'shop_view_mode_active_bg'                       => '#4f46e5',
+            'shop_view_mode_active_text'                     => '#ffffff',
+            'shop_view_mode_inactive_bg'                     => '#f1f5f9',
+            'shop_view_mode_inactive_text'                   => '#64748b',
+            'pagination_active_bg'                           => '#4f46e5',
+            'pagination_active_text'                         => '#ffffff',
+            'pagination_inactive_bg'                         => '#ffffff',
+            'pagination_inactive_text'                       => '#334155',
+            'pagination_hover_bg'                            => '#e0e7ff',
+            'shop_category_pill_bg'                          => '#EEF2FF',
+            'shop_category_pill_text'                        => '#4338CA',
+            'shop_category_pill_border'                      => '#C7D2FE',
+            'shop_category_pill_hover_bg'                    => '#4338CA',
+            'shop_category_pill_hover_text'                  => '#FFFFFF',
+            'shop_category_pill_hover_border'                => '#4338CA',
+            'shop_brand_pill_bg'                             => '#F5F3FF',
+            'shop_brand_pill_text'                           => '#6D28D9',
+            'shop_brand_pill_border'                         => '#DDD6FE',
+            'shop_brand_pill_hover_bg'                       => '#6D28D9',
+            'shop_brand_pill_hover_text'                     => '#FFFFFF',
+            'shop_brand_pill_hover_border'                   => '#6D28D9',
+            'shop_subcat_pill_bg'                            => '#F0FDF4',
+            'shop_subcat_pill_text'                          => '#15803D',
+            'shop_subcat_pill_border'                        => '#BBF7D0',
+            'shop_subcat_pill_hover_bg'                      => '#15803D',
+            'shop_subcat_pill_hover_text'                    => '#FFFFFF',
+            'shop_subcat_pill_hover_border'                  => '#15803D',
+            'header_custom_css'                              => '',
+            'footer_custom_css'                              => '',
         ];
     }
 
@@ -103,16 +132,27 @@ class HeaderFooterCssManager
      */
     public static function clearCompiledCssCache(): void
     {
+        Cache::forget('cms_header_footer_compiled_css');
+        Cache::forget('cms_header_footer_variables');
         Cache::forget('cms_settings_all');
         Cache::forget('header_footer_compiled_css');
     }
 
     /**
-     * Compile CSS rules and :root variables.
+     * Compile CSS rules and :root variables (alias for generateCompiledCss).
      */
     public static function compileCss(?array $vars = null): string
     {
-        $v = $vars ?? self::getActiveVariables();
+        return self::generateCompiledCss();
+    }
+
+    /**
+     * Generate minified CSS output for dynamic site components.
+     */
+    public static function generateCompiledCss(): string
+    {
+        $v = self::getActiveVariables();
+
         $headerBg = !empty($v['header_bg_image_url']) ? "url('" . addslashes($v['header_bg_image_url']) . "')" : "none";
         $footerBg = !empty($v['footer_bg_image_url']) ? "url('" . addslashes($v['footer_bg_image_url']) . "')" : "none";
 
@@ -162,21 +202,141 @@ class HeaderFooterCssManager
   --header-min-height: {$v['header_min_height']};
   --header-padding-top: {$v['header_padding_top']};
   --header-padding-bottom: {$v['header_padding_bottom']};
+  --shop-view-active-bg: {$v['shop_view_mode_active_bg']};
+  --shop-view-active-text: {$v['shop_view_mode_active_text']};
+  --shop-view-inactive-bg: {$v['shop_view_mode_inactive_bg']};
+  --shop-view-inactive-text: {$v['shop_view_mode_inactive_text']};
+  --pagination-active-bg: {$v['pagination_active_bg']};
+  --pagination-active-text: {$v['pagination_active_text']};
+  --pagination-inactive-bg: {$v['pagination_inactive_bg']};
+  --pagination-inactive-text: {$v['pagination_inactive_text']};
+  --pagination-hover-bg: {$v['pagination_hover_bg']};
+  --shop-category-pill-bg: {$v['shop_category_pill_bg']};
+  --shop-category-pill-text: {$v['shop_category_pill_text']};
+  --shop-category-pill-border: {$v['shop_category_pill_border']};
+  --shop-category-pill-hover-bg: {$v['shop_category_pill_hover_bg']};
+  --shop-category-pill-hover-text: {$v['shop_category_pill_hover_text']};
+  --shop-category-pill-hover-border: {$v['shop_category_pill_hover_border']};
+  --shop-brand-pill-bg: {$v['shop_brand_pill_bg']};
+  --shop-brand-pill-text: {$v['shop_brand_pill_text']};
+  --shop-brand-pill-border: {$v['shop_brand_pill_border']};
+  --shop-brand-pill-hover-bg: {$v['shop_brand_pill_hover_bg']};
+  --shop-brand-pill-hover-text: {$v['shop_brand_pill_hover_text']};
+  --shop-brand-pill-hover-border: {$v['shop_brand_pill_hover_border']};
+  --shop-subcat-pill-bg: {$v['shop_subcat_pill_bg']};
+  --shop-subcat-pill-text: {$v['shop_subcat_pill_text']};
+  --shop-subcat-pill-border: {$v['shop_subcat_pill_border']};
+  --shop-subcat-pill-hover-bg: {$v['shop_subcat_pill_hover_bg']};
+  --shop-subcat-pill-hover-text: {$v['shop_subcat_pill_hover_text']};
+  --shop-subcat-pill-hover-border: {$v['shop_subcat_pill_hover_border']};
+  --backtop-bg-color: {$backtopBgCss};
+  --backtop-hover-bg-color: {$backtopHoverBgCss};
+  --backtop-icon-color: {$v['backtop_icon_color']};
 }
 
-/* Header Container Rules */
+/* Shop Catalog View Mode Buttons */
+.btn-view-mode {
+    background-color: var(--shop-view-inactive-bg) !important;
+    color: var(--shop-view-inactive-text) !important;
+    border: 1px solid var(--shop-view-inactive-bg) !important;
+    transition: all 0.2s ease !important;
+}
+.btn-view-mode.active,
+.btn-view-mode:hover {
+    background-color: var(--shop-view-active-bg) !important;
+    color: var(--shop-view-active-text) !important;
+    border-color: var(--shop-view-active-bg) !important;
+}
+
+/* Shop Category, Brand & Subcategory Filter Pills */
+.shop-category-pill {
+    background-color: var(--shop-category-pill-bg) !important;
+    color: var(--shop-category-pill-text) !important;
+    border: 1px solid var(--shop-category-pill-border) !important;
+    transition: all 0.2s ease !important;
+}
+.shop-category-pill:hover {
+    background-color: var(--shop-category-pill-hover-bg) !important;
+    color: var(--shop-category-pill-hover-text) !important;
+    border-color: var(--shop-category-pill-hover-border) !important;
+}
+
+.shop-brand-pill {
+    background-color: var(--shop-brand-pill-bg) !important;
+    color: var(--shop-brand-pill-text) !important;
+    border: 1px solid var(--shop-brand-pill-border) !important;
+    transition: all 0.2s ease !important;
+}
+.shop-brand-pill:hover {
+    background-color: var(--shop-brand-pill-hover-bg) !important;
+    color: var(--shop-brand-pill-hover-text) !important;
+    border-color: var(--shop-brand-pill-hover-border) !important;
+}
+
+.shop-subcat-pill {
+    background-color: var(--shop-subcat-pill-bg) !important;
+    color: var(--shop-subcat-pill-text) !important;
+    border: 1px solid var(--shop-subcat-pill-border) !important;
+    transition: all 0.2s ease !important;
+}
+.shop-subcat-pill:hover {
+    background-color: var(--shop-subcat-pill-hover-bg) !important;
+    color: var(--shop-subcat-pill-hover-text) !important;
+    border-color: var(--shop-subcat-pill-hover-border) !important;
+}
+
+/* Pagination Box Numbers & Navigation */
+nav[role='navigation'] [aria-current='page'] > span,
+nav[role='navigation'] span[aria-current='page'],
+.pagination .active,
+.page-item.active .page-link {
+    background-color: var(--pagination-active-bg) !important;
+    color: var(--pagination-active-text) !important;
+    border-color: var(--pagination-active-bg) !important;
+}
+nav[role='navigation'] a:hover,
+nav[role='navigation'] button:not(.btn-view-mode):not(#header_mobile_toggle):not(.header_mobile_toggle):hover {
+    background-color: var(--pagination-hover-bg) !important;
+    color: var(--pagination-active-bg) !important;
+}
+
+/* Header & Site Container Rules */
 .header_container {
     position: relative !important;
 }
+.site_header_container,
+.site_header_contents,
+.footer_contents,
+.site_container {
+    max-width: var(--site-max-width, 1400px);
+    margin-left: auto;
+    margin-right: auto;
+}
 .site_header_contents {
-    padding-top: var(--header-padding-top, 5px) !important;
-    padding-bottom: var(--header-padding-bottom, 5px) !important;
+    padding-top: var(--header-padding-top);
+    padding-bottom: var(--header-padding-bottom);
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+.header_logo {
+    display: flex !important;
+    align-items: center !important;
+    margin-right: auto !important;
+    flex-shrink: 0 !important;
+}
+#header_features_bar {
+    display: flex !important;
+    align-items: center !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
 }
 .header_row2 { display: none; }
 
 @media only screen and (min-width: 1024px) {
     .header_container {
-        min-height: var(--header-min-height, 201px);
+        min-height: var(--header-min-height);
     }
 }
 
@@ -194,15 +354,13 @@ class HeaderFooterCssManager
     align-items: center;
     background-color: var(--primary-accent-color);
     position: relative;
-    padding-left: 25px;
-    padding-right: 25px;
+    padding-left: 10px;
+    padding-right: 10px;
     min-height: 40px;
 }
 
-@media only screen and (max-width: 600px) {
-    .top_sharing_container { display: none; }
+@media only screen and (max-width: 767px) {
     .header_container { min-height: auto; }
-    .header_col2 { display: none; }
 }
 
 #top_sharing_section {
@@ -266,6 +424,17 @@ class HeaderFooterCssManager
     color: var(--top-nav-menu-desktop-tab-hover-label-color, var(--top-nav-menu-desktop-font-color, inherit));
 }
 
+.header_logo {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.site-logo-title {
+    font-size: 1.125rem !important;
+    font-weight: 800 !important;
+}
+
 @media only screen and (min-width: 1024px) {
     .header_mobile_toggle { display: none !important; }
     .top_nav_container {
@@ -276,6 +445,40 @@ class HeaderFooterCssManager
         background-color: var(--top-nav-container-background, transparent);
         position: relative;
     }
+    .dyn-nav-link,
+    .top_nav_container a,
+    .top_nav_container button {
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        line-height: 1.25rem !important;
+        color: var(--nav-text, #334155) !important;
+    }
+    .dyn-nav-link:hover,
+    .top_nav_container a:hover,
+    .top_nav_container button:hover {
+        color: var(--nav-text-hover, #4f46e5) !important;
+    }
+    .site_header_contents {
+        display: flex !important;
+        align-items: center !important;
+    }
+   .top_nav_container,
+    .header_top_bar .top_nav_container {
+        width: auto !important;
+        flex: 1 1 auto !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        text-align: center !important;
+    }
+    .site_header_contents .top_nav_container ul {
+        justify-content: center !important;
+        align-items: center !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
     #top_nav_area {
         max-width: var(--site-max-width, 1280px);
         width: 100%;
@@ -284,11 +487,24 @@ class HeaderFooterCssManager
         display: block !important;
         width: 100%;
     }
+    .site_header_contents .top_nav_container header[id^='top-nav-'] {
+        width: auto !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .site_header_contents .top_nav_container header[id^='top-nav-'] > div {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        max-width: none !important;
+    }
 }
 @media only screen and (max-width: 1023px) {
     .top_nav_container,
     #top_nav_area,
     #top_nav_contents,
+    #top_nav_row,
+    #top_nav_row_fallback,
     header[id^='top-nav-'] {
         display: none !important;
         height: 0 !important;
@@ -296,6 +512,27 @@ class HeaderFooterCssManager
         padding: 0 !important;
         margin: 0 !important;
         border: none !important;
+    }
+    .site_header_contents {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+    .header_logo {
+        margin-right: auto !important;
+        margin-left: 0 !important;
+    }
+    #header_features_bar {
+        margin-left: auto !important;
+        margin-right: 0 !important;
+    }
+    .header_mobile_toggle,
+    #header_mobile_toggle {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin-left: auto !important;
     }
 }
 
@@ -315,8 +552,8 @@ class HeaderFooterCssManager
     background-repeat: {$v['header_bg_repeat']};
     background-size: {$v['header_bg_size']};
     background-position: {$v['header_bg_position']};
-    padding-left: 25px;
-    padding-right: 25px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 #site_header {
@@ -325,12 +562,14 @@ class HeaderFooterCssManager
 }
 
 .site_header_contents {
-    padding: 25px 0;
+    padding-top: var(--header-padding-top, 14px) !important;
+    padding-bottom: var(--header-padding-bottom, 14px) !important;
     width: 100%;
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    justify-content: space-between;
+    max-width: var(--site-max-width);
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     margin: 0;
     gap: 10px;
 }
@@ -580,9 +819,9 @@ class HeaderFooterCssManager
     position: fixed;
     right: 20px;
     bottom: 20px;
-    color: #fff;
+    color: var(--backtop-icon-color, #ffffff) !important;
     text-align: center;
-    background-color: {$backtopBgCss};
+    background-color: var(--backtop-bg-color, {$backtopBgCss}) !important;
     height: 48px;
     width: 48px;
     line-height: 48px;
@@ -590,7 +829,7 @@ class HeaderFooterCssManager
     cursor: pointer;
     transition: all 0.3s ease;
     z-index: 99999;
-    border-radius: var(--top-nav-menu-borders-radius);
+    border-radius: var(--top-nav-menu-borders-radius, 8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -605,7 +844,7 @@ class HeaderFooterCssManager
     pointer-events: auto;
 }
 #backtop:hover {
-    background-color: {$backtopHoverBgCss};
+    background-color: var(--backtop-hover-bg-color, {$backtopHoverBgCss}) !important;
     transform: translateY(-2px);
 }
 " . ($v['header_custom_css'] ?? '') . "\n" . ($v['footer_custom_css'] ?? '');

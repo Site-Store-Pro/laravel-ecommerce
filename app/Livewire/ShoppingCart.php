@@ -52,11 +52,17 @@ class ShoppingCart extends Component
 
         $item = $this->getCartQuery()->findOrFail($itemId);
 
-        // Block manual quantity adjustments on BOGO target items
+        // Block manual quantity adjustments on BOGO target items and donation/bill pay items
         $attrs = json_decode($item->item_attributes, true) ?: [];
         if (!empty($attrs['is_bogo_target'])) {
             session()->flash('error', $attrs['bogo_cart_text'] ?? 'Quantity of promotional package items cannot be edited manually.');
             return;
+        }
+        if (!empty($attrs['is_donation_or_bill_pay'])) {
+            if ($qty > 1) {
+                session()->flash('error', 'Quantity for donation/bill pay items is fixed at 1.');
+                return;
+            }
         }
 
         // Find associated variant from item name (which has the SKU inside parentheses)

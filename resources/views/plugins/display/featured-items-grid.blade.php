@@ -88,7 +88,7 @@
                     {{-- Price + Button --}}
                     <div class="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between gap-2">
                         <div>
-                            @if($defaultVariant)
+                            @if(!$product->is_donation_or_bill_pay && $defaultVariant)
                                 <div class="flex items-baseline gap-1.5">
                                     <span class="text-lg font-extrabold text-slate-900">
                                         @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
@@ -97,12 +97,20 @@
                                         <span class="text-xs text-slate-400 line-through">${{ number_format($originalPrice, 2) }}</span>
                                     @endif
                                 </div>
-                            @else
+                            @elseif(!$product->is_donation_or_bill_pay)
                                 <span class="text-sm text-slate-400">@label('plugin.out_of_stock', 'Out of Stock')</span>
                             @endif
                         </div>
 
-                        @if($product->variants->count() === 1)
+                        @if($product->is_donation_or_bill_pay || $product->variants->count() > 1)
+                            <a href="{{ route('shop.product', $product->seo_slug) }}"
+                               class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition duration-150 whitespace-nowrap">
+                                @label('plugin.view_options', 'View Options')
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                        @else
                             @php
                                 $v = $product->variants->first();
                                 $avail = ($v->inventory ? $v->inventory->quantity_available - $v->inventory->reserved_stock : 999);
@@ -120,14 +128,6 @@
                                     </svg>
                                 </a>
                             @endif
-                        @else
-                            <a href="{{ route('shop.product', $product->seo_slug) }}"
-                               class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition duration-150 whitespace-nowrap">
-                                @label('plugin.view_options', 'View Options')
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                </svg>
-                            </a>
                         @endif
                     </div>
                 </div>

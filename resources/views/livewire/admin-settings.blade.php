@@ -117,8 +117,8 @@
 
     {{-- Page Header --}}
     <div class="mb-8">
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Site Settings</h1>
-        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage site identity, appearance, fonts, analytics, and custom script integrations.</p>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Global Settings</h1>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage global site identity, theme customization, full-page background media, typography, appearance, and integrations.</p>
     </div>
 
     <form wire:submit="save" class="space-y-8">
@@ -200,46 +200,70 @@
 
                     {{-- S3 (app config) --}}
                     @if($logo_type === 's3')
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">S3 Path / Key</label>
-                                <input type="text" wire:model="logo_path" placeholder="logos/my-logo.png"
-                                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">S3 Path / Key</label>
+                                    <input type="text" wire:model="logo_path" placeholder="logos/my-logo.png"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Optional CDN URL Prefix</label>
+                                    <input type="text" wire:model="logo_cdn_url" placeholder="https://cdn.example.com"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
                             </div>
                             <div>
-                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Optional CDN URL Prefix</label>
-                                <input type="text" wire:model="logo_cdn_url" placeholder="https://cdn.example.com"
-                                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Direct S3 Bucket File Upload</label>
+                                <input type="file" wire:model="logo_upload" accept="image/*"
+                                       class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                <p class="text-xs text-slate-400 mt-1">Uploads file directly into your S3 bucket configured in <code>.env</code>.</p>
                             </div>
                         </div>
-                        <p class="text-xs text-slate-400 mt-2">Uses bucket/region from your app's <code>.env</code> (<code>AWS_BUCKET</code>, <code>AWS_DEFAULT_REGION</code>).</p>
                     @endif
 
                     {{-- Custom S3 --}}
                     @if($logo_type === 'custom_s3')
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Bucket Name</label>
-                                <input type="text" wire:model="logo_s3_bucket" placeholder="my-bucket"
-                                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Bucket Name</label>
+                                    <input type="text" wire:model.live="logo_s3_bucket" placeholder="my-bucket"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Region</label>
+                                    <input type="text" wire:model.live="logo_s3_region" placeholder="us-east-1"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">AWS Access Key ID</label>
+                                    <input type="text" wire:model.live="logo_s3_key" placeholder="AKIA..."
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">AWS Secret Access Key</label>
+                                    <input type="password" wire:model.live="logo_s3_secret" placeholder="Secret Key"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">S3 Path / Key</label>
+                                    <input type="text" wire:model="logo_path" placeholder="logos/my-logo.png"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Optional CDN URL Prefix</label>
+                                    <input type="text" wire:model="logo_cdn_url" placeholder="https://cdn.example.com"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
                             </div>
                             <div>
-                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Region</label>
-                                <input type="text" wire:model="logo_s3_region" placeholder="us-east-1"
-                                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">S3 Path / Key</label>
-                                <input type="text" wire:model="logo_path" placeholder="logos/my-logo.png"
-                                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Optional CDN URL Prefix</label>
-                                <input type="text" wire:model="logo_cdn_url" placeholder="https://cdn.example.com"
-                                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Direct Custom S3 Bucket File Upload</label>
+                                <input type="file" wire:model="logo_upload" accept="image/*"
+                                       class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                <p class="text-xs text-slate-400 mt-1">Uploads file directly into your specified custom S3 bucket using these credentials.</p>
                             </div>
                         </div>
-                        <p class="text-xs text-slate-400 mt-2">Note: Access Key and Secret Key for custom S3 are managed via your <code>.env</code> file for security.</p>
                     @endif
 
                     {{-- CDN + Path --}}
@@ -289,6 +313,367 @@
                             <p class="text-xs text-slate-400 text-center">No custom logo — default SVG icon is shown</p>
                         </div>
                     @endif
+                </div>
+
+            </div>
+        </div>
+
+        {{-- ── SITE THEME CUSTOMIZATION ── --}}
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                <span class="inline-flex items-center justify-center p-2 rounded-lg bg-pink-50 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                    </svg>
+                </span>
+                <div>
+                    <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Site Theme Customization</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Configure full-page background color/image/video, independent element font families &amp; sizes, and content card borders/shading for public pages.</p>
+                </div>
+            </div>
+
+            <div class="divide-y divide-slate-100 dark:divide-slate-700 px-6 py-6 space-y-8">
+
+                {{-- STICKY HEADER NAVIGATION TOGGLE --}}
+                <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-800 flex items-center justify-between gap-4">
+                    <div>
+                        <h4 class="text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">Sticky Header Navigation</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">When enabled, the primary site header and top navigation bar remain fixed at the top of the browser window as visitors scroll down.</p>
+                    </div>
+                    <label class="flex items-center gap-2 cursor-pointer shrink-0">
+                        <input type="checkbox" wire:model="top_nav_sticky" class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-xs font-bold text-indigo-700 dark:text-indigo-300">Sticky Header Active</span>
+                    </label>
+                </div>
+
+                {{-- 1. FULL PAGE BACKGROUND MEDIA --}}
+                <div class="space-y-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">1. Full Page Background Media Customization</p>
+                    <p class="text-xs text-slate-400">Choose how the full-page public background renders. Setting a custom background color, image, or video will override default page backgrounds.</p>
+
+                    {{-- Background Mode Radio Switcher --}}
+                    <div class="flex flex-wrap gap-2">
+                        @foreach(['default'=>'Default Theme', 'color'=>'Custom Background Color', 'image'=>'Full Page Background Image', 'video'=>'Full Page Background Video'] as $modeVal => $modeLabel)
+                            <label class="cursor-pointer">
+                                <input type="radio" wire:model.live="page_bg_mode" value="{{ $modeVal }}" class="sr-only peer">
+                                <span class="inline-block px-3.5 py-2 border-2 rounded-xl text-xs font-bold transition-all
+                                    {{ $page_bg_mode === $modeVal
+                                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300'
+                                        : 'border-slate-200 bg-white dark:bg-slate-800 text-slate-500 hover:border-indigo-300' }}">
+                                    {{ $modeLabel }}
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    {{-- Custom Background Color --}}
+                    @if($page_bg_mode === 'color')
+                        <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-200 dark:border-slate-600">
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Page Background Color Picker</label>
+                            <div class="flex items-center gap-3">
+                                <input type="color" wire:model.live="page_bg_color" class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                <input type="text" wire:model.live="page_bg_color" placeholder="#f8fafc" class="max-w-xs px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl text-xs font-mono uppercase focus:outline-none">
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Full Page Background Image Options --}}
+                    @if($page_bg_mode === 'image')
+                        <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-200 dark:border-slate-600 space-y-4">
+                            {{-- Direct URL Override --}}
+                            <div class="p-3 bg-violet-50/50 dark:bg-violet-950/30 rounded-xl border border-violet-200 dark:border-violet-800 space-y-1.5">
+                                <label class="block text-[11px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">Direct Image URL Override (Highest Priority)</label>
+                                <input type="text" wire:model="page_bg_image_url" placeholder="https://cdn.example.com/background.jpg" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-violet-300 dark:border-violet-700 rounded-xl text-xs font-medium focus:outline-none focus:border-violet-500">
+                                <p class="text-[11px] text-violet-600 dark:text-violet-400">Entering a direct URL here overrides all other file upload sources below.</p>
+                            </div>
+
+                            <p class="text-xs font-bold text-slate-600 dark:text-slate-300">File Storage &amp; Upload Source</p>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach(['local'=>'Local Upload', 's3'=>'S3 (.env Config)', 'custom_s3'=>'Custom S3 Bucket'] as $imgTypeVal => $imgTypeLabel)
+                                    <label class="cursor-pointer">
+                                        <input type="radio" wire:model.live="page_bg_image_type" value="{{ $imgTypeVal }}" class="sr-only peer">
+                                        <span class="inline-block px-3 py-1.5 border rounded-xl text-xs font-bold transition-all {{ $page_bg_image_type === $imgTypeVal ? 'border-indigo-500 bg-indigo-100 text-indigo-800' : 'border-slate-200 bg-white text-slate-600' }}">
+                                            {{ $imgTypeLabel }}
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+
+                            <div class="space-y-3">
+                                @if($page_bg_image_type === 'custom_s3')
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Bucket Name</label><input type="text" wire:model.live="page_bg_image_s3_bucket" placeholder="Bucket Name" class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                        <div><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Region (us-east-1)</label><input type="text" wire:model.live="page_bg_image_s3_region" placeholder="Region (us-east-1)" class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                        <div><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">AWS Access Key ID</label><input type="text" wire:model.live="page_bg_image_s3_key" placeholder="AKIA..." class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                        <div><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">AWS Secret Access Key</label><input type="password" wire:model.live="page_bg_image_s3_secret" placeholder="Secret Key" class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                    </div>
+                                @endif
+
+                                @if($page_bg_image_type === 's3' || $page_bg_image_type === 'custom_s3')
+                                    <div><input type="text" wire:model.live="page_bg_image_path" placeholder="Image S3 Key/Path (backgrounds/hero.jpg)" class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                @endif
+
+                                <div>
+                                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Upload File (Local or S3 Bucket)</label>
+                                    <input type="file" wire:model="page_bg_image_upload" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700">
+                                    @if($page_bg_image_path)
+                                        <p class="text-xs text-emerald-600 mt-1">✓ Active path: <code>{{ $page_bg_image_path }}</code></p>
+                                    @endif
+                                </div>
+                            </div>
+
+                            @php $resolvedBgImg = \App\Models\CmsSetting::resolvePageBgImageUrl(); @endphp
+                            @if($resolvedBgImg)
+                                <div class="mt-2 p-3 bg-white dark:bg-slate-800 rounded-xl border flex items-center gap-3">
+                                    <img src="{{ $resolvedBgImg }}" alt="Preview" class="h-12 w-20 object-cover rounded-lg">
+                                    <span class="text-xs text-slate-500 break-all flex-1">{{ $resolvedBgImg }}</span>
+                                    <button type="button" wire:click="clearBgImage" class="px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all">
+                                        Clear
+                                    </button>
+                                </div>
+                            @else
+                                <div class="pt-2 flex justify-end">
+                                    <button type="button" wire:click="clearBgImage" class="px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        Reset / Clear Background Image
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
+                    {{-- Full Page Background Video Options --}}
+                    @if($page_bg_mode === 'video')
+                        <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-2xl border border-slate-200 dark:border-slate-600 space-y-4">
+                            {{-- Direct URL Override --}}
+                            <div class="p-3 bg-violet-50/50 dark:bg-violet-950/30 rounded-xl border border-violet-200 dark:border-violet-800 space-y-1.5">
+                                <label class="block text-[11px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">Direct Video URL Override (Highest Priority)</label>
+                                <input type="text" wire:model="page_bg_video_url" placeholder="https://cdn.example.com/background.mp4" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-violet-300 dark:border-violet-700 rounded-xl text-xs font-medium focus:outline-none focus:border-violet-500">
+                                <p class="text-[11px] text-violet-600 dark:text-violet-400">Entering a direct URL here overrides all other video upload sources below.</p>
+                            </div>
+
+                            <p class="text-xs font-bold text-slate-600 dark:text-slate-300">File Storage &amp; Upload Source (MP4 / WebM)</p>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach(['local'=>'Local Upload', 's3'=>'S3 (.env Config)', 'custom_s3'=>'Custom S3 Bucket'] as $vidTypeVal => $vidTypeLabel)
+                                    <label class="cursor-pointer">
+                                        <input type="radio" wire:model.live="page_bg_video_type" value="{{ $vidTypeVal }}" class="sr-only peer">
+                                        <span class="inline-block px-3 py-1.5 border rounded-xl text-xs font-bold transition-all {{ $page_bg_video_type === $vidTypeVal ? 'border-indigo-500 bg-indigo-100 text-indigo-800' : 'border-slate-200 bg-white text-slate-600' }}">
+                                            {{ $vidTypeLabel }}
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+
+                            <div class="space-y-3">
+                                @if($page_bg_video_type === 'custom_s3')
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Bucket Name</label><input type="text" wire:model.live="page_bg_video_s3_bucket" placeholder="Bucket Name" class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                        <div><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Region (us-east-1)</label><input type="text" wire:model.live="page_bg_video_s3_region" placeholder="Region (us-east-1)" class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                        <div><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">AWS Access Key ID</label><input type="text" wire:model.live="page_bg_video_s3_key" placeholder="AKIA..." class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                        <div><label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">AWS Secret Access Key</label><input type="password" wire:model.live="page_bg_video_s3_secret" placeholder="Secret Key" class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                    </div>
+                                @endif
+
+                                @if($page_bg_video_type === 's3' || $page_bg_video_type === 'custom_s3')
+                                    <div><input type="text" wire:model.live="page_bg_video_path" placeholder="Video S3 Key/Path (backgrounds/hero.mp4)" class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                @endif
+
+                                <div>
+                                    <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Upload Video File (Local or S3 Bucket)</label>
+                                    <input type="file" wire:model="page_bg_video_upload" accept="video/mp4,video/webm" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700">
+                                    @if($page_bg_video_path)
+                                        <p class="text-xs text-emerald-600 mt-1">✓ Active path: <code>{{ $page_bg_video_path }}</code></p>
+                                    @endif
+                                </div>
+                            </div>
+
+                            @php $resolvedBgVid = \App\Models\CmsSetting::resolvePageBgVideoUrl(); @endphp
+                            @if($resolvedBgVid)
+                                <div class="mt-2 p-3 bg-white dark:bg-slate-800 rounded-xl border flex items-center gap-3">
+                                    <video src="{{ $resolvedBgVid }}" class="h-14 w-24 object-cover rounded-lg" autoplay loop muted playsinline></video>
+                                    <span class="text-xs text-slate-500 break-all flex-1">{{ $resolvedBgVid }}</span>
+                                    <button type="button" wire:click="clearBgVideo" class="px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all">
+                                        Clear
+                                    </button>
+                                </div>
+                            @else
+                                <div class="pt-2 flex justify-end">
+                                    <button type="button" wire:click="clearBgVideo" class="px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        Reset / Clear Background Video
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
+                    {{-- Background Overlay Tint --}}
+                    @if($page_bg_mode === 'image' || $page_bg_mode === 'video')
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Background Overlay Tint Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model.live="page_bg_overlay_color" class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="page_bg_overlay_color" placeholder="#000000" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-xl text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Overlay Opacity (0.0 to 0.9)</label>
+                                <input type="number" step="0.05" min="0" max="0.95" wire:model.live="page_bg_overlay_opacity" placeholder="0.2" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-xl text-xs font-mono focus:outline-none">
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- 2. SITE TYPOGRAPHY & FONT PROPERTIES --}}
+                <div class="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">2. Site Typography &amp; Font Customization</p>
+                    <p class="text-xs text-slate-400">Configure independent font families, font sizes, and text colors for Body, Paragraphs, H1, H2, and H3.</p>
+
+                    {{-- Font Sizes & Colors Grid --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                        {{-- Body --}}
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600 space-y-2.5">
+                            <p class="text-xs font-bold text-slate-700 dark:text-slate-200 border-b pb-1">Body Text</p>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Font Family</label>
+                                <input type="text" wire:model="theme_body_font_family" placeholder="'Plus Jakarta Sans', sans-serif" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Font Size</label>
+                                <input type="text" wire:model="theme_body_font_size" placeholder="1rem / 16px" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Text Color</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="theme_body_font_color" class="w-7 h-7 border rounded-lg cursor-pointer p-0 bg-transparent">
+                                    <input type="text" wire:model.live="theme_body_font_color" placeholder="#334155" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border rounded-lg text-xs font-mono">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Paragraph --}}
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600 space-y-2.5">
+                            <p class="text-xs font-bold text-slate-700 dark:text-slate-200 border-b pb-1">Paragraph Text (&lt;p&gt;)</p>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Font Family</label>
+                                <input type="text" wire:model="theme_paragraph_font_family" placeholder="inherit" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Font Size</label>
+                                <input type="text" wire:model="theme_paragraph_font_size" placeholder="0.875rem / 14px" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Text Color</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="theme_paragraph_font_color" class="w-7 h-7 border rounded-lg cursor-pointer p-0 bg-transparent">
+                                    <input type="text" wire:model.live="theme_paragraph_font_color" placeholder="#475569" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border rounded-lg text-xs font-mono">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Heading H1 --}}
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600 space-y-2.5">
+                            <p class="text-xs font-bold text-slate-700 dark:text-slate-200 border-b pb-1">Heading 1 (&lt;h1&gt;)</p>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Font Family</label>
+                                <input type="text" wire:model="theme_h1_font_family" placeholder="'Outfit', sans-serif" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Font Size</label>
+                                <input type="text" wire:model="theme_h1_font_size" placeholder="2.25rem / 36px" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">H1 Color</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="theme_h1_font_color" class="w-7 h-7 border rounded-lg cursor-pointer p-0 bg-transparent">
+                                    <input type="text" wire:model.live="theme_h1_font_color" placeholder="#0f172a" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border rounded-lg text-xs font-mono">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Heading H2 --}}
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600 space-y-2.5">
+                            <p class="text-xs font-bold text-slate-700 dark:text-slate-200 border-b pb-1">Heading 2 (&lt;h2&gt;)</p>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Font Family</label>
+                                <input type="text" wire:model="theme_h2_font_family" placeholder="'Outfit', sans-serif" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Font Size</label>
+                                <input type="text" wire:model="theme_h2_font_size" placeholder="1.75rem / 28px" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">H2 Color</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="theme_h2_font_color" class="w-7 h-7 border rounded-lg cursor-pointer p-0 bg-transparent">
+                                    <input type="text" wire:model.live="theme_h2_font_color" placeholder="#0f172a" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border rounded-lg text-xs font-mono">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Heading H3 --}}
+                        <div class="p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-600 space-y-2.5">
+                            <p class="text-xs font-bold text-slate-700 dark:text-slate-200 border-b pb-1">Heading 3 (&lt;h3&gt;)</p>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Font Family</label>
+                                <input type="text" wire:model="theme_h3_font_family" placeholder="'Outfit', sans-serif" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">Font Size</label>
+                                <input type="text" wire:model="theme_h3_font_size" placeholder="1.25rem / 20px" class="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border rounded-lg text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 uppercase mb-1">H3 Color</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="theme_h3_font_color" class="w-7 h-7 border rounded-lg cursor-pointer p-0 bg-transparent">
+                                    <input type="text" wire:model.live="theme_h3_font_color" placeholder="#1e293b" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border rounded-lg text-xs font-mono">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 3. CONTENT AREA & CARD STYLING --}}
+                <div class="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">3. Content Area &amp; Card Border/Shading Customization</p>
+                    <p class="text-xs text-slate-400">Configure content area background colors and content card borders/box-shadows for public pages.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Content Area BG</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" wire:model.live="theme_content_bg_color" class="w-9 h-9 border rounded-xl cursor-pointer p-0 bg-transparent">
+                                <input type="text" wire:model.live="theme_content_bg_color" placeholder="#ffffff" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border rounded-xl text-xs font-mono uppercase focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Content Card BG</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" wire:model.live="theme_card_bg_color" class="w-9 h-9 border rounded-xl cursor-pointer p-0 bg-transparent">
+                                <input type="text" wire:model.live="theme_card_bg_color" placeholder="#ffffff" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border rounded-xl text-xs font-mono uppercase focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Card Border Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" wire:model.live="theme_card_border_color" class="w-9 h-9 border rounded-xl cursor-pointer p-0 bg-transparent">
+                                <input type="text" wire:model.live="theme_card_border_color" placeholder="#e2e8f0" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border rounded-xl text-xs font-mono uppercase focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Card Shading (Box Shadow)</label>
+                            <select wire:model="theme_card_shadow" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none">
+                                <option value="">Default Shadow</option>
+                                <option value="none">No Shadow (Flat)</option>
+                                <option value="sm">Small Shadow (sm)</option>
+                                <option value="md">Medium Shadow (md)</option>
+                                <option value="lg">Large Shadow (lg)</option>
+                                <option value="xl">Extra Large Shadow (xl)</option>
+                                <option value="2xl">Deep Shadow (2xl)</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -484,53 +869,319 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Go to Top Button Colors</p>
-                                <p class="text-xs text-slate-400">Configure custom background and hover colors for the floating return-to-top button. If set, these values override the default theme accent colors.</p>
+                                <p class="text-xs text-slate-400">Configure background, hover, and icon colors for the floating return-to-top button on all pages.</p>
                             </div>
                             <div class="shrink-0 flex items-center gap-2">
                                 <button type="button" 
-                                        class="px-4 py-2 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5"
-                                        style="background-color: {{ !empty($backtop_bg_color) ? $backtop_bg_color : 'var(--primary-accent-color, #4f46e5)' }};">
+                                        class="px-4 py-2 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                                        style="background-color: {{ !empty($backtop_bg_color) ? $backtop_bg_color : 'var(--primary-accent-color, #4f46e5)' }}; color: {{ $backtop_icon_color }};">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
                                     <span>Preview Button</span>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             {{-- Go to Top Background Color --}}
                             <div>
                                 <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Background Color</label>
                                 <div class="flex items-center gap-2">
-                                    <input type="color" 
-                                           value="{{ !empty($backtop_bg_color) ? $backtop_bg_color : '#4f46e5' }}"
-                                           onchange="this.nextElementSibling.value = this.value; this.nextElementSibling.dispatchEvent(new Event('input'))"
+                                    <input type="color" wire:model.live="backtop_bg_color"
                                            class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
                                     <input type="text" wire:model.live="backtop_bg_color"
-                                           placeholder="#4f46e5 (blank for theme default)"
+                                           placeholder="#4f46e5 (theme default)"
                                            class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
-                                    @if(!empty($backtop_bg_color))
-                                        <button type="button" wire:click="$set('backtop_bg_color', '')" class="text-xs font-bold text-slate-400 hover:text-rose-500 px-1" title="Reset to default">Reset</button>
-                                    @endif
                                 </div>
-                                @error('backtop_bg_color') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
                             </div>
 
                             {{-- Go to Top Hover Background Color --}}
                             <div>
                                 <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hover Background Color</label>
                                 <div class="flex items-center gap-2">
-                                    <input type="color" 
-                                           value="{{ !empty($backtop_hover_bg_color) ? $backtop_hover_bg_color : '#4338ca' }}"
-                                           onchange="this.nextElementSibling.value = this.value; this.nextElementSibling.dispatchEvent(new Event('input'))"
+                                    <input type="color" wire:model.live="backtop_hover_bg_color"
                                            class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
                                     <input type="text" wire:model.live="backtop_hover_bg_color"
-                                           placeholder="#4338ca (blank for theme default)"
+                                           placeholder="#4338ca (theme default)"
                                            class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
-                                    @if(!empty($backtop_hover_bg_color))
-                                        <button type="button" wire:click="$set('backtop_hover_bg_color', '')" class="text-xs font-bold text-slate-400 hover:text-rose-500 px-1" title="Reset to default">Reset</button>
-                                    @endif
                                 </div>
-                                @error('backtop_hover_bg_color') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+
+                            {{-- Go to Top Icon Color --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Icon Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model.live="backtop_icon_color"
+                                           class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="backtop_icon_color"
+                                           placeholder="#ffffff"
+                                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Shop Catalog Grid & List View Toggle Button Colors --}}
+                    <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Shop View Mode Toggle Colors (Grid / List Icons)</p>
+                                <p class="text-xs text-slate-400">Configure active and inactive state colors for the search results grid & list view toggle buttons on /shop.</p>
+                            </div>
+                            <div class="shrink-0 flex items-center gap-1.5">
+                                <button type="button" class="p-2 rounded-xl text-xs font-bold transition" style="background-color: {{ $shop_view_mode_active_bg }}; color: {{ $shop_view_mode_active_text }};">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                                </button>
+                                <button type="button" class="p-2 rounded-xl text-xs font-bold transition" style="background-color: {{ $shop_view_mode_inactive_bg }}; color: {{ $shop_view_mode_inactive_text }};">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Active Background</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model.live="shop_view_mode_active_bg" class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="shop_view_mode_active_bg" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Active Icon Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model.live="shop_view_mode_active_text" class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="shop_view_mode_active_text" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Inactive Background</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model.live="shop_view_mode_inactive_bg" class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="shop_view_mode_inactive_bg" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Inactive Icon Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model.live="shop_view_mode_inactive_text" class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="shop_view_mode_inactive_text" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Category, Brand & Subcategory Filter Pills Colors --}}
+                    <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Category, Brand &amp; Subcategory Filter Pill Colors (/shop)</p>
+                                <p class="text-xs text-slate-400">Configure normal and hover background, text/font, and border colors for Category, Brand, and Subcategory filter pills on /shop.</p>
+                            </div>
+                            <div class="shrink-0 flex items-center gap-2">
+                                <span class="px-3 py-1 text-xs font-bold rounded-xl border transition" style="background-color: {{ $shop_category_pill_bg }}; color: {{ $shop_category_pill_text }}; border-color: {{ $shop_category_pill_border }};">Category</span>
+                                <span class="px-3 py-1 text-xs font-bold rounded-xl border transition" style="background-color: {{ $shop_brand_pill_bg }}; color: {{ $shop_brand_pill_text }}; border-color: {{ $shop_brand_pill_border }};">Brand</span>
+                                <span class="px-3 py-1 text-xs font-bold rounded-xl border transition" style="background-color: {{ $shop_subcat_pill_bg }}; color: {{ $shop_subcat_pill_text }}; border-color: {{ $shop_subcat_pill_border }};">Subcategory</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {{-- Category Pills --}}
+                            <div class="p-4 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-200 dark:border-slate-600 space-y-3">
+                                <p class="text-xs font-bold text-slate-700 dark:text-slate-200 border-b pb-1">Category Filter Pills</p>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Background</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_category_pill_bg" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_category_pill_bg" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Text Color</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_category_pill_text" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_category_pill_text" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Border Color</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_category_pill_border" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_category_pill_border" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Hover BG</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_category_pill_hover_bg" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_category_pill_hover_bg" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Hover Text</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_category_pill_hover_text" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_category_pill_hover_text" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Hover Border</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_category_pill_hover_border" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_category_pill_hover_border" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Brand Pills --}}
+                            <div class="p-4 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-200 dark:border-slate-600 space-y-3">
+                                <p class="text-xs font-bold text-slate-700 dark:text-slate-200 border-b pb-1">Brand Filter Pills</p>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Background</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_brand_pill_bg" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_brand_pill_bg" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Text Color</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_brand_pill_text" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_brand_pill_text" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Border Color</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_brand_pill_border" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_brand_pill_border" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Hover BG</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_brand_pill_hover_bg" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_brand_pill_hover_bg" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Hover Text</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_brand_pill_hover_text" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_brand_pill_hover_text" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Hover Border</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_brand_pill_hover_border" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_brand_pill_hover_border" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Subcategory Pills --}}
+                            <div class="p-4 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-200 dark:border-slate-600 space-y-3">
+                                <p class="text-xs font-bold text-slate-700 dark:text-slate-200 border-b pb-1">Subcategory Filter Pills</p>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Background</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_subcat_pill_bg" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_subcat_pill_bg" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Text Color</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_subcat_pill_text" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_subcat_pill_text" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Border Color</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_subcat_pill_border" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_subcat_pill_border" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Hover BG</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_subcat_pill_hover_bg" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_subcat_pill_hover_bg" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Hover Text</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_subcat_pill_hover_text" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_subcat_pill_hover_text" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Hover Border</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="color" wire:model.live="shop_subcat_pill_hover_border" class="w-7 h-7 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                            <input type="text" wire:model.live="shop_subcat_pill_hover_border" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Sitewide Pagination Control Colors --}}
+                    <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Sitewide Pagination Button Box Colors</p>
+                                <p class="text-xs text-slate-400">Configure background, number, and hover colors for pagination controls across all catalog & list pages.</p>
+                            </div>
+                            <div class="shrink-0 flex items-center gap-1">
+                                <span class="w-7 h-7 flex items-center justify-center text-xs font-bold rounded-lg shadow-sm" style="background-color: {{ $pagination_active_bg }}; color: {{ $pagination_active_text }};">1</span>
+                                <span class="w-7 h-7 flex items-center justify-center text-xs font-bold rounded-lg border border-slate-200" style="background-color: {{ $pagination_inactive_bg }}; color: {{ $pagination_inactive_text }};">2</span>
+                                <span class="w-7 h-7 flex items-center justify-center text-xs font-bold rounded-lg" style="background-color: {{ $pagination_hover_bg }}; color: {{ $pagination_active_bg }};">3</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Active Box BG</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model.live="pagination_active_bg" class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="pagination_active_bg" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Active Box Text</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model.live="pagination_active_text" class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="pagination_active_text" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Inactive Box BG</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model.live="pagination_inactive_bg" class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="pagination_inactive_bg" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Inactive Box Text</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model.live="pagination_inactive_text" class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="pagination_inactive_text" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Box Hover BG</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" wire:model.live="pagination_hover_bg" class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="pagination_hover_bg" class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
                             </div>
                         </div>
                     </div>

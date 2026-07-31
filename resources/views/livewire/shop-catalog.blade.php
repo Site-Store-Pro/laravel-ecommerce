@@ -90,8 +90,8 @@
                 @endif
             </div>
 
-            <!-- Search Bar & Filter Controls -->
-            <div class="flex items-center gap-3 w-full md:w-auto">
+            <!-- Filter Controls (Top Right) -->
+            <div class="flex items-center justify-end gap-3 w-full md:w-auto">
                 @if($advancedSearchEnabled)
                     <button @click="slideoutOpen = true" type="button" class="relative inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,15 +105,6 @@
                         @endif
                     </button>
                 @endif
-
-                <div class="relative w-full md:w-80">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </span>
-                    <input wire:model.live="search" type="text" placeholder="@label('catalog.search_placeholder', 'Search products...')" class="pl-10 pr-4 py-2.5 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 placeholder-slate-400 rounded-2xl shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition duration-150">
-                </div>
             </div>
         </div>
 
@@ -226,7 +217,7 @@
                             <div class="flex flex-col gap-1.5">
                                 <a href="{{ route('shop.index', array_filter(['category' => $cat->slug, 'brand' => $brand])) }}"
                                    wire:navigate
-                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-100 dark:border-indigo-800 hover:border-indigo-300 text-indigo-700 dark:text-indigo-300 text-xs font-bold rounded-xl transition duration-150 shadow-sm group">
+                                   class="shop-category-pill inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition duration-150 shadow-sm group">
                                     <svg class="w-3 h-3 opacity-60 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                                     </svg>
@@ -238,7 +229,7 @@
                                             <div class="flex flex-col gap-1">
                                                 <a href="{{ route('shop.index', array_filter(['category' => $child->slug, 'brand' => $brand])) }}"
                                                    wire:navigate
-                                                   class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-50 dark:bg-slate-700/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 border border-slate-200 dark:border-slate-600 hover:border-indigo-200 text-slate-600 dark:text-slate-300 hover:text-indigo-600 text-[11px] font-semibold rounded-lg transition duration-150">
+                                                   class="shop-subcat-pill inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded-lg transition duration-150">
                                                     <svg class="w-2.5 h-2.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                                     </svg>
@@ -249,7 +240,7 @@
                                                         @foreach($child->children as $grandchild)
                                                             <a href="{{ route('shop.index', array_filter(['category' => $grandchild->slug, 'brand' => $brand])) }}"
                                                                wire:navigate
-                                                               class="inline-flex items-center gap-1 px-2 py-0.5 bg-white dark:bg-slate-800 hover:bg-slate-50 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-indigo-500 text-[10px] font-medium rounded-md transition duration-150">
+                                                               class="shop-subcat-pill inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md transition duration-150">
                                                                 <span class="text-slate-300 dark:text-slate-600">↳</span>
                                                                 {{ $grandchild->name }}
                                                             </a>
@@ -288,7 +279,7 @@
                             @endphp
                             <a href="{{ route('shop.index', array_filter(['category' => $category, 'brand' => $fb->slug])) }}"
                                wire:navigate
-                               class="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-violet-50 dark:hover:bg-violet-950/40 border border-slate-200 dark:border-slate-700 hover:border-violet-300 text-slate-700 dark:text-slate-200 hover:text-violet-700 text-xs font-semibold rounded-xl transition duration-150 shadow-sm group shrink-0">
+                               class="shop-brand-pill inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-xl transition duration-150 shadow-sm group shrink-0">
                                 @if($fbLogoUrl)
                                     <img src="{{ $fbLogoUrl }}" alt="{{ $fb->name }}" class="w-5 h-5 object-contain rounded">
                                 @endif
@@ -340,12 +331,12 @@
 
                 <div class="flex items-center gap-1.5">
                     <button wire:click="$set('viewMode', 'grid')"
-                            class="btn-secondary !p-2 !rounded-xl text-xs font-bold transition {{ $viewMode === 'grid' ? 'active' : 'opacity-70 hover:opacity-100' }}"
+                            class="btn-view-mode !p-2 !rounded-xl text-xs font-bold transition {{ $viewMode === 'grid' ? 'active' : '' }}"
                             title="Grid View">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                     </button>
                     <button wire:click="$set('viewMode', 'list')"
-                            class="btn-secondary !p-2 !rounded-xl text-xs font-bold transition {{ $viewMode === 'list' ? 'active' : 'opacity-70 hover:opacity-100' }}"
+                            class="btn-view-mode !p-2 !rounded-xl text-xs font-bold transition {{ $viewMode === 'list' ? 'active' : '' }}"
                             title="List View">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
@@ -410,7 +401,7 @@
                             </div>
                             <div class="p-5 pt-0 border-t border-slate-50 dark:border-slate-700/60 mt-auto flex items-center justify-between gap-3">
                                 <div>
-                                    @if($firstVariant)
+                                    @if(!$product->is_donation_or_bill_pay && $firstVariant)
                                         @php
                                             $price = $userType == 2 ? $firstVariant->wholesale_price : $firstVariant->public_price;
                                             $onSale = $userType == 1 && $firstVariant->on_sale && $firstVariant->sale_price > 0;
@@ -425,7 +416,9 @@
                                         @endif
                                     @endif
                                 </div>
-                                @if($firstVariant && $inStock)
+                                @if($product->is_donation_or_bill_pay)
+                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all">@label('catalog.select_options', 'Select Options')</a>
+                                @elseif($firstVariant && $inStock)
                                     <button wire:click="buyNow({{ $firstVariant->id }})" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all">@label('catalog.buy_now', 'Buy Now')</button>
                                 @else
                                     <span class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">@label('catalog.out_of_stock', 'Out of Stock')</span>
@@ -465,21 +458,25 @@
                                 @endif
                             </div>
                             <div class="flex items-center gap-4 shrink-0">
-                                <div class="text-right">
-                                    @if($firstVariant)
-                                        @php
-                                            $price = $userType == 2 ? $firstVariant->wholesale_price : $firstVariant->public_price;
-                                            $onSale = $userType == 1 && $firstVariant->on_sale && $firstVariant->sale_price > 0;
-                                        @endphp
-                                        @if($onSale)
-                                            <span class="block text-lg font-extrabold text-rose-600 dark:text-rose-400">{{ $currencySymbol }}{{ number_format($firstVariant->sale_price, 2) }}</span>
-                                            <span class="block text-xs text-slate-400 line-through font-semibold">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
-                                        @else
-                                            <span class="block text-lg font-extrabold text-slate-900 dark:text-white">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
+                                @if(!$product->is_donation_or_bill_pay)
+                                    <div class="text-right">
+                                        @if($firstVariant)
+                                            @php
+                                                $price = $userType == 2 ? $firstVariant->wholesale_price : $firstVariant->public_price;
+                                                $onSale = $userType == 1 && $firstVariant->on_sale && $firstVariant->sale_price > 0;
+                                            @endphp
+                                            @if($onSale)
+                                                <span class="block text-lg font-extrabold text-rose-600 dark:text-rose-400">{{ $currencySymbol }}{{ number_format($firstVariant->sale_price, 2) }}</span>
+                                                <span class="block text-xs text-slate-400 line-through font-semibold">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
+                                            @else
+                                                <span class="block text-lg font-extrabold text-slate-900 dark:text-white">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
+                                            @endif
                                         @endif
-                                    @endif
-                                </div>
-                                @if($firstVariant && $inStock)
+                                    </div>
+                                @endif
+                                @if($product->is_donation_or_bill_pay)
+                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all">@label('catalog.select_options', 'Select Options')</a>
+                                @elseif($firstVariant && $inStock)
                                     <button wire:click="buyNow({{ $firstVariant->id }})" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all">@label('catalog.buy_now', 'Buy Now')</button>
                                 @endif
                             </div>

@@ -81,11 +81,16 @@ class NavItemRenderer
             }
         }
 
-        if ($siteLabelKey !== null) {
-            return siteLabel($siteLabelKey, $translatedLabel !== '' ? $translatedLabel : $defaultFallback);
+        // If the admin provided a custom label on the NavItem itself, prioritize it!
+        if (trim($translatedLabel) !== '') {
+            return trim($translatedLabel);
         }
 
-        return $translatedLabel;
+        if ($siteLabelKey !== null) {
+            return siteLabel($siteLabelKey, $defaultFallback);
+        }
+
+        return $defaultFallback;
     }
 
     /**

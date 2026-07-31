@@ -174,17 +174,24 @@
 
                                 <div class="fi-footer">
                                     <div>
-                                        @if($defaultVariant)
+                                        @if(!$product->is_donation_or_bill_pay && $defaultVariant)
                                             <div class="fi-price">@if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}</div>
                                             @if($priceToShow < $originalPrice)
                                                 <div class="fi-price-orig">${{ number_format($originalPrice, 2) }}</div>
                                             @endif
-                                        @else
+                                        @elseif(!$product->is_donation_or_bill_pay)
                                             <span style="font-size:12px;color:#94a3b8">@label('plugin.out_of_stock', 'Out of Stock')</span>
                                         @endif
                                     </div>
 
-                                    @if($product->variants->count() === 1)
+                                    @if($product->is_donation_or_bill_pay || $product->variants->count() > 1)
+                                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-outline">
+                                            @label('plugin.options', 'Options')
+                                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                            </svg>
+                                        </a>
+                                    @else
                                         @if(!$v->download_item && $avail <= 0)
                                             <span class="fi-btn fi-btn-disabled">@label('plugin.out_of_stock', 'Out of Stock')</span>
                                         @else
@@ -195,13 +202,6 @@
                                                 </svg>
                                             </a>
                                         @endif
-                                    @else
-                                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-outline">
-                                            @label('plugin.options', 'Options')
-                                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                            </svg>
-                                        </a>
                                     @endif
                                 </div>
                             </div>

@@ -358,6 +358,121 @@ A next-generation, multi-content type search system built as a standard display 
 
 ---
 
+## 🎨 8. Global Settings & Dynamic Site Theme Customization System
+
+### 1. Overview & Navigation
+The platform provides a comprehensive, database-backed **Global Settings & Dynamic Site Theme Customization System** accessible under `/admin/settings` (`AdminSettings` Livewire component). It allows site administrators to completely customize the public storefront skin—including full-page background color, image, or video media, custom font families, Google Font/stylesheet links, granular font sizes and colors for body, paragraphs, and headings, content card borders, card shading, shop view toggles, filter pills, and pagination colors—**without editing template files or rebuilding asset bundles** (`npm run build`).
+
+- **Admin Navigation & Page Title**: Standardized across the admin workspace to **Global Settings**.
+- **Route**: `GET /admin/settings` (`admin.settings`).
+
+---
+
+### 2. Core Modules & Customization Options
+
+#### 🖼️ A. Full-Page Background Media Customization
+Configures the main public page background mode and storage parameters (`page_bg_mode`):
+
+| Mode | Option Key | Description |
+|---|---|---|
+| **Default Theme** | `default` | Uses standard Tailwind background gradients and theme defaults |
+| **Custom Background Color** | `color` | Overrides public background with a custom color picker (`page_bg_color`) |
+| **Full Page Background Image** | `image` | Renders a full-screen background image (`background-size: cover; background-attachment: fixed`) |
+| **Full Page Background Video** | `video` | Renders a fixed background `<video>` overlay (`autoplay loop muted playsinline`) |
+
+##### Media Storage Options (Image & Video)
+Supports 4 storage models matching the logo upload pattern:
+1. **Local File Upload (`local`)**: Upload custom background images or video files (`MP4`, `WebM`). Uploaded media is stored in `storage/app/public/backgrounds/...` and resolved via `asset('storage/...')`.
+2. **S3 via App Config (`s3`)**: Uses `AWS_BUCKET` and `AWS_DEFAULT_REGION` from `.env`.
+3. **Custom S3 Bucket (`custom_s3`)**: Allows entering custom S3 bucket name, S3 key path, and AWS region.
+4. **Direct URL / CDN (`url` / `cdn`)**: Accepts direct HTTP/HTTPS URLs (e.g. `https://cdn.example.com/hero-bg.mp4`).
+
+##### Background Overlay Tint & Opacity
+- **Overlay Color Picker (`page_bg_overlay_color`)**: Custom hex color picker for background tinting (default: `#000000`).
+- **Overlay Opacity Slider (`page_bg_overlay_opacity`)**: Numeric opacity slider ranging from `0.0` (transparent) to `0.95` (high contrast overlay).
+
+---
+
+#### 🔤 B. Site Typography & Font Customization
+Granular font property controls allowing independent tuning of typography scale and color across public templates:
+
+| Element | Size Key | Color Key | Description / Default |
+| Target Element | Font Family Setting | Font Size Setting | Text Color Setting |
+|---|---|---|---|
+| **Body Text** | `theme_body_font_family` | `theme_body_font_size` | `theme_body_font_color` |
+| **Paragraph Text (`<p>`)** | `theme_paragraph_font_family` | `theme_paragraph_font_size` | `theme_paragraph_font_color` |
+| **Heading 1 (`<h1>`)** | `theme_h1_font_family` | `theme_h1_font_size` | `theme_h1_font_color` |
+| **Heading 2 (`<h2>`)** | `theme_h2_font_family` | `theme_h2_font_size` | `theme_h2_font_color` |
+| **Heading 3 (`<h3>`)** | `theme_h3_font_family` | `theme_h3_font_size` | `theme_h3_font_color` |
+
+Each typography element supports its own independent `font-family` property (e.g. `'Plus Jakarta Sans', sans-serif` for body, `'Outfit', sans-serif` for headings). Google Fonts stylesheets loaded via the global Google Fonts loader (`google_fonts_url` under Appearance) apply sitewide.
+
+#### ☁️ Direct S3 Bucket Uploads & Custom Credentials
+- **Direct S3 Upload Integration**: Selecting `s3` (app `.env` configuration) or `custom_s3` (custom bucket, AWS Access Key ID, AWS Secret Access Key & region) provides a direct file upload input for Logos, Background Images, and Background Videos. Uploaded media files are stored directly into S3 buckets rather than local storage.
+- **Custom S3 Credentials & Dynamic Storage**: Matches Product Variant image upload behavior by registering dynamic S3 disks (`config(['filesystems.disks.custom_s3_...'])`), purging stale disk instances via `Storage::forgetDisk()`, and surfacing instant error toasts for AWS connection or credential issues.
+- **Direct URL Override Priority**: Entering a direct URL (`page_bg_image_url` or `page_bg_video_url`) takes immediate highest priority, overriding all other upload sources (`local`, `s3`, `custom_s3`).
+- **Reset / Clear Media Settings**: **Clear** buttons on Background Image and Background Video reset paths, URLs, S3 configurations, and switch `page_bg_mode` back to `default`.
+- **Background Video Rendering & Sticky Navigation Fix**: Body wrappers use `overflow-x-clip` rather than `overflow-x-hidden` so that CSS `position: sticky; top: 0;` remains active while background videos and overlays display seamlessly.
+- **Sticky Header Navigation Configuration Location**: Moved the Sticky Nav setting (`top_nav_sticky`) from individual dynamic menu configurations to the **Dynamic Header CSS / Layout Builder** (`/admin/header-footer-builder`) and **Global Settings / Appearance** (`/admin/settings`).
+- **Per-Page CMS Background Video (`background_video_url` / `background_video`)**: Configure background video options directly on individual CMS pages in the **Header & Background Images** tab. Per-page background video settings take highest priority, overriding global video backgrounds and per-page background images. Supports direct video URLs (MP4/WebM), local file uploads, S3 storage, and custom credentials.
+- **Admin Dashboard Demo Content Alert & Purge**: The **Demo Store Content is Active** banner and **Purge Demo Content** confirmation modal render on both `/admin/settings` and the main admin dashboard (`/admin/dashboard`) for logged-in `role_id = 3` (Admin) users whenever demo data exists.
+- **Donation Or Bill Pay Items (`is_donation_or_bill_pay`)**: Configure products as custom donation or bill pay items. Overrides standard variant prices, hides quantity selectors, locks cart item quantities to 1, and utilizes the default multilingual `@label('product.add_to_cart')` button:
+  - *Allow Customer to Enter Amount (`allow_custom_amount = true`)*: Renders a clean currency price input field with optional minimum (`custom_amount_min`) and maximum (`custom_amount_max`) amount validation rules and non-negative numeric error checks.
+  - *Preset Amounts List (`allow_custom_amount = false`)*: Accepts a comma-delimited list of preset numbers in admin (e.g. `10, 25, 50, 100, 500`) and renders an interactive amount selection menu on the product detail view.
+  - *Catalog & Plugin Results behavior*: Disables price display and direct "Buy Now" cart actions across all product card listings (shop catalog grid/list views, featured items plugin, cross-selling plugin, and related products carousel), forcing the **Select Options** / **View Options** link so customers configure their custom donation amount on the product details page.
+- **Product Page Layout 6 (`No Images | Video On Page`)**: Generic layout based on the centered layout template without the top image gallery space. Supports optional video embed shortcodes/iframes and variant video player previews below/above the buy box while keeping the buy box and full-width description centered.
+
+---
+
+#### 🃏 C. Content Area & Card Customization
+Controls container boundaries, card background colors, borders, and box-shadow depth:
+
+- **Content Area BG (`theme_content_bg_color`)**: Custom background color for main content containers.
+- **Content Card BG (`theme_card_bg_color`)**: Custom background color for content cards (`.card`, `.bg-white`).
+- **Card Border Color (`theme_card_border_color`)**: Custom border color for content cards (`.card`, `.border-slate-200`).
+- **Card Box Shadow (`theme_card_shadow`)**: Dropdown selector with 7 shading presets:
+  - `default`: Default Tailwind shadow
+  - `none`: Flat design (no shadow)
+  - `sm`: Extra subtle shadow (`0 1px 2px`)
+  - `md`: Medium shadow (`0 4px 6px`)
+  - `lg`: Large shadow (`0 10px 15px`)
+  - `xl`: Deep elevated shadow (`0 20px 25px`)
+  - `2xl`: High contrast dramatic shadow (`0 25px 50px`)
+
+---
+
+#### 🛍️ D. Storefront Element & Catalog Controls Color Customization
+Custom color pickers under the **Appearance** panel for specific interactive storefront elements:
+
+1. **Search Results View Toggle Icons (`/shop`)**: Active/Inactive background and icon colors for grid/list catalog view toggle buttons (`.btn-view-mode`).
+2. **Category Filter Pills (`/shop`)**: Background (`shop_category_pill_bg`), text/font (`shop_category_pill_text`), border (`shop_category_pill_border`), hover background (`shop_category_pill_hover_bg`), hover text/font (`shop_category_pill_hover_text`), and hover border (`shop_category_pill_hover_border`) colors for category filter tags (`.shop-category-pill`).
+3. **Brand Filter Pills (`/shop`)**: Background (`shop_brand_pill_bg`), text/font (`shop_brand_pill_text`), border (`shop_brand_pill_border`), hover background (`shop_brand_pill_hover_bg`), hover text/font (`shop_brand_pill_hover_text`), and hover border (`shop_brand_pill_hover_border`) colors for brand filter tags (`.shop-brand-pill`).
+4. **Subcategory Filter Pills (`/shop`)**: Background (`shop_subcat_pill_bg`), text/font (`shop_subcat_pill_text`), border (`shop_subcat_pill_border`), hover background (`shop_subcat_pill_hover_bg`), hover text/font (`shop_subcat_pill_hover_text`), and hover border (`shop_subcat_pill_hover_border`) colors for subcategory filter tags (`.shop-subcat-pill`).
+5. **Sitewide Button Pagination Controls**: Active box background/text, inactive box background/text, and hover background colors for pagination numbers (`nav[role="navigation"]`).
+6. **Go to Top Floating Button (`#backtop`)**: Background, hover background, and icon colors for the floating back-to-top button.
+
+---
+
+### 3. Architectural Isolation & Scoping Rules
+
+#### Public-Only Scoping
+To ensure the admin workspace remains clean, high-contrast, and performant for operations teams:
+- Dynamic theme styles and background media containers are compiled inside `<x-site-theme-styles />` and `<x-header-footer-styles />` within `resources/views/layouts/public.blade.php`.
+- The admin dashboard layout (`resources/views/layouts/app.blade.php`) remains completely isolated, preserving standard dashboard chrome for users with `role_id` 3 or 4.
+
+#### Cache Flushing & Automatic Compilation
+When settings are saved in `/admin/settings`:
+1. `CmsSetting::setMany([...])` bulk upserts key-value records in the `cms_settings` table.
+2. `HeaderFooterCssManager::clearCompiledCssCache()` is executed.
+3. `Cache::forget('cms_settings_all')` and `Cache::flush()` clear setting caches instantly.
+
+#### Helper Resolution Methods (`CmsSetting`)
+- `CmsSetting::resolveLogoUrl()`: Resolves logo type (`url`, `svg`, `local`, `s3`, `custom_s3`, `cdn`).
+- `CmsSetting::resolvePageBgImageUrl()`: Resolves full background image URL.
+- `CmsSetting::resolvePageBgVideoUrl()`: Resolves full background video URL.
+
+---
+
 ## 🎛️ 9. Advanced Search Filtering System (Shop Catalog)
 
 A powerful, multi-attribute product discovery and drill-down engine for the shop storefront (`/shop`). Configurable globally via Admin Settings (**OFF by default**), it enables customers to refine product lists by multiple brands, hierarchical categories/subcategories, interactive price range sliders, and dynamic JSON variant attributes.

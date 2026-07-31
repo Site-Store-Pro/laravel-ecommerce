@@ -1,3 +1,3 @@
 <style id="header-footer-builder-styles">
-{!! \App\Services\HeaderFooterCssManager::compileCss() !!}
+{!! \App\Services\HeaderFooterCssManager::generateCompiledCss() !!}
 </style>

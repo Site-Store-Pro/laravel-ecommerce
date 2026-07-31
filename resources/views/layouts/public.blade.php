@@ -59,13 +59,40 @@
         {{-- flag-icons: renders country code flags (us, mx, fr…) as SVG images on all browsers/OS --}}
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
     </head>
-    <body class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white p-0 m-0 overflow-x-hidden max-w-full">
-        <div class="min-h-screen bg-[#f8fafc] dark:bg-slate-900 flex flex-col p-0 m-0 w-full">
-            {{-- Decorative Background Glows (overflow-hidden here only, so it doesn't clip fixed modals) --}}
-            <div class="pointer-events-none fixed inset-0 overflow-hidden -z-10" aria-hidden="true">
-                <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl"></div>
-                <div class="absolute top-1/4 right-1/4 w-96 h-96 bg-violet-200/20 dark:bg-violet-900/10 rounded-full blur-3xl"></div>
+    @php
+        $cmsPageModel   = $page ?? null;
+        $cmsPageVidUrl  = ($cmsPageModel && method_exists($cmsPageModel, 'resolveBackgroundVideoUrl')) ? $cmsPageModel->resolveBackgroundVideoUrl() : null;
+        $globalBgMode   = \App\Models\CmsSetting::get('page_bg_mode', 'default');
+        $globalBgVidUrl = \App\Models\CmsSetting::resolvePageBgVideoUrl();
+        $overlayColor   = \App\Models\CmsSetting::get('page_bg_overlay_color', '#000000');
+        $overlayOpacity = \App\Models\CmsSetting::get('page_bg_overlay_opacity', '0');
+
+        $activeVidUrl   = $cmsPageVidUrl ?: ($globalBgMode === 'video' ? $globalBgVidUrl : null);
+        $pageBgMode     = $activeVidUrl ? 'video' : $globalBgMode;
+    @endphp
+    <body class="font-sans antialiased {{ $pageBgMode === 'default' ? 'bg-slate-50 dark:bg-slate-900' : 'bg-transparent' }} text-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white p-0 m-0 overflow-x-clip max-w-full">
+
+        @if($activeVidUrl)
+            <div class="fixed inset-0 overflow-hidden -z-20 pointer-events-none">
+                <video src="{{ $activeVidUrl }}" autoplay loop muted playsinline class="w-full h-full object-cover">
+                    <source src="{{ $activeVidUrl }}" type="video/mp4">
+                    <source src="{{ $activeVidUrl }}" type="video/webm">
+                </video>
             </div>
+        @endif
+
+        @if(in_array($pageBgMode, ['image', 'video']) && floatval($overlayOpacity) > 0)
+            <div class="fixed inset-0 -z-10 pointer-events-none" style="background-color: {{ $overlayColor }}; opacity: {{ $overlayOpacity }};"></div>
+        @endif
+
+        <div class="min-h-screen {{ $pageBgMode === 'default' ? 'bg-[#f8fafc] dark:bg-slate-900' : 'bg-transparent' }} flex flex-col p-0 m-0 w-full relative">
+            @if($pageBgMode === 'default')
+                {{-- Decorative Background Glows --}}
+                <div class="pointer-events-none fixed inset-0 overflow-hidden -z-10" aria-hidden="true">
+                    <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl"></div>
+                    <div class="absolute top-1/4 right-1/4 w-96 h-96 bg-violet-200/20 dark:bg-violet-900/10 rounded-full blur-3xl"></div>
+                </div>
+            @endif
 
             <div class="flex-1 flex flex-col justify-between p-0 m-0 w-full">
                 <div class="p-0 m-0 w-full">

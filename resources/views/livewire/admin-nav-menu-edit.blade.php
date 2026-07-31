@@ -447,12 +447,7 @@
 
             {{-- Options row --}}
             <div class="space-y-4">
-                <div class="flex flex-wrap gap-6">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input wire:model.live="menuSticky" type="checkbox"
-                               class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
-                        <span class="text-sm text-slate-700 dark:text-slate-300">Sticky nav (fixed on scroll)</span>
-                    </label>
+                <div class="flex flex-wrap gap-6 items-center">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input wire:model="menuShowLogo" type="checkbox"
                                class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
@@ -460,13 +455,11 @@
                     </label>
                 </div>
 
-                <div x-show="$wire.menuSticky" class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600 space-y-2">
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
-                        Main Body Top Offset (Sticky Menu Compensation)
-                    </label>
-                    <input wire:model="stickyBodyOffset" type="text" placeholder="e.g. 70px, 4rem, 0px"
-                           class="w-full sm:w-72 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono" />
-                    <p class="text-xs text-slate-400">Specify an optional top padding/margin offset for main body content to prevent layout overlap under sticky navigation.</p>
+                <div class="p-3 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-xl border border-indigo-100 dark:border-indigo-800 text-xs text-indigo-900 dark:text-indigo-200 flex items-center justify-between gap-3">
+                    <span class="font-medium">ℹ️ <strong>Sticky Header Navigation</strong> is configured sitewide under Dynamic Header CSS / Layout Builder &amp; Appearance Settings.</span>
+                    <a href="{{ route('admin.header-footer-builder') }}" class="px-3 py-1 bg-indigo-600 text-white rounded-lg font-bold text-2xs uppercase tracking-wider hover:bg-indigo-700 transition shrink-0">
+                        Header CSS Settings →
+                    </a>
                 </div>
             </div>
 

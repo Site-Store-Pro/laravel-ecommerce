@@ -56,6 +56,15 @@ class CmsPage extends Model
         'media_image_secret_access_key',
         'featured_image_cdn_url',
         'media_image_cdn_url',
+        'background_video',
+        'background_video_url',
+        'background_video_type',
+        'background_video_s3',
+        'background_video_region',
+        'background_video_bucket_name',
+        'background_video_access_key_id',
+        'background_video_secret_access_key',
+        'background_video_cdn_url',
         'alternate_page_title',
         'page_title_alignment',
         'page_title_css',
@@ -92,6 +101,7 @@ class CmsPage extends Model
         'custom_sorting' => 'float',
         'featured_image_s3' => 'integer',
         'media_image_s3' => 'integer',
+        'background_video_s3' => 'integer',
     ];
 
     protected static function booted(): void
@@ -308,5 +318,46 @@ class CmsPage extends Model
     public function getParsedRightColAttribute(): string
     {
         return \App\Services\ContentParserService::parse($this->right_col);
+    }
+
+    /**
+     * Resolve the background video URL for this CMS page.
+     * Direct URL overrides all other video upload sources if provided.
+     */
+    public function resolveBackgroundVideoUrl(): ?string
+    {
+        $cdnUrl = trim($this->background_video_url ?? '');
+
+        // Direct URL override takes highest priority
+        if (!empty($cdnUrl)) {
+            return $cdnUrl;
+        }
+
+        $path = trim($this->background_video ?? '');
+        if (empty($path)) {
+            return null;
+        }
+
+        if ($this->background_video_cdn_url || config('app.cdn_url')) {
+            $cdn = $this->background_video_cdn_url ?: config('app.cdn_url');
+            return rtrim($cdn, '/') . '/' . ltrim($path, '/');
+        }
+
+        $s3Type = (int) ($this->background_video_s3 ?? 0);
+        if ($s3Type === 0) {
+            return asset('storage/' . ltrim($path, '/'));
+        } elseif ($s3Type === 1) {
+            $bucket = config('filesystems.disks.s3.bucket', '');
+            $region = config('filesystems.disks.s3.region', 'us-east-1');
+            return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+        } elseif ($s3Type === 2) {
+            $bucket = $this->background_video_bucket_name;
+            $region = $this->background_video_region ?: 'us-east-1';
+            if ($bucket) {
+                return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+            }
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
     }
 }

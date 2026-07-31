@@ -42,6 +42,11 @@ class Product extends Model
         'show_item_total',
         'variant_label',
         'product_video_embed',
+        'is_donation_or_bill_pay',
+        'allow_custom_amount',
+        'custom_amount_min',
+        'custom_amount_max',
+        'custom_amount_options',
     ];
 
     /** Fields automatically translated when translations relation is loaded. */
@@ -67,6 +72,11 @@ class Product extends Model
         'show_item_total' => 'integer',
         'variant_label' => 'string',
         'product_video_embed' => 'string',
+        'is_donation_or_bill_pay' => 'boolean',
+        'allow_custom_amount' => 'boolean',
+        'custom_amount_min' => 'float',
+        'custom_amount_max' => 'float',
+        'custom_amount_options' => 'string',
     ];
 
     protected static function booted(): void

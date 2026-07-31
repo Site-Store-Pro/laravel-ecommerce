@@ -33,10 +33,32 @@ class PublicHeader extends Component
         $this->mobileMenuOpen = !$this->mobileMenuOpen;
     }
 
+    public function setDeviceView(string $device): void
+    {
+        if (in_array($device, ['desktop', 'tablet', 'mobile'], true)) {
+            if ($this->deviceView !== $device) {
+                $this->deviceView = $device;
+            }
+        }
+    }
+
     public function mount(): void
     {
+        $this->detectDeviceFromUserAgent();
         $this->loadCartCount();
         $this->loadDynamicNav();
+    }
+
+    private function detectDeviceFromUserAgent(): void
+    {
+        $ua = request()->header('User-Agent', '');
+        if (preg_match('/(iPad|PlayBook|Tablet|Silk|Kindle)/i', $ua)) {
+            $this->deviceView = 'tablet';
+        } elseif (preg_match('/(iPhone|iPod|Mobile|Android|BlackBerry|IEMobile|Opera Mini)/i', $ua)) {
+            $this->deviceView = 'mobile';
+        } else {
+            $this->deviceView = 'desktop';
+        }
     }
 
     private function loadCartCount(): void
@@ -86,8 +108,17 @@ class PublicHeader extends Component
     {
         // Load active header blocks
         $hasBlocksTable = Schema::hasTable('cms_builder_blocks');
-        $device         = in_array($this->deviceView, ['desktop', 'tablet', 'mobile']) ? $this->deviceView : 'desktop';
-        $headerBlocks   = $hasBlocksTable ? CmsBuilderBlock::header()->activeForDevice($device)->sortForDevice($device)->get() : collect();
+        $singleHeader   = (\App\Models\CmsSetting::get('single_header_config', '0') === '1');
+        $device         = $singleHeader ? 'desktop' : (in_array($this->deviceView, ['desktop', 'tablet', 'mobile']) ? $this->deviceView : 'desktop');
+        $headerBlocks   = $hasBlocksTable ? CmsBuilderBlock::header()->where(function($q) use ($singleHeader) {
+            if ($singleHeader) {
+                $q->where('is_active_desktop', true);
+            } else {
+                $q->where('is_active_desktop', true)
+                  ->orWhere('is_active_tablet', true)
+                  ->orWhere('is_active_mobile', true);
+            }
+        })->sortForDevice($device)->get() : collect();
 
         // Check if fallback to default navigation is needed
         $useFallback = !$hasBlocksTable || $headerBlocks->isEmpty();
@@ -102,8 +133,9 @@ class PublicHeader extends Component
         }
 
         // Check if sticky navigation is enabled for full header
-        $isSticky = $this->navMenu ? (bool) $this->navMenu->sticky : \App\Models\CmsSetting::isEnabled('top_nav_sticky');
-        $cssVars  = HeaderFooterCssManager::getActiveVariables();
+        $stickySetting = \App\Models\CmsSetting::get('top_nav_sticky', '1');
+        $isSticky      = in_array($stickySetting, ['1', 1, true, 'true'], true);
+        $cssVars       = HeaderFooterCssManager::getActiveVariables();
 
         return view('livewire.public-header', [
             'headerBlocks' => $headerBlocks,

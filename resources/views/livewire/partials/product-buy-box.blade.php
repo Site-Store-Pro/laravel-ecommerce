@@ -16,186 +16,236 @@
         </div>
     @endif
 
-    <!-- Price -->
-    <div class="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
-        <div>
-            <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">@label('product.price', 'Price')</span>
-            @if($selectedVariant)
-                @php
-                    $displayCalcPrice = $vatInclusive && $merchantVatRate > 0
-                        ? $this->calculatedPrice * (1 + $merchantVatRate / 100)
-                        : $this->calculatedPrice;
-                    $displayRegPrice  = $vatInclusive && $merchantVatRate > 0
-                        ? $this->regularPrice * (1 + $merchantVatRate / 100)
-                        : $this->regularPrice;
-                @endphp
-                <div class="flex items-center gap-2 mt-1 flex-wrap">
-                    @if($displayCalcPrice < $displayRegPrice)
-                        <span class="text-3xl font-extrabold text-slate-900">{{ $currencySymbol }}{{ number_format($displayCalcPrice, 2) }}</span>
-                        @if($this->hasQtyDiscount)
-                            <span class="text-sm font-semibold text-slate-500">@label('product.each', '/each')</span>
-                        @endif
-                        <span class="text-lg text-slate-400 line-through font-medium">{{ $currencySymbol }}{{ number_format($displayRegPrice, 2) }}</span>
-                        <span class="text-xs font-bold text-red-500 bg-red-50 border border-red-100 rounded-lg px-2 py-0.5 whitespace-nowrap">
-                            @label('product.save', 'Save') {{ $currencySymbol }}{{ number_format($displayRegPrice - $displayCalcPrice, 2) }}!
-                        </span>
-                    @else
-                        <span class="text-3xl font-extrabold text-slate-900">{{ $currencySymbol }}{{ number_format($displayCalcPrice, 2) }}</span>
-                        @if($this->hasQtyDiscount)
-                            <span class="text-sm font-semibold text-slate-500">@label('product.each', '/each')</span>
-                        @endif
-                    @endif
-                    @php
-                        $variantFee = $userType == 2 ? $selectedVariant->wholesale_variant_fee : $selectedVariant->variant_fee;
-                        $displayVarFee = $vatInclusive && $merchantVatRate > 0
-                            ? $variantFee * (1 + $merchantVatRate / 100)
-                            : $variantFee;
-                    @endphp
-                    @if($displayVarFee > 0)
-                        <span class="text-[10px] text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-0.5 font-bold whitespace-nowrap">
-                            + {{ $currencySymbol }}{{ number_format($displayVarFee, 2) }} @label('product.selection_fee', 'selection fee included')
-                        </span>
+    <!-- Price / Donation & Bill Pay Section -->
+    @if($product->is_donation_or_bill_pay)
+        <div class="mt-6 p-6 bg-slate-50 rounded-3xl border border-slate-200 space-y-4 shadow-sm">
+            @if($product->allow_custom_amount)
+                <div class="space-y-2">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-lg font-bold text-slate-500">{{ $currencySymbol }}</span>
+                        <input type="number" step="0.01" min="0.01" wire:model.live="custom_amount"
+                               placeholder="0.00"
+                               class="w-full pl-8 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-2xl font-extrabold text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+                    </div>
+                    @if($product->custom_amount_min || $product->custom_amount_max)
+                        <p class="text-xs text-slate-600 font-semibold flex items-center gap-2">
+                            @if($product->custom_amount_min)
+                                <span>Min: {{ $currencySymbol }}{{ number_format($product->custom_amount_min, 2) }}</span>
+                            @endif
+                            @if($product->custom_amount_min && $product->custom_amount_max)
+                                <span>•</span>
+                            @endif
+                            @if($product->custom_amount_max)
+                                <span>Max: {{ $currencySymbol }}{{ number_format($product->custom_amount_max, 2) }}</span>
+                            @endif
+                        </p>
                     @endif
                 </div>
             @else
-                <span class="text-sm text-slate-500 font-bold mt-1 block">N/A</span>
+                @php $presetOptions = $this->parsed_custom_amount_options; @endphp
+                @if(!empty($presetOptions))
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                        @foreach($presetOptions as $optVal)
+                            <button type="button"
+                                    wire:click="$set('custom_amount', '{{ $optVal }}')"
+                                    class="py-3 px-4 rounded-2xl text-sm font-extrabold border transition-all duration-150 text-center
+                                        {{ (float)$custom_amount === (float)$optVal ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20 scale-[1.02]' : 'bg-white text-slate-800 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30' }}">
+                                {{ $currencySymbol }}{{ number_format($optVal, 2) }}
+                            </button>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-lg font-bold text-slate-500">{{ $currencySymbol }}</span>
+                        <input type="number" step="0.01" min="0.01" wire:model.live="custom_amount"
+                               placeholder="0.00"
+                               class="w-full pl-8 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-2xl font-extrabold text-slate-900 focus:outline-none focus:border-indigo-500">
+                    </div>
+                @endif
+            @endif
+        </div>
+    @else
+        <!-- Price -->
+        <div class="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+            <div>
+                <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">@label('product.price', 'Price')</span>
+                @if($selectedVariant)
+                    @php
+                        $displayCalcPrice = $vatInclusive && $merchantVatRate > 0
+                            ? $this->calculatedPrice * (1 + $merchantVatRate / 100)
+                            : $this->calculatedPrice;
+                        $displayRegPrice  = $vatInclusive && $merchantVatRate > 0
+                            ? $this->regularPrice * (1 + $merchantVatRate / 100)
+                            : $this->regularPrice;
+                    @endphp
+                    <div class="flex items-center gap-2 mt-1 flex-wrap">
+                        @if($displayCalcPrice < $displayRegPrice)
+                            <span class="text-3xl font-extrabold text-slate-900">{{ $currencySymbol }}{{ number_format($displayCalcPrice, 2) }}</span>
+                            @if($this->hasQtyDiscount)
+                                <span class="text-sm font-semibold text-slate-500">@label('product.each', '/each')</span>
+                            @endif
+                            <span class="text-lg text-slate-400 line-through font-medium">{{ $currencySymbol }}{{ number_format($displayRegPrice, 2) }}</span>
+                            <span class="text-xs font-bold text-red-500 bg-red-50 border border-red-100 rounded-lg px-2 py-0.5 whitespace-nowrap">
+                                @label('product.save', 'Save') {{ $currencySymbol }}{{ number_format($displayRegPrice - $displayCalcPrice, 2) }}!
+                            </span>
+                        @else
+                            <span class="text-3xl font-extrabold text-slate-900">{{ $currencySymbol }}{{ number_format($displayCalcPrice, 2) }}</span>
+                            @if($this->hasQtyDiscount)
+                                <span class="text-sm font-semibold text-slate-500">@label('product.each', '/each')</span>
+                            @endif
+                        @endif
+                        @php
+                            $variantFee = $userType == 2 ? $selectedVariant->wholesale_variant_fee : $selectedVariant->variant_fee;
+                            $displayVarFee = $vatInclusive && $merchantVatRate > 0
+                                ? $variantFee * (1 + $merchantVatRate / 100)
+                                : $variantFee;
+                        @endphp
+                        @if($displayVarFee > 0)
+                            <span class="text-[10px] text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-0.5 font-bold whitespace-nowrap">
+                                + {{ $currencySymbol }}{{ number_format($displayVarFee, 2) }} @label('product.selection_fee', 'selection fee included')
+                            </span>
+                        @endif
+                    </div>
+                @else
+                    <span class="text-sm text-slate-500 font-bold mt-1 block">N/A</span>
+                @endif
+            </div>
+
+            @if($userType == 2)
+                <span class="px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-full border border-emerald-100">@label('product.wholesale_rate', 'Wholesale Rate')</span>
             @endif
         </div>
 
-        @if($userType == 2)
-            <span class="px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-full border border-emerald-100">@label('product.wholesale_rate', 'Wholesale Rate')</span>
-        @endif
-    </div>
-
-    <!-- Variant Selection -->
-    @if($product->variants->count() > 1)
-        @if($product->dependent_variants == 1)
-            {{-- Dynamic Drill-Down & Dependent Selectors --}}
-            @php
-                $groupedAttributes = [];
-                foreach ($product->variants as $var) {
-                    $attrs = json_decode($var->attributes, true) ?: [];
-                    foreach ($attrs as $k => $v) {
-                        $groupedAttributes[$k][] = $v;
+        <!-- Variant Selection -->
+        @if($product->variants->count() > 1)
+            @if($product->dependent_variants == 1)
+                {{-- Dynamic Drill-Down & Dependent Selectors --}}
+                @php
+                    $groupedAttributes = [];
+                    foreach ($product->variants as $var) {
+                        $attrs = json_decode($var->attributes, true) ?: [];
+                        foreach ($attrs as $k => $v) {
+                            $groupedAttributes[$k][] = $v;
+                        }
                     }
-                }
-                foreach ($groupedAttributes as $k => $vals) {
-                    $groupedAttributes[$k] = array_unique($vals);
-                }
-            @endphp
+                    foreach ($groupedAttributes as $k => $vals) {
+                        $groupedAttributes[$k] = array_unique($vals);
+                    }
+                @endphp
 
-            @if(!empty($groupedAttributes))
-                <div class="mt-8 space-y-6 bg-slate-50/50 border border-slate-100 rounded-3xl p-6">
-                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200/60 pb-2">{{ $product->variant_label ?: 'Select Option:' }}</h3>
-                    
-                    <div class="space-y-5">
-                        @foreach($groupedAttributes as $key => $values)
-                            <div>
-                                <span class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">{{ $key }}</span>
-                                <div class="flex flex-wrap gap-2">
-                                    @foreach($values as $value)
-                                        @php
-                                            // Check if this option is available under current selections of other keys
-                                            $isSelectable = false;
-                                            foreach ($product->variants as $var) {
-                                                $attrs = json_decode($var->attributes, true) ?: [];
-                                                if (!isset($attrs[$key]) || $attrs[$key] !== $value) {
-                                                    continue;
-                                                }
-                                                $matchesOthers = true;
-                                                foreach ($selectedAttributes as $otherKey => $otherValue) {
-                                                    if ($otherKey === $key || $otherValue === null) {
+                @if(!empty($groupedAttributes))
+                    <div class="mt-8 space-y-6 bg-slate-50/50 border border-slate-100 rounded-3xl p-6">
+                        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200/60 pb-2">{{ $product->variant_label ?: 'Select Option:' }}</h3>
+                        
+                        <div class="space-y-5">
+                            @foreach($groupedAttributes as $key => $values)
+                                <div>
+                                    <span class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">{{ $key }}</span>
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach($values as $value)
+                                            @php
+                                                // Check if this option is available under current selections of other keys
+                                                $isSelectable = false;
+                                                foreach ($product->variants as $var) {
+                                                    $attrs = json_decode($var->attributes, true) ?: [];
+                                                    if (!isset($attrs[$key]) || $attrs[$key] !== $value) {
                                                         continue;
                                                     }
-                                                    if (!isset($attrs[$otherKey]) || $attrs[$otherKey] !== $otherValue) {
-                                                        $matchesOthers = false;
+                                                    $matchesOthers = true;
+                                                    foreach ($selectedAttributes as $otherKey => $otherValue) {
+                                                        if ($otherKey === $key || $otherValue === null) {
+                                                            continue;
+                                                        }
+                                                        if (!isset($attrs[$otherKey]) || $attrs[$otherKey] !== $otherValue) {
+                                                            $matchesOthers = false;
+                                                            break;
+                                                        }
+                                                    }
+                                                    if ($matchesOthers) {
+                                                        $isSelectable = true;
                                                         break;
                                                     }
                                                 }
-                                                if ($matchesOthers) {
-                                                    $isSelectable = true;
-                                                    break;
-                                                }
-                                            }
-                                            $isSelected = isset($selectedAttributes[$key]) && $selectedAttributes[$key] === $value;
-                                        @endphp
-                                        <button 
-                                            type="button"
-                                            wire:click="selectAttribute('{{ $key }}', '{{ $value }}')"
-                                            @disabled(!$isSelectable)
-                                            class="px-4 py-2.5 text-xs font-bold border rounded-2xl transition duration-150 focus:outline-none 
-                                                {{ $isSelected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : '' }}
-                                                {{ !$isSelected && $isSelectable ? 'bg-white text-slate-800 border-slate-200 hover:border-indigo-300' : '' }}
-                                                {{ !$isSelectable ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50' : '' }}"
-                                        >
-                                            {{ $value }}
-                                        </button>
-                                    @endforeach
+                                                $isSelected = isset($selectedAttributes[$key]) && $selectedAttributes[$key] === $value;
+                                            @endphp
+                                            <button 
+                                                type="button"
+                                                wire:click="selectAttribute('{{ $key }}', '{{ $value }}')"
+                                                @disabled(!$isSelectable)
+                                                class="px-4 py-2.5 text-xs font-bold border rounded-2xl transition duration-150 focus:outline-none 
+                                                    {{ $isSelected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : '' }}
+                                                    {{ !$isSelected && $isSelectable ? 'bg-white text-slate-800 border-slate-200 hover:border-indigo-300' : '' }}
+                                                    {{ !$isSelectable ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50' : '' }}"
+                                            >
+                                                {{ $value }}
+                                            </button>
+                                        @endforeach
+                                    </div>
                                 </div>
-                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            @else
+                {{-- Flat options list showing each price / SKU --}}
+                <div class="mt-8">
+                    <label class="text-sm font-bold text-slate-900 block mb-3">{{ $product->variant_label ?: 'Select Option:' }}</label>
+                    <div class="space-y-3">
+                        @foreach($product->variants as $variant)
+                            @php
+                                $attrs = json_decode($variant->attributes, true) ?: [];
+                                $attrStr = collect($attrs)->map(fn($v, $k) => "$k: $v")->implode(', ');
+                            @endphp
+                            <label class="flex items-center justify-between p-4 bg-white border {{ $selectedVariantId == $variant->id ? 'border-indigo-500 ring-2 ring-indigo-500/10 bg-indigo-50/10' : 'border-slate-200' }} rounded-2xl cursor-pointer hover:border-indigo-300 transition duration-150">
+                                <div class="flex items-center gap-3">
+                                    <input type="radio" wire:model.live="selectedVariantId" name="variant" value="{{ $variant->id }}" class="text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                    <div>
+                                        <span class="text-sm font-bold text-slate-800">{{ $variant->sku }}</span>
+                                        @if($attrStr)
+                                            <span class="text-xs text-slate-400 block">{{ $attrStr }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <span class="text-sm font-extrabold text-slate-900 text-right">
+                                    @php
+                                        $varBasePrice = $userType == 2 ? $variant->wholesale_price : ($variant->on_sale && $variant->sale_price > 0 ? $variant->sale_price : $variant->public_price);
+                                        $varTotalPrice = $varBasePrice + $variant->variant_fee;
+                                        if ($vatInclusive && $merchantVatRate > 0) {
+                                            $varTotalPrice = $varTotalPrice * (1 + $merchantVatRate / 100);
+                                        }
+                                    @endphp
+                                    {{ $currencySymbol }}{{ number_format($varTotalPrice, 2) }}
+                                    @if($variant->variant_fee > 0)
+                                        <span class="text-[10px] font-bold text-indigo-500 block">+{{ $currencySymbol }}{{ number_format($variant->variant_fee * (1 + ($vatInclusive ? $merchantVatRate / 100 : 0)), 2) }} @label('product.selection_fee', 'selection fee')</span>
+                                    @endif
+                                </span>
+                            </label>
                         @endforeach
                     </div>
                 </div>
             @endif
-        @else
-            {{-- Flat options list showing each price / SKU --}}
-            <div class="mt-8">
-                <label class="text-sm font-bold text-slate-900 block mb-3">{{ $product->variant_label ?: 'Select Option:' }}</label>
-                <div class="space-y-3">
-                    @foreach($product->variants as $variant)
-                        @php
-                            $attrs = json_decode($variant->attributes, true) ?: [];
-                            $attrStr = collect($attrs)->map(fn($v, $k) => "$k: $v")->implode(', ');
-                        @endphp
-                        <label class="flex items-center justify-between p-4 bg-white border {{ $selectedVariantId == $variant->id ? 'border-indigo-500 ring-2 ring-indigo-500/10 bg-indigo-50/10' : 'border-slate-200' }} rounded-2xl cursor-pointer hover:border-indigo-300 transition duration-150">
-                            <div class="flex items-center gap-3">
-                                <input type="radio" wire:model.live="selectedVariantId" name="variant" value="{{ $variant->id }}" class="text-indigo-600 focus:ring-indigo-500 h-4 w-4">
-                                <div>
-                                    <span class="text-sm font-bold text-slate-800">{{ $variant->sku }}</span>
-                                    @if($attrStr)
-                                        <span class="text-xs text-slate-400 block">{{ $attrStr }}</span>
-                                    @endif
-                                </div>
-                            </div>
-                            <span class="text-sm font-extrabold text-slate-900 text-right">
-                                @php
-                                    $varBasePrice = $userType == 2 ? $variant->wholesale_price : ($variant->on_sale && $variant->sale_price > 0 ? $variant->sale_price : $variant->public_price);
-                                    $varTotalPrice = $varBasePrice + $variant->variant_fee;
-                                    if ($vatInclusive && $merchantVatRate > 0) {
-                                        $varTotalPrice = $varTotalPrice * (1 + $merchantVatRate / 100);
-                                    }
-                                @endphp
-                                {{ $currencySymbol }}{{ number_format($varTotalPrice, 2) }}
-                                @if($variant->variant_fee > 0)
-                                    <span class="text-[10px] font-bold text-indigo-500 block">+{{ $currencySymbol }}{{ number_format($variant->variant_fee * (1 + ($vatInclusive ? $merchantVatRate / 100 : 0)), 2) }} @label('product.selection_fee', 'selection fee')</span>
-                                @endif
-                            </span>
-                        </label>
-                    @endforeach
-                </div>
+        @endif
+
+        <!-- Stock Levels -->
+        @if($selectedVariant && !$selectedVariant->download_item && !$product->hide_inventory_levels)
+            <div class="mt-6 flex items-center gap-2">
+                @php
+                    $stock = $selectedVariant->inventory ? ($selectedVariant->inventory->quantity_available - $selectedVariant->inventory->reserved_stock) : 0;
+                @endphp
+                @if($stock > 0)
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <span class="text-xs text-slate-500 font-semibold">{{ $stock }} @label('product.in_stock', 'in stock')</span>
+                @else
+                    <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                    <span class="text-xs text-red-500 font-bold">@label('product.out_of_stock', 'Out of stock')</span>
+                @endif
+            </div>
+        @elseif($selectedVariant && $selectedVariant->download_item)
+            <div class="mt-6 flex items-center gap-2">
+                <span class="h-2 w-2 rounded-full bg-indigo-500"></span>
+                <span class="text-xs text-indigo-600 font-bold">{{ $selectedVariant->download_label ?: siteLabel('product.digital_item', 'Digital Item (Instant Download)') }}</span>
             </div>
         @endif
-    @endif
-
-    <!-- Stock Levels -->
-    @if($selectedVariant && !$selectedVariant->download_item && !$product->hide_inventory_levels)
-        <div class="mt-6 flex items-center gap-2">
-            @php
-                $stock = $selectedVariant->inventory ? ($selectedVariant->inventory->quantity_available - $selectedVariant->inventory->reserved_stock) : 0;
-            @endphp
-            @if($stock > 0)
-                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                <span class="text-xs text-slate-500 font-semibold">{{ $stock }} @label('product.in_stock', 'in stock')</span>
-            @else
-                <span class="h-2 w-2 rounded-full bg-red-500"></span>
-                <span class="text-xs text-red-500 font-bold">@label('product.out_of_stock', 'Out of stock')</span>
-            @endif
-        </div>
-    @elseif($selectedVariant && $selectedVariant->download_item)
-        <div class="mt-6 flex items-center gap-2">
-            <span class="h-2 w-2 rounded-full bg-indigo-500"></span>
-            <span class="text-xs text-indigo-600 font-bold">{{ $selectedVariant->download_label ?: siteLabel('product.digital_item', 'Digital Item (Instant Download)') }}</span>
-        </div>
     @endif
 </div>
 
@@ -333,10 +383,10 @@
 @endif
 
 <!-- Quantity & Add to Cart -->
-@if($selectedVariant && ($selectedVariant->download_item || ($selectedVariant->inventory && ($selectedVariant->inventory->quantity_available - $selectedVariant->inventory->reserved_stock) > 0)))
+@if($product->is_donation_or_bill_pay || ($selectedVariant && ($selectedVariant->download_item || ($selectedVariant->inventory && ($selectedVariant->inventory->quantity_available - $selectedVariant->inventory->reserved_stock) > 0))))
     <div id="add-to-cart" class="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-3">
         <div class="flex items-center gap-4">
-            @if($product->max_qty != 1)
+            @if($product->max_qty != 1 && !$product->is_donation_or_bill_pay)
                 <div class="flex flex-col w-28 shrink-0">
                     <label class="sr-only">@label('product.quantity', 'Quantity')</label>
                     <input type="number" min="1" step="1" wire:model.live="quantity" class="w-full text-center py-3 bg-slate-50 border @error('quantity') border-red-500 @else border-slate-200 @enderror rounded-2xl focus:outline-none focus:border-indigo-500 text-slate-800 font-bold">
@@ -345,7 +395,8 @@
                     @enderror
                 </div>
             @endif
-            <button wire:click="addToCart" wire:loading.attr="disabled" wire:target="addToCart" class="flex-1 py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-md hover:scale-[1.01] transition duration-150 flex items-center justify-center gap-2">
+            <button wire:click="addToCart" wire:loading.attr="disabled" wire:target="addToCart"
+                    class="flex-1 py-3.5 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-2xl shadow-md hover:scale-[1.01] transition duration-150 flex items-center justify-center gap-2">
                 <svg wire:loading.remove wire:target="addToCart" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
@@ -353,7 +404,9 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span wire:loading.remove wire:target="addToCart">@label('product.add_to_cart', 'Add to Cart')</span>
+                <span wire:loading.remove wire:target="addToCart">
+                    @label('product.add_to_cart', 'Add to Cart')
+                </span>
                 <span wire:loading wire:target="addToCart">@label('product.adding', 'Adding...')</span>
             </button>
         </div>

@@ -78,8 +78,8 @@ class FeaturedItemsWidget extends Component
         $variant = ProductVariant::with(['inventory', 'product.fields'])->findOrFail($variantId);
         $product = $variant->product;
 
-        // If product has custom fields → redirect to full product page
-        if ($product && $product->fields->isNotEmpty()) {
+        // If product has custom fields or is a donation item → redirect to full product page
+        if ($product && ($product->fields->isNotEmpty() || $product->is_donation_or_bill_pay)) {
             return redirect()->route('shop.product', $product->seo_slug);
         }
 

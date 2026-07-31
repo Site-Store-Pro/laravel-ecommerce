@@ -63,8 +63,10 @@ class AdminHeaderFooterBuilder extends Component
     public bool $newIsActiveTablet = true;
     public bool $newIsActiveMobile = true;
 
-    // CSS Manager state
+    // CSS Manager & Layout Config state
     public array $cssVars = [];
+    public bool $singleHeaderConfig = false;
+    public bool $topNavSticky = true;
 
     // Shortcode assistant data
     public array $listMenus = [];
@@ -85,6 +87,72 @@ class AdminHeaderFooterBuilder extends Component
     private function ensureDefaultBlocksExist(): void
     {
         if (\Illuminate\Support\Facades\Schema::hasTable('cms_builder_blocks')) {
+            CmsBuilderBlock::firstOrCreate(
+                ['target_element' => 'site_header_container', 'section_type' => 'header'],
+                [
+                    'title'             => 'Main Site Header Bar',
+                    'type'              => 1,
+                    'is_placeholder'    => false,
+                    'sort_desktop'      => 1,
+                    'sort_tablet'       => 1,
+                    'sort_mobile'       => 1,
+                    'is_active_desktop' => true,
+                    'is_active_tablet'  => true,
+                    'is_active_mobile'  => true,
+                ]
+            );
+
+            CmsBuilderBlock::firstOrCreate(
+                ['target_element' => 'header_top_bar', 'section_type' => 'header'],
+                [
+                    'title'             => 'Header Top Bar Columns Row',
+                    'type'              => 1,
+                    'is_placeholder'    => false,
+                    'sort_desktop'      => 0,
+                    'sort_tablet'       => 0,
+                    'sort_mobile'       => 0,
+                    'is_active_desktop' => true,
+                    'is_active_tablet'  => true,
+                    'is_active_mobile'  => true,
+                ]
+            );
+
+            CmsBuilderBlock::firstOrCreate(
+                ['target_element' => 'header_col1', 'section_type' => 'header'],
+                [
+                    'title'             => 'Header Column #1 (Left Slot)',
+                    'type'              => 2,
+                    'is_placeholder'    => false,
+                    'sort_desktop'      => 1,
+                    'sort_tablet'       => 1,
+                    'sort_mobile'       => 1,
+                    'content_desktop'   => '',
+                    'content_tablet'    => '',
+                    'content_mobile'    => '',
+                    'is_active_desktop' => true,
+                    'is_active_tablet'  => true,
+                    'is_active_mobile'  => true,
+                ]
+            );
+
+            CmsBuilderBlock::firstOrCreate(
+                ['target_element' => 'header_col2', 'section_type' => 'header'],
+                [
+                    'title'             => 'Header Column #2 (Right Slot)',
+                    'type'              => 2,
+                    'is_placeholder'    => false,
+                    'sort_desktop'      => 2,
+                    'sort_tablet'       => 2,
+                    'sort_mobile'       => 2,
+                    'content_desktop'   => '',
+                    'content_tablet'    => '',
+                    'content_mobile'    => '',
+                    'is_active_desktop' => true,
+                    'is_active_tablet'  => true,
+                    'is_active_mobile'  => true,
+                ]
+            );
+
             CmsBuilderBlock::firstOrCreate(
                 ['target_element' => 'header_features', 'section_type' => 'header'],
                 [
@@ -493,6 +561,19 @@ class AdminHeaderFooterBuilder extends Component
     public function loadCssVars(): void
     {
         $this->cssVars = HeaderFooterCssManager::getActiveVariables();
+        $this->singleHeaderConfig = (\App\Models\CmsSetting::get('single_header_config', '0') === '1');
+        $this->topNavSticky = in_array(\App\Models\CmsSetting::get('top_nav_sticky', '1'), ['1', 1, true, 'true'], true);
+    }
+
+    public function toggleSingleHeaderConfig(): void
+    {
+        $this->singleHeaderConfig = !$this->singleHeaderConfig;
+        \App\Models\CmsSetting::set('single_header_config', $this->singleHeaderConfig ? '1' : '0');
+        HeaderFooterCssManager::clearCache();
+        $this->refreshLivePreview();
+        session()->flash('message', $this->singleHeaderConfig 
+            ? 'Single Responsive Header mode enabled. Single layout applies responsively with top navigation on Desktop (≥ 1024px) and hamburger drawer menu on Tablet & Mobile (≤ 1023px).' 
+            : 'Multi-Device Header Layout Mode enabled. Customize Desktop, Tablet, and Mobile layouts independently.');
     }
 
     public function saveCssVars(): void
@@ -510,6 +591,9 @@ class AdminHeaderFooterBuilder extends Component
             $this->cssVars['footer_bg_image_url'] = asset('storage/' . $path);
             $this->footerBgFile = null;
         }
+
+        \App\Models\CmsSetting::set('top_nav_sticky', $this->topNavSticky ? '1' : '0');
+        $this->cssVars['top_nav_sticky'] = $this->topNavSticky ? '1' : '0';
 
         HeaderFooterCssManager::saveVariables($this->cssVars);
         $this->refreshLivePreview();

@@ -8,7 +8,14 @@ use Livewire\Component;
 
 class PublicBrandsMenu extends Component
 {
-    public ?string $label = 'Brands';
+    public ?string $label = null;
+
+    public function mount(?string $label = null): void
+    {
+        if ($label !== null && trim($label) !== '') {
+            $this->label = trim($label);
+        }
+    }
 
     public function render(): View
     {

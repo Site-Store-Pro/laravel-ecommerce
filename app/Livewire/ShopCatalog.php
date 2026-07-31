@@ -339,7 +339,7 @@ class ShopCatalog extends Component
         $variant = ProductVariant::with(['inventory', 'product.fields'])->findOrFail($variantId);
         $product = $variant->product;
 
-        if ($product && $product->fields->isNotEmpty()) {
+        if ($product && ($product->fields->isNotEmpty() || $product->is_donation_or_bill_pay)) {
             return redirect()->route('shop.product', $product->seo_slug);
         }
 

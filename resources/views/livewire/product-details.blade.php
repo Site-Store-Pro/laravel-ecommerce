@@ -158,6 +158,27 @@
                 </div>
                 @break
 
+            @case(6)
+                {{-- Layout 6: No Images | Video On Page — Centered layout without top gallery --}}
+                <div class="space-y-8">
+                    <div class="bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm space-y-8">
+                        @if($product->product_video_embed)
+                            <div class="max-w-4xl mx-auto w-full">
+                                {!! $product->parsed_video_embed !!}
+                            </div>
+                        @endif
+                        <div class="max-w-2xl mx-auto flex flex-col items-stretch">
+                            @include('livewire.partials.product-buy-box')
+                            @include('livewire.partials.product-video-player')
+                        </div>
+                    </div>
+                    {{-- Full-width description below --}}
+                    <div class="bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm">
+                        @include('livewire.partials.product-description')
+                    </div>
+                </div>
+                @break
+
             @default
                 {{-- Right Side Images (Default) — description full-width below --}}
                 <div class="space-y-8">
@@ -194,13 +215,13 @@
                     $price = ($rv->on_sale && $rv->sale_price > 0 && $userType != 2) ? $rv->sale_price : $base;
                 }
                 return [
-                    'title'   => $rp->title,
-                    'desc'    => $rp->parsed_short_description,
-                    'thumb'   => $thumbUrl,
-                    'price'   =>  number_format($price, 2),
-                    #'price'   => $currencySymbol . number_format($price, 2),
-                    'url'     => route('shop.product', $rp->seo_slug),
-                    'digital' => $rv ? (bool) $rv->download_item : false,
+                    'title'       => $rp->title,
+                    'desc'        => $rp->parsed_short_description,
+                    'thumb'       => $thumbUrl,
+                    'price'       => number_format($price, 2),
+                    'url'         => route('shop.product', $rp->seo_slug),
+                    'digital'     => $rv ? (bool) $rv->download_item : false,
+                    'is_donation' => (bool) $rp->is_donation_or_bill_pay,
                 ];
             })->values()->toJson(JSON_HEX_APOS | JSON_HEX_QUOT);
 
@@ -299,8 +320,10 @@
                             <h3 class="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug" x-text="card.title"></h3>
                             <p class="text-xs text-slate-400 mt-1.5 line-clamp-2 flex-1" x-text="card.desc"></p>
                             <div class="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
-                                <span class="text-sm font-extrabold text-slate-900" x-text="card.price"></span>
-                                <span class="text-[11px] font-bold text-indigo-600 group-hover:text-indigo-700 flex items-center gap-0.5">
+                                <template x-if="!card.is_donation">
+                                    <span class="text-sm font-extrabold text-slate-900" x-text="'$' + card.price"></span>
+                                </template>
+                                <span class="text-[11px] font-bold text-indigo-600 group-hover:text-indigo-700 flex items-center gap-0.5 ml-auto">
                                     @label('product.view', 'View')
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
                                 </span>

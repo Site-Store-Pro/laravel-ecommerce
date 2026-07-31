@@ -142,19 +142,36 @@
     @if($activeTab === 'header' || $activeTab === 'footer')
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             {{-- Device Selection --}}
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Device Mode:</span>
-                <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl">
-                    <button wire:click="setDeviceView('desktop')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'desktop' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
-                        🖥️ Desktop (Wide)
-                    </button>
-                    <button wire:click="setDeviceView('tablet')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'tablet' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
-                        📱 Tablet (768px)
-                    </button>
-                    <button wire:click="setDeviceView('mobile')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'mobile' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
-                        📱 Mobile (375px)
-                    </button>
+            <div class="flex items-center gap-3 flex-wrap">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Device Mode:</span>
+                    <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl">
+                        <button wire:click="setDeviceView('desktop')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'desktop' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
+                            🖥️ Desktop (&ge; 1024px)
+                        </button>
+                        <button wire:click="setDeviceView('tablet')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'tablet' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
+                            📱 Tablet (768px - 1023px)
+                        </button>
+                        <button wire:click="setDeviceView('mobile')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'mobile' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
+                            📱 Mobile (&lt; 768px)
+                        </button>
+                    </div>
                 </div>
+
+                {{-- Single Responsive Header Override Toggle --}}
+                @if($activeTab === 'header')
+                    <div class="flex items-center gap-2 border-l border-slate-200 dark:border-slate-700 pl-3">
+                        <label for="singleHeaderToggle" class="text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer flex items-center gap-2">
+                            <span>Single Responsive Header:</span>
+                            <button type="button" wire:click="toggleSingleHeaderConfig" id="singleHeaderToggle" class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none {{ $singleHeaderConfig ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600' }}" role="switch" aria-checked="{{ $singleHeaderConfig ? 'true' : 'false' }}">
+                                <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $singleHeaderConfig ? 'translate-x-4' : 'translate-x-0' }}"></span>
+                            </button>
+                        </label>
+                        <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-full {{ $singleHeaderConfig ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400' }}">
+                            {{ $singleHeaderConfig ? 'ON (Single Responsive Header)' : 'OFF (Multi-Device Config)' }}
+                        </span>
+                    </div>
+                @endif
             </div>
 
             {{-- Control Actions --}}
@@ -173,10 +190,19 @@
     @if($activeTab === 'header' || $activeTab === 'footer')
         <div class="space-y-6">
 
+            {{-- Single Responsive Header Mode Banner --}}
+            @if($activeTab === 'header' && $singleHeaderConfig)
+                <div class="p-3.5 bg-indigo-50/90 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-2xl flex items-center gap-3 text-indigo-900 dark:text-indigo-200 text-xs font-medium shadow-sm">
+                    <svg class="w-5 h-5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span><strong>Single Responsive Header is Active:</strong> A single unified header layout is configured. Top navigation displays on Desktop (&ge; 1024px) and automatically collapses into the hamburger menu &amp; mobile menu drawer on Tablet &amp; Mobile (&le; 1023px) for optimal speed and streamlined setup.</span>
+                </div>
+            @endif
+
             {{-- 1. Inactive / Available Elements Pool Tray --}}
             @php
+                $evalDevice = ($activeTab === 'header' && $singleHeaderConfig) ? 'desktop' : $deviceView;
                 $currentBlocks = $activeTab === 'header' ? $headerBlocks : $footerBlocks;
-                $inactiveBlocks = $currentBlocks->filter(fn($b) => !$b->isActiveForDevice($deviceView));
+                $inactiveBlocks = $currentBlocks->filter(fn($b) => !$b->isActiveForDevice($evalDevice));
             @endphp
             @if($inactiveBlocks->isNotEmpty())
                 <div class="bg-amber-50/70 dark:bg-amber-950/20 border-2 border-dashed border-amber-300 dark:border-amber-700/60 rounded-2xl p-4">
@@ -218,16 +244,29 @@
                         </p>
                     </div>
 
-                    {{-- Search Placement Toolbar Control --}}
+                    {{-- Search & Navigation Placement Toolbar Control --}}
                     @if($activeTab === 'header')
                         <div class="flex items-center gap-4 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 flex-wrap">
                             @if($deviceView === 'desktop')
+                                @php $navPlacement = $cssVars['nav_placement'] ?? 'standalone'; @endphp
                                 <div class="flex items-center gap-2">
+                                    <span class="text-indigo-600 dark:text-indigo-400 font-extrabold uppercase text-2xs tracking-wider">Navigation Bar Location:</span>
+                                    <select wire:change="setNavPlacement($event.target.value)" class="text-xs font-bold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1 text-slate-800 dark:text-white">
+                                        <option value="standalone" {{ $navPlacement === 'standalone' ? 'selected' : '' }}>Standalone Row Below Header</option>
+                                        <option value="main_header" {{ $navPlacement === 'main_header' ? 'selected' : '' }}>Main Header Bar (Center Embedded)</option>
+                                        <option value="header_col1" {{ $navPlacement === 'header_col1' ? 'selected' : '' }}>Header Column #1 (Left Slot)</option>
+                                        <option value="header_col2" {{ $navPlacement === 'header_col2' ? 'selected' : '' }}>Header Column #2 (Right Slot)</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center gap-2 border-l border-slate-200 dark:border-slate-700 pl-3">
                                     <span class="text-indigo-600 dark:text-indigo-400 font-extrabold uppercase text-2xs tracking-wider">Desktop Search Bar Placement:</span>
                                     <select wire:model.live="cssVars.search_placement_desktop" wire:change="saveCssVars" class="text-xs font-bold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1 text-slate-800 dark:text-white">
                                         <option value="main_header">Main Header Bar (Center/Embedded)</option>
-                                        <option value="header_col1">Header Column #1</option>
-                                        <option value="header_col2">Header Column #2</option>
+                                        <option value="header_col1">Header Column #1 (Left Slot)</option>
+                                        <option value="header_col2">Header Column #2 (Right Slot)</option>
+                                        <option value="top_sharing_container">Top Sharing / Alert Bar Row</option>
+                                        <option value="standalone">Standalone Row Below Header</option>
+                                        <option value="disabled">Disabled / Off (Not Displayed)</option>
                                     </select>
                                 </div>
                             @elseif($deviceView === 'tablet')
@@ -235,16 +274,20 @@
                                     <span class="text-indigo-600 dark:text-indigo-400 font-extrabold uppercase text-2xs tracking-wider">Tablet Search Bar Placement:</span>
                                     <select wire:model.live="cssVars.search_placement_tablet" wire:change="saveCssVars" class="text-xs font-bold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1 text-slate-800 dark:text-white">
                                         <option value="main_header">Main Header Bar (Center/Embedded)</option>
-                                        <option value="header_col1">Header Column #1</option>
-                                        <option value="header_col2">Header Column #2</option>
+                                        <option value="header_col1">Header Column #1 (Left Slot)</option>
+                                        <option value="header_col2">Header Column #2 (Right Slot)</option>
+                                        <option value="top_sharing_container">Top Sharing / Alert Bar Row</option>
+                                        <option value="standalone">Standalone Row Below Header</option>
+                                        <option value="disabled">Disabled / Off (Not Displayed)</option>
                                     </select>
                                 </div>
                             @else
                                 <div class="flex items-center gap-2">
                                     <span class="text-indigo-600 dark:text-indigo-400 font-extrabold uppercase text-2xs tracking-wider">Mobile Menu Search Position:</span>
                                     <select wire:model.live="cssVars.mobile_search_position" wire:change="saveCssVars" class="text-xs font-bold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg px-2.5 py-1 text-slate-800 dark:text-white">
-                                        <option value="top">Top of Mobile Menu</option>
-                                        <option value="bottom">Bottom of Mobile Menu</option>
+                                        <option value="top">Top of Mobile Menu Drawer</option>
+                                        <option value="bottom">Bottom of Mobile Menu Drawer</option>
+                                        <option value="disabled">Disabled / Off (Not Displayed)</option>
                                     </select>
                                 </div>
                             @endif
@@ -255,20 +298,21 @@
                 @if($activeTab === 'header')
                     {{-- HEADER GEOMETRIC WIREFRAME MOCKUP WITH DRAGGABLE ROWS --}}
                     @php
-                        $sortCol = match($deviceView) {
+                        $evalDevice = $singleHeaderConfig ? 'desktop' : $deviceView;
+                        $sortCol = match($evalDevice) {
                             'tablet' => 'sort_tablet',
                             'mobile' => 'sort_mobile',
                             default  => 'sort_desktop',
                         };
                         $activeHeaderRows = $headerBlocks->where('type', 1)
-                            ->filter(fn($b) => $b->isActiveForDevice($deviceView))
+                            ->filter(fn($b) => $b->isActiveForDevice($evalDevice))
                             ->sortBy(fn($b) => $b->{$sortCol})
                             ->values();
                         $isNavEmbedded = !empty($cssVars['nav_inside_main_header']);
                         $searchPlacementDesktop = $cssVars['search_placement_desktop'] ?? 'main_header';
-                        $searchPlacementTablet  = $cssVars['search_placement_tablet'] ?? 'main_header';
+                        $searchPlacementTablet  = $singleHeaderConfig ? $searchPlacementDesktop : ($cssVars['search_placement_tablet'] ?? 'main_header');
                         $mobileSearchPosition   = $cssVars['mobile_search_position'] ?? 'top';
-                        $activeSearchPlacement  = match($deviceView) {
+                        $activeSearchPlacement  = match($evalDevice) {
                             'tablet' => $searchPlacementTablet,
                             'mobile' => 'mobile_menu',
                             default  => $searchPlacementDesktop,
@@ -341,57 +385,26 @@
                                                 @endif
                                             @endforeach
 
-                                             {{-- Header Search Bar --}}
-                                             @php $bSearch = $headerBlocks->firstWhere('target_element', 'header_search'); @endphp
-                                             @if($activeSearchPlacement === 'main_header' && $bSearch && $bSearch->isActiveForDevice($deviceView))
-                                                 <div class="flex-1 min-w-[180px] max-w-xs rounded-lg border-2 border-dashed border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 p-3 transition-all duration-300">
-                                                     <div class="flex items-center justify-between gap-2">
-                                                         <div>
-                                                             <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100 block">{{ $bSearch->title }}</span>
-                                                             <span class="text-2xs text-slate-400 block font-mono">header_search</span>
-                                                         </div>
-                                                         <div class="flex items-center gap-1 shrink-0">
-                                                             <button wire:click="editBlock({{ $bSearch->id }})" class="px-2 py-1 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition flex items-center gap-1" title="Edit Search Bar Block">
-                                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                                                 <span>Edit</span>
-                                                             </button>
-                                                             <button wire:click="toggleActive({{ $bSearch->id }})" class="px-2 py-1 rounded-lg bg-rose-500 text-white text-xs font-medium hover:bg-rose-600 transition flex items-center gap-1" title="Remove Search Bar">
-                                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                                 <span>Remove</span>
-                                                             </button>
-                                                         </div>
-                                                     </div>
-                                                     <div class="mt-2 p-1.5 bg-slate-100 dark:bg-slate-700 rounded text-2xs font-mono text-slate-600 dark:text-slate-300 truncate">
-                                                         {!! e($bSearch->getContentForDevice($deviceView)) !!}
-                                                     </div>
-                                                 </div>
-                                             @endif
-
-                                             {{-- Removable Cart / Account Features Bar --}}
-                                             @php $bFeatures = $headerBlocks->firstWhere('target_element', 'header_features'); @endphp
-                                             @if($featuresPlacement === 'main_header' && $bFeatures && $bFeatures->isActiveForDevice($deviceView))
-                                                 <div class="shrink-0 rounded-lg border-2 border-dashed border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 p-3 min-w-[150px]">
-                                                     <div class="flex items-center justify-between gap-2">
-                                                         <div>
-                                                             <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100 block">{{ $bFeatures->title }}</span>
-                                                             <span class="text-2xs text-slate-400 block font-mono">header_features</span>
-                                                         </div>
-                                                         <div class="flex items-center gap-1 shrink-0">
-                                                             <button wire:click="editBlock({{ $bFeatures->id }})" class="px-2 py-1 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition flex items-center gap-1" title="Edit Features Block">
-                                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                                                 <span>Edit</span>
-                                                             </button>
-                                                             <button wire:click="toggleActive({{ $bFeatures->id }})" class="px-2 py-1 rounded-lg bg-rose-500 text-white text-xs font-medium hover:bg-rose-600 transition flex items-center gap-1" title="Remove Features Bar">
-                                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                                 <span>Remove</span>
-                                                             </button>
-                                                         </div>
-                                                     </div>
-                                                 </div>
-                                             @endif
+                                            {{-- Header Search Bar in Top Sharing Container --}}
+                                            @php $bSearch = $headerBlocks->firstWhere('target_element', 'header_search'); @endphp
+                                            @if($activeSearchPlacement === 'top_sharing_container' && $bSearch && $bSearch->isActiveForDevice($deviceView))
+                                                <div class="flex-1 min-w-[180px] max-w-xs rounded-lg border-2 border-dashed border-purple-500 bg-purple-50/50 dark:bg-purple-900/20 p-3 transition-all duration-300">
+                                                    <div class="flex items-center justify-between gap-2">
+                                                        <div>
+                                                            <span class="text-xs font-extrabold text-slate-800 dark:text-slate-100 block">{{ $bSearch->title }}</span>
+                                                            <span class="text-2xs text-slate-400 block font-mono">top_sharing_container</span>
+                                                        </div>
+                                                        <div class="flex items-center gap-1 shrink-0">
+                                                            <button wire:click="editBlock({{ $bSearch->id }})" class="px-2 py-1 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition flex items-center gap-1" title="Edit Search Bar Block">
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                                <span>Edit</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
-
                                 {{-- ROW CONTENT TYPE: Main Site Header Bar --}}
                                 @elseif($rowBlock->target_element === 'site_header_container')
                                     <div class="main-header-wireframe-row rounded-b-xl border-2 border-dashed border-indigo-400 dark:border-indigo-600 bg-white dark:bg-slate-800 p-4 shadow-sm space-y-3">
@@ -611,7 +624,7 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div class="space-y-1">
                                     <label class="text-2xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">Navigation Bar Location</label>
                                     <select wire:change="setNavPlacement($event.target.value)" class="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-indigo-500">
@@ -629,6 +642,14 @@
                                         <option value="header_col1" {{ $featuresPlacement === 'header_col1' ? 'selected' : '' }}>Embedded in Header Column 1 (header_col1)</option>
                                         <option value="header_col2" {{ $featuresPlacement === 'header_col2' ? 'selected' : '' }}>Embedded in Header Column 2 (header_col2)</option>
                                     </select>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <label class="text-2xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">Sticky Header Navigation</label>
+                                    <label class="flex items-center gap-2 cursor-pointer pt-2">
+                                        <input type="checkbox" wire:model.live="topNavSticky" wire:change="saveCssVars" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                        <span class="text-xs font-bold text-indigo-900 dark:text-indigo-200">Sticky Nav (Fixed on Scroll)</span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -808,9 +829,11 @@
                                     <label class="block text-xs font-extrabold text-slate-800 dark:text-slate-100 mb-1">Desktop View Placement</label>
                                     <p class="text-2xs text-slate-500 dark:text-slate-400 mb-2">Choose where the search bar embeds in desktop view.</p>
                                     <select wire:model.live="cssVars.search_placement_desktop" wire:change="saveCssVars" class="w-full text-xs font-bold bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-white">
-                                        <option value="main_header">Main Header Bar (Center/Embedded)</option>
-                                        <option value="header_col1">Header Column #1</option>
-                                        <option value="header_col2">Header Column #2</option>
+                                        <option value="main_header">Main Header Bar (Center Slot)</option>
+                                        <option value="header_col1">Header Column #1 (Left Slot)</option>
+                                        <option value="header_col2">Header Column #2 (Right Slot)</option>
+                                        <option value="top_sharing_container">Top Sharing Bar</option>
+                                        <option value="disabled">Hidden / Disabled (Off)</option>
                                     </select>
                                 </div>
 
@@ -819,19 +842,22 @@
                                     <label class="block text-xs font-extrabold text-slate-800 dark:text-slate-100 mb-1">Tablet View Placement</label>
                                     <p class="text-2xs text-slate-500 dark:text-slate-400 mb-2">Choose where the search bar embeds in tablet view.</p>
                                     <select wire:model.live="cssVars.search_placement_tablet" wire:change="saveCssVars" class="w-full text-xs font-bold bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-white">
-                                        <option value="main_header">Main Header Bar (Center/Embedded)</option>
-                                        <option value="header_col1">Header Column #1</option>
-                                        <option value="header_col2">Header Column #2</option>
+                                        <option value="main_header">Main Header Bar (Center Slot)</option>
+                                        <option value="header_col1">Header Column #1 (Left Slot)</option>
+                                        <option value="header_col2">Header Column #2 (Right Slot)</option>
+                                        <option value="top_sharing_container">Top Sharing Bar</option>
+                                        <option value="disabled">Hidden / Disabled (Off)</option>
                                     </select>
                                 </div>
 
                                 {{-- Mobile Position --}}
                                 <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-indigo-200 dark:border-indigo-800">
                                     <label class="block text-xs font-extrabold text-slate-800 dark:text-slate-100 mb-1">Mobile Menu Position</label>
-                                    <p class="text-2xs text-slate-500 dark:text-slate-400 mb-2">Select top or bottom of the mobile drawer menu.</p>
+                                    <p class="text-2xs text-slate-500 dark:text-slate-400 mb-2">Select top, bottom, or disabled in mobile drawer.</p>
                                     <select wire:model.live="cssVars.mobile_search_position" wire:change="saveCssVars" class="w-full text-xs font-bold bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-800 dark:text-white">
                                         <option value="top">Top of Mobile Menu</option>
                                         <option value="bottom">Bottom of Mobile Menu</option>
+                                        <option value="disabled">Hidden / Disabled (Off)</option>
                                     </select>
                                 </div>
                             </div>
@@ -1101,6 +1127,14 @@
                             <input type="color" wire:model="cssVars.top_nav_container_background" class="h-8 w-10 rounded cursor-pointer border-0" />
                             <input type="text" wire:model="cssVars.top_nav_container_background" class="w-full px-3 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs rounded" />
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="text-2xs font-bold text-slate-500 block mb-1">Site Max Width (site_max_width)</label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" wire:model="cssVars.site_max_width" class="w-full px-3 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs rounded font-mono" placeholder="1400px or 100%" />
+                        </div>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">Global maximum container layout width for header, content, and footer. Default: 1400px.</span>
                     </div>
 
                     <div>

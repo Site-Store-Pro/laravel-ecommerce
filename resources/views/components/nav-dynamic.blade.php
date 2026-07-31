@@ -53,22 +53,30 @@
     -webkit-backdrop-filter: var(--nav-backdrop, none);
     {{ $menu->sticky ? 'position: sticky; top: 0; z-index: 50;' : '' }}
 }
+.dyn-nav-link,
 #top-nav-{{ $menu->slug }} .dyn-nav-link {
-    color: var(--nav-text, #475569);
-    font-size: 0.875rem;
-    font-weight: 600;
+    color: var(--nav-text, #334155);
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    line-height: 1.25rem;
     text-decoration: none;
     transition: color 0.15s;
     padding: 0.25rem 0;
     position: relative;
 }
+.dyn-nav-link:hover,
+.dyn-nav-link:focus,
 #top-nav-{{ $menu->slug }} .dyn-nav-link:hover,
 #top-nav-{{ $menu->slug }} .dyn-nav-link:focus {
     color: var(--nav-text-hover, #4f46e5);
     outline: none;
 }
+button.dyn-nav-link,
 #top-nav-{{ $menu->slug }} button {
-    color: var(--nav-text, #475569) !important;
+    color: var(--nav-text, #334155) !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    line-height: 1.25rem !important;
 }
 #top-nav-{{ $menu->slug }} button:hover,
 #top-nav-{{ $menu->slug }} button:focus {
@@ -134,6 +142,15 @@
 }
 </style>
 
+@if($embedded ?? false)
+    <ul class="flex items-center gap-6 flex-1 {{ $alignmentClass }} list-none m-0 p-0">
+        @foreach($items as $item)
+            @if(!$item->isVisibleFor($context['user'])) @continue @endif
+            @if($item->hide_on_desktop) @continue @endif
+            <x-nav-item :item="$item" :renderer="$renderer" :context="$context" :cartCount="$cartCount" />
+        @endforeach
+    </ul>
+@else
 <header id="top-nav-{{ $menu->slug }}"
         x-data="{ mobileOpen: false }"
         role="navigation"
@@ -155,7 +172,6 @@
                     @if($item->hide_on_desktop) @continue @endif
                     <x-nav-item :item="$item" :renderer="$renderer" :context="$context" :cartCount="$cartCount" />
                 @endforeach
-
             </ul>
         </nav>
 
@@ -273,3 +289,4 @@
         @endforeach
     </div>
 </header>
+@endif

@@ -115,6 +115,10 @@
                                                 </svg>
                                                 @label('cart.locked_bogo', 'Locked (BOGO)')
                                             </div>
+                                        @elseif(!empty($item['is_donation_or_bill_pay']))
+                                            <div class="px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-xl text-[10px] font-bold text-emerald-800 whitespace-nowrap">
+                                                @label('cart.qty_donation_limit', 'Qty: 1 (Custom Amount)')
+                                            </div>
                                         @elseif(isset($item['max_qty']) && $item['max_qty'] == 1)
                                             <div class="px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-500 whitespace-nowrap">
                                                 @label('cart.qty_max_limit', 'Qty: 1 (Max limit)')

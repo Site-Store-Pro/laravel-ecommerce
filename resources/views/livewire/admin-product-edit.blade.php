@@ -547,6 +547,56 @@
                                 </div>
                             </label>
 
+                            {{-- Donation Or Bill Pay Item Toggle & Settings --}}
+                            <div class="pt-4 border-t border-slate-100 space-y-3">
+                                <label class="flex items-start gap-3 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="is_donation_or_bill_pay" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 bg-white mt-0.5">
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold {{ $is_donation_or_bill_pay ? 'text-emerald-700' : 'text-slate-700' }} transition-colors">
+                                            💚 Donation Or Bill Pay Item
+                                            @if($is_donation_or_bill_pay)
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-800 ml-1">Active</span>
+                                            @endif
+                                        </span>
+                                        <span class="text-xs text-slate-400">Configure this product as a donation or invoice bill pay item. Overrides standard variant prices, hides quantity controls, and locks cart quantity to 1.</span>
+                                    </div>
+                                </label>
+
+                                @if($is_donation_or_bill_pay)
+                                    <div class="ml-7 p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-4 animate-fade-in">
+                                        <label class="flex items-start gap-3 cursor-pointer">
+                                            <input type="checkbox" wire:model.live="allow_custom_amount" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 bg-white mt-0.5">
+                                            <div class="flex flex-col">
+                                                <span class="text-xs font-bold text-slate-800">Allow Customer to Enter Amount</span>
+                                                <span class="text-[11px] text-slate-500">If enabled, an open price input field is presented on the storefront. If disabled, preset options are shown.</span>
+                                            </div>
+                                        </label>
+
+                                        @if($allow_custom_amount)
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                                <div>
+                                                    <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">Minimum Amount ($)</label>
+                                                    <input type="number" step="0.01" min="0" wire:model="custom_amount_min" placeholder="e.g. 5.00 (optional)" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-500">
+                                                    @error('custom_amount_min') <span class="text-[11px] text-rose-500 font-medium block mt-0.5">{{ $message }}</span> @enderror
+                                                </div>
+                                                <div>
+                                                    <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">Maximum Amount ($)</label>
+                                                    <input type="number" step="0.01" min="0" wire:model="custom_amount_max" placeholder="e.g. 1000.00 (optional)" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-500">
+                                                    @error('custom_amount_max') <span class="text-[11px] text-rose-500 font-medium block mt-0.5">{{ $message }}</span> @enderror
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div class="pt-2">
+                                                <label class="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">Preset Amounts List (Comma-Separated)</label>
+                                                <input type="text" wire:model="custom_amount_options" placeholder="e.g. 10, 25, 50, 100, 500" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-500">
+                                                <p class="text-[11px] text-slate-400 mt-1">Enter a comma-delimited list of numbers. These will render as select options on the storefront.</p>
+                                                @error('custom_amount_options') <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+
                             <!-- Search Index & Lock Control Card -->
                             <div class="pt-6 border-t border-slate-100 space-y-4">
                                 <div class="flex items-center justify-between flex-wrap gap-3">
@@ -623,12 +673,13 @@
                                 <option value="3">Layout 3 — Right Side Images + Large Video Player Below</option>
                                 <option value="4">Layout 4 — Centered Layout With Images On Top</option>
                                 <option value="5">Layout 5 — Centered Layout + Large Video Player On Top</option>
+                                <option value="6">Layout 6 — No Images | Video On Page</option>
                             </select>
                             @error('layout_type') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
                         </div>
 
-                        {{-- Video Embed (only for layouts 3 & 5) --}}
-                        @if($layout_type == 3 || $layout_type == 5)
+                        {{-- Video Embed (for layouts 3, 5 & 6) --}}
+                        @if($layout_type == 3 || $layout_type == 5 || $layout_type == 6)
                             <div class="space-y-3 p-5 bg-violet-50 border border-violet-200 rounded-2xl">
                                 <div class="flex items-start gap-2">
                                     <svg class="w-4 h-4 text-violet-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>

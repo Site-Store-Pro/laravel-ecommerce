@@ -154,4 +154,86 @@ class CmsSetting extends Model
 
         return ['type' => null, 'value' => null];
     }
+
+    /**
+     * Resolve the page background image URL from cms_settings.
+     * Direct URL overrides all other upload sources if provided.
+     */
+    public static function resolvePageBgImageUrl(): ?string
+    {
+        $settings = static::allCached();
+        $cdnUrl = trim($settings['page_bg_image_url'] ?? '');
+
+        // Direct URL override takes highest priority
+        if (!empty($cdnUrl)) {
+            return $cdnUrl;
+        }
+
+        $type = $settings['page_bg_image_type'] ?? null;
+        $path = trim($settings['page_bg_image_path'] ?? '');
+
+        if (!$type || empty($path)) return null;
+
+        switch ($type) {
+            case 'local':
+                return asset('storage/' . ltrim($path, '/'));
+            case 's3':
+                $bucket = config('filesystems.disks.s3.bucket', '');
+                $region = config('filesystems.disks.s3.region', 'us-east-1');
+                return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+            case 'custom_s3':
+                $bucket = $settings['page_bg_image_s3_bucket'] ?? '';
+                $region = $settings['page_bg_image_s3_region'] ?? 'us-east-1';
+                if ($bucket) {
+                    return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+                }
+                break;
+            case 'cdn':
+            case 'url':
+                return str_starts_with($path, 'http') ? $path : asset('storage/' . ltrim($path, '/'));
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve the page background video URL from cms_settings.
+     * Direct URL overrides all other upload sources if provided.
+     */
+    public static function resolvePageBgVideoUrl(): ?string
+    {
+        $settings = static::allCached();
+        $cdnUrl = trim($settings['page_bg_video_url'] ?? '');
+
+        // Direct URL override takes highest priority
+        if (!empty($cdnUrl)) {
+            return $cdnUrl;
+        }
+
+        $type = $settings['page_bg_video_type'] ?? null;
+        $path = trim($settings['page_bg_video_path'] ?? '');
+
+        if (!$type || empty($path)) return null;
+
+        switch ($type) {
+            case 'local':
+                return asset('storage/' . ltrim($path, '/'));
+            case 's3':
+                $bucket = config('filesystems.disks.s3.bucket', '');
+                $region = config('filesystems.disks.s3.region', 'us-east-1');
+                return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+            case 'custom_s3':
+                $bucket = $settings['page_bg_video_s3_bucket'] ?? '';
+                $region = $settings['page_bg_video_s3_region'] ?? 'us-east-1';
+                if ($bucket) {
+                    return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+                }
+                break;
+            case 'cdn':
+            case 'url':
+                return str_starts_with($path, 'http') ? $path : asset('storage/' . ltrim($path, '/'));
+        }
+
+        return null;
+    }
 }
