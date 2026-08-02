@@ -38,6 +38,7 @@ class DemoStoreSeeder extends Seeder
         $this->seedCategories();
         $this->seedProducts();
         $this->seedCrossSells();
+        $this->call(KbHelpCenterSeeder::class);
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 

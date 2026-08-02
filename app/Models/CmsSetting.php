@@ -162,15 +162,16 @@ class CmsSetting extends Model
     public static function resolvePageBgImageUrl(): ?string
     {
         $settings = static::allCached();
-        $cdnUrl = trim($settings['page_bg_image_url'] ?? '');
+        $directUrl = trim($settings['page_bg_image_url'] ?? '');
 
         // Direct URL override takes highest priority
-        if (!empty($cdnUrl)) {
-            return $cdnUrl;
+        if (!empty($directUrl)) {
+            return $directUrl;
         }
 
-        $type = $settings['page_bg_image_type'] ?? null;
-        $path = trim($settings['page_bg_image_path'] ?? '');
+        $type   = $settings['page_bg_image_type'] ?? null;
+        $path   = trim($settings['page_bg_image_path'] ?? '');
+        $cdnUrl = trim($settings['page_bg_image_s3_cdn_url'] ?? '');
 
         if (!$type || empty($path)) return null;
 
@@ -178,6 +179,9 @@ class CmsSetting extends Model
             case 'local':
                 return asset('storage/' . ltrim($path, '/'));
             case 's3':
+                if (!empty($cdnUrl)) {
+                    return rtrim($cdnUrl, '/') . '/' . ltrim($path, '/');
+                }
                 $bucket = config('filesystems.disks.s3.bucket', '');
                 $region = config('filesystems.disks.s3.region', 'us-east-1');
                 return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
@@ -185,6 +189,9 @@ class CmsSetting extends Model
                 $bucket = $settings['page_bg_image_s3_bucket'] ?? '';
                 $region = $settings['page_bg_image_s3_region'] ?? 'us-east-1';
                 if ($bucket) {
+                    if (!empty($cdnUrl)) {
+                        return rtrim($cdnUrl, '/') . '/' . ltrim($path, '/');
+                    }
                     return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
                 }
                 break;
@@ -203,15 +210,16 @@ class CmsSetting extends Model
     public static function resolvePageBgVideoUrl(): ?string
     {
         $settings = static::allCached();
-        $cdnUrl = trim($settings['page_bg_video_url'] ?? '');
+        $directUrl = trim($settings['page_bg_video_url'] ?? '');
 
         // Direct URL override takes highest priority
-        if (!empty($cdnUrl)) {
-            return $cdnUrl;
+        if (!empty($directUrl)) {
+            return $directUrl;
         }
 
-        $type = $settings['page_bg_video_type'] ?? null;
-        $path = trim($settings['page_bg_video_path'] ?? '');
+        $type   = $settings['page_bg_video_type'] ?? null;
+        $path   = trim($settings['page_bg_video_path'] ?? '');
+        $cdnUrl = trim($settings['page_bg_video_s3_cdn_url'] ?? '');
 
         if (!$type || empty($path)) return null;
 
@@ -219,6 +227,9 @@ class CmsSetting extends Model
             case 'local':
                 return asset('storage/' . ltrim($path, '/'));
             case 's3':
+                if (!empty($cdnUrl)) {
+                    return rtrim($cdnUrl, '/') . '/' . ltrim($path, '/');
+                }
                 $bucket = config('filesystems.disks.s3.bucket', '');
                 $region = config('filesystems.disks.s3.region', 'us-east-1');
                 return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
@@ -226,6 +237,9 @@ class CmsSetting extends Model
                 $bucket = $settings['page_bg_video_s3_bucket'] ?? '';
                 $region = $settings['page_bg_video_s3_region'] ?? 'us-east-1';
                 if ($bucket) {
+                    if (!empty($cdnUrl)) {
+                        return rtrim($cdnUrl, '/') . '/' . ltrim($path, '/');
+                    }
                     return "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
                 }
                 break;

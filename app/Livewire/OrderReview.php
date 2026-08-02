@@ -810,7 +810,7 @@ class OrderReview extends Component
 
                 $itemTypeBadge = $item->download_item 
                     ? '<span style="background-color: #f0fdf4; color: #15803d; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bbf7d0; display: inline-block; margin-top: 4px;">' . e(siteLabel('email.digital_download', 'Digital Download')) . '</span>'
-                    : '<span style="background-color: #e0f2fe; color: #0369a1; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bae6fd; display: inline-block; margin-top: 4px;">' . e(siteLabel('email.shippable_item', 'Shippable Item')) . '</span>';
+                    : ($item->item_shippable ? '<span style="background-color: #e0f2fe; color: #0369a1; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bae6fd; display: inline-block; margin-top: 4px;">' . e(siteLabel('email.shippable_item', 'Shippable Item')) . '</span>' : '');
 
                 $itemsHtml .= '<tr style="border-bottom: 1px solid #f1f5f9;">';
                 $itemsHtml .= '<td style="padding: 12px 0; vertical-align: top;">';

@@ -1009,6 +1009,20 @@
                 </div>
             </div>
 
+            {{-- Sticky Header Navigation Toggle --}}
+            <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-800 flex items-center justify-between gap-4">
+                <div>
+                    <h4 class="text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">Sticky Header Navigation</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">When enabled, the primary site header and top navigation bar remain fixed at the top of the browser window as visitors scroll down.</p>
+                </div>
+                <label class="flex items-center gap-2 cursor-pointer shrink-0">
+                    <input type="checkbox" wire:model.live="topNavSticky" wire:change="saveCssVars" class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-xs font-bold {{ $topNavSticky ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-400' }}">
+                        {{ $topNavSticky ? 'Sticky Header Active' : 'Sticky Header Off' }}
+                    </span>
+                </label>
+            </div>
+
             {{-- 1. Header & Footer Background Images (CDN URL or File Upload) --}}
             <div class="space-y-4 border-b border-slate-100 dark:border-slate-700 pb-6">
                 <h4 class="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-wider text-indigo-600 flex items-center gap-2">

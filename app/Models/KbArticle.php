@@ -25,6 +25,7 @@ class KbArticle extends Model
         'date_modified',
         'sort_order',
         'kb_rating',
+        'is_demo',
     ];
 
     /** Fields automatically translated when translations relation is loaded. */

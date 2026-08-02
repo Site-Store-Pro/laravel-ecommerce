@@ -138,18 +138,20 @@
                         
                         <div class="space-y-4">
                             @foreach([
-                                'CMS Pages'           => $stats['cms_pages'],
-                                'Products'            => $stats['products'],
-                                'KB Articles'         => $stats['kb_articles'],
-                                'Testimonials'        => $stats['testimonials'],
-                                'Nav Items'           => $stats['nav_items'],
-                                'List Menus'          => $stats['list_menus'],
-                                'Site Labels'         => $stats['site_labels'],
-                                'Product Categories'  => $stats['product_categories'],
-                                'CMS Categories'      => $stats['cms_categories'],
-                                'CMS Tags'            => $stats['cms_tags'],
-                                'KB Categories'       => $stats['kb_categories'],
-                                'Email Templates'     => $stats['email_templates'],
+                                'CMS Pages'              => $stats['cms_pages'],
+                                'Products'               => $stats['products'],
+                                'Variant Attr. Labels'   => $stats['variant_attributes'],
+                                'Variant Personalization'=> $stats['variant_personalization'],
+                                'KB Articles'            => $stats['kb_articles'],
+                                'Testimonials'           => $stats['testimonials'],
+                                'Nav Items'              => $stats['nav_items'],
+                                'List Menus'             => $stats['list_menus'],
+                                'Site Labels'            => $stats['site_labels'],
+                                'Product Categories'     => $stats['product_categories'],
+                                'CMS Categories'         => $stats['cms_categories'],
+                                'CMS Tags'               => $stats['cms_tags'],
+                                'KB Categories'          => $stats['kb_categories'],
+                                'Email Templates'        => $stats['email_templates'],
                             ] as $label => $stat)
                                 @php
                                     $pct = $stat['total'] > 0 ? round(($stat['translated'] / $stat['total']) * 100) : 100;

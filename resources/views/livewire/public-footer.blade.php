@@ -1,4 +1,22 @@
 <footer class="footer_container border-t border-slate-200 dark:border-slate-800">
+
+    {{-- Dark mode footer override: when html.dark is active (frontend_dark_mode setting),
+         override the admin-configured --footer-background-color with a dark slate tone. --}}
+    <style>
+    html.dark .footer_container,
+    html.dark .footer_row1,
+    html.dark .footer_row2,
+    html.dark .footer_row3,
+    html.dark .footer_row4,
+    html.dark .footer_contents {
+        background-color: #1e293b !important;
+        background-image: none !important;
+    }
+    html.dark .footer_container {
+        border-top-color: rgba(255, 255, 255, 0.06) !important;
+    }
+    </style>
+
     
     {{-- Footer Row #1 --}}
     @if(isset($parsedBlocks['footer_row1']) && $parsedBlocks['footer_row1']['block']->is_active_desktop && !empty($parsedBlocks['footer_row1']['content']))

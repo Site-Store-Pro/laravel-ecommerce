@@ -27,6 +27,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="theme-color" content="#f8fafc">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ $metaTitle }}</title>
         @if($metaDescription)
             <meta name="description" content="{{ $metaDescription }}">
@@ -87,7 +88,7 @@
         $activeVidUrl = $cmsPageVidUrl ?: ($globalBgMode === 'video' ? $globalBgVidUrl : null);
         $activeMode   = $activeVidUrl ? 'video' : ($page?->background_image ? 'image' : $globalBgMode);
     @endphp
-    <body class="antialiased font-sans {{ $activeMode === 'default' ? 'bg-slate-50 dark:bg-slate-900' : 'bg-transparent' }} text-slate-800 dark:text-slate-100 overflow-x-clip selection:bg-indigo-500 selection:text-white p-0 m-0">
+    <body class="antialiased font-sans {{ $activeMode === 'default' ? 'bg-slate-50 dark:bg-slate-900' : 'bg-transparent' }} text-slate-800 dark:text-slate-100 selection:bg-indigo-500 selection:text-white p-0 m-0 overflow-x-clip max-w-full">
         <!-- Background Video / Background Glows / Background Image support -->
         @if($activeVidUrl)
             <div class="fixed inset-0 overflow-hidden -z-20 pointer-events-none">
@@ -112,8 +113,10 @@
             </div>
         @endif
 
-        <div class="min-h-[100dvh] flex flex-col justify-between relative p-0 m-0 w-full">
+        <div class="min-h-screen flex flex-col p-0 m-0 w-full relative">
             <livewire:public-header />
+
+            <div class="flex-1 flex flex-col p-0 m-0 w-full">
 
             <!-- Slideshow Plugin full width block -->
             @if($page && !empty($page->include_slideshow))
@@ -199,7 +202,7 @@
 
                             <!-- Main Column -->
                             <div class="w-full lg:flex-1 space-y-6">
-                                <div>
+                                <div class="cms-card-wrapper card bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-150 dark:border-slate-700/60 rounded-3xl p-6 sm:p-8 md:p-10 shadow-xl shadow-slate-100/40 dark:shadow-none">
                                     @if($page)
                                         {!! $page->parsed_content !!}
 
@@ -215,7 +218,9 @@
                                         @endif
 
                                         @if(!$page->hide_page_ranking)
-                                            <livewire:cms-page-rating :pageId="$page->id" />
+                                            <div class="mt-6">
+                                                <livewire:cms-page-rating :pageId="$page->id" />
+                                            </div>
                                         @endif
                                     @endif
                                 </div>
@@ -224,7 +229,7 @@
                             @if($page && in_array($page->layout_type, [3, 4]) && !empty($page->right_col))
                                 <!-- Right Sidebar -->
                                 <div class="w-full lg:w-1/4 space-y-6">
-                                    <div class="bg-white/95 backdrop-blur-md border border-slate-100 rounded-3xl p-6 shadow-xl shadow-slate-100/40">
+                                    <div class="bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-100 rounded-3xl p-6 shadow-xl shadow-slate-100/40">
                                         {!! $page->parsed_right_col !!}
                                     </div>
                                 </div>
@@ -232,14 +237,14 @@
                         </div>
                     </div>
                 @else
-                    {{-- Standard full-width page without sidebars (matches home page structure) --}}
+                    {{-- Standard full-width page without sidebars --}}
                     @if($page)
-                        {!! $page->parsed_content !!}
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+                            <div class="cms-card-wrapper card bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border border-slate-150 dark:border-slate-700/60 rounded-3xl p-6 sm:p-8 md:p-10 shadow-xl shadow-slate-100/40 dark:shadow-none">
+                                {!! $page->parsed_content !!}
 
-                        @if($page->tags->count() > 0 || !$page->hide_page_ranking)
-                            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
                                 @if($page->tags->count() > 0)
-                                    <div class="mt-4 pt-6 border-t border-slate-100/60 flex flex-wrap gap-2 items-center">
+                                    <div class="mt-8 pt-6 border-t border-slate-100/60 flex flex-wrap gap-2 items-center">
                                         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">@label('cms.tags', 'Tags:')</span>
                                         @foreach($page->tags as $tag)
                                             <a href="{{ route('cms.tag', $tag->slug) }}" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer">
@@ -250,17 +255,21 @@
                                 @endif
 
                                 @if(!$page->hide_page_ranking)
-                                    <livewire:cms-page-rating :pageId="$page->id" />
+                                    <div class="mt-6">
+                                        <livewire:cms-page-rating :pageId="$page->id" />
+                                    </div>
                                 @endif
                             </div>
-                        @endif
+                        </div>
                     @endif
                 @endif
             </main>
 
+            </div>{{-- end flex-1 content --}}
+
             <!-- Footer -->
             <livewire:public-footer />
-        </div>
+        </div>{{-- end min-h-screen outer wrapper --}}
 
         @if(auth()->check() && auth()->user()->isAdmin())
             <!-- Floating Admin Edit Button -->

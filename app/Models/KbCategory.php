@@ -24,6 +24,7 @@ class KbCategory extends Model
         'slug',
         'description',
         'sort_order',
+        'is_demo',
     ];
 
     protected $casts = [

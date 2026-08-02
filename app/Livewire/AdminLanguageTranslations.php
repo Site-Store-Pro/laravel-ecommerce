@@ -26,24 +26,52 @@ class AdminLanguageTranslations extends Component
     public function loadStats(): void
     {
         $service = app(TranslationService::class);
+        $variantStats = $service->variantTranslationStats($this->languageId);
+
         $this->stats = [
-            'cms_pages'          => $service->translationStats(\App\Models\CmsPage::class, $this->languageId),
-            'products'           => $service->translationStats(\App\Models\Product::class, $this->languageId),
-            'kb_articles'        => $service->translationStats(\App\Models\KbArticle::class, $this->languageId),
-            'testimonials'       => $service->translationStats(\App\Models\CmsTestimonial::class, $this->languageId),
-            'nav_items'          => $service->translationStats(\App\Models\NavItem::class, $this->languageId),
-            'list_menus'         => $service->translationStats(\App\Models\CmsListMenuItem::class, $this->languageId),
-            'site_labels'        => $service->translationStats(\App\Models\SiteLabel::class, $this->languageId),
-            'product_categories' => $service->translationStats(\App\Models\Category::class, $this->languageId),
-            'cms_categories'     => $service->translationStats(\App\Models\CmsPagesCategory::class, $this->languageId),
-            'cms_tags'           => $service->translationStats(\App\Models\CmsPagesTag::class, $this->languageId),
-            'kb_categories'      => $service->translationStats(\App\Models\KbCategory::class, $this->languageId),
-            'email_templates'    => $service->translationStats(\App\Models\EmailTemplate::class, $this->languageId),
+            'cms_pages'              => $service->translationStats(\App\Models\CmsPage::class, $this->languageId),
+            'products'               => $service->translationStats(\App\Models\Product::class, $this->languageId),
+            'variant_attributes'     => [
+                'total'      => $variantStats['total_with_attrs'],
+                'translated' => $variantStats['translated_attrs'],
+                'pending'    => $variantStats['pending_attrs'],
+                'reviewed'   => 0,
+            ],
+            'variant_personalization' => [
+                'total'      => $variantStats['total_personalization'],
+                'translated' => $variantStats['translated_personalization'],
+                'pending'    => $variantStats['pending_personalization'],
+                'reviewed'   => 0,
+            ],
+            'kb_articles'            => $service->translationStats(\App\Models\KbArticle::class, $this->languageId),
+            'testimonials'           => $service->translationStats(\App\Models\CmsTestimonial::class, $this->languageId),
+            'nav_items'              => $service->translationStats(\App\Models\NavItem::class, $this->languageId),
+            'list_menus'             => $service->translationStats(\App\Models\CmsListMenuItem::class, $this->languageId),
+            'site_labels'            => $service->translationStats(\App\Models\SiteLabel::class, $this->languageId),
+            'product_categories'     => $service->translationStats(\App\Models\Category::class, $this->languageId),
+            'cms_categories'         => $service->translationStats(\App\Models\CmsPagesCategory::class, $this->languageId),
+            'cms_tags'               => $service->translationStats(\App\Models\CmsPagesTag::class, $this->languageId),
+            'kb_categories'          => $service->translationStats(\App\Models\KbCategory::class, $this->languageId),
+            'email_templates'        => $service->translationStats(\App\Models\EmailTemplate::class, $this->languageId),
         ];
     }
 
     public function translateType(string $type): void
     {
+        // Variant attribute and personalization translations use the dedicated job.
+        if ($type === 'variant_attributes' || $type === 'variant_personalization') {
+            $variantIds = \App\Models\ProductVariant::pluck('id');
+            foreach ($variantIds as $id) {
+                \App\Jobs\TranslateVariantJob::dispatch($id, $this->languageId);
+            }
+            $this->dispatch('toast',
+                message: count($variantIds) . ' variant translation jobs queued.',
+                type: 'success'
+            );
+            $this->loadStats();
+            return;
+        }
+
         $map = [
             'cms_pages'          => \App\Models\CmsPage::class,
             'products'           => \App\Models\Product::class,
@@ -76,7 +104,13 @@ class AdminLanguageTranslations extends Component
 
     public function translateSingle(string $type, int $modelId): void
     {
-        // Same map as above
+        // Variant types use the dedicated job.
+        if ($type === 'variant_attributes' || $type === 'variant_personalization') {
+            \App\Jobs\TranslateVariantJob::dispatch($modelId, $this->languageId);
+            $this->dispatch('toast', message: 'Variant translation job queued.', type: 'success');
+            return;
+        }
+
         $map = [
             'cms_pages'          => \App\Models\CmsPage::class,
             'products'           => \App\Models\Product::class,
@@ -100,8 +134,9 @@ class AdminLanguageTranslations extends Component
 
     public function render(): View
     {
-        // Load untranslated items for the active type
-        $map = [
+        // Load untranslated items for the active type.
+        // Variant types show a list of variants with pending attribute/personalization translations.
+        $standardMap = [
             'cms_pages'          => [\App\Models\CmsPage::class,        'cms_page_id',              'title'],
             'products'           => [\App\Models\Product::class,         'product_id',               'title'],
             'kb_articles'        => [\App\Models\KbArticle::class,       'kb_article_id',            'title'],
@@ -117,19 +152,52 @@ class AdminLanguageTranslations extends Component
         ];
 
         $items = collect();
-        if (isset($map[$this->activeType])) {
-            [$modelClass, $fk, $labelField] = $map[$this->activeType];
+        $labelField = 'id';
+        $isVariantType = in_array($this->activeType, ['variant_attributes', 'variant_personalization']);
+
+        if ($isVariantType) {
+            // For variant types, show variants that have not yet been translated.
+            $translatedVariantIds = \App\Models\ProductVariantTranslation::where('language_id', $this->languageId)
+                ->when($this->activeType === 'variant_attributes', fn($q) => $q->whereNotNull('attributes_translated'))
+                ->when($this->activeType === 'variant_personalization', fn($q) => $q->whereNotNull('personalization_label')->where('personalization_label', '!=', ''))
+                ->pluck('product_variant_id');
+
+            $query = \App\Models\ProductVariant::whereNotIn('id', $translatedVariantIds);
+
+            if ($this->activeType === 'variant_personalization') {
+                // Only show variants that have personalization enabled.
+                $query->where('personalization_active', 1)
+                    ->whereNotNull('personalization_label')
+                    ->where('personalization_label', '!=', '');
+            } else {
+                // Only show variants that have attributes to translate.
+                $query->whereNotNull('attributes')
+                    ->where('attributes', '!=', '{}')
+                    ->where('attributes', '!=', '');
+            }
+
+            $items = $query->with('product:id,title')->limit(50)->get(['id', 'sku', 'attributes', 'product_id', 'personalization_label']);
+            $labelField = 'sku';
+        } elseif (isset($standardMap[$this->activeType])) {
+            [$modelClass, $fk, $lf] = $standardMap[$this->activeType];
+            $labelField = $lf;
             $translationClass = 'App\\Models\\' . class_basename($modelClass) . 'Translation';
             $translatedIds = class_exists($translationClass)
                 ? $translationClass::where('language_id', $this->languageId)->pluck($fk)
                 : collect();
-            $items = $modelClass::whereNotIn('id', $translatedIds)->limit(50)->get(['id', $labelField]);
+            $items = $modelClass::whereNotIn('id', $translatedIds)->limit(50)->get(['id', $lf]);
         }
 
+        $allTypes = array_merge(
+            ['variant_attributes', 'variant_personalization'],
+            array_keys($standardMap)
+        );
+
         return view('livewire.admin-language-translations', [
-            'items'     => $items,
-            'labelField'=> $map[$this->activeType][2] ?? 'id',
-            'typeMap'   => array_keys($map),
+            'items'         => $items,
+            'labelField'    => $labelField,
+            'typeMap'       => $allTypes,
+            'isVariantType' => $isVariantType,
         ]);
     }
 }

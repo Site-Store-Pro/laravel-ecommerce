@@ -60,24 +60,26 @@
         <x-header-footer-styles />
         <link rel="stylesheet" href="{{ asset('css/prose.css') }}">
     </head>
-    <body class="antialiased font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 overflow-x-hidden selection:bg-indigo-500 selection:text-white p-0 m-0">
+    <body class="antialiased font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 selection:bg-indigo-500 selection:text-white p-0 m-0 overflow-x-clip max-w-full">
         <!-- Background Glows -->
         <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
             <div class="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-tr from-indigo-200/30 to-violet-200/20 blur-3xl opacity-60"></div>
             <div class="absolute top-[40%] right-[-15%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-indigo-100/30 to-purple-100/20 blur-3xl opacity-50"></div>
         </div>
 
-        <div class="min-h-[100dvh] flex flex-col justify-between relative p-0 m-0 w-full">
+        <div class="min-h-screen flex flex-col p-0 m-0 w-full relative">
             <livewire:public-header />
 
-            <main class="flex-1 p-0 m-0 w-full">
-                @if($page)
-                    {!! $page->parsed_content !!}
-                @endif
-            </main>
+            <div class="flex-1 flex flex-col p-0 m-0 w-full">
+                <main class="flex-1 p-0 m-0 w-full">
+                    @if($page)
+                        {!! $page->parsed_content !!}
+                    @endif
+                </main>
+            </div>{{-- end flex-1 content --}}
 
             <livewire:public-footer />
-        </div>
+        </div>{{-- end min-h-screen outer wrapper --}}
 
         @if($page && $page->custom_js)
             @if(str_contains($page->custom_js, '<script'))

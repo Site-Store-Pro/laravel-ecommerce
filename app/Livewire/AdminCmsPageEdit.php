@@ -907,6 +907,28 @@ class AdminCmsPageEdit extends Component
         }
     }
 
+    public function clearHeaderImage(): void
+    {
+        $this->header_image_upload = null;
+        $this->header_image_path   = null;
+        if ($this->pageId && $this->page) {
+            $this->page->header_image = null;
+            $this->page->save();
+        }
+        $this->dispatch('toast', message: 'Header image cleared.', type: 'info');
+    }
+
+    public function clearBackgroundImage(): void
+    {
+        $this->background_image_upload = null;
+        $this->background_image_path   = null;
+        if ($this->pageId && $this->page) {
+            $this->page->background_image = null;
+            $this->page->save();
+        }
+        $this->dispatch('toast', message: 'Background image cleared.', type: 'info');
+    }
+
     public function clearBackgroundVideo(): void
     {
         $this->background_video_upload = null;

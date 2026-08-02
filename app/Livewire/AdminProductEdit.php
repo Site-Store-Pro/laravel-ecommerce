@@ -75,6 +75,8 @@ class AdminProductEdit extends Component
     public string $trans_personalization_label = '';
     public string $trans_personalization_details_label = '';
     public string $trans_personalization_placeholder = '';
+    /** Flat map: raw attribute key or value => translated string. e.g. ['Color'=>'Couleur','Blue'=>'Bleu'] */
+    public array $trans_attributes = [];
 
     // Field & Option Translation
     public string $fieldTransLangCode = '';
@@ -1004,6 +1006,16 @@ class AdminProductEdit extends Component
         $this->new_image_s3_secret_access_key = '';
         $this->new_image_alt = '';
         $this->new_zoom_label = '';
+
+        // Reset variant translation panel so stale state from a prior variant edit
+        // doesn't carry over when the user switches to a different variant.
+        $this->variantTransLangCode                = '';
+        $this->variantTransLangId                  = null;
+        $this->trans_personalization_label         = '';
+        $this->trans_personalization_details_label = '';
+        $this->trans_personalization_placeholder   = '';
+        $this->trans_attributes                    = [];
+
 
         $this->isEditingVariant = true;
     }
@@ -2307,10 +2319,25 @@ class AdminProductEdit extends Component
             $this->trans_personalization_label         = $trans?->personalization_label ?? '';
             $this->trans_personalization_details_label = $trans?->personalization_details_label ?? '';
             $this->trans_personalization_placeholder   = $trans?->personalization_placeholder ?? '';
+
+            // Load existing attribute label translations (flat raw→translated map).
+            $this->trans_attributes = $trans?->attributes_translated ?? [];
+
+            // Pre-populate with raw attribute keys/values so every field is visible
+            // in the UI even before any translation has been saved.
+            $variant = \App\Models\ProductVariant::find($this->selectedVariantId);
+            if ($variant) {
+                $rawAttrs = json_decode($variant->attributes ?? '{}', true) ?: [];
+                foreach ($rawAttrs as $rawKey => $rawVal) {
+                    $this->trans_attributes[$rawKey] ??= '';
+                    $this->trans_attributes[$rawVal] ??= '';
+                }
+            }
         } else {
             $this->trans_personalization_label         = '';
             $this->trans_personalization_details_label = '';
             $this->trans_personalization_placeholder   = '';
+            $this->trans_attributes                    = [];
         }
     }
 
@@ -2321,6 +2348,13 @@ class AdminProductEdit extends Component
     {
         if (!$this->variantTransLangId || !$this->selectedVariantId) return;
 
+        // Strip blank entries from the attributes map before persisting —
+        // keeps the JSON lean and makes isEmpty checks reliable.
+        $attrsToSave = array_filter(
+            $this->trans_attributes,
+            fn($v) => is_string($v) && trim($v) !== ''
+        );
+
         \App\Models\ProductVariantTranslation::updateOrCreate(
             [
                 'product_variant_id' => $this->selectedVariantId,
@@ -2330,6 +2364,7 @@ class AdminProductEdit extends Component
                 'personalization_label'         => $this->trans_personalization_label ?: null,
                 'personalization_details_label' => $this->trans_personalization_details_label ?: null,
                 'personalization_placeholder'   => $this->trans_personalization_placeholder ?: null,
+                'attributes_translated'         => !empty($attrsToSave) ? $attrsToSave : null,
             ]
         );
 

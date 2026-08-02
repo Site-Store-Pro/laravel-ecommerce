@@ -411,6 +411,11 @@
 
                                 @if($page_bg_image_type === 's3' || $page_bg_image_type === 'custom_s3')
                                     <div><input type="text" wire:model.live="page_bg_image_path" placeholder="Image S3 Key/Path (backgrounds/hero.jpg)" class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">CDN / CloudFront Base URL <span class="font-normal text-slate-300">(Optional)</span></label>
+                                        <input type="text" wire:model.live="page_bg_image_s3_cdn_url" placeholder="https://d1234abcd.cloudfront.net" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs">
+                                        <p class="text-[10px] text-slate-400 mt-0.5">If set, files are served via this CDN instead of the raw S3 URL.</p>
+                                    </div>
                                 @endif
 
                                 <div>
@@ -476,6 +481,11 @@
 
                                 @if($page_bg_video_type === 's3' || $page_bg_video_type === 'custom_s3')
                                     <div><input type="text" wire:model.live="page_bg_video_path" placeholder="Video S3 Key/Path (backgrounds/hero.mp4)" class="w-full px-3 py-2 bg-white border rounded-xl text-xs"></div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">CDN / CloudFront Base URL <span class="font-normal text-slate-300">(Optional)</span></label>
+                                        <input type="text" wire:model.live="page_bg_video_s3_cdn_url" placeholder="https://d1234abcd.cloudfront.net" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs">
+                                        <p class="text-[10px] text-slate-400 mt-0.5">If set, files are served via this CDN instead of the raw S3 URL.</p>
+                                    </div>
                                 @endif
 
                                 <div>

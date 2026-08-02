@@ -329,7 +329,7 @@
                                 <span class="text-xs text-slate-400 block">@label('checkout.qty_label', 'Qty:') {{ number_format($item->item_qty, 0) }}</span>
                                 @if($item->item_shippable)
                                     <span class="inline-block bg-indigo-50 text-indigo-700 text-[10px] px-1.5 py-0.5 rounded font-bold mt-1">@label('checkout.requires_shipping', 'Requires Shipping')</span>
-                                @else
+                                @elseif(!empty($item->is_digital) || !empty($item->download_item))
                                     <span class="inline-block bg-teal-50 text-teal-700 text-[10px] px-1.5 py-0.5 rounded font-bold mt-1">@label('checkout.digital_delivery', 'Digital Delivery')</span>
                                 @endif
                             </div>

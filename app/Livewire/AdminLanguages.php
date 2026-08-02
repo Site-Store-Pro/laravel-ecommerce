@@ -178,6 +178,14 @@ class AdminLanguages extends Component
             }
         }
 
+        // Dispatch dedicated variant translation jobs for attribute labels
+        // and personalization labels (handled by TranslateVariantJob, not the generic job).
+        $variantIds = \App\Models\ProductVariant::pluck('id');
+        foreach ($variantIds as $variantId) {
+            \App\Jobs\TranslateVariantJob::dispatch($variantId, $id);
+            $count++;
+        }
+
         $this->dispatch('toast',
             message: "{$count} translation jobs queued — run `php artisan queue:work` on the server to process them.",
             type: 'success'
@@ -187,19 +195,32 @@ class AdminLanguages extends Component
     public function translationStats(int $languageId): array
     {
         $service = app(TranslationService::class);
+        $variantStats = $service->variantTranslationStats($languageId);
         return [
-            'cms_pages'    => $service->translationStats(\App\Models\CmsPage::class, $languageId),
-            'products'     => $service->translationStats(\App\Models\Product::class, $languageId),
-            'kb_articles'  => $service->translationStats(\App\Models\KbArticle::class, $languageId),
-            'testimonials' => $service->translationStats(\App\Models\CmsTestimonial::class, $languageId),
-            'nav_items'    => $service->translationStats(\App\Models\NavItem::class, $languageId),
-            'list_menus'   => $service->translationStats(\App\Models\CmsListMenuItem::class, $languageId),
-            'site_labels'  => $service->translationStats(\App\Models\SiteLabel::class, $languageId),
-            'product_categories' => $service->translationStats(\App\Models\Category::class, $languageId),
-            'cms_categories'=> $service->translationStats(\App\Models\CmsPagesCategory::class, $languageId),
-            'cms_tags'     => $service->translationStats(\App\Models\CmsPagesTag::class, $languageId),
-            'kb_categories'=> $service->translationStats(\App\Models\KbCategory::class, $languageId),
-            'email_templates' => $service->translationStats(\App\Models\EmailTemplate::class, $languageId),
+            'cms_pages'              => $service->translationStats(\App\Models\CmsPage::class, $languageId),
+            'products'               => $service->translationStats(\App\Models\Product::class, $languageId),
+            'variant_attributes'     => [
+                'total'      => $variantStats['total_with_attrs'],
+                'translated' => $variantStats['translated_attrs'],
+                'pending'    => $variantStats['pending_attrs'],
+                'reviewed'   => 0,
+            ],
+            'variant_personalization' => [
+                'total'      => $variantStats['total_personalization'],
+                'translated' => $variantStats['translated_personalization'],
+                'pending'    => $variantStats['pending_personalization'],
+                'reviewed'   => 0,
+            ],
+            'kb_articles'            => $service->translationStats(\App\Models\KbArticle::class, $languageId),
+            'testimonials'           => $service->translationStats(\App\Models\CmsTestimonial::class, $languageId),
+            'nav_items'              => $service->translationStats(\App\Models\NavItem::class, $languageId),
+            'list_menus'             => $service->translationStats(\App\Models\CmsListMenuItem::class, $languageId),
+            'site_labels'            => $service->translationStats(\App\Models\SiteLabel::class, $languageId),
+            'product_categories'     => $service->translationStats(\App\Models\Category::class, $languageId),
+            'cms_categories'         => $service->translationStats(\App\Models\CmsPagesCategory::class, $languageId),
+            'cms_tags'               => $service->translationStats(\App\Models\CmsPagesTag::class, $languageId),
+            'kb_categories'          => $service->translationStats(\App\Models\KbCategory::class, $languageId),
+            'email_templates'        => $service->translationStats(\App\Models\EmailTemplate::class, $languageId),
         ];
     }
 

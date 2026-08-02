@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\CmsSetting;
 use App\Helpers\TimezoneHelper;
+use App\Services\HeaderFooterCssManager;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -92,6 +93,7 @@ class AdminSettings extends Component
     public string $page_bg_image_type = 'local';
     public string $page_bg_image_path = '';
     public string $page_bg_image_url = '';
+    public string $page_bg_image_s3_cdn_url = '';  // Optional CDN/CloudFront base URL for S3 image
     public string $page_bg_image_s3_bucket = '';
     public string $page_bg_image_s3_key = '';
     public string $page_bg_image_s3_secret = '';
@@ -102,6 +104,7 @@ class AdminSettings extends Component
     public string $page_bg_video_type = 'local';
     public string $page_bg_video_path = '';
     public string $page_bg_video_url = '';
+    public string $page_bg_video_s3_cdn_url = '';  // Optional CDN/CloudFront base URL for S3 video
     public string $page_bg_video_s3_bucket = '';
     public string $page_bg_video_s3_key = '';
     public string $page_bg_video_s3_secret = '';
@@ -248,6 +251,7 @@ class AdminSettings extends Component
         $this->page_bg_image_type          = $settings['page_bg_image_type'] ?? 'local';
         $this->page_bg_image_path          = $settings['page_bg_image_path'] ?? '';
         $this->page_bg_image_url           = $settings['page_bg_image_url'] ?? '';
+        $this->page_bg_image_s3_cdn_url    = $settings['page_bg_image_s3_cdn_url'] ?? '';
         $this->page_bg_image_s3_bucket     = $settings['page_bg_image_s3_bucket'] ?? '';
         $this->page_bg_image_s3_key        = $settings['page_bg_image_s3_key'] ?? '';
         $this->page_bg_image_s3_secret     = $settings['page_bg_image_s3_secret'] ?? '';
@@ -256,6 +260,7 @@ class AdminSettings extends Component
         $this->page_bg_video_type          = $settings['page_bg_video_type'] ?? 'local';
         $this->page_bg_video_path          = $settings['page_bg_video_path'] ?? '';
         $this->page_bg_video_url           = $settings['page_bg_video_url'] ?? '';
+        $this->page_bg_video_s3_cdn_url    = $settings['page_bg_video_s3_cdn_url'] ?? '';
         $this->page_bg_video_s3_bucket     = $settings['page_bg_video_s3_bucket'] ?? '';
         $this->page_bg_video_s3_key        = $settings['page_bg_video_s3_key'] ?? '';
         $this->page_bg_video_s3_secret     = $settings['page_bg_video_s3_secret'] ?? '';
@@ -409,21 +414,23 @@ class AdminSettings extends Component
             // Site Theme Customization: Background Media
             'page_bg_mode'            => $this->page_bg_mode,
             'page_bg_color'           => trim($this->page_bg_color),
-            'page_bg_image_type'      => $this->page_bg_image_type,
-            'page_bg_image_path'      => trim($this->page_bg_image_path),
-            'page_bg_image_url'       => trim($this->page_bg_image_url),
-            'page_bg_image_s3_bucket' => trim($this->page_bg_image_s3_bucket),
-            'page_bg_image_s3_key'    => trim($this->page_bg_image_s3_key),
-            'page_bg_image_s3_secret' => trim($this->page_bg_image_s3_secret),
-            'page_bg_image_s3_region' => trim($this->page_bg_image_s3_region) ?: 'us-east-1',
+            'page_bg_image_type'          => $this->page_bg_image_type,
+            'page_bg_image_path'          => trim($this->page_bg_image_path),
+            'page_bg_image_url'           => trim($this->page_bg_image_url),
+            'page_bg_image_s3_cdn_url'    => trim($this->page_bg_image_s3_cdn_url),
+            'page_bg_image_s3_bucket'     => trim($this->page_bg_image_s3_bucket),
+            'page_bg_image_s3_key'        => trim($this->page_bg_image_s3_key),
+            'page_bg_image_s3_secret'     => trim($this->page_bg_image_s3_secret),
+            'page_bg_image_s3_region'     => trim($this->page_bg_image_s3_region) ?: 'us-east-1',
 
-            'page_bg_video_type'      => $this->page_bg_video_type,
-            'page_bg_video_path'      => trim($this->page_bg_video_path),
-            'page_bg_video_url'       => trim($this->page_bg_video_url),
-            'page_bg_video_s3_bucket' => trim($this->page_bg_video_s3_bucket),
-            'page_bg_video_s3_key'    => trim($this->page_bg_video_s3_key),
-            'page_bg_video_s3_secret' => trim($this->page_bg_video_s3_secret),
-            'page_bg_video_s3_region' => trim($this->page_bg_video_s3_region) ?: 'us-east-1',
+            'page_bg_video_type'          => $this->page_bg_video_type,
+            'page_bg_video_path'          => trim($this->page_bg_video_path),
+            'page_bg_video_url'           => trim($this->page_bg_video_url),
+            'page_bg_video_s3_cdn_url'    => trim($this->page_bg_video_s3_cdn_url),
+            'page_bg_video_s3_bucket'     => trim($this->page_bg_video_s3_bucket),
+            'page_bg_video_s3_key'        => trim($this->page_bg_video_s3_key),
+            'page_bg_video_s3_secret'     => trim($this->page_bg_video_s3_secret),
+            'page_bg_video_s3_region'     => trim($this->page_bg_video_s3_region) ?: 'us-east-1',
 
             'page_bg_overlay_color'   => trim($this->page_bg_overlay_color),
             'page_bg_overlay_opacity' => trim($this->page_bg_overlay_opacity),
@@ -525,7 +532,8 @@ class AdminSettings extends Component
      */
     public function getHasDemoContentProperty(): bool
     {
-        return DB::table('products')->where('is_demo', 1)->exists();
+        return DB::table('products')->where('is_demo', 1)->exists()
+            || DB::table('kb_articles')->where('is_demo', 1)->exists();
     }
 
     /**
@@ -604,6 +612,12 @@ class AdminSettings extends Component
             ->where('is_demo', 1)
             ->orderByDesc('parent_id') // children (non-null parent_id) first
             ->delete();
+
+        // 14. Demo KB Articles
+        DB::table('kb_articles')->where('is_demo', 1)->delete();
+
+        // 15. Demo KB Categories
+        DB::table('kb_categories')->where('is_demo', 1)->delete();
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 

@@ -223,4 +223,49 @@ class TranslationService
 
         return compact('total', 'translated', 'pending', 'reviewed');
     }
+
+    /**
+     * Count ProductVariant translation coverage for a given language.
+     *
+     * A variant is considered "translated" if it has an attributes_translated
+     * entry (the attribute token pool has been translated). Variants with no
+     * attributes JSON are skipped from the "needs translation" count because
+     * there is nothing to translate.
+     *
+     * Personalization coverage is tracked separately.
+     */
+    public function variantTranslationStats(int $languageId): array
+    {
+        // Variants that have at least one attribute to translate.
+        $totalWithAttrs = \App\Models\ProductVariant::whereNotNull('attributes')
+            ->where('attributes', '!=', '{}')
+            ->where('attributes', '!=', '')
+            ->count();
+
+        $translatedAttrs = \App\Models\ProductVariantTranslation::where('language_id', $languageId)
+            ->whereNotNull('attributes_translated')
+            ->count();
+
+        // Variants with personalization enabled.
+        $totalPersonalization = \App\Models\ProductVariant::where('personalization_active', 1)
+            ->whereNotNull('personalization_label')
+            ->where('personalization_label', '!=', '')
+            ->count();
+
+        $translatedPersonalization = \App\Models\ProductVariantTranslation::where('language_id', $languageId)
+            ->whereNotNull('personalization_label')
+            ->where('personalization_label', '!=', '')
+            ->count();
+
+        return [
+            'total'                      => \App\Models\ProductVariant::count(),
+            'total_with_attrs'           => $totalWithAttrs,
+            'translated_attrs'           => $translatedAttrs,
+            'pending_attrs'              => max(0, $totalWithAttrs - $translatedAttrs),
+            'total_personalization'      => $totalPersonalization,
+            'translated_personalization' => $translatedPersonalization,
+            'pending_personalization'    => max(0, $totalPersonalization - $translatedPersonalization),
+        ];
+    }
 }
+

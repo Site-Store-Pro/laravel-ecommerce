@@ -723,16 +723,49 @@ class ProductDetails extends Component
         } catch (\Throwable) {}
 
         return view('livewire.product-details', [
-            'selectedVariant'  => $selectedVariant,
-            'selectedImageSet' => $selectedImageSet,
-            'userType'         => $userType,
-            'breadcrumbs'      => $breadcrumbs,
-            'relatedProducts'  => $relatedProducts,
-            'currencySymbol'   => \App\Services\CurrencyService::symbol(),
-            'vatInclusive'     => \App\Services\CurrencyService::isVatInclusive(),
-            'merchantVatRate'  => \App\Services\CurrencyService::merchantVatRate(),
+            'selectedVariant'              => $selectedVariant,
+            'selectedImageSet'             => $selectedImageSet,
+            'userType'                     => $userType,
+            'breadcrumbs'                  => $breadcrumbs,
+            'relatedProducts'              => $relatedProducts,
+            'currencySymbol'               => \App\Services\CurrencyService::symbol(),
+            'vatInclusive'                 => \App\Services\CurrencyService::isVatInclusive(),
+            'merchantVatRate'              => \App\Services\CurrencyService::merchantVatRate(),
+            // Flat map of variantId => ['RawKey'=>'TranslatedKey', 'RawVal'=>'TranslatedVal', ...]
+            // Used by product-buy-box to display translated attribute labels while keeping
+            // raw canonical values in wire:click so selectAttribute() still works correctly.
+            'variantAttributeTranslations' => $this->buildVariantAttributeTranslations(),
+            'isDefaultLanguage'            => app(\App\Services\LanguageService::class)->isDefault(),
         ])->layout('layouts.public', ['metaTitle' => $metaTitle]);
     }
+
+    /**
+     * Build a map of variant ID → flat raw→translated label map from the
+     * already-eager-loaded variants.translations relation.
+     * Returns empty arrays for the default language (no translation needed).
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function buildVariantAttributeTranslations(): array
+    {
+        $langService = app(\App\Services\LanguageService::class);
+        if ($langService->isDefault()) {
+            return [];
+        }
+
+        $currentLangId = $langService->currentId();
+        $result = [];
+
+        foreach ($this->product->variants as $variant) {
+            $map = $variant->getTranslatedAttributes($currentLangId);
+            if (!empty($map)) {
+                $result[$variant->id] = $map;
+            }
+        }
+
+        return $result;
+    }
+
 
     /**
      * Determine if a cart item is taxable.

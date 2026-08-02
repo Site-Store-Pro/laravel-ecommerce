@@ -131,6 +131,20 @@
                     foreach ($groupedAttributes as $k => $vals) {
                         $groupedAttributes[$k] = array_unique($vals);
                     }
+
+                    // Build a merged flat translation map across all variants.
+                    // Keys are raw strings, values are translated strings.
+                    // Merging all variants gives us a complete token pool for this product.
+                    $attrTransMap = [];
+                    if (!($isDefaultLanguage ?? true) && !empty($variantAttributeTranslations)) {
+                        foreach ($variantAttributeTranslations as $transMap) {
+                            foreach ($transMap as $raw => $translated) {
+                                if ($translated !== '') {
+                                    $attrTransMap[$raw] = $translated;
+                                }
+                            }
+                        }
+                    }
                 @endphp
 
                 @if(!empty($groupedAttributes))
@@ -140,7 +154,10 @@
                         <div class="space-y-5">
                             @foreach($groupedAttributes as $key => $values)
                                 <div>
-                                    <span class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">{{ $key }}</span>
+                                    {{-- Display translated key label; wire:click always uses raw key --}}
+                                    <span class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">
+                                        {{ $attrTransMap[$key] ?? $key }}
+                                    </span>
                                     <div class="flex flex-wrap gap-2">
                                         @foreach($values as $value)
                                             @php
@@ -167,6 +184,9 @@
                                                     }
                                                 }
                                                 $isSelected = isset($selectedAttributes[$key]) && $selectedAttributes[$key] === $value;
+                                                // Display label (translated if available) — the raw $value is always
+                                                // what wire:click sends so selectAttribute() can match it against JSON.
+                                                $displayValue = $attrTransMap[$value] ?? $value;
                                             @endphp
                                             <button 
                                                 type="button"
@@ -177,7 +197,7 @@
                                                     {{ !$isSelected && $isSelectable ? 'bg-white text-slate-800 border-slate-200 hover:border-indigo-300' : '' }}
                                                     {{ !$isSelectable ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50' : '' }}"
                                             >
-                                                {{ $value }}
+                                                {{ $displayValue }}
                                             </button>
                                         @endforeach
                                     </div>
@@ -194,7 +214,13 @@
                         @foreach($product->variants as $variant)
                             @php
                                 $attrs = json_decode($variant->attributes, true) ?: [];
-                                $attrStr = collect($attrs)->map(fn($v, $k) => "$k: $v")->implode(', ');
+                                // Build display string using translated labels where available.
+                                $flatTransMap = $variantAttributeTranslations[$variant->id] ?? [];
+                                $attrStr = collect($attrs)->map(function($v, $k) use ($flatTransMap) {
+                                    $displayKey = ($flatTransMap[$k] ?? '') ?: $k;
+                                    $displayVal = ($flatTransMap[$v] ?? '') ?: $v;
+                                    return "$displayKey: $displayVal";
+                                })->implode(', ');
                             @endphp
                             <label class="flex items-center justify-between p-4 bg-white border {{ $selectedVariantId == $variant->id ? 'border-indigo-500 ring-2 ring-indigo-500/10 bg-indigo-50/10' : 'border-slate-200' }} rounded-2xl cursor-pointer hover:border-indigo-300 transition duration-150">
                                 <div class="flex items-center gap-3">

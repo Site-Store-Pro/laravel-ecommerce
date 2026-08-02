@@ -99,6 +99,7 @@ class DatabaseSeeder extends Seeder
         // Subseeders
         // ---------------------------------------------------------------
         $this->call([
+            KbHelpCenterSeeder::class,
             KbCategorySeeder::class,
             KbArticleSeeder::class,
             CmsSettingsSeeder::class,

@@ -26,12 +26,19 @@
             <!-- Left Side: Shipping Info & Payment -->
             <div class="lg:col-span-8 space-y-6">
                 <!-- Shipping Summary Card -->
+                @php
+                    $hasDownloadable = collect($items)->filter(fn($i) => !empty($i->item_downloadable))->isNotEmpty();
+                    $isServiceOnly   = !$requiresShipping && !$hasDownloadable;
+                @endphp
                 <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-                    <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
-                        <h2 class="text-lg font-bold text-slate-900">@label('review.delivery_heading', 'Delivery Information')</h2>
-                        <a href="{{ route('shop.checkout', ['edit' => 1]) }}" class="text-xs font-bold text-indigo-600 hover:underline">@label('review.edit_details', 'Edit details')</a>
+                    <div class="flex justify-between items-center {{ $isServiceOnly ? '' : 'border-b border-slate-100 pb-4 mb-4' }}">
+                        @if(!$isServiceOnly)
+                            <h2 class="text-lg font-bold text-slate-900">@label('review.delivery_heading', 'Delivery Information')</h2>
+                        @endif
+                        <a href="{{ route('shop.checkout', ['edit' => 1]) }}" class="text-xs font-bold text-indigo-600 hover:underline {{ $isServiceOnly ? 'ml-auto' : '' }}">@label('review.edit_details', 'Edit details')</a>
                     </div>
-                    
+
+                    @if(!$isServiceOnly)
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                             <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider mb-1">@label('review.customer_profile', 'Customer Profile')</span>
@@ -51,10 +58,13 @@
                         @else
                             <div>
                                 <span class="text-xs font-bold text-slate-400 block uppercase tracking-wider mb-1">@label('review.fulfillment', 'Fulfillment')</span>
-                                <p class="text-slate-500">@label('review.digital_only_message', 'Order contains digital products only. Instant download links will be generated on completion.')</p>
+                                @if($hasDownloadable)
+                                    <p class="text-slate-500">@label('review.digital_only_message', 'Order contains digital products only. Instant download links will be generated on completion.')</p>
+                                @endif
                             </div>
                         @endif
                     </div>
+                    @endif
                 </div>
 
                 <!-- Shipping Option Selector -->
@@ -327,7 +337,7 @@
                                 @endif
                                 @if($item->item_shippable)
                                     <span class="inline-block bg-indigo-50 text-indigo-700 text-[10px] px-1.5 py-0.5 rounded font-bold mt-1.5">@label('checkout.requires_shipping', 'Requires Shipping')</span>
-                                @else
+                                @elseif(!empty($item->item_downloadable))
                                     <span class="inline-block bg-teal-50 text-teal-700 text-[10px] px-1.5 py-0.5 rounded font-bold mt-1.5">@label('checkout.digital_delivery', 'Digital Delivery')</span>
                                 @endif
                             </div>

@@ -201,44 +201,58 @@ class Checkout extends Component
             $this->checkoutOptIn = (bool) session('checkout_opt_in');
         }
 
-        // Bypass checkout page if details are already complete
-        if (!request()->has('edit') && Auth::check()) {
+        // Note: auto-redirect for completed profiles is handled in booted()
+        // so it fires on every Livewire lifecycle, not just the initial page load.
+    }
+
+    /**
+     * Determine whether the current authenticated user has a complete-enough
+     * profile to skip the checkout details form entirely.
+     */
+    private function canBypassCheckout(): bool
+    {
+        if (request()->has('edit') || !Auth::check()) {
+            return false;
+        }
+
+        $user = Auth::user();
+
+        if (!$this->requiresShipping) {
+            // Download / service order — just needs name + email
+            return !empty($user->name) && !empty($user->email);
+        }
+
+        // Physical order — needs a complete shipping address
+        $hasBaseAddress = !empty($user->name) &&
+                          !empty($user->email) &&
+                          !empty($user->shipping_address1) &&
+                          !empty($user->shipping_city) &&
+                          !empty($user->shipping_countrycode) &&
+                          !empty($user->shopping_postalcode);
+
+        if (!$hasBaseAddress) {
+            return false;
+        }
+
+        if (in_array($user->shipping_countrycode, ['US', 'CA']) && empty($user->shipping_state)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * booted() runs on every Livewire request (initial + subsequent re-renders).
+     * This ensures the bypass redirect fires even after loginUser() triggers
+     * a component re-render, which does NOT re-run mount().
+     */
+    public function booted(): void
+    {
+        if ($this->canBypassCheckout()) {
             $user = Auth::user();
-            $canBypass = false;
-
-            if (!$this->requiresShipping) {
-                // Case 1: Download order only, has name and email
-                if (!empty($user->name) && !empty($user->email)) {
-                    $canBypass = true;
-                }
-            } else {
-                // Case 2: Shippable order, has complete shipping address
-                $hasBaseAddress = !empty($user->name) &&
-                                  !empty($user->email) &&
-                                  !empty($user->shipping_address1) &&
-                                  !empty($user->shipping_city) &&
-                                  !empty($user->shipping_countrycode) &&
-                                  !empty($user->shopping_postalcode);
-
-                if ($hasBaseAddress) {
-                    $stateOk = true;
-                    if (in_array($user->shipping_countrycode, ['US', 'CA']) && empty($user->shipping_state)) {
-                        $stateOk = false;
-                    }
-                    if ($stateOk) {
-                        $canBypass = true;
-                    }
-                }
-            }
-
-            if ($canBypass) {
-                // Associate current shopping cart records with the logged-in user ID
-                $this->getCartQuery()->update([
-                    'user_id' => $user->id,
-                ]);
-
-                return redirect()->route('shop.checkout-review');
-            }
+            // Associate current guest cart items with this user before leaving
+            $this->getCartQuery()->update(['user_id' => $user->id]);
+            $this->redirect(route('shop.checkout-review'), navigate: false);
         }
     }
 
@@ -293,8 +307,19 @@ class Checkout extends Component
             $this->showLoginForm = false;
             $this->loginEmail = '';
             $this->loginPassword = '';
-            
+
             $this->dispatch('cart-updated');
+
+            // If profile is already complete, bypass the details form immediately.
+            // canBypassCheckout() + booted() would catch this on the next render,
+            // but doing it here avoids the one-render flash of the checkout form.
+            if ($this->canBypassCheckout()) {
+                $user = Auth::user();
+                $this->getCartQuery()->update(['user_id' => $user->id]);
+                $this->redirect(route('shop.checkout-review'), navigate: false);
+                return;
+            }
+
             session()->flash('status', 'Logged in successfully!');
         } else {
             $this->addError('login_error', 'Invalid email or password.');

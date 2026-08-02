@@ -8,7 +8,7 @@
     </button>
 
     <!-- Mobile Trigger -->
-    <button @click="open = !open" class="md:hidden flex w-full items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors" style="color: var(--nav-mobile-text, #1e293b)">
+    <button @click="open = !open" class="md:hidden flex w-full items-center justify-between py-2 rounded-xl text-sm font-semibold transition-colors" style="color: var(--nav-mobile-text, #1e293b)">
         <span>@if(!empty($label)) {{ $label }} @else @label('nav.categories_fallback', 'Categories') @endif</span>
         <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{'rotate-180 text-indigo-600': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />

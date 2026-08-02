@@ -61,7 +61,7 @@
                                             @label('success.download_file', 'Download File')
                                         </a>
                                     </div>
-                                @else
+                                @elseif($item->item_shippable)
                                     <span class="inline-block bg-indigo-50 text-indigo-700 text-[9px] px-1.5 py-0.5 rounded font-bold border border-indigo-150 mt-1">@label('success.will_be_shipped', 'Will be shipped')</span>
                                 @endif
                             </div>

@@ -72,15 +72,15 @@
                                 @endif
                             </div>
 
-                            {{-- ── Personalization Label Translations ──────────────────────── --}}
-                            @if($personalization_active && isset($activeLanguages) && $activeLanguages->count() > 0)
+                            {{-- ── Variant Translations (Attributes + Personalization Labels) ──── --}}
+                            @if(isset($activeLanguages) && $activeLanguages->count() > 0)
                             <div class="mt-4 border border-indigo-200 bg-indigo-50/40 rounded-2xl p-5 space-y-4">
                                 <div class="flex items-center gap-2 pb-2 border-b border-indigo-100">
                                     <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
                                     </svg>
-                                    <h4 class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Personalization Label Translations</h4>
-                                    <span class="ml-auto text-[10px] text-slate-400 hidden sm:block">Translate the storefront personalization prompts</span>
+                                    <h4 class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Variant Translations</h4>
+                                    <span class="ml-auto text-[10px] text-slate-400 hidden sm:block">Translate attribute labels &amp; personalization prompts</span>
                                 </div>
 
                                 {{-- Language pills --}}
@@ -89,7 +89,12 @@
                                         @php
                                             $vTrans   = \App\Models\ProductVariantTranslation::where('product_variant_id', $selectedVariantId)
                                                             ->where('language_id', $lang->id)->first();
-                                            $vHasData = $vTrans && ($vTrans->personalization_label || $vTrans->personalization_details_label || $vTrans->personalization_placeholder);
+                                            $vHasData = $vTrans && (
+                                                $vTrans->personalization_label ||
+                                                $vTrans->personalization_details_label ||
+                                                $vTrans->personalization_placeholder ||
+                                                !empty($vTrans->attributes_translated)
+                                            );
                                         @endphp
                                         <button type="button"
                                                 wire:click="selectVariantTranslationLang('{{ $lang->code }}', {{ $lang->id }})"
@@ -108,26 +113,94 @@
                                 </div>
 
                                 @if($variantTransLangCode)
-                                    <div class="space-y-3 bg-white rounded-xl p-4 border border-indigo-100">
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Personalization Label</label>
-                                            <input type="text" wire:model="trans_personalization_label"
-                                                   placeholder="Translated label, e.g. 'Añadir texto personalizado'…"
-                                                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Details / Message Label</label>
-                                            <input type="text" wire:model="trans_personalization_details_label"
-                                                   placeholder="Translated details label…"
-                                                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
-                                        </div>
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Placeholder Text</label>
-                                            <input type="text" wire:model="trans_personalization_placeholder"
-                                                   placeholder="Translated placeholder text…"
-                                                   class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
-                                        </div>
-                                        <div class="flex justify-end pt-1">
+                                    @php
+                                        // Decode the raw attributes JSON once so we can build the translation rows.
+                                        $rawVariantAttrs = json_decode(
+                                            \App\Models\ProductVariant::find($selectedVariantId)?->attributes ?? '{}',
+                                            true
+                                        ) ?: [];
+                                    @endphp
+
+                                    <div class="space-y-4 bg-white rounded-xl p-4 border border-indigo-100">
+
+                                        {{-- ── Attribute Label Translations ── --}}
+                                        @if(!empty($rawVariantAttrs))
+                                            <div>
+                                                <h5 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                                    <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                                                    Attribute Labels
+                                                </h5>
+                                                <div class="space-y-2">
+                                                    @foreach($rawVariantAttrs as $rawAttrKey => $rawAttrVal)
+                                                        {{-- Attribute KEY row --}}
+                                                        <div class="grid grid-cols-2 gap-3 items-center">
+                                                            <div class="flex items-center gap-2">
+                                                                <span class="px-2 py-1 bg-slate-100 rounded-lg text-xs font-mono text-slate-600 whitespace-nowrap">Key:</span>
+                                                                <span class="text-xs font-semibold text-slate-700">{{ $rawAttrKey }}</span>
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                wire:model="trans_attributes.{{ $rawAttrKey }}"
+                                                                placeholder="{{ $rawAttrKey }} in {{ $variantTransLangCode }}…"
+                                                                class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"
+                                                            >
+                                                        </div>
+                                                        {{-- Attribute VALUE row --}}
+                                                        <div class="grid grid-cols-2 gap-3 items-center pl-4">
+                                                            <div class="flex items-center gap-2">
+                                                                <span class="px-2 py-1 bg-indigo-50 rounded-lg text-xs font-mono text-indigo-600 whitespace-nowrap">Val:</span>
+                                                                <span class="text-xs font-semibold text-slate-600">{{ $rawAttrVal }}</span>
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                wire:model="trans_attributes.{{ $rawAttrVal }}"
+                                                                placeholder="{{ $rawAttrVal }} in {{ $variantTransLangCode }}…"
+                                                                class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"
+                                                            >
+                                                        </div>
+                                                        @if(!$loop->last)
+                                                            <hr class="border-slate-100">
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @else
+                                            <p class="text-xs text-slate-400 italic">
+                                                No attributes defined on this variant. Add attributes (Color, Size, etc.) first, then save the variant before translating.
+                                            </p>
+                                        @endif
+
+                                        {{-- ── Personalization Label Translations ── --}}
+                                        @if($personalization_active)
+                                            <div class="pt-3 border-t border-slate-100">
+                                                <h5 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                                    <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                    Personalization Labels
+                                                </h5>
+                                                <div class="space-y-3">
+                                                    <div>
+                                                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Personalization Label</label>
+                                                        <input type="text" wire:model="trans_personalization_label"
+                                                               placeholder="Translated label…"
+                                                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Details / Message Label</label>
+                                                        <input type="text" wire:model="trans_personalization_details_label"
+                                                               placeholder="Translated details label…"
+                                                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Placeholder Text</label>
+                                                        <input type="text" wire:model="trans_personalization_placeholder"
+                                                               placeholder="Translated placeholder text…"
+                                                               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        <div class="flex justify-end pt-1 border-t border-slate-100">
                                             <button type="button" wire:click="saveVariantTranslation" wire:loading.attr="disabled"
                                                     class="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition">
                                                 <span wire:loading wire:target="saveVariantTranslation"
@@ -244,7 +317,7 @@
                                             <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-indigo-400 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
                                         </div>
                                         <span class="text-sm font-bold {{ $shipping ? 'text-indigo-700' : 'text-slate-400' }} transition-colors">
-                                            {{ $shipping ? 'Shipping Required' : 'No Shipping (Digital)' }}
+                                            {{ $shipping ? 'Shipping Required' : 'No Shipping' }}
                                         </span>
                                     </label>
                                 </div>
@@ -979,6 +1052,14 @@
                                         <input type="text" wire:model="personalization_placeholder" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Enter names for engraving, personalization details, or a custom gift message here...">
                                     </div>
                                 @endif
+                                @if(isset($activeLanguages) && $activeLanguages->count() > 0)
+                                    <div class="col-span-1 md:col-span-3">
+                                        <div class="flex items-center gap-2 mt-2 p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs text-indigo-600">
+                                            <svg class="w-4 h-4 flex-shrink-0 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                                            <span><strong>Translations</strong> for personalization labels can be added after saving this variant — click <em>Edit &amp; Inventory</em> on the saved variant to access the translation panel.</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
 
                             <!-- Quantity Discount breaks -->
@@ -1076,12 +1157,18 @@
                                         <option value="g">g</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Requires Shipping</label>
-                                    <select wire:model="shipping" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                        <option value="1">Yes</option>
-                                        <option value="0">No (Digital Item)</option>
-                                    </select>
+                                {{-- Requires Shipping Toggle --}}
+                                <div class="flex flex-col justify-end pb-1">
+                                    <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">Requires Shipping</label>
+                                    <label class="flex items-center gap-2.5 cursor-pointer group">
+                                        <div class="relative">
+                                            <input type="checkbox" wire:model.number="shipping" class="sr-only peer" true-value="1" false-value="0">
+                                            <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-indigo-400 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500"></div>
+                                        </div>
+                                        <span class="text-sm font-bold {{ $shipping ? 'text-indigo-700' : 'text-slate-400' }} transition-colors">
+                                            {{ $shipping ? 'Shipping Required' : 'No Shipping' }}
+                                        </span>
+                                    </label>
                                 </div>
                                 {{-- Charge Tax Toggle --}}
                                 <div class="flex flex-col justify-end pb-1">

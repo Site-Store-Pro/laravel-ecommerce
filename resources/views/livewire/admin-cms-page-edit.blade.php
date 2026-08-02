@@ -105,7 +105,7 @@
                         :class="activeTab === 'layout' ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'"
                         class="w-full text-left px-4 py-3 rounded-2xl transition duration-150 text-sm flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    Header &amp; Background Images
+                    Header &amp; Background Images | Video Settings
                 </button>
                 <button @click="activeTab = 'code'" 
                         :class="activeTab === 'code' ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-50 font-medium'"
@@ -875,9 +875,67 @@ rightCol: @entangle('right_col'),
                     <!-- Layout & Media Tab -->
                     <div x-show="activeTab === 'layout'" class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-6">
                         <h3 class="text-lg font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center gap-2">
-                            <span class="w-1.5 h-6 bg-indigo-600 rounded"></span> Header &amp; Background Images
+                            <span class="w-1.5 h-6 bg-indigo-600 rounded"></span> Header &amp; Background Images | Video Settings
                         </h3>
 
+                        {{-- ── Media Storage Destination (moved to top) ──────────────── --}}
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Media Storage Destination</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">Storage Destination</label>
+                                    <select wire:model.live="media_image_s3" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <option value="0">Local Server</option>
+                                        <option value="1">Global S3 Storage</option>
+                                        <option value="2">Custom S3 Bucket Credentials</option>
+                                    </select>
+                                    @error('media_image_s3') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                </div>
+
+                                @if($media_image_s3 > 0)
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">CDN URL Override (Optional)</label>
+                                        <input type="text" wire:model="media_image_cdn_url" placeholder="https://cdn.mywebsite.com" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
+                                        <span class="text-[10px] text-slate-400 block mt-1">Loads layout media files from CloudFront instead of the direct S3 URL.</span>
+                                        @error('media_image_cdn_url') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                    </div>
+                                @endif
+                            </div>
+
+                            @if($media_image_s3 == 2)
+                                <div class="p-5 bg-indigo-50/30 border border-indigo-100/50 rounded-2xl space-y-4">
+                                    <h5 class="text-xs font-bold text-indigo-900 uppercase tracking-widest">Custom S3 Credentials for Layout Media</h5>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1 uppercase">Access Key ID</label>
+                                            <input type="text" wire:model="media_image_access_key_id" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm" placeholder="AKIA..." />
+                                            @error('media_image_access_key_id') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1 uppercase">Secret Access Key</label>
+                                            <input type="password" wire:model="media_image_secret_access_key" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm" placeholder="••••••••••••••••" />
+                                            @error('media_image_secret_access_key') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                        </div>
+
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1 uppercase">S3 Bucket Name</label>
+                                            <input type="text" wire:model="media_image_bucket_name" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm" placeholder="my-custom-bucket" />
+                                            @error('media_image_bucket_name') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                        </div>
+
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1 uppercase">S3 Region</label>
+                                            <input type="text" wire:model="media_image_region" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm" placeholder="us-east-1" />
+                                            @error('media_image_region') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- ── Header Image + Background Image ──────────────────────── --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div class="space-y-4">
                                 <label class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Header Image Banner</label>
@@ -926,6 +984,16 @@ rightCol: @entangle('right_col'),
                                 @endif
                                 <input type="file" wire:model="header_image_upload" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
                                 @error('header_image_upload') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+                                @if($header_image_path)
+                                    <div class="flex justify-end">
+                                        <button type="button" wire:click="clearHeaderImage"
+                                                wire:confirm="Clear the header image? This will remove it from the page after saving."
+                                                class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            Clear Header Image
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
 
                             <div class="space-y-4">
@@ -973,8 +1041,18 @@ rightCol: @entangle('right_col'),
                                         @endif
                                     </div>
                                 @endif
-                                 <input type="file" wire:model="background_image_upload" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                                <input type="file" wire:model="background_image_upload" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
                                 @error('background_image_upload') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+                                @if($background_image_path)
+                                    <div class="flex justify-end">
+                                        <button type="button" wire:click="clearBackgroundImage"
+                                                wire:confirm="Clear the background image? This will remove it from the page after saving."
+                                                class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            Clear Background Image
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -1030,61 +1108,6 @@ rightCol: @entangle('right_col'),
                             </div>
                         </div>
 
-                        <!-- Media storage destination and credentials -->
-                        <div class="border-t border-slate-100 pt-6 space-y-6">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">Media Storage Destination</label>
-                                    <select wire:model.live="media_image_s3" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                        <option value="0">Local Server</option>
-                                        <option value="1">Global S3 Storage</option>
-                                        <option value="2">Custom S3 Bucket Credentials</option>
-                                    </select>
-                                    @error('media_image_s3') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                                </div>
-
-                                @if($media_image_s3 > 0)
-                                    <div>
-                                        <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">CDN URL Override (Optional)</label>
-                                        <input type="text" wire:model="media_image_cdn_url" placeholder="https://cdn.mywebsite.com" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
-                                        <span class="text-[10px] text-slate-400 block mt-1">Loads layout media files from CloudFront instead of the direct S3 URL.</span>
-                                        @error('media_image_cdn_url') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                                    </div>
-                                @endif
-                            </div>
-
-                            @if($media_image_s3 == 2)
-                                <div class="p-5 bg-indigo-50/30 border border-indigo-100/50 rounded-2xl space-y-4">
-                                    <h5 class="text-xs font-bold text-indigo-900 uppercase tracking-widest">Custom S3 Credentials for Layout Media</h5>
-                                    
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="text-2xs font-bold text-slate-400 block mb-1 uppercase">Access Key ID</label>
-                                            <input type="text" wire:model="media_image_access_key_id" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm" placeholder="AKIA..." />
-                                            @error('media_image_access_key_id') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                                        </div>
-                                        
-                                        <div>
-                                            <label class="text-2xs font-bold text-slate-400 block mb-1 uppercase">Secret Access Key</label>
-                                            <input type="password" wire:model="media_image_secret_access_key" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm" placeholder="••••••••••••••••" />
-                                            @error('media_image_secret_access_key') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                                        </div>
-
-                                        <div>
-                                            <label class="text-2xs font-bold text-slate-400 block mb-1 uppercase">S3 Bucket Name</label>
-                                            <input type="text" wire:model="media_image_bucket_name" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm" placeholder="my-custom-bucket" />
-                                            @error('media_image_bucket_name') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                                        </div>
-
-                                        <div>
-                                            <label class="text-2xs font-bold text-slate-400 block mb-1 uppercase">S3 Region</label>
-                                            <input type="text" wire:model="media_image_region" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm" placeholder="us-east-1" />
-                                            @error('media_image_region') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
 
                         <!-- Custom Title & Alignment Customizations -->
                         <div class="border-t border-slate-100 pt-6 space-y-6">

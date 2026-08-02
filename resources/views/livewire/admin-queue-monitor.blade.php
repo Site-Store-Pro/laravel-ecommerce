@@ -163,7 +163,7 @@
 
     {{-- ── Worker Settings (only when stopped) ───────────────────────────── --}}
     @if(!$isRunning)
-    <div class="px-6 pb-4">
+    <div class="px-6 pb-4 space-y-3">
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Worker Settings</h2>
             <div class="flex flex-wrap gap-4">
@@ -188,6 +188,20 @@
                 </div>
             </div>
         </div>
+
+        {{-- Translation variant tip --}}
+        @if($this->pendingJobs > 0)
+        <div class="flex gap-3 rounded-xl border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 px-4 py-3">
+            <svg class="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                <span class="font-semibold">Tip — large catalogues with variant translations:</span>
+                If your products have many variants with multiple options (e.g. Color × Size combinations), translation jobs are dispatched <em>per variant</em>, so the total job count can grow quickly.
+                For stores with hundreds of variants, setting <strong>Max Jobs Per Run to 5,000</strong> is recommended to ensure a full translation batch completes in a single worker run without needing to be restarted.
+            </p>
+        </div>
+        @endif
     </div>
     @endif
 

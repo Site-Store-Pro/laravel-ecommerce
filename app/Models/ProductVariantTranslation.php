@@ -13,6 +13,12 @@ class ProductVariantTranslation extends Model
         'personalization_label',
         'personalization_details_label',
         'personalization_placeholder',
+        'attributes_translated',
+    ];
+
+    protected $casts = [
+        // Decoded automatically to array when accessed; stored as JSON in DB.
+        'attributes_translated' => 'array',
     ];
 
     public function variant(): BelongsTo

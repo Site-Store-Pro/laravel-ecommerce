@@ -140,6 +140,135 @@ button.dyn-nav-link,
     background: var(--nav-dropdown-hover-bg, #f8fafc);
     color: var(--nav-text-hover, #4f46e5);
 }
+
+/* ── Dark mode overrides ─────────────────────────────────────────────────── */
+/* Strategy: redefine ALL --nav-* CSS variables at the container level so     */
+/* every descendant reading var(--nav-text) etc. gets dark-mode values.       */
+/* This is necessary because HeaderFooterCssManager hard-sets --nav-text to   */
+/* the admin's chosen color (e.g. #000000), making fallbacks inside           */
+/* var(--nav-text, #cbd5e1) unreachable — the variable IS set, just wrong.   */
+/* Redefining variables on the parent ensures the new values cascade down.    */
+
+/* Standalone nav wrapper — redefine all nav variables */
+html.dark #top-nav-{{ $menu->slug }} {
+    --nav-bg:                  #1e293b;
+    --nav-text:                #cbd5e1;
+    --nav-text-hover:          #818cf8;
+    --nav-border:              rgba(255, 255, 255, 0.06);
+    --nav-dropdown-bg:         #1e293b;
+    --nav-dropdown-border:     #334155;
+    --nav-dropdown-text:       #cbd5e1;
+    --nav-dropdown-hover-bg:   #334155;
+    --nav-dropdown-shadow:     0 10px 40px rgba(0, 0, 0, 0.4);
+    --nav-mobile-bg:           #1e293b;
+    --nav-mobile-text:         #cbd5e1;
+    background:                #1e293b;
+    border-bottom-color:       rgba(255, 255, 255, 0.06);
+}
+
+/* Override --header-background-color so the Tailwind bg-[var()] class on
+   .header_container also resolves to dark. This is needed because the
+   Tailwind JIT class reads the CSS variable from :root, set by
+   HeaderFooterCssManager to the admin's chosen color. */
+html.dark {
+    --header-background-color: #1e293b;
+}
+
+/* Header builder container (outer wrapper) + site_header_container (inner div
+   where HeaderFooterCssManager applies background-color: var(--header-background-color))
+   Both need overriding because the compiled CSS paints .site_header_container
+   separately from the outer .header_container wrapper. */
+html.dark .header_container,
+html.dark .site_header_container,
+html.dark #site_header_container {
+    --nav-bg:                    #1e293b;
+    --nav-text:                  #cbd5e1;
+    --nav-text-hover:            #818cf8;
+    --nav-border:                rgba(255, 255, 255, 0.06);
+    --nav-dropdown-bg:           #1e293b;
+    --nav-dropdown-border:       #334155;
+    --nav-dropdown-text:         #cbd5e1;
+    --nav-dropdown-hover-bg:     #334155;
+    --nav-dropdown-shadow:       0 10px 40px rgba(0, 0, 0, 0.4);
+    --nav-mobile-bg:             #1e293b;
+    --nav-mobile-text:           #cbd5e1;
+    --header-background-color:   #1e293b;  /* redefine at element level too */
+    background-color:            #1e293b !important;
+    background-image:            none !important;
+}
+
+/* Explicit color rules — belt + braces for specificity */
+html.dark .header_container .dyn-nav-link,
+html.dark #top-nav-{{ $menu->slug }} .dyn-nav-link {
+    color: #cbd5e1 !important;
+}
+html.dark .header_container .dyn-nav-link:hover,
+html.dark .header_container .dyn-nav-link:focus,
+html.dark #top-nav-{{ $menu->slug }} .dyn-nav-link:hover,
+html.dark #top-nav-{{ $menu->slug }} .dyn-nav-link:focus {
+    color: #818cf8 !important;
+}
+html.dark .header_container button.dyn-nav-link,
+html.dark #top-nav-{{ $menu->slug }} button {
+    color: #cbd5e1 !important;
+}
+html.dark .header_container button.dyn-nav-link:hover,
+html.dark #top-nav-{{ $menu->slug }} button:hover,
+html.dark #top-nav-{{ $menu->slug }} button:focus {
+    color: #818cf8 !important;
+}
+
+/* Dropdown panels */
+html.dark .header_container .nav-dropdown,
+html.dark .header_container .nav-mega-menu,
+html.dark #top-nav-{{ $menu->slug }} .nav-dropdown,
+html.dark #top-nav-{{ $menu->slug }} .nav-mega-menu {
+    background:    #1e293b;
+    border-color:  #334155;
+    box-shadow:    0 10px 40px rgba(0, 0, 0, 0.4);
+}
+html.dark .header_container .nav-dropdown li a,
+html.dark .header_container .nav-dropdown li button,
+html.dark #top-nav-{{ $menu->slug }} .nav-dropdown li a,
+html.dark #top-nav-{{ $menu->slug }} .nav-dropdown li button {
+    color: #cbd5e1 !important;
+}
+html.dark .header_container .nav-dropdown li a:hover,
+html.dark .header_container .nav-dropdown li button:hover,
+html.dark #top-nav-{{ $menu->slug }} .nav-dropdown li a:hover,
+html.dark #top-nav-{{ $menu->slug }} .nav-dropdown li button:hover {
+    background: #334155;
+    color:      #818cf8 !important;
+}
+
+/* Top sharing / promo bar */
+html.dark .top_sharing_container {
+    background-color: #1e293b;
+    color:            #cbd5e1;
+}
+html.dark .top_sharing_container a {
+    color: #cbd5e1;
+}
+html.dark .top_sharing_container a:hover {
+    color: #818cf8;
+}
+
+/* Fallback plain-link nav rows (no dynamic menu configured) */
+html.dark .top_nav_row a,
+html.dark .top_nav_area a,
+html.dark #top_nav_row a,
+html.dark #top_nav_area a,
+html.dark #top_nav_area_main a,
+html.dark #top_nav_area_col1 a,
+html.dark #top_nav_area_col2 a {
+    color: #cbd5e1;
+}
+html.dark .top_nav_row a:hover,
+html.dark #top_nav_area_main a:hover,
+html.dark #top_nav_area_col1 a:hover,
+html.dark #top_nav_area_col2 a:hover {
+    color: #818cf8;
+}
 </style>
 
 @if($embedded ?? false)

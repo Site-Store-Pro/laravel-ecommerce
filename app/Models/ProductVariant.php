@@ -298,4 +298,46 @@ class ProductVariant extends Model
         $img = $this->searchActiveImageSet();
         return $img ? $img->zoomUrl() : null;
     }
+
+    /**
+     * Return a flat map of raw attribute string → translated string for both
+     * keys AND values stored in this variant's attributes JSON.
+     *
+     * e.g. if attributes = {"Color":"Blue","Size":"Large"}
+     * and attributes_translated = {"Color":"Couleur","Blue":"Bleu","Size":"Taille","Large":"Grand"}
+     * returns: ["Color"=>"Couleur","Blue"=>"Bleu","Size"=>"Taille","Large"=>"Grand"]
+     *
+     * Returns empty array for the default language or if no translation row exists.
+     * The raw canonical attributes JSON is NEVER modified — translations are display-only.
+     * The selectAttribute() Livewire action always receives raw canonical values.
+     *
+     * @param int|null $languageId  Defaults to the current active language.
+     * @return array<string, string>
+     */
+    public function getTranslatedAttributes(?int $languageId = null): array
+    {
+        $langService = app(\App\Services\LanguageService::class);
+        $languageId ??= $langService->currentId();
+
+        // No translation needed for the default language.
+        if ($languageId === $langService->defaultId()) {
+            return [];
+        }
+
+        // Prefer already-eager-loaded translations collection to avoid N+1.
+        if ($this->relationLoaded('translations')) {
+            $trans = $this->translations->firstWhere('language_id', $languageId);
+        } else {
+            $trans = $this->translations()->where('language_id', $languageId)->first();
+        }
+
+        if (!$trans || empty($trans->attributes_translated)) {
+            return [];
+        }
+
+        return is_array($trans->attributes_translated)
+            ? $trans->attributes_translated
+            : (json_decode($trans->attributes_translated, true) ?: []);
+    }
 }
+
