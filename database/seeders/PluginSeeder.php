@@ -378,7 +378,7 @@ class PluginSeeder extends Seeder
                 'activation_required' => 'no',
                 'activation_status'   => 1,
                 'description'         => 'Displays brand logos and links to brand SEO slugs in Slider, Grid, or List mode. Shortcode: [plugin:brands-2026]',
-                'usage_instructions'  => '<p>Add <strong>[plugin:brands-2026]</strong> to any page. Options: <code>display=slider|grid|list</code>, <code>max=12</code>, <code>cols=4</code>, <code>header="Featured Brands"</code>.</p>',
+                'usage_instructions'  => '<p>Add <strong>[plugin:brands-2026]</strong> to any page. Options: <code>display=slider|grid|list</code>, <code>max=12</code>, <code>cols=4</code>, <code>header="Featured Brands"</code>, <code>autoplay=on|off</code>, <code>show_label=1|0</code> (show/hide text brand name under logo).</p>',
             ]
         );
 
@@ -389,6 +389,8 @@ class PluginSeeder extends Seeder
             ['field_name' => 'max_brands',   'field_label' => 'Max Brands',   'field_type' => 'input',  'field_data_format' => 'integer', 'sort_order' => 20, 'field_default_value' => '12'],
             ['field_name' => 'columns',      'field_label' => 'Columns',      'field_type' => 'select', 'field_selections' => '2,3,4,5,6',     'sort_order' => 30, 'field_default_value' => '4'],
             ['field_name' => 'header_title', 'field_label' => 'Header Title', 'field_type' => 'input',  'field_data_format' => 'string',  'sort_order' => 40, 'field_default_value' => 'Featured Brands'],
+            ['field_name' => 'autoplay',     'field_label' => 'Autoplay (Slider)',  'field_type' => 'select', 'field_selections' => 'on,off', 'sort_order' => 45, 'field_default_value' => 'on', 'field_help' => 'Auto-advance slides in slider mode.'],
+            ['field_name' => 'show_label',   'field_label' => 'Show Brand Name Label', 'field_type' => 'checkbox', 'sort_order' => 47, 'field_default_value' => '1', 'field_help' => 'Display the brand text name below the logo image.'],
             ['field_name' => 'custom_css',   'field_label' => 'Custom CSS Overrides',    'field_type' => 'textarea', 'field_editor' => 'css', 'sort_order' => 50, 'field_default_value' => ''],
             ['field_name' => 'default_css',  'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 55, 'field_default_value' => $brandsDefaultCss],
         ];

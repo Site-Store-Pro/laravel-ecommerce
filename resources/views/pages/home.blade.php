@@ -61,8 +61,8 @@
         <link rel="stylesheet" href="{{ asset('css/prose.css') }}">
     </head>
     <body class="antialiased font-sans bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 selection:bg-indigo-500 selection:text-white p-0 m-0 overflow-x-clip max-w-full">
-        <!-- Background Glows -->
-        <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <!-- Background Glows (hidden in dark mode — light-tone glows are unsuitable on dark bg) -->
+        <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10 dark:hidden">
             <div class="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-tr from-indigo-200/30 to-violet-200/20 blur-3xl opacity-60"></div>
             <div class="absolute top-[40%] right-[-15%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-indigo-100/30 to-purple-100/20 blur-3xl opacity-50"></div>
         </div>

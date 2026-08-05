@@ -58,6 +58,7 @@ class ProductDetails extends Component
                 'fields.translations'                => fn ($q) => $q->whereIn('language_id', $langIds),
                 'fields.options.translations'        => fn ($q) => $q->whereIn('language_id', $langIds),
                 'crossSells.crossSellProduct.variants.images',
+                'inventoryAlert',
             ])
             ->firstOrFail();
 
@@ -78,6 +79,50 @@ class ProductDetails extends Component
     public function getSelectedVariantProperty(): ?ProductVariant
     {
         return $this->product->variants->firstWhere('id', $this->selectedVariantId);
+    }
+
+    /**
+     * Reactive computed property: returns the custom out-of-stock message
+     * for the currently selected variant, or null if in stock / no message set.
+     *
+     * Logic:
+     *  - If the selected variant is a download, always null (always orderable).
+     *  - If the variant has inventory and stock > 0, null (in stock).
+     *  - If out of stock (inventory exists with 0 stock, or inventory is null
+     *    and stock tracking is off but product has an alert assigned), return
+     *    the product-level inventoryAlert message.
+     *
+     * Because this is a Livewire computed property it re-evaluates automatically
+     * whenever $selectedVariantId changes.
+     */
+    public function getOutOfStockMessageProperty(): ?string
+    {
+        $variant = $this->selectedVariant;
+
+        if (!$variant) {
+            return null;
+        }
+
+        // Downloads are always purchasable — no OOS message.
+        if ($variant->download_item) {
+            return null;
+        }
+
+        // If inventory tracking is set up for this variant, check actual stock.
+        if ($variant->inventory) {
+            $stock = $variant->inventory->quantity_available - $variant->inventory->reserved_stock;
+            if ($stock > 0) {
+                return null; // In stock — no message.
+            }
+        }
+        // No inventory record means the variant has no stock tracking set up.
+        // In that case we treat it as in-stock (unlimited) — no message.
+        else {
+            return null;
+        }
+
+        // Variant is out of stock — return the product-level custom message if set.
+        return $this->product->inventoryAlert?->message ?? null;
     }
 
     protected function validationRules(): array
@@ -736,6 +781,8 @@ class ProductDetails extends Component
             // raw canonical values in wire:click so selectAttribute() still works correctly.
             'variantAttributeTranslations' => $this->buildVariantAttributeTranslations(),
             'isDefaultLanguage'            => app(\App\Services\LanguageService::class)->isDefault(),
+            // Reactive OOS message for the currently selected variant.
+            'outOfStockMessage'            => $this->outOfStockMessage,
         ])->layout('layouts.public', ['metaTitle' => $metaTitle]);
     }
 

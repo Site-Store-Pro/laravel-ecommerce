@@ -160,6 +160,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Testimonials
         Route::get('testimonials', \App\Livewire\AdminTestimonialsManager::class)->name('testimonials.index');
 
+        // ── Inventory Alert Messages ──────────────────────────────────────────────
+        Route::get('inventory-alerts', \App\Livewire\AdminInventoryAlerts::class)->name('inventory-alerts.index');
+
+        // ── FAQ Manager ───────────────────────────────────────────────────────────
+        Route::get('faqs', \App\Livewire\AdminFaqs::class)->name('faqs.index');
+
+        // ── Modal Manager ──────────────────────────────────────────────────────────
+        Route::get('modals', \App\Livewire\AdminModalIndex::class)->name('modals.index');
+        Route::get('modals/create', \App\Livewire\AdminModalEdit::class)->name('modals.create');
+        Route::get('modals/{id}/edit', \App\Livewire\AdminModalEdit::class)->name('modals.edit');
+
         // Site Labels (dynamic text overrides)
         Route::get('site-labels', AdminSiteLabels::class)->name('site-labels.index');
 

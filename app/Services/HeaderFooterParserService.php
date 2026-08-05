@@ -143,13 +143,13 @@ class HeaderFooterParserService
         } elseif ($logoType === 'url' && !empty($logoVal)) {
             $logoMediaHtml = '<img src="' . e($logoVal) . '" alt="' . e($siteName) . '" class="site-logo-img max-h-10 w-auto object-contain shrink-0">';
         } else {
-            // Default fallback e-commerce gift package icon badge using primary accent color
-            $logoMediaHtml = '<span class="p-1.5 rounded-xl text-white shadow-md shrink-0 flex items-center justify-center" style="background-color: var(--primary-accent-color, #026C80);"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm-7 8h14M5 8h14a1 1 0 011 1v11a1 1 0 01-1 1H5a1 1 0 01-1-1V9a1 1 0 011-1z"/></svg></span>';
+            // Default fallback SVG icon (snazzy ribbon emblem without box) using menu label color
+            $logoMediaHtml = '<span class="site-logo-icon flex items-center justify-center shrink-0 text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" style="color: var(--nav-text, currentColor);"><svg class="w-6 h-6 shrink-0 transition-transform duration-300 group-hover:scale-105" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 14a5 5 0 100-10 5 5 0 000 10zM8.5 13.5L6.5 21 12 18.5 17.5 21l-2-7.5M12 7.5v3m-1.5-1.5h3"/></svg></span>';
         }
 
         $titleHtml = '<span class="site-logo-title text-lg font-extrabold tracking-tight text-slate-900 dark:text-white group-hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors truncate max-w-[130px] xs:max-w-[180px] sm:max-w-none">' . e($siteName) . '</span>';
 
-        return '<a href="' . e(url('/')) . '" class="site-logo-link group inline-flex items-center gap-3 hover:opacity-95 transition-opacity w-auto max-w-max min-w-0 shrink-0 my-auto py-0.5" title="' . e($siteName) . '">'
+        return '<a href="' . e(url('/')) . '" class="site-logo-link group inline-flex items-center gap-1 hover:opacity-95 transition-opacity w-auto max-w-max min-w-0 shrink-0 my-auto py-0.5" title="' . e($siteName) . '">'
             . $logoMediaHtml
             . $titleHtml
             . '</a>';

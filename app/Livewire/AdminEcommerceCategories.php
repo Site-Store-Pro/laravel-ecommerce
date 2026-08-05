@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Category;
 use App\Models\Language;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -26,6 +27,15 @@ class AdminEcommerceCategories extends Component
     public ?int $parent_id = null;
     public int $sort_order = 0;
     public bool $is_visible_in_menu = true;
+
+    // Image storage settings
+    public int $category_image_s3 = 0;   // 0=Local, 1=Global S3, 2=Custom S3
+    public string $category_image_cdn_url = '';
+    public string $category_image_region = '';
+    public string $category_image_bucket_name = '';
+    public string $category_image_access_key_id = '';
+    public string $category_image_secret_access_key = '';
+    public string $category_image_direct_url = '';  // Direct URL (highest priority)
 
     // Search / Filter
     public string $search = '';
@@ -98,6 +108,13 @@ class AdminEcommerceCategories extends Component
         $this->is_visible_in_menu = true;
         $this->isEditing = false;
         $this->isCreating = false;
+        $this->category_image_s3 = 0;
+        $this->category_image_cdn_url = '';
+        $this->category_image_region = '';
+        $this->category_image_bucket_name = '';
+        $this->category_image_access_key_id = '';
+        $this->category_image_secret_access_key = '';
+        $this->category_image_direct_url = '';
         
         $this->selectedCategoryIdForProducts = null;
         $this->selectedCategoryName = '';
@@ -123,6 +140,13 @@ class AdminEcommerceCategories extends Component
         $this->parent_id = $category->parent_id;
         $this->sort_order = $category->sort_order;
         $this->is_visible_in_menu = (bool) $category->is_visible_in_menu;
+        $this->category_image_s3 = (int) ($category->category_image_s3 ?? 0);
+        $this->category_image_cdn_url = $category->category_image_cdn_url ?? '';
+        $this->category_image_region = $category->category_image_region ?? '';
+        $this->category_image_bucket_name = $category->category_image_bucket_name ?? '';
+        $this->category_image_access_key_id = $category->category_image_access_key_id ?? '';
+        $this->category_image_secret_access_key = $category->category_image_secret_access_key ?? '';
+        $this->category_image_direct_url = $category->category_image_direct_url ?? '';
         
         $this->isEditing = true;
         $this->loadTlFor($id);
@@ -177,13 +201,20 @@ class AdminEcommerceCategories extends Component
     public function saveCategory(): void
     {
         $rules = [
-            'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:product_categories,slug,' . ($this->categoryId ?? 'NULL') . ',id',
-            'category_image' => 'nullable|string|max:2048',
-            'category_image_file' => 'nullable|image|max:4096',
-            'parent_id' => 'nullable|integer|exists:product_categories,id',
-            'sort_order' => 'required|integer',
-            'is_visible_in_menu' => 'required|boolean',
+            'name'                          => 'required|string|max:255',
+            'slug'                          => 'required|string|max:255|unique:product_categories,slug,' . ($this->categoryId ?? 'NULL') . ',id',
+            'category_image'                => 'nullable|string|max:2048',
+            'category_image_file'           => 'nullable|image|max:4096',
+            'parent_id'                     => 'nullable|integer|exists:product_categories,id',
+            'sort_order'                    => 'required|integer',
+            'is_visible_in_menu'            => 'required|boolean',
+            'category_image_s3'             => 'required|integer',
+            'category_image_cdn_url'        => 'nullable|url|max:500',
+            'category_image_direct_url'     => 'nullable|url|max:1000',
+            'category_image_region'         => 'nullable|string|max:100',
+            'category_image_bucket_name'    => 'nullable|string|max:255',
+            'category_image_access_key_id'  => 'nullable|string|max:255',
+            'category_image_secret_access_key' => 'nullable|string|max:500',
         ];
 
         // Prevent setting parent_id to itself
@@ -194,35 +225,67 @@ class AdminEcommerceCategories extends Component
 
         $this->validate($rules);
 
-        $finalImagePath = $this->category_image;
+        // ── Resolve final image path / URL ────────────────────────────────────
+        // Priority: direct URL > file upload > existing value
+        $finalImagePath = $this->category_image ?: null;
 
-        if ($this->category_image_file) {
-            $path = $this->category_image_file->store('uploads/categories', 'public');
-            $finalImagePath = asset('storage/' . $path);
+        if (!empty($this->category_image_direct_url)) {
+            // Direct URL — store as-is, no file upload needed
+            $finalImagePath = $this->category_image_direct_url;
+        } elseif ($this->category_image_file) {
+            // File upload — pick the correct disk
+            if ($this->category_image_s3 == 2) {
+                $diskName = 'custom_s3_categories_' . ($this->categoryId ?: 'new');
+                config([
+                    "filesystems.disks.{$diskName}" => [
+                        'driver' => 's3',
+                        'key'    => $this->category_image_access_key_id,
+                        'secret' => $this->category_image_secret_access_key,
+                        'region' => $this->category_image_region,
+                        'bucket' => $this->category_image_bucket_name,
+                        'use_path_style_endpoint' => false,
+                    ]
+                ]);
+            } elseif ($this->category_image_s3 == 1) {
+                $diskName = 's3';
+            } else {
+                $diskName = 'public';
+            }
+
+            $stored_path = $this->category_image_file->store('uploads/categories', $diskName);
+
+            // Apply CDN prefix if provided
+            if (!empty($this->category_image_cdn_url)) {
+                $finalImagePath = rtrim($this->category_image_cdn_url, '/') . '/' . ltrim($stored_path, '/');
+            } elseif ($diskName === 'public') {
+                $finalImagePath = asset('storage/' . $stored_path);
+            } else {
+                $finalImagePath = $stored_path;
+            }
         }
 
+        $saveData = [
+            'name'                             => $this->name,
+            'slug'                             => $this->slug,
+            'description'                      => $this->description ?: null,
+            'category_image'                   => $finalImagePath,
+            'parent_id'                        => $this->parent_id,
+            'sort_order'                       => $this->sort_order,
+            'is_visible_in_menu'               => $this->is_visible_in_menu,
+            'category_image_s3'                => $this->category_image_s3,
+            'category_image_cdn_url'           => $this->category_image_cdn_url ?: null,
+            'category_image_region'            => $this->category_image_region ?: null,
+            'category_image_bucket_name'       => $this->category_image_bucket_name ?: null,
+            'category_image_access_key_id'     => $this->category_image_access_key_id ?: null,
+            'category_image_secret_access_key' => $this->category_image_secret_access_key ?: null,
+            'category_image_direct_url'        => $this->category_image_direct_url ?: null,
+        ];
+
         if ($this->isEditing && $this->categoryId) {
-            $category = Category::findOrFail($this->categoryId);
-            $category->update([
-                'name'              => $this->name,
-                'slug'              => $this->slug,
-                'description'       => $this->description ?: null,
-                'category_image'    => $finalImagePath ?: null,
-                'parent_id'         => $this->parent_id,
-                'sort_order'        => $this->sort_order,
-                'is_visible_in_menu' => $this->is_visible_in_menu,
-            ]);
+            Category::findOrFail($this->categoryId)->update($saveData);
             session()->flash('status', 'Category updated successfully.');
         } else {
-            Category::create([
-                'name'              => $this->name,
-                'slug'              => $this->slug,
-                'description'       => $this->description ?: null,
-                'category_image'    => $finalImagePath ?: null,
-                'parent_id'         => $this->parent_id,
-                'sort_order'        => $this->sort_order,
-                'is_visible_in_menu' => $this->is_visible_in_menu,
-            ]);
+            Category::create($saveData);
             session()->flash('status', 'Category created successfully.');
         }
 

@@ -14,18 +14,20 @@ class RecaptchaService
      * and the score meets the configured threshold.
      * Always returns true when no site key is configured (local dev).
      */
-    public function verify(string $token, string $action): bool
+    public function verify(?string $token, string $action): bool
     {
         $siteKey = config('services.recaptcha.site_key', '');
 
-        // Skip verification when keys are not configured (local / CI environments)
+        // Skip verification when keys are not configured (local / CI / staging without reCAPTCHA)
         if (empty($siteKey) || empty(config('services.recaptcha.secret'))) {
             return true;
         }
 
+        // Token is null or empty — credentials ARE set, so treat as a failed check
         if (empty($token)) {
             return false;
         }
+
 
         try {
             $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [

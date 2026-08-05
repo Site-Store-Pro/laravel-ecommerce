@@ -140,10 +140,29 @@ class SocialIconsPlugin implements DisplayPlugin
                 $html .= "</style>\n";
             }
 
-            // Inject FontAwesome 6 CDN if enabled and not already output
-            if ($useFa && !static::$faCdnLoaded) {
-                static::$faCdnLoaded = true;
-                $html .= '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />';
+            // Inject FontAwesome 6 CDN if enabled and not already loaded on this request
+            $alreadyLoadedInRequest = app()->bound('fa_cdn_loaded');
+
+            if ($useFa) {
+                if (!$alreadyLoadedInRequest) {
+                    app()->instance('fa_cdn_loaded', true);
+                    $html .= '<link id="fa-cdn-css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />';
+                }
+
+                // Client-side DOM guard: guarantees FontAwesome is in document.head regardless of render order or multiple instances
+                $html .= '<script>
+                    if (!window.faCdnLoaded && !document.getElementById("fa-cdn-css") && !document.querySelector("link[href*=\"font-awesome\"]")) {
+                        window.faCdnLoaded = true;
+                        var link = document.createElement("link");
+                        link.id = "fa-cdn-css";
+                        link.rel = "stylesheet";
+                        link.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css";
+                        link.integrity = "sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==";
+                        link.crossOrigin = "anonymous";
+                        link.referrerPolicy = "no-referrer";
+                        document.head.appendChild(link);
+                    }
+                </script>';
             }
 
             $html .= '<div class="social-icons-wrapper flex items-center gap-3 ' . $alignClass . ' py-1">';

@@ -942,14 +942,29 @@
                     @endif
 
                     {{-- Save Controls --}}
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
-                        <button wire:click="cancelEdit" class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 transition">
-                            Cancel
+                    <div class="flex items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
+                        {{-- Translate action (left side) --}}
+                        <button wire:click="translateBlock({{ $editingBlockId }})"
+                                wire:loading.attr="disabled"
+                                wire:target="translateBlock"
+                                title="Auto-translate this block into all active languages using OpenAI"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl border border-violet-200 dark:border-violet-700 text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/20 hover:bg-violet-100 dark:hover:bg-violet-900/40 transition disabled:opacity-50">
+                            <svg wire:loading.remove wire:target="translateBlock" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                            <svg wire:loading wire:target="translateBlock" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span wire:loading.remove wire:target="translateBlock">Translate All Languages</span>
+                            <span wire:loading wire:target="translateBlock">Queueing…</span>
                         </button>
-                        <button wire:click="saveBlock" class="px-5 py-2.5 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md transition flex items-center gap-1.5">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-                            <span>Save Section Changes</span>
-                        </button>
+
+                        {{-- Cancel / Save (right side) --}}
+                        <div class="flex items-center gap-3">
+                            <button wire:click="cancelEdit" class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 transition">
+                                Cancel
+                            </button>
+                            <button wire:click="saveBlock" class="px-5 py-2.5 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md transition flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                                <span>Save Section Changes</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             @endif
@@ -1275,6 +1290,61 @@
                             <input type="text" wire:model="cssVars.footer_heading_font_size" class="w-full px-2 py-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs rounded" placeholder="1.2rem" />
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {{-- Custom Icon SVG Overrides --}}
+            <div class="space-y-4 border-b border-slate-100 dark:border-slate-700 pb-6">
+                <h4 class="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-wider text-indigo-600 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
+                    <span>Cart &amp; Account Icon Overrides</span>
+                </h4>
+                <p class="text-xs text-slate-500 dark:text-slate-400 -mt-2">Paste custom SVG code to replace the default cart or account icons in the header. Leave empty to use the built-in defaults. Do not include the outer <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">&lt;button&gt;</code> or <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">&lt;a&gt;</code> wrapper — just the <code class="bg-slate-100 dark:bg-slate-700 px-1 rounded">&lt;svg&gt;...&lt;/svg&gt;</code> element itself.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Shopping Cart Icon --}}
+                    <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Shopping Cart Icon</span>
+                        </div>
+                        <p class="text-2xs text-slate-400">Default: shopping bag outline SVG. Paste a replacement <code>&lt;svg&gt;</code> here.</p>
+                        <textarea wire:model="cssVars.custom_cart_icon_svg"
+                                  rows="5"
+                                  class="w-full font-mono text-xs p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y"
+                                  placeholder="<svg class=&quot;w-6 h-6&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; viewBox=&quot;0 0 24 24&quot;>...</svg>"></textarea>
+                        @if(!empty($cssVars['custom_cart_icon_svg']))
+                            <div class="flex items-center gap-2 pt-1">
+                                <span class="text-2xs font-bold text-slate-400 uppercase tracking-wider">Preview:</span>
+                                <span class="text-slate-700 dark:text-slate-200">{!! $cssVars['custom_cart_icon_svg'] !!}</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- My Account Icon --}}
+                    <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">My Account Icon</span>
+                        </div>
+                        <p class="text-2xs text-slate-400">Default: person/user circle outline SVG. Paste a replacement <code>&lt;svg&gt;</code> here.</p>
+                        <textarea wire:model="cssVars.custom_account_icon_svg"
+                                  rows="5"
+                                  class="w-full font-mono text-xs p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y"
+                                  placeholder="<svg class=&quot;w-6 h-6&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; viewBox=&quot;0 0 24 24&quot;>...</svg>"></textarea>
+                        @if(!empty($cssVars['custom_account_icon_svg']))
+                            <div class="flex items-center gap-2 pt-1">
+                                <span class="text-2xs font-bold text-slate-400 uppercase tracking-wider">Preview:</span>
+                                <span class="text-slate-700 dark:text-slate-200">{!! $cssVars['custom_account_icon_svg'] !!}</span>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <button wire:click="saveCssVars" class="px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md transition flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                        Save Icon Settings
+                    </button>
                 </div>
             </div>
 

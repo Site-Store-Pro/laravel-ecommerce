@@ -53,6 +53,8 @@ class AdminLanguageTranslations extends Component
             'cms_tags'               => $service->translationStats(\App\Models\CmsPagesTag::class, $this->languageId),
             'kb_categories'          => $service->translationStats(\App\Models\KbCategory::class, $this->languageId),
             'email_templates'        => $service->translationStats(\App\Models\EmailTemplate::class, $this->languageId),
+            'modals'                 => $service->translationStats(\App\Models\CmsModal::class, $this->languageId),
+            'builder_blocks'         => $service->translationStats(\App\Models\CmsBuilderBlock::class, $this->languageId),
         ];
     }
 
@@ -85,6 +87,7 @@ class AdminLanguageTranslations extends Component
             'cms_tags'           => \App\Models\CmsPagesTag::class,
             'kb_categories'      => \App\Models\KbCategory::class,
             'email_templates'    => \App\Models\EmailTemplate::class,
+            'builder_blocks'     => \App\Models\CmsBuilderBlock::class,
         ];
 
         $modelClass = $map[$type] ?? null;
@@ -124,6 +127,7 @@ class AdminLanguageTranslations extends Component
             'cms_tags'           => \App\Models\CmsPagesTag::class,
             'kb_categories'      => \App\Models\KbCategory::class,
             'email_templates'    => \App\Models\EmailTemplate::class,
+            'builder_blocks'     => \App\Models\CmsBuilderBlock::class,
         ];
         $modelClass = $map[$type] ?? null;
         if ($modelClass) {
@@ -137,18 +141,19 @@ class AdminLanguageTranslations extends Component
         // Load untranslated items for the active type.
         // Variant types show a list of variants with pending attribute/personalization translations.
         $standardMap = [
-            'cms_pages'          => [\App\Models\CmsPage::class,        'cms_page_id',              'title'],
-            'products'           => [\App\Models\Product::class,         'product_id',               'title'],
-            'kb_articles'        => [\App\Models\KbArticle::class,       'kb_article_id',            'title'],
-            'testimonials'       => [\App\Models\CmsTestimonial::class,  'testimonial_id',           'author_name'],
-            'nav_items'          => [\App\Models\NavItem::class,         'nav_item_id',              'label'],
-            'list_menus'         => [\App\Models\CmsListMenuItem::class, 'cms_list_menu_item_id',    'list_item'],
-            'site_labels'        => [\App\Models\SiteLabel::class,       'site_label_id',            'label_key'],
-            'product_categories' => [\App\Models\Category::class,        'category_id',              'name'],
-            'cms_categories'     => [\App\Models\CmsPagesCategory::class,'cms_pages_category_id',    'name'],
-            'cms_tags'           => [\App\Models\CmsPagesTag::class,     'cms_pages_tag_id',         'name'],
-            'kb_categories'      => [\App\Models\KbCategory::class,      'kb_category_id',           'name'],
-            'email_templates'    => [\App\Models\EmailTemplate::class,   'email_template_id',        'profile_name'],
+            'cms_pages'          => [\App\Models\CmsPage::class,          'cms_page_id',              'title'],
+            'products'           => [\App\Models\Product::class,           'product_id',               'title'],
+            'kb_articles'        => [\App\Models\KbArticle::class,         'kb_article_id',            'title'],
+            'testimonials'       => [\App\Models\CmsTestimonial::class,    'testimonial_id',           'author_name'],
+            'nav_items'          => [\App\Models\NavItem::class,           'nav_item_id',              'label'],
+            'list_menus'         => [\App\Models\CmsListMenuItem::class,   'cms_list_menu_item_id',    'list_item'],
+            'site_labels'        => [\App\Models\SiteLabel::class,         'site_label_id',            'label_key'],
+            'product_categories' => [\App\Models\Category::class,          'category_id',              'name'],
+            'cms_categories'     => [\App\Models\CmsPagesCategory::class,  'cms_pages_category_id',    'name'],
+            'cms_tags'           => [\App\Models\CmsPagesTag::class,       'cms_pages_tag_id',         'name'],
+            'kb_categories'      => [\App\Models\KbCategory::class,        'kb_category_id',           'name'],
+            'email_templates'    => [\App\Models\EmailTemplate::class,     'email_template_id',        'profile_name'],
+            'builder_blocks'     => [\App\Models\CmsBuilderBlock::class,   'cms_builder_block_id',     'title'],
         ];
 
         $items = collect();
@@ -181,7 +186,9 @@ class AdminLanguageTranslations extends Component
         } elseif (isset($standardMap[$this->activeType])) {
             [$modelClass, $fk, $lf] = $standardMap[$this->activeType];
             $labelField = $lf;
-            $translationClass = 'App\\Models\\' . class_basename($modelClass) . 'Translation';
+            $translationClassOverrides = ['CmsTestimonial' => 'App\\Models\\TestimonialTranslation'];
+            $translationClass = $translationClassOverrides[class_basename($modelClass)]
+                ?? ('App\\Models\\' . class_basename($modelClass) . 'Translation');
             $translatedIds = class_exists($translationClass)
                 ? $translationClass::where('language_id', $this->languageId)->pluck($fk)
                 : collect();

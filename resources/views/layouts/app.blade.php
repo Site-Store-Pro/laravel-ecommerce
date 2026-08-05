@@ -14,6 +14,9 @@
 
         <title>{{ \App\Models\CmsSetting::getSiteName() }}</title>
 
+        <!-- Favicon (DB-driven) -->
+        <x-site-favicon-loader />
+
         <!-- Google Fonts (DB-driven) -->
         <x-site-google-fonts-loader />
 
@@ -43,7 +46,8 @@
         {{-- flag-icons: renders country code flags (us, mx, fr…) as SVG images on all browsers/OS --}}
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
     </head>
-    <body class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white">
+    @php $isAdminArea = auth()->check() && in_array(auth()->user()->role_id?->value, [3, 4]); @endphp
+    <body class="font-sans antialiased bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 selection:bg-indigo-500 selection:text-white {{ $isAdminArea ? 'admin-area' : '' }}">
         <div class="min-h-screen bg-[#f8fafc] dark:bg-slate-900 relative overflow-hidden">
             <!-- Decorative Background Glows -->
             <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-3xl pointer-events-none"></div>

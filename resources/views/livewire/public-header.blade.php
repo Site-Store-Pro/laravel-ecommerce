@@ -178,7 +178,7 @@
                                             <div id="header_features_icons_col1" class="flex items-center gap-3">
                                                 @livewire('language-switcher')
                                                 <button type="button" wire:click.prevent="$dispatch('open-cart')" @click="$dispatch('open-cart')" class="relative p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 transition-colors focus:outline-none" aria-label="Shopping Cart">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                                                    {!! !empty($cssVars['custom_cart_icon_svg']) ? $cssVars['custom_cart_icon_svg'] : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>' !!}
                                                     @if($cartCount > 0)
                                                         <span class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">{{ $cartCount }}</span>
                                                     @endif
@@ -187,7 +187,7 @@
                                                    class="p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                                    title="{{ auth()->check() ? auth()->user()->name : siteLabel('nav.sign_in', 'Sign In') }}"
                                                    aria-label="{{ auth()->check() ? auth()->user()->name : siteLabel('nav.sign_in', 'Sign In') }}">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                    {!! !empty($cssVars['custom_account_icon_svg']) ? $cssVars['custom_account_icon_svg'] : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>' !!}
                                                 </a>
                                             </div>
                                         @endif
@@ -250,7 +250,7 @@
                                             <div id="header_features_icons_col2" class="flex items-center gap-3">
                                                 @livewire('language-switcher')
                                                 <button type="button" wire:click.prevent="$dispatch('open-cart')" @click="$dispatch('open-cart')" class="relative p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 transition-colors focus:outline-none" aria-label="Shopping Cart">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                                                    {!! !empty($cssVars['custom_cart_icon_svg']) ? $cssVars['custom_cart_icon_svg'] : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>' !!}
                                                     @if($cartCount > 0)
                                                         <span class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">{{ $cartCount }}</span>
                                                     @endif
@@ -259,7 +259,7 @@
                                                    class="p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                                    title="{{ auth()->check() ? auth()->user()->name : siteLabel('nav.sign_in', 'Sign In') }}"
                                                    aria-label="{{ auth()->check() ? auth()->user()->name : siteLabel('nav.sign_in', 'Sign In') }}">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                    {!! !empty($cssVars['custom_account_icon_svg']) ? $cssVars['custom_account_icon_svg'] : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>' !!}
                                                 </a>
                                             </div>
                                         @endif
@@ -272,7 +272,7 @@
                                         <div id="header_features_icons" class="flex items-center gap-2 sm:gap-3">
                                             @livewire('language-switcher')
                                             <button type="button" wire:click.prevent="$dispatch('open-cart')" @click="$dispatch('open-cart')" class="relative p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none" aria-label="Shopping Cart">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                                                {!! !empty($cssVars['custom_cart_icon_svg']) ? $cssVars['custom_cart_icon_svg'] : '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>' !!}
                                                 @if($cartCount > 0)
                                                     <span class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
                                                         {{ $cartCount }}
@@ -280,11 +280,11 @@
                                                 @endif
                                             </button>
 
-                                            <a href="{{ auth()->check() ? route('dashboard') : route('login') }}"
+                                                <a href="{{ auth()->check() ? route('dashboard') : route('login') }}"
                                                class="p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                                title="{{ auth()->check() ? auth()->user()->name : siteLabel('nav.sign_in', 'Sign In') }}"
                                                aria-label="{{ auth()->check() ? auth()->user()->name : siteLabel('nav.sign_in', 'Sign In') }}">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                {!! !empty($cssVars['custom_account_icon_svg']) ? $cssVars['custom_account_icon_svg'] : '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>' !!}
                                             </a>
                                         </div>
                                     @endif

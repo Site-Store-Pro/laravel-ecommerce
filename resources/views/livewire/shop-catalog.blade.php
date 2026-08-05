@@ -412,7 +412,7 @@
                                                 <span class="text-xs text-slate-400 line-through font-semibold">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
                                             </div>
                                         @else
-                                            <span class="text-lg font-extrabold text-slate-900 dark:text-white">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
+                                            <span class="text-lg font-extrabold text-slate-900 dark:text-slate-200">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
                                         @endif
                                     @endif
                                 </div>
@@ -469,7 +469,7 @@
                                                 <span class="block text-lg font-extrabold text-rose-600 dark:text-rose-400">{{ $currencySymbol }}{{ number_format($firstVariant->sale_price, 2) }}</span>
                                                 <span class="block text-xs text-slate-400 line-through font-semibold">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
                                             @else
-                                                <span class="block text-lg font-extrabold text-slate-900 dark:text-white">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
+                                                <span class="block text-lg font-extrabold text-slate-900 dark:text-slate-200">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
                                             @endif
                                         @endif
                                     </div>
@@ -518,7 +518,7 @@
 
             <!-- Drawer Header (Filtered Items Count Bubble + Close Button) -->
             <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
-                <span class="px-3 py-1 rounded-full bg-indigo-600/90 text-white text-xs font-extrabold shadow-sm border border-indigo-400/30">
+                <span class="px-3 py-1 rounded-full bg-indigo-600/90 dark:bg-[#2c4a7c] text-white text-xs font-extrabold shadow-sm border border-indigo-400/30 dark:border-indigo-500/30">
                     {{ number_format($products->total()) }} {{ Str::plural('Product', $products->total()) }}
                 </span>
                 <button @click="slideoutOpen = false" type="button" class="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition">
@@ -554,7 +554,7 @@
                             <span>{{ $currencySymbol }}0</span>
                             <span>{{ $currencySymbol }}{{ number_format($catalogMaxPrice, 2) }}</span>
                         </div>
-                        <input type="range" min="0" max="{{ $catalogMaxPrice }}" step="1" wire:model.live.debounce.150ms="maxPriceFilter" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        <input type="range" min="0" max="{{ $catalogMaxPrice }}" step="1" wire:model.live.debounce.150ms="maxPriceFilter" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-600 dark:accent-[#818cf8]">
                     </div>
                 </div>
 
@@ -661,7 +661,7 @@
                 <button wire:click="resetAllAdvancedFilters" type="button" class="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-xs hover:bg-rose-100 hover:text-rose-700 transition">
                     @label('catalog.reset_filters', 'Reset All Filters')
                 </button>
-                <button @click="slideoutOpen = false" type="button" class="flex-1 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition flex items-center justify-center gap-1.5">
+                <button @click="slideoutOpen = false" type="button" class="flex-1 px-5 py-2.5 rounded-xl bg-indigo-600 dark:bg-[#2c4a7c] hover:bg-indigo-700 dark:hover:bg-[#1e3664] text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition flex items-center justify-center gap-1.5">
                     <span>@label('catalog.apply_view', 'Apply & View')</span>
                     <span class="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black">
                         {{ number_format($products->total()) }}

@@ -172,6 +172,45 @@ html.dark #top-nav-{{ $menu->slug }} {
    HeaderFooterCssManager to the admin's chosen color. */
 html.dark {
     --header-background-color: #1e293b;
+
+    /* ── Shop filter pills ────────────────────────────────────────────────── */
+    /* Strategy: redefine the CSS variables here rather than fighting the      */
+    /* compiled CSS !important rules. html.dark has higher specificity than    */
+    /* :root, so these values cascade down and the compiled CSS var() calls    */
+    /* resolve to the muted dark-mode tones automatically.                     */
+    /* Admin colour overrides using direct colour values bypass variables       */
+    /* entirely and are unaffected. Admin variable customisations via :root     */
+    /* are superseded here in dark mode only.                                  */
+
+    /* Category filter pills */
+    --shop-category-pill-bg:           rgba(30, 41, 59, 0.75);
+    --shop-category-pill-text:         #94a3b8;
+    --shop-category-pill-border:       rgba(71, 85, 105, 0.55);
+    --shop-category-pill-hover-bg:     rgba(44, 74, 124, 0.50);
+    --shop-category-pill-hover-text:   #cbd5e1;
+    --shop-category-pill-hover-border: rgba(44, 74, 124, 0.70);
+
+    /* Brand filter pills */
+    --shop-brand-pill-bg:              rgba(30, 41, 59, 0.75);
+    --shop-brand-pill-text:            #94a3b8;
+    --shop-brand-pill-border:          rgba(71, 85, 105, 0.55);
+    --shop-brand-pill-hover-bg:        rgba(44, 74, 124, 0.50);
+    --shop-brand-pill-hover-text:      #cbd5e1;
+    --shop-brand-pill-hover-border:    rgba(44, 74, 124, 0.70);
+
+    /* Subcategory filter pills */
+    --shop-subcat-pill-bg:             rgba(30, 41, 59, 0.75);
+    --shop-subcat-pill-text:           #94a3b8;
+    --shop-subcat-pill-border:         rgba(71, 85, 105, 0.55);
+    --shop-subcat-pill-hover-bg:       rgba(44, 74, 124, 0.50);
+    --shop-subcat-pill-hover-text:     #cbd5e1;
+    --shop-subcat-pill-hover-border:   rgba(44, 74, 124, 0.70);
+
+    /* Grid / List view-mode toggle icons */
+    --shop-view-inactive-bg:           #1e293b;
+    --shop-view-inactive-text:         #64748b;
+    --shop-view-active-bg:             #2c4a7c;
+    --shop-view-active-text:           #cbd5e1;
 }
 
 /* Header builder container (outer wrapper) + site_header_container (inner div
@@ -268,6 +307,33 @@ html.dark #top_nav_area_main a:hover,
 html.dark #top_nav_area_col1 a:hover,
 html.dark #top_nav_area_col2 a:hover {
     color: #818cf8;
+}
+
+/* ── Dark mode: muted slate-navy primary button override ─────────────────── */
+/* Replaces the vibrant indigo-600 (#4f46e5) with a softer slate-navy tone   */
+/* (#2c4a7c) that reads more naturally on dark backgrounds.                  */
+/*                                                                             */
+/* NOTE: No !important is used here intentionally — any admin CSS skinning    */
+/* override that uses !important OR targets a more specific selector will     */
+/* naturally take precedence, preserving button customisation capability.     */
+html.dark button.bg-indigo-600,
+html.dark a.bg-indigo-600,
+html.dark input[type="submit"].bg-indigo-600,
+html.dark input[type="button"].bg-indigo-600 {
+    background-color: #2c4a7c;
+}
+html.dark button.bg-indigo-600:hover,
+html.dark a.bg-indigo-600:hover,
+html.dark input[type="submit"].bg-indigo-600:hover,
+html.dark input[type="button"].bg-indigo-600:hover,
+html.dark button.hover\:bg-indigo-700:hover,
+html.dark a.hover\:bg-indigo-700:hover {
+    background-color: #1e3664;
+}
+/* Focus ring — keep it visible but toned down */
+html.dark button.focus\:ring-indigo-500:focus,
+html.dark a.focus\:ring-indigo-500:focus {
+    --tw-ring-color: rgba(44, 74, 124, 0.6);
 }
 </style>
 

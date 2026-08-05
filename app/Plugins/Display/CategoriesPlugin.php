@@ -55,7 +55,7 @@ class CategoriesPlugin implements DisplayPlugin
                     $imgUrl = $cat->category_image ?: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=150&auto=format&fit=crop&q=80';
 
                     $html .= '<a href="' . e($catUrl) . '" class="inline-flex items-center gap-2.5 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-indigo-500 hover:text-indigo-600 transition shadow-sm">';
-                    $html .= '<img src="' . e($imgUrl) . '" alt="' . e($cat->name) . '" class="w-6 h-6 object-cover rounded-md shrink-0">';
+                    $html .= '<img src="' . e($imgUrl) . '" alt="' . e($cat->name) . '" class="category-logo-img w-6 h-6 object-cover rounded-md shrink-0">';
                     $html .= '<span>' . e($cat->name) . '</span>';
                     $html .= '</a>';
                 }
@@ -71,7 +71,7 @@ class CategoriesPlugin implements DisplayPlugin
                     $html .= '<div class="shrink-0 p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm hover:shadow-md transition flex flex-col items-center text-center gap-3" style="width: calc((100% - ' . (($cols - 1) * 1) . 'rem) / ' . $cols . ');">';
                     $html .= '<a href="' . e($catUrl) . '" class="group flex flex-col items-center gap-3 w-full">';
                     $html .= '<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-100 dark:border-indigo-900 group-hover:border-indigo-500 transition-colors shadow-sm shrink-0">';
-                    $html .= '<img src="' . e($imgUrl) . '" alt="' . e($cat->name) . '" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">';
+                    $html .= '<img src="' . e($imgUrl) . '" alt="' . e($cat->name) . '" class="category-logo-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">';
                     $html .= '</div>';
                     $html .= '<span class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">' . e($cat->name) . '</span>';
                     $html .= '</a></div>';
@@ -95,7 +95,7 @@ class CategoriesPlugin implements DisplayPlugin
 
                     $html .= '<a href="' . e($catUrl) . '" class="group p-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-500 transition flex flex-col items-center text-center gap-3">';
                     $html .= '<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-50 dark:border-indigo-950 group-hover:border-indigo-500 transition-colors shadow-sm shrink-0">';
-                    $html .= '<img src="' . e($imgUrl) . '" alt="' . e($cat->name) . '" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">';
+                    $html .= '<img src="' . e($imgUrl) . '" alt="' . e($cat->name) . '" class="category-logo-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">';
                     $html .= '</div>';
                     $html .= '<span class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">' . e($cat->name) . '</span>';
                     $html .= '</a>';

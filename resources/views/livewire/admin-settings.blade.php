@@ -116,15 +116,48 @@
     @endif
 
     {{-- Page Header --}}
-    <div class="mb-8">
+    <div class="mb-6">
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Global Settings</h1>
         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage global site identity, theme customization, full-page background media, typography, appearance, and integrations.</p>
+    </div>
+
+    {{-- Standard Embedded Jump List --}}
+    <div class="mb-8 p-4 bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl shadow-sm">
+        <div class="text-3xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2.5 px-1">
+            Quick Section Navigation
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <a href="#site-identity" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-600/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-1.5 text-center">
+                <svg class="w-3.5 h-3.5 text-violet-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Site Identity</span>
+            </a>
+            <a href="#theme-customization" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-600/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-1.5 text-center">
+                <svg class="w-3.5 h-3.5 text-pink-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                <span>Theme &amp; Fonts</span>
+            </a>
+            <a href="#appearance" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-600/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-1.5 text-center">
+                <svg class="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                <span>Appearance</span>
+            </a>
+            <a href="#loaders-integrations" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-600/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-1.5 text-center">
+                <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                <span>Scripts &amp; GA</span>
+            </a>
+            <a href="#product-reviews" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-600/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-1.5 text-center">
+                <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                <span>Reviews</span>
+            </a>
+            <a href="#general-settings" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-600/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-1.5 text-center">
+                <svg class="w-3.5 h-3.5 text-sky-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.572c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>General Settings</span>
+            </a>
+        </div>
     </div>
 
     <form wire:submit="save" class="space-y-8">
 
         {{-- ── SITE IDENTITY ── --}}
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div id="site-identity" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
                 <span class="inline-flex items-center justify-center p-2 rounded-lg bg-violet-50 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -315,11 +348,178 @@
                     @endif
                 </div>
 
+                {{-- Favicon Mode Selector --}}
+                <div class="pt-6 border-t border-slate-100 dark:border-slate-700">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-3">Site Favicon Settings</label>
+                    <div class="flex flex-wrap gap-2 mb-5">
+                        @foreach([''=>'Default (favicon.ico)', 'local'=>'Local Upload', 'url'=>'Direct URL', 'svg'=>'SVG Code', 's3'=>'S3 (.env)', 'custom_s3'=>'Custom S3', 'cdn'=>'CDN + Path'] as $val=>$label)
+                            <label class="cursor-pointer">
+                                <input type="radio" wire:model.live="favicon_type" value="{{ $val }}" class="sr-only peer">
+                                <span class="inline-block px-3 py-1.5 border-2 rounded-xl text-xs font-bold transition-all
+                                    {{ $favicon_type === $val
+                                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                                        : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-300' }}">
+                                    {{ $label }}
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+
+                    {{-- Local Upload --}}
+                    @if($favicon_type === 'local')
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Upload Favicon File (.ico, .png, .svg, .jpg)</label>
+                            <input type="file" wire:model="favicon_upload" accept="image/*,.ico,.svg"
+                                   class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            @error('favicon_upload') <span class="text-xs text-red-500 block">{{ $message }}</span> @enderror
+                            @if($favicon_path)
+                                <p class="text-xs text-emerald-600">✓ Current favicon path: <code>{{ $favicon_path }}</code></p>
+                            @endif
+                        </div>
+                    @endif
+
+                    {{-- Direct URL --}}
+                    @if($favicon_type === 'url')
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Favicon URL</label>
+                            <input type="text" wire:model="favicon_path" placeholder="https://example.com/favicon.png"
+                                   class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                            @error('favicon_path') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
+
+                    {{-- SVG Code --}}
+                    @if($favicon_type === 'svg')
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Favicon SVG HTML Code</label>
+                            <textarea wire:model="favicon_svg_html" rows="5" placeholder='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">...</svg>'
+                                      class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 rounded-xl text-slate-800 text-sm font-mono focus:outline-none focus:border-indigo-400"></textarea>
+                            @error('favicon_svg_html') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
+
+                    {{-- S3 (.env) --}}
+                    @if($favicon_type === 's3')
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">S3 Path / Key</label>
+                                    <input type="text" wire:model="favicon_path" placeholder="favicons/my-favicon.png"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Optional CDN / CloudFront URL Prefix</label>
+                                    <input type="text" wire:model="favicon_cdn_url" placeholder="https://cdn.example.com"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Direct S3 Bucket Favicon Upload</label>
+                                <input type="file" wire:model="favicon_upload" accept="image/*,.ico,.svg"
+                                       class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                <p class="text-xs text-slate-400 mt-1">Uploads favicon directly into your S3 bucket configured in <code>.env</code>.</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Custom S3 --}}
+                    @if($favicon_type === 'custom_s3')
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Bucket Name</label>
+                                    <input type="text" wire:model.live="favicon_s3_bucket" placeholder="my-bucket"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Region</label>
+                                    <input type="text" wire:model.live="favicon_s3_region" placeholder="us-east-1"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">AWS Access Key ID</label>
+                                    <input type="text" wire:model.live="favicon_s3_key" placeholder="AKIA..."
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">AWS Secret Access Key</label>
+                                    <input type="password" wire:model.live="favicon_s3_secret" placeholder="Secret Key"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">S3 Path / Key</label>
+                                    <input type="text" wire:model="favicon_path" placeholder="favicons/my-favicon.png"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Optional CDN / CloudFront URL Prefix</label>
+                                    <input type="text" wire:model="favicon_cdn_url" placeholder="https://cdn.example.com"
+                                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Direct Custom S3 Bucket Favicon Upload</label>
+                                <input type="file" wire:model="favicon_upload" accept="image/*,.ico,.svg"
+                                       class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                <p class="text-xs text-slate-400 mt-1">Uploads favicon file directly into your specified custom S3 bucket using these credentials.</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- CDN + Path --}}
+                    @if($favicon_type === 'cdn')
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">CDN / CloudFront Base URL</label>
+                                <input type="text" wire:model="favicon_cdn_url" placeholder="https://cdn.example.com"
+                                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                                @error('favicon_cdn_url') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">File Path</label>
+                                <input type="text" wire:model="favicon_path" placeholder="favicons/favicon.png"
+                                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm font-medium focus:outline-none focus:border-indigo-400">
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Current Favicon preview --}}
+                    @php
+                        $currentFavicon = \App\Models\CmsSetting::resolveFaviconUrl();
+                    @endphp
+                    @if($currentFavicon['type'] === 'url')
+                        <div class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-4">
+                            <img src="{{ $currentFavicon['value'] }}" alt="Current Favicon" class="h-8 w-8 object-contain rounded-md border border-slate-200 bg-white p-1">
+                            <div class="flex-1">
+                                <p class="text-xs font-bold text-slate-600">Current Favicon Preview</p>
+                                <p class="text-xs text-slate-400 break-all">{{ $currentFavicon['value'] }}</p>
+                            </div>
+                            <button type="button" wire:click="clearFavicon" class="px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all">
+                                Clear
+                            </button>
+                        </div>
+                    @elseif($currentFavicon['type'] === 'svg')
+                        <div class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-4">
+                            <div class="h-8 w-8 flex items-center justify-center rounded-md border border-slate-200 bg-white p-1">{!! $currentFavicon['value'] !!}</div>
+                            <div class="flex-1">
+                                <p class="text-xs font-bold text-slate-600">Current Favicon: Custom SVG Code</p>
+                            </div>
+                            <button type="button" wire:click="clearFavicon" class="px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-xl hover:bg-red-100 transition-all">
+                                Clear
+                            </button>
+                        </div>
+                    @else
+                        <div class="mt-4 p-3 bg-slate-50 border border-dashed border-slate-300 rounded-2xl">
+                            <p class="text-xs text-slate-400 text-center">No custom favicon configured — default <code>favicon.ico</code> file is used</p>
+                        </div>
+                    @endif
+                </div>
+
             </div>
         </div>
 
         {{-- ── SITE THEME CUSTOMIZATION ── --}}
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div id="theme-customization" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
                 <span class="inline-flex items-center justify-center p-2 rounded-lg bg-pink-50 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -641,6 +841,37 @@
                                 </div>
                             </div>
                         </div>
+
+                        {{-- Site Link Colors --}}
+                        <div class="p-3.5 bg-indigo-50/40 dark:bg-slate-700/40 rounded-xl border border-indigo-100 dark:border-slate-600 space-y-2.5 col-span-1 md:col-span-2 lg:col-span-3">
+                            <div class="flex items-center justify-between border-b pb-1">
+                                <p class="text-xs font-bold text-slate-700 dark:text-slate-200">Site Hyperlink Customization (&lt;a&gt; tags)</p>
+                                <span class="text-[10px] text-slate-400">Override default body link, hover link, and active link colors</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 uppercase mb-1">Site Link Color</label>
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="color" wire:model.live="theme_link_color" class="w-7 h-7 border rounded-lg cursor-pointer p-0 bg-transparent">
+                                        <input type="text" wire:model.live="theme_link_color" placeholder="#4f46e5 (default)" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border rounded-lg text-xs font-mono">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 uppercase mb-1">Link Hover Color</label>
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="color" wire:model.live="theme_link_hover_color" class="w-7 h-7 border rounded-lg cursor-pointer p-0 bg-transparent">
+                                        <input type="text" wire:model.live="theme_link_hover_color" placeholder="#4338ca (default)" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border rounded-lg text-xs font-mono">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 uppercase mb-1">Link Active Color</label>
+                                    <div class="flex items-center gap-1.5">
+                                        <input type="color" wire:model.live="theme_link_active_color" class="w-7 h-7 border rounded-lg cursor-pointer p-0 bg-transparent">
+                                        <input type="text" wire:model.live="theme_link_active_color" placeholder="#3730a3 (default)" class="flex-1 px-2 py-1 bg-white dark:bg-slate-800 border rounded-lg text-xs font-mono">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -691,7 +922,7 @@
 
         {{-- ── APPEARANCE ── --}}
 
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div id="appearance" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
                 <span class="inline-flex items-center justify-center p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -742,54 +973,84 @@
 
                 {{-- Button Color Picker & Border Radius Theme Customizer --}}
                 <div class="px-6 py-6 space-y-4">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Button Color Scheme &amp; Border Radius</p>
-                    <p class="text-xs text-slate-400">Choose custom colors and button shape to reskin the site elements to match your brand identity.</p>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Primary Button Styling Manager</p>
+                            <p class="text-xs text-slate-400">Configure primary call-to-action buttons. Fields left blank default to your active brand primary navy color (#1e3a8a).</p>
+                        </div>
+                        <button type="button"
+                                class="btn-theme-primary !text-xs"
+                                style="background-color: {{ $theme_primary_color ?: '#1e3a8a' }}; color: {{ $theme_text_color ?: '#ffffff' }}; border-color: {{ $theme_primary_border_color ?: ($theme_primary_color ?: '#1e3a8a') }}; border-radius: {{ $theme_border_radius }};">
+                            Preview Primary Button
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                        {{-- Button Text Color --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Text Color</label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" wire:model.live="theme_text_color"
+                                       class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                <input type="text" wire:model.live="theme_text_color"
+                                       placeholder="#ffffff"
+                                       class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                            </div>
+                        </div>
+
                         {{-- Primary Background Color --}}
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Primary Color</label>
-                            <div class="flex items-center gap-2">
-                                <input type="color" wire:model="theme_primary_color"
-                                       class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
-                                <input type="text" wire:model="theme_primary_color"
-                                       placeholder="#4f46e5"
-                                       class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Background Color</label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" wire:model.live="theme_primary_color"
+                                       class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                <input type="text" wire:model.live="theme_primary_color"
+                                       placeholder="#1e3a8a"
+                                       class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
                             </div>
-                            @error('theme_primary_color') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        {{-- Primary Border Color --}}
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Border Color</label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" wire:model.live="theme_primary_border_color"
+                                       class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                <input type="text" wire:model.live="theme_primary_border_color"
+                                       placeholder="#1e3a8a"
+                                       class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                            </div>
                         </div>
 
                         {{-- Hover Background Color --}}
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hover Color</label>
-                            <div class="flex items-center gap-2">
-                                <input type="color" wire:model="theme_hover_color"
-                                       class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
-                                <input type="text" wire:model="theme_hover_color"
-                                       placeholder="#4338ca"
-                                       class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Hover Background</label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" wire:model.live="theme_hover_color"
+                                       class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                <input type="text" wire:model.live="theme_hover_color"
+                                       placeholder="#172554"
+                                       class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
                             </div>
-                            @error('theme_hover_color') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
-                        {{-- Button Text Color --}}
+                        {{-- Hover Text Color --}}
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Text Color</label>
-                            <div class="flex items-center gap-2">
-                                <input type="color" wire:model="theme_text_color"
-                                       class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
-                                <input type="text" wire:model="theme_text_color"
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Hover Text Color</label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" wire:model.live="theme_primary_hover_text_color"
+                                       class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                <input type="text" wire:model.live="theme_primary_hover_text_color"
                                        placeholder="#ffffff"
-                                       class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                       class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
                             </div>
-                            @error('theme_text_color') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
                         </div>
 
                         {{-- Button Border Radius --}}
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Button Shape</label>
-                            <select wire:model="theme_border_radius"
-                                    class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-medium focus:outline-none focus:border-indigo-400">
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Button Shape</label>
+                            <select wire:model.live="theme_border_radius"
+                                    class="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-medium focus:outline-none focus:border-indigo-400">
                                 <option value="0px">Sharp (0px)</option>
                                 <option value="0.25rem">Rounded SM (4px)</option>
                                 <option value="0.375rem">Rounded MD (6px)</option>
@@ -815,60 +1076,60 @@
                             </button>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
                             {{-- Secondary Text Color --}}
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Text Color</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="color" wire:model="theme_secondary_text_color"
-                                           class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
-                                    <input type="text" wire:model="theme_secondary_text_color"
-                                           placeholder="#4f46e5"
-                                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Text Color</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="theme_secondary_text_color"
+                                           class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="theme_secondary_text_color"
+                                           placeholder="#1e3a8a"
+                                           class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
                                 </div>
                             </div>
 
                             {{-- Secondary Background Color --}}
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Background</label>
-                                <input type="text" wire:model="theme_secondary_bg_color"
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Background</label>
+                                <input type="text" wire:model.live="theme_secondary_bg_color"
                                        placeholder="transparent"
-                                       class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono focus:outline-none">
+                                       class="w-full min-w-0 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono focus:outline-none">
                             </div>
 
                             {{-- Secondary Border Color --}}
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Border Color</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="color" wire:model="theme_secondary_border_color"
-                                           class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
-                                    <input type="text" wire:model="theme_secondary_border_color"
-                                           placeholder="#4f46e5"
-                                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Border Color</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="theme_secondary_border_color"
+                                           class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="theme_secondary_border_color"
+                                           placeholder="#1e3a8a"
+                                           class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
                                 </div>
                             </div>
 
                             {{-- Secondary Hover BG Color --}}
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hover Background</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="color" wire:model="theme_secondary_hover_bg_color"
-                                           class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
-                                    <input type="text" wire:model="theme_secondary_hover_bg_color"
-                                           placeholder="#4f46e5"
-                                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Hover Background</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="theme_secondary_hover_bg_color"
+                                           class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="theme_secondary_hover_bg_color"
+                                           placeholder="#1e3a8a"
+                                           class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
                                 </div>
                             </div>
 
                             {{-- Secondary Hover Text Color --}}
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Hover Text Color</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="color" wire:model="theme_secondary_hover_text_color"
-                                           class="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer bg-transparent p-0">
-                                    <input type="text" wire:model="theme_secondary_hover_text_color"
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Hover Text Color</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="theme_secondary_hover_text_color"
+                                           class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="theme_secondary_hover_text_color"
                                            placeholder="#ffffff"
-                                           class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                           class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
                                 </div>
                             </div>
                         </div>
@@ -884,7 +1145,7 @@
                             <div class="shrink-0 flex items-center gap-2">
                                 <button type="button" 
                                         class="px-4 py-2 text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5"
-                                        style="background-color: {{ !empty($backtop_bg_color) ? $backtop_bg_color : 'var(--primary-accent-color, #4f46e5)' }}; color: {{ $backtop_icon_color }};">
+                                        style="background-color: {{ !empty($backtop_bg_color) ? $backtop_bg_color : 'var(--theme-primary, #4f46e5)' }}; color: {{ !empty($backtop_icon_color) ? $backtop_icon_color : '#ffffff' }};">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
                                     <span>Preview Button</span>
                                 </button>
@@ -1201,7 +1462,7 @@
         </div>
 
         {{-- ── LOADERS & INTEGRATIONS ── --}}
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div id="loaders-integrations" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
                 <span class="inline-flex items-center justify-center p-2 rounded-lg bg-violet-50 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1282,7 +1543,7 @@
         </div>
 
         {{-- ── PRODUCT REVIEWS ── --}}
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div id="product-reviews" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
                 <span class="inline-flex items-center justify-center p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1333,7 +1594,7 @@
         </div>
 
         {{-- ── GENERAL / TIMEZONE ── --}}
-        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div id="general-settings" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
                 <span class="inline-flex items-center justify-center p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

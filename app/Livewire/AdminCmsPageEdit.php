@@ -22,6 +22,7 @@ class AdminCmsPageEdit extends Component
     // Form attributes
     public string $title = '';
     public string $slug = '';
+    public bool   $slugTouched = false; // true once the user has manually edited the slug field
     public string $content = '';
     public string $meta_title = '';
     public string $meta_description = '';
@@ -218,7 +219,8 @@ class AdminCmsPageEdit extends Component
             $this->hide_page_ranking = true;
             $this->custom_sorting = 0.0;
             $this->selected_category_id = null;
-            $this->selected_tag_ids = [];
+            $this->selected_tag_ids     = [];
+            $this->slugTouched          = false;
 
             $this->featured_image_s3 = 0;
             $this->featured_image_path = null;
@@ -239,8 +241,18 @@ class AdminCmsPageEdit extends Component
 
     public function updatedTitle(): void
     {
-        if (!$this->pageId) {
+        if (!$this->pageId && !$this->slugTouched) {
             $this->slug = Str::slug($this->title);
+        }
+    }
+
+    /** Mark the slug as manually edited so title changes no longer overwrite it. */
+    public function updatedSlug(): void
+    {
+        if (!$this->pageId) {
+            // Only flag as touched if the user cleared or typed something different from the auto-slug
+            $autoSlug = Str::slug($this->title);
+            $this->slugTouched = ($this->slug !== $autoSlug && $this->slug !== '');
         }
     }
 
@@ -316,6 +328,16 @@ class AdminCmsPageEdit extends Component
         if (!$isUnique) {
             $this->addError('slug', 'This slug is already in use by a page, category, or tag.');
             return;
+        }
+
+        // Reserved route-prefix guard — these prefixes are owned by the application router
+        $reservedPrefixes = ['kb/', 'shop/', 'items/', 'cart/', 'checkout/', 'login/', 'register/', 'admin/', 'section/'];
+        $normalizedSlug   = ltrim($this->slug, '/');
+        foreach ($reservedPrefixes as $prefix) {
+            if (str_starts_with($normalizedSlug, $prefix) || $normalizedSlug === rtrim($prefix, '/')) {
+                $this->addError('slug', "The slug may not start with '/{$prefix}' — that path is reserved by the system.");
+                return;
+            }
         }
 
         // Upload files

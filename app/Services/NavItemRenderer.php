@@ -219,7 +219,7 @@ class NavItemRenderer
             $html = '<ul class="nav-dropdown nav-brands-dropdown min-w-[200px] py-1">';
             foreach ($brands as $brand) {
                 $url = route('shop.brand', $brand->slug);
-                $html .= '<li><a href="' . e($url) . '">' . e($brand->name) . '</a></li>';
+                $html .= '<li><a href="' . e($url) . '" class="hover:text-indigo-600 transition">' . e($brand->name) . '</a></li>';
             }
             $html .= '</ul>';
             return $html;

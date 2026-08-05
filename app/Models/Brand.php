@@ -20,7 +20,13 @@ class Brand extends Model
         'is_visible_in_menu',
         'brand_icon',
         'brand_url',
-        'brand_logo_s3'
+        'brand_logo_s3',
+        'brand_logo_cdn_url',
+        'brand_logo_region',
+        'brand_logo_bucket_name',
+        'brand_logo_access_key_id',
+        'brand_logo_secret_access_key',
+        'brand_icon_direct_url',
     ];
 
     protected $casts = [

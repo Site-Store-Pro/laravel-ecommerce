@@ -331,6 +331,30 @@ class AdminHeaderFooterBuilder extends Component
         session()->flash('message', 'Layout block saved successfully.');
     }
 
+    public function translateBlock(int $id): void
+    {
+        $block = CmsBuilderBlock::findOrFail($id);
+
+        $languages = \App\Models\Language::where('is_active', true)
+            ->where('is_default', false)
+            ->get();
+
+        if ($languages->isEmpty()) {
+            $this->dispatch('toast', message: 'No active non-default languages found to translate into.', type: 'warning');
+            return;
+        }
+
+        foreach ($languages as $language) {
+            \App\Jobs\TranslateContentJob::dispatch(\App\Models\CmsBuilderBlock::class, $block->id, $language->id);
+        }
+
+        $this->dispatch('toast',
+            message: $languages->count() . ' translation job(s) queued for "' . e($block->title) . '".',
+            type: 'success',
+            duration: 6000
+        );
+    }
+
     public function toggleActive(int $id): void
     {
         $block = CmsBuilderBlock::find($id);

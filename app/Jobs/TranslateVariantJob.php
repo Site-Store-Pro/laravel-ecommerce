@@ -91,9 +91,9 @@ class TranslateVariantJob implements ShouldQueue
                 }
             }
 
-            if (!empty($attrTranslated)) {
-                $translationData['attributes_translated'] = $attrTranslated;
-            }
+            // Always persist attributes_translated (even as empty map) so the
+            // variant is marked as processed and won't appear as pending again.
+            $translationData['attributes_translated'] = $attrTranslated;
         }
 
         // ── Translate personalization labels ────────────────────────────────────

@@ -1,16 +1,16 @@
 <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" class="relative inline-block text-left w-full md:w-auto">
     <!-- Desktop Trigger -->
-    <button @click="open = !open" class="hidden md:inline-flex items-center gap-1.5 dyn-nav-link px-3 py-2 focus:outline-none">
+    <button @click="open = !open" class="hidden md:inline-flex items-center gap-1.5 dyn-nav-link px-3 py-2 focus:outline-none hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <span>@if(!empty($label)) {{ $label }} @else @label('nav.categories_fallback', 'Categories') @endif</span>
-        <svg class="w-3 h-3 text-current opacity-60 transition-transform duration-200" :class="{'rotate-180 text-indigo-600': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-3 h-3 text-current opacity-60 transition-transform duration-200" :class="{'rotate-180 text-indigo-600 dark:text-indigo-400': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
         </svg>
     </button>
 
     <!-- Mobile Trigger -->
-    <button @click="open = !open" class="md:hidden flex w-full items-center justify-between py-2 rounded-xl text-sm font-semibold transition-colors" style="color: var(--nav-mobile-text, #1e293b)">
+    <button @click="open = !open" class="md:hidden flex w-full items-center justify-between py-2 rounded-xl text-sm font-semibold transition-colors hover:text-indigo-600 dark:hover:text-indigo-400" style="color: var(--nav-mobile-text, #1e293b)">
         <span>@if(!empty($label)) {{ $label }} @else @label('nav.categories_fallback', 'Categories') @endif</span>
-        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{'rotate-180 text-indigo-600': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{'rotate-180 text-indigo-600 dark:text-indigo-400': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
     </button>
@@ -33,10 +33,12 @@
                 @foreach($categories as $category)
                     <div class="group/item py-0.5">
                         <!-- Top-level Category Link -->
-                        <a href="{{ route('shop.category', ['category_slug' => $category->slug]) }}" wire:navigate class="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-bold text-slate-800 dark:text-slate-100 hover:bg-indigo-50/50 dark:hover:bg-slate-700 hover:text-indigo-600 transition duration-150">
-                            <span>{{ $category->name }}</span>
+                        <a href="{{ route('shop.category', ['category_slug' => $category->slug]) }}"
+                           wire:navigate
+                           class="flex items-center justify-between px-3 py-2 rounded-xl text-slate-800 dark:text-slate-100 hover:bg-indigo-50/50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition duration-150 group/item">
+                            <span class="text-sm font-bold text-slate-800 dark:text-slate-100 group-hover/item:text-indigo-600 dark:group-hover/item:text-indigo-400 transition">{{ $category->name }}</span>
                             @if($category->children->isNotEmpty())
-                                <svg class="w-3 h-3 text-slate-400 group-hover/item:text-indigo-500 transition-transform duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-3 h-3 text-slate-400 group-hover/item:text-indigo-500 dark:group-hover/item:text-indigo-400 transition-transform duration-150" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
                                 </svg>
                             @endif
@@ -46,8 +48,10 @@
                         @if($category->children->isNotEmpty())
                             <div class="pl-4 pr-2 py-1 space-y-1 border-l border-slate-150 dark:border-slate-700 ml-3">
                                 @foreach($category->children as $child)
-                                    <a href="{{ route('shop.category', ['category_slug' => $child->slug]) }}" wire:navigate class="block px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 transition">
-                                        {{ $child->name }}
+                                    <a href="{{ route('shop.category', ['category_slug' => $child->slug]) }}"
+                                       wire:navigate
+                                       class="block px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition group/child">
+                                        <span class="text-xs font-semibold text-slate-600 dark:text-slate-300 group-hover/child:text-indigo-600 dark:group-hover/child:text-indigo-400 transition">{{ $child->name }}</span>
                                     </a>
                                 @endforeach
                             </div>
@@ -69,13 +73,13 @@
             <div class="space-y-1 max-h-[16rem] overflow-y-auto pr-1 scrollbar-thin scroll-smooth overscroll-contain">
                 @foreach($categories as $category)
                     <div class="py-1">
-                        <a href="{{ route('shop.category', ['category_slug' => $category->slug]) }}" wire:navigate class="block px-3 py-1.5 rounded-lg text-sm font-bold text-slate-800 dark:text-slate-100 hover:text-indigo-600">
+                        <a href="{{ route('shop.category', ['category_slug' => $category->slug]) }}" wire:navigate class="block px-3 py-1.5 rounded-lg text-sm font-bold text-slate-800 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400">
                             {{ $category->name }}
                         </a>
                         @if($category->children->isNotEmpty())
                             <div class="pl-4 space-y-1 border-l border-slate-200 dark:border-slate-700 ml-3 mt-1">
                                 @foreach($category->children as $child)
-                                    <a href="{{ route('shop.category', ['category_slug' => $child->slug]) }}" wire:navigate class="block px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-600">
+                                    <a href="{{ route('shop.category', ['category_slug' => $child->slug]) }}" wire:navigate class="block px-3 py-1 rounded-md text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400">
                                         {{ $child->name }}
                                     </a>
                                 @endforeach

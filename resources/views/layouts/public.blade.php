@@ -26,6 +26,9 @@
         @endif
         @stack('meta')
 
+        <!-- Favicon (DB-driven) -->
+        <x-site-favicon-loader />
+
         <!-- Google Fonts (DB-driven) -->
         <x-site-google-fonts-loader />
 

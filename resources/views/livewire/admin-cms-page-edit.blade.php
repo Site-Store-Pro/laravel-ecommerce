@@ -161,7 +161,7 @@
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">SEO Slug</label>
-                                <input type="text" wire:model="slug" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. help-page" />
+                                <input type="text" wire:model.live="slug" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. help-page" />
                                 @error('slug') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
                             </div>
                         </div>

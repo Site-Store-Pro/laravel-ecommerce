@@ -97,7 +97,7 @@ class TranslationService
         $fkField = $this->getForeignKeyFor($record);
         $translationData[$fkField] = $record->id;
 
-        $translationClass = 'App\\Models\\' . class_basename($record) . 'Translation';
+        $translationClass = $this->getTranslationClass($record);
         if (!class_exists($translationClass)) {
             return false;
         }
@@ -177,6 +177,16 @@ class TranslationService
                 'copyright'    => 'email copyright line',
                 'footer_html'  => 'email footer HTML content',
             ],
+            'CmsModal'         => [
+                'title' => 'modal popup window title',
+                'body'  => 'modal popup window body content (HTML)',
+            ],
+            'CmsBuilderBlock'  => [
+                'title'           => 'header/footer builder block title (internal label)',
+                'content_desktop' => 'header or footer HTML block content for desktop — preserve all HTML and shortcodes exactly',
+                'content_tablet'  => 'header or footer HTML block content for tablet — preserve all HTML and shortcodes exactly',
+                'content_mobile'  => 'header or footer HTML block content for mobile — preserve all HTML and shortcodes exactly',
+            ],
         ];
 
         return $map[class_basename($record)] ?? [];
@@ -197,6 +207,8 @@ class TranslationService
             'CmsPagesTag'     => 'cms_pages_tag_id',
             'KbCategory'      => 'kb_category_id',
             'EmailTemplate'   => 'email_template_id',
+            'CmsModal'        => 'cms_modal_id',
+            'CmsBuilderBlock' => 'cms_builder_block_id',
         ];
         return $overrides[class_basename($record)] ?? $record->getForeignKey();
     }
@@ -211,7 +223,7 @@ class TranslationService
      */
     public function translationStats(string $modelClass, int $languageId): array
     {
-        $translationClass = 'App\\Models\\' . class_basename($modelClass) . 'Translation';
+        $translationClass = $this->getTranslationClassByName(class_basename($modelClass));
         if (!class_exists($translationClass)) {
             return ['total' => 0, 'translated' => 0, 'pending' => 0, 'reviewed' => 0];
         }
@@ -222,6 +234,25 @@ class TranslationService
         $pending    = $total - $translated;
 
         return compact('total', 'translated', 'pending', 'reviewed');
+    }
+
+    // ── Translation class resolution ─────────────────────────────────────────
+
+    /**
+     * Some translation models don't follow the {ModelName}Translation convention.
+     * This override map corrects the lookup for those cases.
+     */
+    private function getTranslationClass(Model $record): string
+    {
+        return $this->getTranslationClassByName(class_basename($record));
+    }
+
+    private function getTranslationClassByName(string $baseName): string
+    {
+        $overrides = [
+            'CmsTestimonial' => 'App\\Models\\TestimonialTranslation',
+        ];
+        return $overrides[$baseName] ?? ('App\\Models\\' . $baseName . 'Translation');
     }
 
     /**
@@ -236,14 +267,36 @@ class TranslationService
      */
     public function variantTranslationStats(int $languageId): array
     {
-        // Variants that have at least one attribute to translate.
+        // Variants that have at least one non-empty attribute token to translate.
+        // Must match the exact condition used in TranslateVariantJob::handle():
+        // json_decode returns a non-empty array AND at least one key or value is a non-empty string.
+        // We filter in PHP via a collection to avoid DB-specific JSON functions.
         $totalWithAttrs = \App\Models\ProductVariant::whereNotNull('attributes')
             ->where('attributes', '!=', '{}')
             ->where('attributes', '!=', '')
+            ->get(['id', 'attributes'])
+            ->filter(function ($variant) {
+                $decoded = json_decode($variant->attributes ?? '{}', true);
+                if (!is_array($decoded) || empty($decoded)) {
+                    return false;
+                }
+                // At least one key or value must be a non-empty string (same as job's loop)
+                foreach ($decoded as $key => $val) {
+                    if (trim((string) $key) !== '' || trim((string) $val) !== '') {
+                        return true;
+                    }
+                }
+                return false;
+            })
             ->count();
 
+        // Only count translation rows whose parent variant actually has translatable attributes.
         $translatedAttrs = \App\Models\ProductVariantTranslation::where('language_id', $languageId)
             ->whereNotNull('attributes_translated')
+            ->whereHas('variant', fn ($q) => $q
+                ->whereNotNull('attributes')
+                ->where('attributes', '!=', '{}')
+                ->where('attributes', '!=', ''))
             ->count();
 
         // Variants with personalization enabled.
@@ -255,6 +308,9 @@ class TranslationService
         $translatedPersonalization = \App\Models\ProductVariantTranslation::where('language_id', $languageId)
             ->whereNotNull('personalization_label')
             ->where('personalization_label', '!=', '')
+            ->whereHas('variant', fn ($q) => $q->where('personalization_active', 1)
+                ->whereNotNull('personalization_label')
+                ->where('personalization_label', '!=', ''))
             ->count();
 
         return [

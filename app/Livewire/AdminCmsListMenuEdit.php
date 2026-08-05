@@ -45,17 +45,15 @@ class AdminCmsListMenuEdit extends Component
 
     public function loadItemsData(): void
     {
-        $items = CmsListMenuItem::where('cms_list_menu_id', $this->menuId)
+        $this->itemsData = CmsListMenuItem::where('cms_list_menu_id', $this->menuId)
             ->orderBy('sort_val')
-            ->get();
-
-        $this->itemsData = [];
-        foreach ($items as $item) {
-            $this->itemsData[$item->id] = [
-                'id' => $item->id,
+            ->get()
+            ->map(fn($item) => [
+                'id'        => $item->id,
                 'list_item' => $item->list_item ?? '',
-            ];
-        }
+            ])
+            ->values()
+            ->toArray();
     }
 
     public function addItem(): void
@@ -66,8 +64,8 @@ class AdminCmsListMenuEdit extends Component
         $this->validate([
             'itemsData.*.list_item' => 'nullable|string',
         ]);
-        foreach ($this->itemsData as $id => $data) {
-            CmsListMenuItem::where('id', $id)
+        foreach ($this->itemsData as $data) {
+            CmsListMenuItem::where('id', $data['id'])
                 ->where('cms_list_menu_id', $this->menuId)
                 ->update(['list_item' => $data['list_item']]);
         }
@@ -100,13 +98,19 @@ class AdminCmsListMenuEdit extends Component
     {
         abort_unless(auth()->check() && auth()->user()->isAdmin(), 403);
 
+        // Find the item in the sequential array by its stored DB id
+        $index = collect($this->itemsData)->search(fn($d) => $d['id'] === $itemId);
+        if ($index === false) {
+            return;
+        }
+
         $this->validate([
-            "itemsData.{$itemId}.list_item" => 'nullable|string',
+            "itemsData.{$index}.list_item" => 'nullable|string',
         ]);
 
         CmsListMenuItem::where('id', $itemId)
             ->where('cms_list_menu_id', $this->menuId)
-            ->update(['list_item' => $this->itemsData[$itemId]['list_item']]);
+            ->update(['list_item' => $this->itemsData[$index]['list_item']]);
 
         // Reload data to reset dirty state in UI
         $this->loadItemsData();
@@ -129,9 +133,9 @@ class AdminCmsListMenuEdit extends Component
             'custom_css' => $this->customCss,
         ]);
 
-        // Save each item
-        foreach ($this->itemsData as $itemId => $data) {
-            CmsListMenuItem::where('id', $itemId)
+        // Save each item (sequential array — id is stored inside the element)
+        foreach ($this->itemsData as $data) {
+            CmsListMenuItem::where('id', $data['id'])
                 ->where('cms_list_menu_id', $this->menuId)
                 ->update(['list_item' => $data['list_item']]);
         }

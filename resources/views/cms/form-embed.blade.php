@@ -238,9 +238,10 @@ function cmsFormEmbed_{{ $form->id }}(slug, formId) {
                         this.generalError = data.errors['_recaptcha'];
                     } else {
                         this.errors = data.errors;
+                        this.generalError = 'Please correct the errors below.';
                     }
                 } else {
-                    this.generalError = data.error ?? 'Something went wrong. Please try again.';
+                    this.generalError = data.error ?? data.message ?? 'Something went wrong. Please try again.';
                 }
             } catch (e) {
                 this.generalError = 'Network error. Please check your connection and try again.';

@@ -1,4 +1,5 @@
 <div>
+@php $outOfStockMessage = $outOfStockMessage ?? null; @endphp
     <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">{{ $product->title }}</h1>
     <p class="mt-4 text-slate-500 leading-relaxed">{!! $product->parsed_short_description !!}</p>
 
@@ -148,14 +149,14 @@
                 @endphp
 
                 @if(!empty($groupedAttributes))
-                    <div class="mt-8 space-y-6 bg-slate-50/50 border border-slate-100 rounded-3xl p-6">
-                        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-200/60 pb-2">{{ $product->variant_label ?: 'Select Option:' }}</h3>
+                    <div class="mt-8 space-y-6 bg-slate-50/50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 rounded-3xl p-6">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider border-b border-slate-200/60 dark:border-slate-700/60 pb-2">{{ $product->variant_label ?: 'Select Option:' }}</h3>
                         
                         <div class="space-y-5">
                             @foreach($groupedAttributes as $key => $values)
                                 <div>
                                     {{-- Display translated key label; wire:click always uses raw key --}}
-                                    <span class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">
+                                    <span class="text-xs font-bold text-slate-400 dark:text-slate-400 block mb-2 uppercase tracking-wider">
                                         {{ $attrTransMap[$key] ?? $key }}
                                     </span>
                                     <div class="flex flex-wrap gap-2">
@@ -194,8 +195,8 @@
                                                 @disabled(!$isSelectable)
                                                 class="px-4 py-2.5 text-xs font-bold border rounded-2xl transition duration-150 focus:outline-none 
                                                     {{ $isSelected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : '' }}
-                                                    {{ !$isSelected && $isSelectable ? 'bg-white text-slate-800 border-slate-200 hover:border-indigo-300' : '' }}
-                                                    {{ !$isSelectable ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-50' : '' }}"
+                                                    {{ !$isSelected && $isSelectable ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500' : '' }}
+                                                    {{ !$isSelectable ? 'bg-slate-100 dark:bg-slate-700/50 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-600/50 cursor-not-allowed opacity-50' : '' }}"
                                             >
                                                 {{ $displayValue }}
                                             </button>
@@ -261,7 +262,8 @@
                 @if($stock > 0)
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                     <span class="text-xs text-slate-500 font-semibold">{{ $stock }} @label('product.in_stock', 'in stock')</span>
-                @else
+                @elseif(!$outOfStockMessage)
+                    {{-- Only show the generic red OOS dot when no custom message is assigned --}}
                     <span class="h-2 w-2 rounded-full bg-red-500"></span>
                     <span class="text-xs text-red-500 font-bold">@label('product.out_of_stock', 'Out of stock')</span>
                 @endif
@@ -483,9 +485,22 @@
             </div>
         </div>
     @endif
-    <div class="mt-8 pt-8 border-t border-slate-100">
-        <button disabled class="w-full py-3 px-6 bg-slate-100 text-slate-400 font-bold rounded-2xl cursor-not-allowed text-center">
-            @label('product.unavailable', 'Currently Unavailable')
-        </button>
+    <div class="mt-8 pt-8 border-t border-slate-100 space-y-3">
+        {{-- $outOfStockMessage is resolved reactively in ProductDetails::getOutOfStockMessageProperty()
+             and re-evaluated on every variant selection change. --}}
+        @if($outOfStockMessage)
+            <div class="flex items-center gap-2.5 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl">
+                <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="text-sm font-bold text-amber-800">{{ $outOfStockMessage }}</span>
+            </div>
+        @endif
+        {{-- Only show the generic disabled button when no custom message is shown --}}
+        @if(!$outOfStockMessage)
+            <button disabled class="w-full py-3 px-6 bg-slate-100 text-slate-400 font-bold rounded-2xl cursor-not-allowed text-center">
+                @label('product.unavailable', 'Currently Unavailable')
+            </button>
+        @endif
     </div>
 @endif

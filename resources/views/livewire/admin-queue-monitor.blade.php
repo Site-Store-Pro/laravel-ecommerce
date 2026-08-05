@@ -258,10 +258,7 @@
             </div>
         </div>
 
-        <p class="text-xs text-gray-400 dark:text-gray-600 mt-2">
-            Log file: <code class="font-mono">storage/app/queue_worker.log</code>
-            &nbsp;·&nbsp; PID file: <code class="font-mono">storage/app/queue_worker.pid</code>
-        </p>
+
     </div>
 
     {{-- ── Polling heartbeat (3s while running, 15s while idle) ─────────────── --}}

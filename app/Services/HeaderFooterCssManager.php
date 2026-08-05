@@ -156,10 +156,23 @@ class HeaderFooterCssManager
         $headerBg = !empty($v['header_bg_image_url']) ? "url('" . addslashes($v['header_bg_image_url']) . "')" : "none";
         $footerBg = !empty($v['footer_bg_image_url']) ? "url('" . addslashes($v['footer_bg_image_url']) . "')" : "none";
 
-        $customBacktopBg = $v['backtop_bg_color'] ?? CmsSetting::get('backtop_bg_color', '');
-        $customBacktopHover = $v['backtop_hover_bg_color'] ?? CmsSetting::get('backtop_hover_bg_color', '');
-        $backtopBgCss = (!empty($customBacktopBg) && preg_match('/^#[0-9a-fA-F]{6}$/', $customBacktopBg)) ? $customBacktopBg : 'var(--primary-accent-color)';
-        $backtopHoverBgCss = (!empty($customBacktopHover) && preg_match('/^#[0-9a-fA-F]{6}$/', $customBacktopHover)) ? $customBacktopHover : 'var(--secondary-accent-color)';
+        $customBacktopBg    = trim($v['backtop_bg_color'] ?? CmsSetting::get('backtop_bg_color', ''));
+        $customBacktopHover = trim($v['backtop_hover_bg_color'] ?? CmsSetting::get('backtop_hover_bg_color', ''));
+        $customBacktopIcon  = trim($v['backtop_icon_color'] ?? CmsSetting::get('backtop_icon_color', '#ffffff'));
+
+        if (empty($customBacktopBg) || $customBacktopBg === '#026C80') {
+            $backtopBgCss = 'var(--theme-primary, #4f46e5)';
+        } else {
+            $backtopBgCss = $customBacktopBg;
+        }
+
+        if (empty($customBacktopHover) || $customBacktopHover === '#76B5C5') {
+            $backtopHoverBgCss = 'var(--theme-primary-hover, #4338ca)';
+        } else {
+            $backtopHoverBgCss = $customBacktopHover;
+        }
+
+        $backtopIconCss = !empty($customBacktopIcon) ? $customBacktopIcon : '#ffffff';
 
         $css = "
 :root {
@@ -231,7 +244,7 @@ class HeaderFooterCssManager
   --shop-subcat-pill-hover-border: {$v['shop_subcat_pill_hover_border']};
   --backtop-bg-color: {$backtopBgCss};
   --backtop-hover-bg-color: {$backtopHoverBgCss};
-  --backtop-icon-color: {$v['backtop_icon_color']};
+  --backtop-icon-color: {$backtopIconCss};
 }
 
 /* Shop Catalog View Mode Buttons */
@@ -285,19 +298,79 @@ class HeaderFooterCssManager
     border-color: var(--shop-subcat-pill-hover-border) !important;
 }
 
-/* Pagination Box Numbers & Navigation */
+/* Cohesive Segmented Pagination Group Styling */
+nav[role='navigation'] .inline-flex,
+nav[role='navigation'] .pagination,
+.pagination-unit {
+    display: inline-flex !important;
+    border-radius: var(--theme-border-radius, 0.75rem) !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+    overflow: hidden !important;
+}
+
+/* Remove rounding from ALL inner page buttons, links and active indicators so they form a single unit */
+nav[role='navigation'] button:not(#header_mobile_toggle):not(.btn-view-mode):not(.header_mobile_toggle),
+nav[role='navigation'] a:not(.btn-view-mode),
+nav[role='navigation'] span[aria-current],
+nav[role='navigation'] .page-item,
+nav[role='navigation'] .page-link,
+.pagination-unit button,
+.pagination-unit a,
+.pagination-unit span {
+    border-radius: 0 !important;
+    margin: 0 !important;
+}
+
+/* Round ONLY the first item on the far left of the group */
+nav[role='navigation'] .inline-flex > *:first-child,
+nav[role='navigation'] .inline-flex > *:first-child > button,
+nav[role='navigation'] .inline-flex > *:first-child > a,
+nav[role='navigation'] .inline-flex > *:first-child > span,
+.pagination-unit > *:first-child {
+    border-top-left-radius: var(--theme-border-radius, 0.75rem) !important;
+    border-bottom-left-radius: var(--theme-border-radius, 0.75rem) !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+/* Round ONLY the last item on the far right of the group */
+nav[role='navigation'] .inline-flex > *:last-child,
+nav[role='navigation'] .inline-flex > *:last-child > button,
+nav[role='navigation'] .inline-flex > *:last-child > a,
+nav[role='navigation'] .inline-flex > *:last-child > span,
+.pagination-unit > *:last-child {
+    border-top-right-radius: var(--theme-border-radius, 0.75rem) !important;
+    border-bottom-right-radius: var(--theme-border-radius, 0.75rem) !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+
+/* Active Page Numbers */
+nav[role='navigation'] [aria-current='page'],
 nav[role='navigation'] [aria-current='page'] > span,
-nav[role='navigation'] span[aria-current='page'],
+nav[role='navigation'] [aria-current='page'] > button,
 .pagination .active,
 .page-item.active .page-link {
-    background-color: var(--pagination-active-bg) !important;
-    color: var(--pagination-active-text) !important;
-    border-color: var(--pagination-active-bg) !important;
+    background-color: var(--pagination-active-bg, var(--theme-primary, #4f46e5)) !important;
+    color: var(--pagination-active-text, #ffffff) !important;
+    border-color: var(--pagination-active-bg, var(--theme-primary, #4f46e5)) !important;
 }
-nav[role='navigation'] a:hover,
-nav[role='navigation'] button:not(.btn-view-mode):not(#header_mobile_toggle):not(.header_mobile_toggle):hover {
-    background-color: var(--pagination-hover-bg) !important;
-    color: var(--pagination-active-bg) !important;
+
+html.dark nav[role='navigation'] [aria-current='page'],
+html.dark nav[role='navigation'] [aria-current='page'] > span,
+html.dark nav[role='navigation'] [aria-current='page'] > button,
+html.dark .pagination .active,
+html.dark .page-item.active .page-link {
+    background-color: var(--pagination-active-bg, #2c4a7c) !important;
+    color: var(--pagination-active-text, #ffffff) !important;
+    border-color: var(--pagination-active-bg, #2c4a7c) !important;
+}
+
+/* Hover States for Inactive Page Numbers */
+nav[role='navigation'] a:not(.btn-view-mode):hover,
+nav[role='navigation'] button:not(.btn-view-mode):not(#header_mobile_toggle):not(.header_mobile_toggle):not([aria-current='page']):hover {
+    background-color: var(--pagination-hover-bg, #e0e7ff) !important;
+    color: var(--pagination-active-bg, var(--theme-primary, #4f46e5)) !important;
 }
 
 /* Header & Site Container Rules */
@@ -821,7 +894,7 @@ nav[role='navigation'] button:not(.btn-view-mode):not(#header_mobile_toggle):not
     bottom: 20px;
     color: var(--backtop-icon-color, #ffffff) !important;
     text-align: center;
-    background-color: var(--backtop-bg-color, {$backtopBgCss}) !important;
+    background-color: var(--backtop-bg-color, var(--theme-primary, #4f46e5)) !important;
     height: 48px;
     width: 48px;
     line-height: 48px;
@@ -829,7 +902,7 @@ nav[role='navigation'] button:not(.btn-view-mode):not(#header_mobile_toggle):not
     cursor: pointer;
     transition: all 0.3s ease;
     z-index: 99999;
-    border-radius: var(--top-nav-menu-borders-radius, 8px);
+    border-radius: var(--theme-border-radius, var(--top-nav-menu-borders-radius, 8px));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -837,6 +910,7 @@ nav[role='navigation'] button:not(.btn-view-mode):not(#header_mobile_toggle):not
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
+    border: 1px solid transparent;
 }
 #backtop.show {
     opacity: 1;
@@ -844,8 +918,61 @@ nav[role='navigation'] button:not(.btn-view-mode):not(#header_mobile_toggle):not
     pointer-events: auto;
 }
 #backtop:hover {
-    background-color: var(--backtop-hover-bg-color, {$backtopHoverBgCss}) !important;
+    background-color: var(--backtop-hover-bg-color, var(--theme-primary-hover, #4338ca)) !important;
     transform: translateY(-2px);
+}
+
+/* Dark Mode Override for Go To Top Button */
+html.dark #backtop {
+    background-color: var(--backtop-bg-color, #334155) !important;
+    color: var(--backtop-icon-color, #f8fafc) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+html.dark #backtop:hover {
+    background-color: var(--backtop-hover-bg-color, #475569) !important;
+}
+
+/* Dark Mode Override for Footer Links */
+html.dark .footer_container a,
+html.dark .footer_contents a,
+html.dark .footer_row1 a,
+html.dark .footer_row2 a,
+html.dark .footer_row3 a,
+html.dark .footer_row4 a,
+html.dark footer a {
+    color: #94a3b8 !important;
+    transition: color 0.15s ease !important;
+}
+html.dark .footer_container a:hover,
+html.dark .footer_contents a:hover,
+html.dark .footer_row1 a:hover,
+html.dark .footer_row2 a:hover,
+html.dark .footer_row3 a:hover,
+html.dark .footer_row4 a:hover,
+html.dark footer a:hover {
+    color: #e2e8f0 !important;
+}
+
+/* Dark Mode: Strip ALL button shadows & glows entirely */
+html.dark button,
+html.dark .btn,
+html.dark .btn-primary,
+html.dark .btn-secondary,
+html.dark .btn-theme-primary,
+html.dark .btn-theme-secondary,
+html.dark a.bg-indigo-600,
+html.dark a.bg-indigo-700,
+html.dark a.bg-purple-600,
+html.dark a.bg-violet-600,
+html.dark a[class*='shadow'],
+html.dark button[class*='shadow'],
+html.dark input[type='submit'],
+html.dark input[type='button'] {
+    box-shadow: none !important;
+    --tw-shadow: 0 0 #0000 !important;
+    --tw-shadow-colored: 0 0 #0000 !important;
+    filter: none !important;
 }
 " . ($v['header_custom_css'] ?? '') . "\n" . ($v['footer_custom_css'] ?? '');
 

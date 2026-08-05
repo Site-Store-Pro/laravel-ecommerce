@@ -4,12 +4,12 @@
         type: 'success',
         message: '',
         timeout: null,
-        trigger(type, message) {
+        trigger(type, message, duration) {
             this.show = true;
             this.type = type;
             this.message = message;
             if (this.timeout) clearTimeout(this.timeout);
-            this.timeout = setTimeout(() => this.show = false, 4000);
+            this.timeout = setTimeout(() => this.show = false, duration || 4000);
         }
      }" 
      x-init="
@@ -17,7 +17,7 @@
             trigger('{{ session()->has('error') ? 'error' : (session()->has('warning') ? 'warning' : 'success') }}', '{{ session('status') ?: session('success') ?: session('error') }}');
         @endif
       "
-      @toast.window="trigger($event.detail.type || 'success', $event.detail.message || '')"
+      @toast.window="trigger($event.detail.type || 'success', $event.detail.message || '', $event.detail.duration || 4000)"
      x-show="show" 
      x-transition:enter="transition ease-out duration-300"
      x-transition:enter-start="opacity-0 translate-y-2 md:translate-y-0 md:translate-x-4"
@@ -50,7 +50,7 @@
         </span>
         <div>
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider" x-text="type === 'error' ? 'Error' : (type === 'warning' ? 'Warning' : 'Success')"></p>
-            <p class="text-slate-800 text-xs font-semibold mt-0.5" x-text="message"></p>
+            <p class="text-slate-800 text-xs font-semibold mt-0.5" x-html="message"></p>
         </div>
     </div>
     <button @click="show = false" class="text-slate-400 hover:text-slate-600 transition">

@@ -57,6 +57,8 @@ class AdminProductEdit extends Component
     public ?float $custom_amount_min   = null;
     public ?float $custom_amount_max   = null;
     public string $custom_amount_options = '';
+    public ?int   $inventory_alert_id    = null;  // Out-of-stock alert message assigned to this product
+
 
     // Translation Management
     public string $activeLangCode = '';
@@ -273,6 +275,7 @@ class AdminProductEdit extends Component
         $this->custom_amount_min = $this->product->custom_amount_min !== null ? (float) $this->product->custom_amount_min : null;
         $this->custom_amount_max = $this->product->custom_amount_max !== null ? (float) $this->product->custom_amount_max : null;
         $this->custom_amount_options = (string) ($this->product->custom_amount_options ?? '');
+        $this->inventory_alert_id    = $this->product->inventory_alert_id ? (int) $this->product->inventory_alert_id : null;
     }
 
     public function updateProduct(): void
@@ -374,6 +377,7 @@ class AdminProductEdit extends Component
             'custom_amount_min'      => 'nullable|numeric|min:0',
             'custom_amount_max'      => 'nullable|numeric|min:0',
             'custom_amount_options'  => 'nullable|string|max:500',
+            'inventory_alert_id'     => 'nullable|integer|exists:product_inventory_alerts,id',
         ]);
 
         // Validate preset options format when custom amount entry is disabled
@@ -404,6 +408,7 @@ class AdminProductEdit extends Component
             'custom_amount_min'      => $this->custom_amount_min !== null && $this->custom_amount_min !== '' ? (float) $this->custom_amount_min : null,
             'custom_amount_max'      => $this->custom_amount_max !== null && $this->custom_amount_max !== '' ? (float) $this->custom_amount_max : null,
             'custom_amount_options'  => trim($this->custom_amount_options) ?: null,
+            'inventory_alert_id'     => $this->inventory_alert_id ?: null,
         ]);
 
         $this->dispatch('toast', type: 'success', message: 'Advanced settings saved.');
@@ -1939,6 +1944,7 @@ class AdminProductEdit extends Component
         $categoryTree   = \App\Models\Category::whereNull('parent_id')->with('children')->orderBy('sort_order')->get();
         $brands         = \App\Models\Brand::orderBy('name')->get();
         $displayPlugins = \App\Models\Plugin::active()->ofType('display')->orderBy('name', 'asc')->get();
+        $inventoryAlerts = \App\Models\ProductInventoryAlert::active()->get();
 
         // Link Generator Drawer searches
         $searchedProducts = [];
@@ -2067,6 +2073,7 @@ class AdminProductEdit extends Component
             'shortcodeSearchResults'=> $shortcodeSearchResults,
             'showAiButton'          => $showAiButton,
             'activeLanguages'       => \App\Models\Language::getAllActive()->where('is_default', false)->values(),
+            'inventoryAlerts'       => $inventoryAlerts,
         ]);
     }
 

@@ -37,7 +37,7 @@ new #[Layout('layouts.public')] class extends Component
 
 @section('title', siteLabel('auth.verify_heading', 'Verify Your Email Address'))
 
-<div class="min-h-[70vh] flex items-center justify-center px-6 py-16 bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+<div class="min-h-[70vh] flex items-center justify-center px-6 py-16 bg-white dark:bg-slate-900">
     <div class="max-w-md w-full space-y-6">
 
         {{-- Header --}}
@@ -47,10 +47,10 @@ new #[Layout('layouts.public')] class extends Component
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                 </svg>
             </div>
-            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">@label('auth.check_email', 'Check Your Email')</h1>
-            <p class="mt-2 text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">
+            <h1 class="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">@label('auth.check_email', 'Check Your Email')</h1>
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
                 @label('auth.verify_sent', 'We sent a verification link to')
-                <strong class="text-slate-700">{{ Auth::user()->email }}</strong>.
+                <strong class="text-slate-700 dark:text-slate-200">{{ Auth::user()->email }}</strong>.
                 @label('auth.verify_click', 'Click the link in that email to activate your account.')
             </p>
         </div>
@@ -68,26 +68,26 @@ new #[Layout('layouts.public')] class extends Component
         @endif
 
         {{-- Card --}}
-        <div class="bg-white border border-slate-100 rounded-3xl shadow-xl shadow-slate-100/50 p-8 space-y-5">
+        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 rounded-3xl shadow-xl shadow-slate-100/50 dark:shadow-none p-8 space-y-5">
 
             {{-- Instruction steps --}}
             <div class="space-y-3">
                 <div class="flex items-start gap-3">
-                    <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-                    <p class="text-sm text-slate-600">Open the email we sent to <strong class="text-slate-800">{{ Auth::user()->email }}</strong></p>
+                    <span class="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                    <p class="text-sm text-slate-600 dark:text-slate-300">Open the email we sent to <strong class="text-slate-800 dark:text-slate-100">{{ Auth::user()->email }}</strong></p>
                 </div>
                 <div class="flex items-start gap-3">
-                    <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-                    <p class="text-sm text-slate-600">Click the <strong class="text-slate-800">"Verify Email Address"</strong> button in the email</p>
+                    <span class="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                    <p class="text-sm text-slate-600 dark:text-slate-300">Click the <strong class="text-slate-800 dark:text-slate-100">"Verify Email Address"</strong> button in the email</p>
                 </div>
                 <div class="flex items-start gap-3">
-                    <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-                    <p class="text-sm text-slate-600">You will be redirected to your account dashboard automatically</p>
+                    <span class="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                    <p class="text-sm text-slate-600 dark:text-slate-300">You will be redirected to your account dashboard automatically</p>
                 </div>
             </div>
 
             <div class="border-t border-slate-100 pt-5">
-                <p class="text-xs text-slate-500 mb-3">Didn't receive the email? Check your spam folder, or:</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Didn't receive the email? Check your spam folder, or:</p>
                 <button wire:click="sendVerification"
                         wire:loading.attr="disabled"
                         class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-60 text-white font-bold px-6 py-3 rounded-2xl shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 transition-all flex items-center justify-center gap-2 text-sm">
@@ -106,9 +106,9 @@ new #[Layout('layouts.public')] class extends Component
         </div>
 
         {{-- Footer --}}
-        <p class="text-center text-xs text-slate-400">
-            @label('auth.signed_in_as', 'Signed in as') <strong class="text-slate-600">{{ Auth::user()->email }}</strong> &mdash;
-            <button wire:click="logout" class="text-indigo-600 hover:text-indigo-700 font-semibold">@label('auth.sign_out_link', 'Sign out')</button>
+        <p class="text-center text-xs text-slate-400 dark:text-slate-500">
+            @label('auth.signed_in_as', 'Signed in as') <strong class="text-slate-600 dark:text-slate-300">{{ Auth::user()->email }}</strong> &mdash;
+            <button wire:click="logout" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold">@label('auth.sign_out_link', 'Sign out')</button>
         </p>
 
     </div>

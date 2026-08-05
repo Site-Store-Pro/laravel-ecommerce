@@ -631,6 +631,59 @@
                             </div>
                         </div>
 
+                        {{-- ── Out-of-Stock Alert Message ──────────────────────────── --}}
+                        <div class="pt-6 border-t border-slate-100 space-y-3">
+                            <div class="flex items-start gap-2.5">
+                                <svg class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div>
+                                    <label for="inventory_alert_id" class="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                                        Out-of-Stock Message
+                                    </label>
+                                    <p class="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                                        Shown on the storefront when this product has zero available stock. Leave as default to display the standard "Currently Unavailable" label.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <select id="inventory_alert_id" wire:model="inventory_alert_id"
+                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 shadow-sm">
+                                <option value="">— Default: Currently Unavailable —</option>
+                                @foreach($inventoryAlerts as $alert)
+                                    <option value="{{ $alert->id }}">{{ $alert->message }}</option>
+                                @endforeach
+                            </select>
+
+                            @if($inventory_alert_id)
+                            <div class="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 font-medium">
+                                <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                                </svg>
+                                <span>When out of stock, customers will see:
+                                    <strong class="text-amber-900 ml-1">
+                                        "{{ $inventoryAlerts->firstWhere('id', $inventory_alert_id)?->message ?? 'Currently Unavailable' }}"
+                                    </strong>
+                                </span>
+                            </div>
+                            @else
+                            <div class="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500">
+                                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span>Using default: <strong class="text-slate-600">"Currently Unavailable"</strong></span>
+                            </div>
+                            @endif
+
+                            @error('inventory_alert_id') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+
+                            <p class="text-[11px] text-slate-400">
+                                Manage the full list of messages at
+                                <a href="{{ route('admin.inventory-alerts.index') }}" wire:navigate
+                                   class="text-indigo-600 hover:underline font-semibold">Admin → Inventory Alert Messages</a>.
+                            </p>
+                        </div>
+
                         <div class="pt-6 border-t border-slate-100 flex justify-end">
                             <button type="submit" wire:loading.attr="disabled" wire:target="updateAdvancedSettings" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-2xl shadow-md hover:opacity-90 flex items-center justify-center gap-2">
                                 <svg wire:loading wire:target="updateAdvancedSettings" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

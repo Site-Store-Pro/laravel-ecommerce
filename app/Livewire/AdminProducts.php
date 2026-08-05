@@ -34,7 +34,7 @@ class AdminProducts extends Component
     public string $filterPriceMax = '';
     public string $filterProductType = '';   // '', 'download', 'shippable', 'event', 'featured'
     public string $filterStockStatus = '';   // '', 'in_stock', 'out_of_stock'
-    public string $filterSortBy = 'newest';  // newest, oldest, alpha_asc, alpha_desc, price_asc, price_desc
+    public string $filterSortBy = 'last_modified';  // last_modified, oldest_modified, newest, oldest, alpha_asc, alpha_desc, price_asc, price_desc
     public string $filterAttribute = '';     // free-text attribute key search
     public string $filterAttributeValue = ''; // optional value
 
@@ -471,7 +471,7 @@ class AdminProducts extends Component
         $this->filterPriceMax      = '';
         $this->filterProductType   = '';
         $this->filterStockStatus   = '';
-        $this->filterSortBy        = 'newest';
+        $this->filterSortBy        = 'last_modified';
         $this->filterAttribute     = '';
         $this->filterAttributeValue = '';
         $this->resetPage();
@@ -557,12 +557,14 @@ class AdminProducts extends Component
 
         // Sorting
         match ($this->filterSortBy) {
-            'oldest'     => $query->oldest(),
-            'alpha_asc'  => $query->orderBy('title', 'asc'),
-            'alpha_desc' => $query->orderBy('title', 'desc'),
-            'price_asc'  => $query->orderByRaw('(SELECT MIN(public_price) FROM product_variants WHERE product_id = products.id) ASC'),
-            'price_desc' => $query->orderByRaw('(SELECT MAX(public_price) FROM product_variants WHERE product_id = products.id) DESC'),
-            default      => $query->latest(),
+            'last_modified'    => $query->orderBy('updated_at', 'desc'),
+            'oldest_modified'  => $query->orderBy('updated_at', 'asc'),
+            'oldest'           => $query->oldest(),
+            'alpha_asc'        => $query->orderBy('title', 'asc'),
+            'alpha_desc'       => $query->orderBy('title', 'desc'),
+            'price_asc'        => $query->orderByRaw('(SELECT MIN(public_price) FROM product_variants WHERE product_id = products.id) ASC'),
+            'price_desc'       => $query->orderByRaw('(SELECT MAX(public_price) FROM product_variants WHERE product_id = products.id) DESC'),
+            default            => $query->latest(), // 'newest' = created_at desc
         };
 
         $products = $query->paginate(25);

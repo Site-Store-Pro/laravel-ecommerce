@@ -50,6 +50,8 @@
                     'cms_tags'               => 'CMS Tags',
                     'kb_categories'          => 'KB Categories',
                     'email_templates'        => 'Email Templates',
+                    'modals'                 => 'Modals',
+                    'builder_blocks'         => 'Header/Footer Blocks',
                 ];
             @endphp
             @foreach($typeMap as $type)

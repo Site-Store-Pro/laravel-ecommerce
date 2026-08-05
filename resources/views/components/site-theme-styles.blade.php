@@ -1,7 +1,19 @@
 @php
-    $primaryColor = \App\Models\CmsSetting::get('theme_primary_color', '#4f46e5');
-    $hoverColor   = \App\Models\CmsSetting::get('theme_hover_color', '#4338ca');
-    $textColor    = \App\Models\CmsSetting::get('theme_text_color', '#ffffff');
+    $primaryColor = \App\Models\CmsSetting::get('theme_primary_color');
+    $primaryColor = !empty($primaryColor) ? $primaryColor : '#1e3a8a';
+
+    $hoverColor   = \App\Models\CmsSetting::get('theme_hover_color');
+    $hoverColor   = !empty($hoverColor) ? $hoverColor : '#172554';
+
+    $textColor    = \App\Models\CmsSetting::get('theme_text_color');
+    $textColor    = !empty($textColor) ? $textColor : '#ffffff';
+
+    $priBorder    = \App\Models\CmsSetting::get('theme_primary_border_color');
+    $priBorder    = !empty($priBorder) ? $priBorder : $primaryColor;
+
+    $priHoverText = \App\Models\CmsSetting::get('theme_primary_hover_text_color');
+    $priHoverText = !empty($priHoverText) ? $priHoverText : '#ffffff';
+
     $borderRadius = \App\Models\CmsSetting::get('theme_border_radius', '0.75rem');
 
     $secBg        = \App\Models\CmsSetting::get('theme_secondary_bg_color', 'transparent');
@@ -10,33 +22,51 @@
     $secHoverBg   = \App\Models\CmsSetting::get('theme_secondary_hover_bg_color', $primaryColor);
     $secHoverText = \App\Models\CmsSetting::get('theme_secondary_hover_text_color', '#ffffff');
 
+    $rawLinkColor      = \App\Models\CmsSetting::get('theme_link_color');
+    $rawLinkHoverColor = \App\Models\CmsSetting::get('theme_link_hover_color');
+    $rawLinkActiveColor= \App\Models\CmsSetting::get('theme_link_active_color');
+
+    $linkColor      = !empty($rawLinkColor) ? $rawLinkColor : '#1d4ed8';
+    $linkHoverColor = !empty($rawLinkHoverColor) ? $rawLinkHoverColor : '#1e40af';
+    $linkActiveColor= !empty($rawLinkActiveColor) ? $rawLinkActiveColor : '#1e3a8a';
+
+    // Dark mode defaults: soft, readable sky blue (#60a5fa) that pairs beautifully with dark theme
+    $darkLinkColor      = !empty($rawLinkColor) ? $rawLinkColor : '#60a5fa';
+    $darkLinkHoverColor = !empty($rawLinkHoverColor) ? $rawLinkHoverColor : '#93c5fd';
+    $darkLinkActiveColor= !empty($rawLinkActiveColor) ? $rawLinkActiveColor : '#bfdbfe';
+
     $rawStyles = ":root {
         --theme-primary: {$primaryColor};
         --theme-primary-hover: {$hoverColor};
         --theme-text: {$textColor};
+        --theme-primary-border: {$priBorder};
+        --theme-primary-hover-text: {$priHoverText};
         --theme-border-radius: {$borderRadius};
         --theme-secondary-bg: {$secBg};
         --theme-secondary-text: {$secText};
         --theme-secondary-border: {$secBorder};
         --theme-secondary-hover-bg: {$secHoverBg};
         --theme-secondary-hover-text: {$secHoverText};
+        --theme-link-color: {$linkColor};
+        --theme-link-hover-color: {$linkHoverColor};
+        --theme-link-active-color: {$linkActiveColor};
+        --theme-dark-link-color: {$darkLinkColor};
+        --theme-dark-link-hover-color: {$darkLinkHoverColor};
+        --theme-dark-link-active-color: {$darkLinkActiveColor};
     }
+
+    /* Primary Buttons & Background Utilities */
     .bg-indigo-600, .bg-purple-600, .bg-violet-600,
-    .bg-gradient-to-r.from-indigo-600.to-violet-600 {
+    [class*='from-indigo-600'], [class*='from-purple-600'], [class*='from-violet-600'] {
         background-image: none !important;
         background-color: var(--theme-primary) !important;
-        color: var(--theme-text) !important;
+        color: var(--theme-text, #ffffff) !important;
     }
     .hover\:bg-indigo-500:hover, .hover\:bg-indigo-700:hover, .hover\:bg-purple-500:hover, .hover\:bg-purple-700:hover, .hover\:bg-violet-700:hover,
-    .bg-gradient-to-r.from-indigo-600.to-violet-600:hover {
+    [class*='hover:from-indigo-700']:hover, [class*='hover:from-purple-700']:hover {
         background-image: none !important;
         background-color: var(--theme-primary-hover) !important;
-    }
-    .text-indigo-600, .text-purple-600, .text-violet-600 {
-        color: var(--theme-primary) !important;
-    }
-    .hover\:text-indigo-700:hover, .hover\:text-purple-700:hover, .hover\:text-violet-700:hover {
-        color: var(--theme-primary-hover) !important;
+        color: var(--theme-primary-hover-text, var(--theme-text, #ffffff)) !important;
     }
     .border-indigo-500, .border-purple-500, .border-violet-500, .border-indigo-600, .border-purple-600, .border-violet-600 {
         border-color: var(--theme-primary) !important;
@@ -48,7 +78,9 @@
         --tw-ring-color: var(--theme-primary) !important;
         outline-color: var(--theme-primary) !important;
     }
-    button,
+
+    /* Button Border Radius & Shape */
+    button:not(nav[role='navigation'] button),
     .btn,
     .btn-primary,
     a.bg-indigo-600,
@@ -61,11 +93,13 @@
     input[type=\"button\"] {
         border-radius: var(--theme-border-radius) !important;
     }
+
+    /* Primary Theme Button */
     .btn-theme-primary {
         background-color: var(--theme-primary) !important;
-        color: var(--theme-text) !important;
+        color: var(--theme-text, #ffffff) !important;
+        border: 1px solid var(--theme-primary-border, var(--theme-primary)) !important;
         border-radius: var(--theme-border-radius) !important;
-        border: none !important;
         padding: 10px 20px !important;
         font-weight: 700 !important;
         font-family: inherit !important;
@@ -73,11 +107,19 @@
         display: inline-block !important;
         text-align: center !important;
         text-decoration: none !important;
-        transition: background-color 0.2s !important;
+        transition: background-color 0.2s, color 0.2s, border-color 0.2s !important;
     }
     .btn-theme-primary:hover {
         background-color: var(--theme-primary-hover) !important;
+        color: var(--theme-primary-hover-text, var(--theme-text, #ffffff)) !important;
+        border-color: var(--theme-primary-hover) !important;
     }
+    .btn-theme-primary *,
+    .btn-primary * {
+        color: inherit !important;
+    }
+
+    /* Secondary Theme Button */
     .btn-secondary, .btn-theme-secondary {
         background-color: var(--theme-secondary-bg) !important;
         color: var(--theme-secondary-text) !important;
@@ -97,6 +139,76 @@
     .btn-secondary.active, .btn-theme-secondary.active {
         background-color: var(--theme-secondary-hover-bg) !important;
         color: var(--theme-secondary-hover-text) !important;
+    }
+
+    /* Standard Hyperlinks Only (Excludes ALL Buttons, Badges, Tabs & Explicitly Colored Text) */
+    a:not(button):not(.btn):not(.btn-primary):not(.btn-secondary):not(.btn-theme-primary):not(.btn-theme-secondary):not(.btn-view-mode):not(.dyn-nav-link):not(.social-icon-link):not([x-show='open'] a):not([class*='bg-']):not([class*='btn']):not([class*='button']):not([class*='badge']):not([class*='text-white']):not([class*='text-slate-']):not([class*='text-emerald-']):not([class*='text-amber-']):not([class*='text-red-']):not([class*='from-']) {
+        color: var(--theme-link-color, #1d4ed8);
+        transition: color 0.15s ease;
+    }
+    a:not(button):not(.btn):not(.btn-primary):not(.btn-secondary):not(.btn-theme-primary):not(.btn-theme-secondary):not(.btn-view-mode):not(.dyn-nav-link):not(.social-icon-link):not([x-show='open'] a):not([class*='bg-']):not([class*='btn']):not([class*='button']):not([class*='badge']):not([class*='text-white']):not([class*='text-slate-']):not([class*='text-emerald-']):not([class*='text-amber-']):not([class*='text-red-']):not([class*='from-']):hover {
+        color: var(--theme-link-hover-color, #1e40af);
+    }
+    a:not(button):not(.btn):not(.btn-primary):not(.btn-secondary):not(.btn-theme-primary):not(.btn-theme-secondary):not(.btn-view-mode):not(.dyn-nav-link):not(.social-icon-link):not([x-show='open'] a):not([class*='bg-']):not([class*='btn']):not([class*='button']):not([class*='badge']):not([class*='text-white']):not([class*='text-slate-']):not([class*='text-emerald-']):not([class*='text-amber-']):not([class*='text-red-']):not([class*='from-']):active {
+        color: var(--theme-link-active-color, #1e3a8a);
+    }
+
+    /* Dark Mode Hyperlinks (Excludes ALL Buttons, Badges, Tabs & Explicitly Colored Text) */
+    html.dark a:not(button):not(.btn):not(.btn-primary):not(.btn-secondary):not(.btn-theme-primary):not(.btn-theme-secondary):not(.btn-view-mode):not(.dyn-nav-link):not(.social-icon-link):not([x-show='open'] a):not([class*='bg-']):not([class*='btn']):not([class*='button']):not([class*='badge']):not([class*='text-white']):not([class*='text-slate-']):not([class*='text-emerald-']):not([class*='text-amber-']):not([class*='text-red-']):not([class*='from-']) {
+        color: var(--theme-dark-link-color, #60a5fa) !important;
+    }
+    html.dark a:not(button):not(.btn):not(.btn-primary):not(.btn-secondary):not(.btn-theme-primary):not(.btn-theme-secondary):not(.btn-view-mode):not(.dyn-nav-link):not(.social-icon-link):not([x-show='open'] a):not([class*='bg-']):not([class*='btn']):not([class*='button']):not([class*='badge']):not([class*='text-white']):not([class*='text-slate-']):not([class*='text-emerald-']):not([class*='text-amber-']):not([class*='text-red-']):not([class*='from-']):hover {
+        color: var(--theme-dark-link-hover-color, #93c5fd) !important;
+    }
+    html.dark a:not(button):not(.btn):not(.btn-primary):not(.btn-secondary):not(.btn-theme-primary):not(.btn-theme-secondary):not(.btn-view-mode):not(.dyn-nav-link):not(.social-icon-link):not([x-show='open'] a):not([class*='bg-']):not([class*='btn']):not([class*='button']):not([class*='badge']):not([class*='text-white']):not([class*='text-slate-']):not([class*='text-emerald-']):not([class*='text-amber-']):not([class*='text-red-']):not([class*='from-']):active {
+        color: var(--theme-dark-link-active-color, #bfdbfe) !important;
+    }
+    /* Footer Links in Dark Mode */
+    html.dark .footer_container a,
+    html.dark .footer_contents a,
+    html.dark .footer_row1 a,
+    html.dark .footer_row2 a,
+    html.dark .footer_row3 a,
+    html.dark .footer_row4 a,
+    html.dark footer a {
+        color: #94a3b8 !important;
+        transition: color 0.15s ease !important;
+    }
+    html.dark .footer_container a:hover,
+    html.dark .footer_contents a:hover,
+    html.dark .footer_row1 a:hover,
+    html.dark .footer_row2 a:hover,
+    html.dark .footer_row3 a:hover,
+    html.dark .footer_row4 a:hover,
+    html.dark footer a:hover {
+        color: #e2e8f0 !important;
+    }
+    html.dark nav[role='navigation'] [aria-current='page'],
+    html.dark nav[role='navigation'] [aria-current='page'] > span,
+    html.dark nav[role='navigation'] [aria-current='page'] > button {
+        background-color: var(--pagination-active-bg, #2c4a7c) !important;
+        color: var(--pagination-active-text, #ffffff) !important;
+        border-color: var(--pagination-active-bg, #2c4a7c) !important;
+    }
+    /* Dark Mode: Strip ALL button shadows & glows entirely */
+    html.dark button,
+    html.dark .btn,
+    html.dark .btn-primary,
+    html.dark .btn-secondary,
+    html.dark .btn-theme-primary,
+    html.dark .btn-theme-secondary,
+    html.dark a.bg-indigo-600,
+    html.dark a.bg-indigo-700,
+    html.dark a.bg-purple-600,
+    html.dark a.bg-violet-600,
+    html.dark a[class*='shadow'],
+    html.dark button[class*='shadow'],
+    html.dark input[type='submit'],
+    html.dark input[type='button'] {
+        box-shadow: none !important;
+        --tw-shadow: 0 0 #0000 !important;
+        --tw-shadow-colored: 0 0 #0000 !important;
+        filter: none !important;
     }";
 
     $bodyFontFamily = \App\Models\CmsSetting::get('theme_body_font_family');

@@ -107,7 +107,7 @@
                 <div class="fixed inset-0 -z-10 pointer-events-none" style="background-color: {{ $overlayColor }}; opacity: {{ $overlayOpacity }};"></div>
             @endif
         @else
-            <div class="fixed inset-0 overflow-hidden pointer-events-none">
+            <div class="fixed inset-0 overflow-hidden pointer-events-none dark:hidden">
                 <div class="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-tr from-indigo-200/30 to-violet-200/20 blur-3xl opacity-60"></div>
                 <div class="absolute top-[40%] right-[-15%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-indigo-100/30 to-purple-100/20 blur-3xl opacity-50"></div>
             </div>
@@ -156,7 +156,7 @@
                     <div class="max-w-5xl mx-auto px-6 pt-8 pb-0 w-full flex flex-col {{ $classes['horizontal'] }}">
                         <div class="border-b border-slate-200/80 pb-0 mb-6 w-full flex flex-col {{ $classes['horizontal'] }} {{ $classes['text'] }}">
                             @if($page->show_title)
-                                <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent mb-4">
+                                <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent dark:bg-none dark:text-slate-200 mb-4">
                                     {{ $page->alternate_page_title ?: $page->title }}
                                 </h1>
                             @endif

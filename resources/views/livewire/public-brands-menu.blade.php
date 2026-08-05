@@ -1,16 +1,16 @@
 <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" class="relative inline-block text-left w-full md:w-auto">
     <!-- Desktop Trigger -->
-    <button @click="open = !open" class="hidden md:inline-flex items-center gap-1.5 dyn-nav-link px-3 py-2 focus:outline-none">
+    <button @click="open = !open" class="hidden md:inline-flex items-center gap-1.5 dyn-nav-link px-3 py-2 focus:outline-none hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
         <span>@if(!empty($label)) {{ $label }} @else @label('nav.brands_fallback', 'Brands') @endif</span>
-        <svg class="w-3 h-3 text-current opacity-60 transition-transform duration-200" :class="{'rotate-180 text-indigo-600': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-3 h-3 text-current opacity-60 transition-transform duration-200" :class="{'rotate-180 text-indigo-600 dark:text-indigo-400': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
         </svg>
     </button>
 
     <!-- Mobile Trigger -->
-    <button @click="open = !open" class="md:hidden flex w-full items-center justify-between py-2 rounded-xl text-sm font-semibold transition-colors" style="color: var(--nav-mobile-text, #1e293b)">
+    <button @click="open = !open" class="md:hidden flex w-full items-center justify-between py-2 rounded-xl text-sm font-semibold transition-colors hover:text-indigo-600 dark:hover:text-indigo-400" style="color: var(--nav-mobile-text, #1e293b)">
         <span>@if(!empty($label)) {{ $label }} @else @label('nav.brands_fallback', 'Brands') @endif</span>
-        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{'rotate-180 text-indigo-600': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{'rotate-180 text-indigo-600 dark:text-indigo-400': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
     </button>
@@ -32,15 +32,16 @@
             <div class="grid grid-cols-2 gap-4 max-h-[20rem] overflow-y-auto pr-1 scrollbar-thin scroll-smooth overscroll-contain">
                 @foreach($brands as $brand)
                     @php
-                        $logoUrl = $brand->brand_icon
-                            ? ($brand->brand_logo_s3
-                                ? Storage::disk('s3')->url($brand->brand_icon)
-                                : Storage::disk('public')->url($brand->brand_icon))
-                            : null;
+                        $logoUrl = $brand->brand_icon_direct_url
+                            ?: ($brand->brand_icon
+                                ? ($brand->brand_logo_s3
+                                    ? Storage::disk('s3')->url($brand->brand_icon)
+                                    : Storage::disk('public')->url($brand->brand_icon))
+                                : null);
                     @endphp
                     <a href="{{ route('shop.brand', ['brand_slug' => $brand->slug]) }}"
                        wire:navigate
-                       class="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700 border border-transparent hover:border-slate-100 dark:hover:border-slate-600 hover:shadow-sm transition duration-150 group">
+                       class="flex items-center gap-3 p-2.5 rounded-2xl text-slate-800 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-slate-700 border border-transparent hover:border-slate-100 dark:hover:border-slate-600 hover:shadow-sm transition duration-150 group">
 
                         <!-- Brand Logo Image (Only rendered if image uploaded) -->
                         @if($logoUrl)
@@ -73,15 +74,16 @@
             <div class="grid grid-cols-1 gap-2 max-h-[14rem] overflow-y-auto pr-1 scrollbar-thin scroll-smooth overscroll-contain">
                 @foreach($brands as $brand)
                     @php
-                        $logoUrl = $brand->brand_icon
-                            ? ($brand->brand_logo_s3
-                                ? Storage::disk('s3')->url($brand->brand_icon)
-                                : Storage::disk('public')->url($brand->brand_icon))
-                            : null;
+                        $logoUrl = $brand->brand_icon_direct_url
+                            ?: ($brand->brand_icon
+                                ? ($brand->brand_logo_s3
+                                    ? Storage::disk('s3')->url($brand->brand_icon)
+                                    : Storage::disk('public')->url($brand->brand_icon))
+                                : null);
                     @endphp
                     <a href="{{ route('shop.brand', ['brand_slug' => $brand->slug]) }}"
                        wire:navigate
-                       class="flex items-center gap-3 p-2 rounded-xl hover:bg-white dark:hover:bg-slate-700 border border-transparent hover:border-slate-100 dark:hover:border-slate-600 transition">
+                       class="flex items-center gap-3 p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 border border-transparent hover:border-slate-100 dark:hover:border-slate-600 transition group">
 
                         @if($logoUrl)
                             <div class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-slate-200/60 dark:border-slate-600/60 overflow-hidden flex items-center justify-center text-slate-500 font-bold shrink-0">
@@ -89,7 +91,7 @@
                             </div>
                         @endif
 
-                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ $brand->name }}</span>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">{{ $brand->name }}</span>
                     </a>
                 @endforeach
             </div>

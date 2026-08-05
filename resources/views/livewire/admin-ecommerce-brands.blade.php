@@ -105,10 +105,12 @@
                                         <div class="flex items-center gap-4">
                                             <!-- Brand Logo Image -->
                                             <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/60 overflow-hidden flex items-center justify-center text-slate-500 font-bold shrink-0">
-                                                @if($brand->brand_icon)
+                                                @if($brand->brand_icon_direct_url)
+                                                    <img src="{{ $brand->brand_icon_direct_url }}" alt="{{ $brand->name }}" class="w-full h-full object-contain p-1">
+                                                @elseif($brand->brand_icon)
                                                     @php
-                                                        $logoUrl = $brand->brand_logo_s3 == 1 
-                                                            ? Storage::disk('s3')->url($brand->brand_icon) 
+                                                        $logoUrl = $brand->brand_logo_s3 == 1
+                                                            ? Storage::disk('s3')->url($brand->brand_icon)
                                                             : Storage::disk('public')->url($brand->brand_icon);
                                                     @endphp
                                                     <img src="{{ $logoUrl }}" alt="{{ $brand->name }}" class="w-full h-full object-contain p-1">
@@ -223,44 +225,86 @@
                                         <input type="number" wire:model="sort_order" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500 @error('sort_order') border-rose-500 @enderror">
                                         @error('sort_order') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                     </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Storage Destination</label>
-                                        <select wire:model="brand_logo_s3" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500">
-                                            <option value="0">Local Public Storage</option>
-                                            <option value="1">Default S3 Storage</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                                    <input type="checkbox" id="is_visible_in_menu" wire:model="is_visible_in_menu" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
-                                    <label for="is_visible_in_menu" class="text-xs font-bold text-slate-700 cursor-pointer">
-                                        Visible in Menus & Shop Filters
-                                    </label>
                                 </div>
 
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Brand Logo Image</label>
-                                    @if($brand_icon)
-                                        <div class="mb-2 flex items-center gap-3 p-2 bg-slate-50 border border-slate-200 rounded-xl">
-                                            @php
-                                                $logoUrl = $brand_logo_s3 == 1 
-                                                    ? Storage::disk('s3')->url($brand_icon) 
-                                                    : Storage::disk('public')->url($brand_icon);
-                                            @endphp
-                                            <img src="{{ $logoUrl }}" class="w-12 h-12 object-contain bg-white border border-slate-150 rounded-lg p-1" alt="Current Logo">
-                                            <div class="text-[10px] text-slate-400 font-mono truncate max-w-[200px]">{{ basename($brand_icon) }}</div>
-                                        </div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Brand Logo / Icon</label>
+
+
+                                    {{-- Storage Mode --}}
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Storage Destination</label>
+                                        <select wire:model.live="brand_logo_s3" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500">
+                                            <option value="0">Local Public Storage</option>
+                                            <option value="1">Default S3 (.env credentials)</option>
+                                            <option value="2">Custom S3 (own credentials)</option>
+                                        </select>
+                                    </div>
+
+                                    {{-- CDN prefix — shown for S3 modes --}}
+                                    @if($brand_logo_s3 >= 1)
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">CDN / CloudFront URL Prefix <span class="font-normal text-slate-400">(optional)</span></label>
+                                        <input type="text" wire:model="brand_logo_cdn_url" placeholder="https://dxxxxxx.cloudfront.net" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500 @error('brand_logo_cdn_url') border-rose-500 @enderror">
+                                        <p class="text-[10px] text-slate-400 mt-1">Prepended to the stored file path to build the public URL.</p>
+                                        @error('brand_logo_cdn_url') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
                                     @endif
-                                    <input type="file" wire:model="logoFile" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500">
-                                    <p class="text-[10px] text-slate-400 mt-1 font-medium">Recommended: PNG or JPG image, max 2MB. Leave blank to keep existing logo.</p>
-                                    @error('logoFile') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+
+                                    {{-- Custom S3 credentials — shown for mode=2 --}}
+                                    @if($brand_logo_s3 == 2)
+                                    <div class="space-y-2 mb-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                                        <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Custom S3 Credentials</p>
+                                        <input type="text" wire:model="brand_logo_region" placeholder="Region (e.g. us-east-1)" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="text" wire:model="brand_logo_bucket_name" placeholder="Bucket Name" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="text" wire:model="brand_logo_access_key_id" placeholder="Access Key ID" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="password" wire:model="brand_logo_secret_access_key" placeholder="Secret Access Key" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                    </div>
+                                    @endif
+
+                                    {{-- Current logo preview --}}
+                                    @if($brand_icon || $brand_icon_direct_url)
+                                    @php
+                                        $logoPreview = $brand_icon_direct_url ?: (
+                                            $brand_logo_s3 == 1
+                                                ? (class_exists('\\Illuminate\\Support\\Facades\\Storage') ? \Illuminate\Support\Facades\Storage::disk('s3')->url($brand_icon) : $brand_icon)
+                                                : ($brand_logo_s3 == 0 ? \Illuminate\Support\Facades\Storage::disk('public')->url($brand_icon) : $brand_icon)
+                                        );
+                                    @endphp
+                                    <div class="mb-2 flex items-center gap-3 p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                                        <img src="{{ $logoPreview }}" class="w-12 h-12 object-contain bg-white border border-slate-150 rounded-lg p-1" alt="Current Logo">
+                                        <div class="text-[10px] text-slate-400 font-mono truncate max-w-[200px]">{{ basename($brand_icon_direct_url ?: $brand_icon) }}</div>
+                                    </div>
+                                    @endif
+
+                                    {{-- Direct URL option --}}
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Direct Image URL <span class="font-normal text-slate-400">(bypasses file upload)</span></label>
+                                        <input type="text" wire:model="brand_icon_direct_url" placeholder="https://example.com/logo.png" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500 @error('brand_icon_direct_url') border-rose-500 @enderror">
+                                        <p class="text-[10px] text-slate-400 mt-1">If set, this URL is used as the brand icon — no upload required.</p>
+                                        @error('brand_icon_direct_url') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    {{-- File upload --}}
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Upload File <span class="font-normal text-slate-400">(overrides direct URL if provided)</span></label>
+                                        <input type="file" wire:model="logoFile" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500">
+                                        <p class="text-[10px] text-slate-400 mt-1 font-medium">PNG or JPG, max 2 MB. Leave blank to keep existing logo.</p>
+                                        @error('logoFile') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
 
                                 <div>
                                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Brand Website URL</label>
                                     <input type="text" wire:model="brand_url" placeholder="e.g. https://antigravitygear.local" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500 @error('brand_url') border-rose-500 @enderror">
                                     @error('brand_url') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+
+                                <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <input type="checkbox" id="is_visible_in_menu" wire:model="is_visible_in_menu" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                                    <label for="is_visible_in_menu" class="text-xs font-bold text-slate-700 cursor-pointer">
+                                        Visible in Menus &amp; Shop Filters
+                                    </label>
                                 </div>
 
                                 <div class="flex items-center gap-3 pt-4">

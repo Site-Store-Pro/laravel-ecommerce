@@ -167,22 +167,64 @@
                                 </div>
 
                                 <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider font-sans">Category Image (Upload or CDN URL)</label>
-                                    <div class="space-y-2">
-                                        <input type="text" wire:model="category_image" placeholder="https://cdn.example.com/images/category.jpg" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-indigo-500">
-                                        <div class="flex items-center gap-2">
-                                            <input type="file" wire:model="category_image_file" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700">
-                                        </div>
+                                    <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider font-sans">Category Image</label>
+
+                                    {{-- Storage Mode --}}
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Storage Destination</label>
+                                        <select wire:model.live="category_image_s3" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500">
+                                            <option value="0">Local Public Storage</option>
+                                            <option value="1">Default S3 (.env credentials)</option>
+                                            <option value="2">Custom S3 (own credentials)</option>
+                                        </select>
                                     </div>
-                                    @if($category_image)
-                                        <div class="mt-2 flex items-center gap-2">
-                                            <img src="{{ $category_image }}" alt="Category Preview" class="w-12 h-12 object-cover rounded-lg border border-slate-200 shadow-sm">
-                                            <span class="text-2xs text-slate-400 truncate max-w-[200px]">{{ $category_image }}</span>
-                                        </div>
+
+                                    {{-- CDN prefix — shown for S3 modes --}}
+                                    @if($category_image_s3 >= 1)
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">CDN / CloudFront URL Prefix <span class="font-normal text-slate-400">(optional)</span></label>
+                                        <input type="text" wire:model="category_image_cdn_url" placeholder="https://dxxxxxx.cloudfront.net" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-indigo-500 @error('category_image_cdn_url') border-rose-500 @enderror">
+                                        <p class="text-[10px] text-slate-400 mt-1">Prepended to the stored file path to build the public URL.</p>
+                                        @error('category_image_cdn_url') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
                                     @endif
-                                    @error('category_image') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
-                                    @error('category_image_file') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+
+                                    {{-- Custom S3 credentials — shown for mode=2 --}}
+                                    @if($category_image_s3 == 2)
+                                    <div class="space-y-2 mb-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                                        <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Custom S3 Credentials</p>
+                                        <input type="text" wire:model="category_image_region" placeholder="Region (e.g. us-east-1)" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="text" wire:model="category_image_bucket_name" placeholder="Bucket Name" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="text" wire:model="category_image_access_key_id" placeholder="Access Key ID" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="password" wire:model="category_image_secret_access_key" placeholder="Secret Access Key" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                    </div>
+                                    @endif
+
+                                    {{-- Current image preview --}}
+                                    @if($category_image || $category_image_direct_url)
+                                    <div class="mb-2 flex items-center gap-2 mt-1">
+                                        <img src="{{ $category_image_direct_url ?: $category_image }}" alt="Category Preview" class="w-12 h-12 object-cover rounded-lg border border-slate-200 shadow-sm">
+                                        <span class="text-2xs text-slate-400 truncate max-w-[200px]">{{ basename($category_image_direct_url ?: $category_image) }}</span>
+                                    </div>
+                                    @endif
+
+                                    {{-- Direct URL option --}}
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Direct Image URL <span class="font-normal text-slate-400">(bypasses file upload)</span></label>
+                                        <input type="text" wire:model="category_image_direct_url" placeholder="https://example.com/category.jpg" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-indigo-500 @error('category_image_direct_url') border-rose-500 @enderror">
+                                        <p class="text-[10px] text-slate-400 mt-1">If set, used as the image — no upload required.</p>
+                                        @error('category_image_direct_url') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    {{-- File upload --}}
+                                    <div class="space-y-1">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Upload File <span class="font-normal text-slate-400">(overrides direct URL if provided)</span></label>
+                                        <input type="file" wire:model="category_image_file" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700">
+                                        @error('category_image') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                        @error('category_image_file') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
+
 
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider font-sans">Parent Category</label>

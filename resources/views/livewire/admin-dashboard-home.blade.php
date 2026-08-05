@@ -98,7 +98,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
         <!-- Quick Nav actions for admins -->
         <div class="flex flex-wrap items-center gap-2.5">
-            <a href="{{ url('/') }}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-tr from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold rounded-2xl shadow-md shadow-indigo-100 transition">
+            <a href="{{ url('/') }}" target="_blank" class="btn-theme-primary !text-xs !py-2 !px-4 inline-flex items-center gap-1.5 whitespace-nowrap">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 View Public Site
             </a>

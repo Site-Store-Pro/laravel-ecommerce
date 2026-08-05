@@ -103,7 +103,8 @@
                                         }
                                     }"
                                 >
-                                    @foreach($itemsData as $itemId => $item)
+                                    @foreach($itemsData as $index => $item)
+                                        @php $itemId = $item['id']; @endphp
                                         <div data-item-id="{{ $itemId }}" 
                                              wire:key="list-item-{{ $itemId }}"
                                              class="flex gap-4 items-start p-4 bg-slate-50/50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-700/50 rounded-2xl transition duration-150 hover:border-slate-300 dark:hover:border-slate-600">
@@ -118,7 +119,7 @@
                                             <!-- Content Input & Save Button -->
                                             <div class="flex-1 flex items-center gap-2">
                                                 <input 
-                                                    wire:model="itemsData.{{ $itemId }}.list_item" 
+                                                    wire:model="itemsData.{{ $index }}.list_item" 
                                                     type="text" 
                                                     placeholder="Enter HTML link or drop a shortcode from the panel..." 
                                                     class="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-sm" 
@@ -127,7 +128,7 @@
                                                     type="button" 
                                                     wire:click="saveItem({{ $itemId }})"
                                                     wire:dirty.class.remove="invisible"
-                                                    wire:target="itemsData.{{ $itemId }}.list_item"
+                                                    wire:target="itemsData.{{ $index }}.list_item"
                                                     class="invisible px-3.5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1 shrink-0"
                                                     title="Save item edits"
                                                 >

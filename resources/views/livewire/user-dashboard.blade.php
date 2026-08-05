@@ -123,7 +123,7 @@
                 @if($selectedOrder)
                     {{-- Detailed Order View --}}
                     <div class="bg-white border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden">
-                        <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div class="p-6 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between bg-slate-50/50">
                             <div>
                                 <h3 class="font-bold text-lg text-slate-800">@label('account.order_detail', 'Order Detail')</h3>
                                 <p class="text-xs text-slate-400 mt-0.5">Invoice #{{ $selectedOrder->order_invoice_no }} · Placed on {{ $selectedOrder->order_date ? $selectedOrder->order_date->format('M d, Y') : $selectedOrder->created_at->format('M d, Y') }}</p>
@@ -136,7 +136,7 @@
                             {{-- Order Items Table --}}
                             <div class="overflow-x-auto border border-slate-150 rounded-xl">
                                 <table class="min-w-full divide-y divide-slate-100">
-                                    <thead class="bg-slate-50">
+                                    <thead class="bg-slate-50 dark:bg-slate-700/60">
                                         <tr>
                                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">@label('account.col_product', 'Product')</th>
                                             <th class="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">@label('account.col_qty', 'Qty')</th>
@@ -195,7 +195,7 @@
 
                             {{-- Financial Summary --}}
                             <div class="flex justify-end">
-                                <div class="w-80 space-y-3 bg-slate-50/50 p-6 rounded-2xl border border-slate-100 text-sm">
+                                <div class="w-80 space-y-3 bg-slate-50/50 dark:bg-slate-700/50 p-6 rounded-2xl border border-slate-100 text-sm">
                                     <div class="flex justify-between text-slate-500">
                                         <span>@label('account.subtotal', 'Subtotal:')</span>
                                         <span class="font-semibold text-slate-700">${{ number_format($selectedOrder->order_subtotal, 2) }}</span>
@@ -237,7 +237,7 @@
                         </div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-slate-100">
-                                <thead class="bg-slate-50/50">
+                                <thead class="bg-slate-50/50 dark:bg-slate-700/60">
                                     <tr>
                                         <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">@label('account.col_order', 'Order #')</th>
                                         <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">@label('account.col_date', 'Date')</th>
@@ -378,58 +378,58 @@
 
                 {{-- Stats Grid --}}
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <div class="bg-white border border-slate-200/70 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                        <div class="absolute -right-4 -bottom-4 text-slate-100 group-hover:scale-110 transition-transform pointer-events-none">
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-slate-200/60 dark:text-slate-600/50 group-hover:scale-110 transition-transform pointer-events-none">
                             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V7h10v2zm0 8H7v-2h10v2z"/></svg>
                         </div>
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">@label('account.total_tickets', 'Total Tickets')</p>
-                        <h3 class="text-3xl font-extrabold text-slate-800 mt-2">{{ array_sum($counts) }}</h3>
+                        <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">@label('account.total_tickets', 'Total Tickets')</p>
+                        <h3 class="text-3xl font-extrabold text-slate-800 dark:text-slate-100 mt-2">{{ array_sum($counts) }}</h3>
                     </div>
-                    <div class="bg-white border border-slate-200/70 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                        <div class="absolute -right-4 -bottom-4 text-blue-50 group-hover:scale-110 transition-transform pointer-events-none">
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-blue-100/60 dark:text-blue-900/40 group-hover:scale-110 transition-transform pointer-events-none">
                             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                         </div>
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">@label('account.open_in_process', 'Open & In Process')</p>
-                        <h3 class="text-3xl font-extrabold text-blue-600 mt-2">
+                        <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">@label('account.open_in_process', 'Open & In Process')</p>
+                        <h3 class="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">
                             {{ ($counts['open'] ?? 0) + ($counts['in_process'] ?? 0) + ($counts['assigned'] ?? 0) }}
                         </h3>
                     </div>
-                    <div class="bg-white border border-slate-200/70 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                        <div class="absolute -right-4 -bottom-4 text-emerald-50 group-hover:scale-110 transition-transform pointer-events-none">
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-emerald-100/60 dark:text-emerald-900/40 group-hover:scale-110 transition-transform pointer-events-none">
                             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                         </div>
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">@label('account.completed', 'Completed')</p>
-                        <h3 class="text-3xl font-extrabold text-emerald-600 mt-2">{{ $counts['completed'] ?? 0 }}</h3>
+                        <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">@label('account.completed', 'Completed')</p>
+                        <h3 class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2">{{ $counts['completed'] ?? 0 }}</h3>
                     </div>
-                    <div class="bg-white border border-slate-200/70 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                        <div class="absolute -right-4 -bottom-4 text-slate-50 group-hover:scale-110 transition-transform pointer-events-none">
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 text-slate-200/60 dark:text-slate-600/50 group-hover:scale-110 transition-transform pointer-events-none">
                             <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
                         </div>
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">@label('account.closed', 'Closed')</p>
-                        <h3 class="text-3xl font-extrabold text-slate-700 mt-2">{{ $counts['closed'] ?? 0 }}</h3>
+                        <p class="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">@label('account.closed', 'Closed')</p>
+                        <h3 class="text-3xl font-extrabold text-slate-700 dark:text-slate-200 mt-2">{{ $counts['closed'] ?? 0 }}</h3>
                     </div>
                 </div>
 
                 {{-- Tickets List --}}
-                <div class="bg-white border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
-                        <h3 class="font-bold text-lg text-slate-800">@label('account.support_history', 'Support History')</h3>
-                        <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-50 text-slate-500 border border-slate-200/60">
+                <div class="bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/60 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                        <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100">@label('account.support_history', 'Support History')</h3>
+                        <span class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700">
                             @label('account.showing', 'Showing') {{ $tickets->count() }} @label('account.of', 'of') {{ $tickets->total() }} tickets
                         </span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-slate-100">
-                            <thead class="bg-slate-50/50">
+                        <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-700/60">
+                            <thead class="bg-slate-50/50 dark:bg-slate-700/60">
                                 <tr>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">@label('account.col_ticket', 'Ticket')</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">@label('account.col_status', 'Status')</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">@label('account.col_replies', 'Replies')</th>
-                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">@label('account.col_updated', 'Updated')</th>
-                                    <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">@label('account.col_action', 'Action')</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-300">@label('account.col_ticket', 'Ticket')</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-300">@label('account.col_status', 'Status')</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-300">@label('account.col_replies', 'Replies')</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-300">@label('account.col_updated', 'Updated')</th>
+                                    <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-300">@label('account.col_action', 'Action')</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 bg-white">
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-700/60 bg-white dark:bg-slate-800">
                                 @forelse ($tickets as $ticket)
                                     <tr class="hover:bg-slate-50/50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap">

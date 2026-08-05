@@ -87,7 +87,7 @@
                 padding: 6px 14px; font-size: 11px; font-weight: 700;
                 border-radius: 12px; white-space: nowrap;
                 text-decoration: none; transition: background 0.15s, color 0.15s;
-                border: none; cursor: pointer;
+                border: none; cursor: pointer; flex-shrink: 0;
             }
             #{{ $instanceId }}_outer .fi-btn-primary { background: #4f46e5; color: #fff; }
             #{{ $instanceId }}_outer .fi-btn-primary:hover { background: #4338ca; }
@@ -114,6 +114,36 @@
                 #{{ $instanceId }}_outer .fi-swiper-prev { left: 0; }
                 #{{ $instanceId }}_outer .fi-swiper-next { right: 0; }
             }
+            /* Dark mode overrides */
+            .dark #{{ $instanceId }}_outer .fi-card {
+                background: #1e293b;
+                border-color: rgba(51,65,85,0.6);
+            }
+            .dark #{{ $instanceId }}_outer .fi-card:hover {
+                box-shadow: 0 4px 16px rgba(79,70,229,0.2);
+                border-color: #475569;
+            }
+            .dark #{{ $instanceId }}_outer .fi-img-wrap {
+                background: linear-gradient(135deg, rgba(79,70,229,0.2), rgba(124,58,237,0.2));
+            }
+            .dark #{{ $instanceId }}_outer .fi-title { color: #f1f5f9; }
+            .dark #{{ $instanceId }}_outer .fi-card:hover .fi-title { color: #818cf8; }
+            .dark #{{ $instanceId }}_outer .fi-desc { color: #94a3b8; }
+            .dark #{{ $instanceId }}_outer .fi-footer { border-top-color: rgba(51,65,85,0.6); }
+            .dark #{{ $instanceId }}_outer .fi-price { color: #e2e8f0; }
+            .dark #{{ $instanceId }}_outer .fi-price-orig { color: #475569; }
+            .dark #{{ $instanceId }}_outer .fi-badge-sale {
+                background: rgba(153,27,27,0.3); color: #fca5a5; border-color: rgba(153,27,27,0.3);
+            }
+            .dark #{{ $instanceId }}_outer .fi-btn-disabled { background: #334155; color: #64748b; }
+            .dark #{{ $instanceId }}_outer .fi-btn-outline { background: rgba(79,70,229,0.15); color: #818cf8; }
+            .dark #{{ $instanceId }}_outer .fi-btn-outline:hover { background: rgba(79,70,229,0.25); }
+            .dark #{{ $instanceId }}_outer .fi-swiper-prev,
+            .dark #{{ $instanceId }}_outer .fi-swiper-next {
+                background: #1e293b; border-color: #475569; color: #818cf8;
+            }
+            .dark #{{ $instanceId }}_outer .fi-swiper-prev:hover,
+            .dark #{{ $instanceId }}_outer .fi-swiper-next:hover { background: #4f46e5; color: #fff; border-color: #4f46e5; }
         </style>
 
         <div class="swiper featured-items-swiper" id="{{ $instanceId }}">

@@ -27,8 +27,22 @@ class Category extends Model
         'category_image',
         'parent_id',
         'sort_order',
-        'is_visible_in_menu'
+        'is_visible_in_menu',
+        'category_image_s3',
+        'category_image_cdn_url',
+        'category_image_region',
+        'category_image_bucket_name',
+        'category_image_access_key_id',
+        'category_image_secret_access_key',
+        'category_image_direct_url',
     ];
+
+    protected $casts = [
+        'is_visible_in_menu' => 'boolean',
+        'sort_order'         => 'integer',
+        'category_image_s3'  => 'integer',
+    ];
+
 
     /**
      * Relationship: Products belonging to this category.

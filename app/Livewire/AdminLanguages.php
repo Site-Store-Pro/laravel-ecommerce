@@ -161,11 +161,10 @@ class AdminLanguages extends Component
             \App\Models\NavItem::class,
             \App\Models\CmsListMenuItem::class,
             \App\Models\SiteLabel::class,
-            \App\Models\Category::class,
-            \App\Models\CmsPagesCategory::class,
-            \App\Models\CmsPagesTag::class,
             \App\Models\KbCategory::class,
             \App\Models\EmailTemplate::class,
+            \App\Models\CmsModal::class,
+            \App\Models\CmsBuilderBlock::class,
         ];
 
         $count = 0;
@@ -186,9 +185,11 @@ class AdminLanguages extends Component
             $count++;
         }
 
+        $queueMonitorUrl = route('admin.languages.queue-monitor');
         $this->dispatch('toast',
-            message: "{$count} translation jobs queued — run `php artisan queue:work` on the server to process them.",
-            type: 'success'
+            message: "{$count} translation jobs queued. <a href=\"{$queueMonitorUrl}\" class=\"underline font-bold\">Open Queue Monitor and start the worker process</a>, or run <code class=\"bg-black/10 px-1 rounded\">php artisan queue:work</code> on the server.",
+            type: 'success',
+            duration: 10000
         );
     }
 
@@ -221,6 +222,8 @@ class AdminLanguages extends Component
             'cms_tags'               => $service->translationStats(\App\Models\CmsPagesTag::class, $languageId),
             'kb_categories'          => $service->translationStats(\App\Models\KbCategory::class, $languageId),
             'email_templates'        => $service->translationStats(\App\Models\EmailTemplate::class, $languageId),
+            'modals'                 => $service->translationStats(\App\Models\CmsModal::class, $languageId),
+            'builder_blocks'         => $service->translationStats(\App\Models\CmsBuilderBlock::class, $languageId),
         ];
     }
 

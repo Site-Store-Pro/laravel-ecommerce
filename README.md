@@ -2142,3 +2142,173 @@ storage/app/queue_runner.php
 | `storage/app/queue_worker.log` | Runtime: appended log output from `queue:work` |
 | `routes/web.php` | Route: `GET /admin/languages/queue-monitor` → `admin.languages.queue-monitor` |
 | `resources/views/livewire/layout/navigation.blade.php` | Nav: "Queue Monitor" link in CMS dropdown and responsive menu |
+
+---
+
+## 🆕 Recent Additions
+
+---
+
+### Admin / Settings — Jump Navigation
+
+The `/admin/settings` page now includes a **static embedded jump-link list** at the top of the side panel. Each link scrolls instantly to its corresponding section anchor (`#general`, `#appearance`, `#store`, etc.) without any horizontal scroll container or JavaScript carousel — it is a plain, vertically stacked anchor list matching the CMS sidebar aesthetic.
+
+#### How it works
+
+Each section heading in the settings blade view carries an `id` attribute (e.g. `id="section-general"`). The side panel renders a simple list of `<a href="#section-...">` links styled as the standard Tailwind rounded pill links. No JavaScript is required.
+
+---
+
+### CMS Modal Manager
+
+A full **Modal Window Management system** modelled on a legacy popup manager. Modals are embedded into any CMS page or product description using the display plugin shortcode:
+
+```
+[plugin:modal {id}]
+```
+
+#### Features
+
+- **Four position types:** centered overlay (popup), fixed-left, fixed-right, fixed-bottom drawer
+- **Dismiss button toggle:** each modal record has an on/off flag to include or exclude an × dismiss button with label
+- **Max-width control:** configurable `max_width` (px or %) for centered modals
+- **TinyMCE body editor:** full rich-text editor in the modal edit form (same init config as the CMS page editor)
+- **CSS override field:** per-modal custom CSS stored alongside the record; injected as a `<style>` block at render time
+- **Translation system integration:** `question` and `answer` fields are included in the global auto-translate pipeline (new language → queued AI translation) and expose the manual OpenAI translate button (same UX as product categories / variants)
+- **Admin navigation:** accessible from both the **CMS left sidebar** and the **CMS top-nav dropdown**
+
+#### Database
+
+| Table | Key Columns |
+|---|---|
+| `cms_modals` | `id`, `name`, `position` (`center`\|`left`\|`right`\|`bottom`), `max_width`, `body`, `custom_css`, `show_dismiss`, `is_active`, `sort_order` |
+| `cms_modal_translations` | `modal_id`, `language_id`, `body`, `translation_status`, `translated_at` |
+
+#### File Reference
+
+| File | Purpose |
+|---|---|
+| `database/migrations/2026_08_04_000001_create_cms_modals_table.php` | Schema + `cms_modal_translations` |
+| `app/Models/CmsModal.php` | Eloquent model with `translations()` HasMany, `scopeActive()` |
+| `app/Models/CmsModalTranslation.php` | Translation pivot model |
+| `app/Livewire/AdminModalIndex.php` | CRUD list component |
+| `app/Livewire/AdminModalEdit.php` | Create/edit component with TinyMCE + translation panel |
+| `app/Plugins/Display/ModalDisplayPlugin.php` | Shortcode renderer — reads modal by ID, injects CSS, renders Alpine.js overlay |
+| `resources/views/livewire/admin-modal-index.blade.php` | Manager list blade |
+| `resources/views/livewire/admin-modal-edit.blade.php` | Edit form blade |
+| `routes/web.php` | `admin.modals.index`, `admin.modals.create`, `admin.modals.edit` |
+
+---
+
+### Inventory Alert Messages
+
+A **product-level out-of-stock message system** that replaces the generic "Currently Unavailable" label with a configurable, per-product message when stock reaches zero.
+
+#### How it works
+
+1. A new `product_inventory_alerts` table holds a library of reusable alert messages (e.g. *"Back-Ordered: ETA 2 Weeks"*, *"Event Sold-Out"*, *"Item Discontinued"*).
+2. Each `Product` record has a nullable `inventory_alert_id` foreign key (with `nullOnDelete` so deleting an alert automatically reverts affected products to the default — no errors on the storefront).
+3. In the **Product Edit** → **Advanced Settings** tab, a dropdown lets the admin assign one of these messages to the product.
+4. On the **storefront product page**, when a product has zero available stock, the assigned alert message is shown in an amber notice badge above the disabled "Currently Unavailable" button. If no alert is assigned (or the assigned alert was deleted), the default label appears silently.
+
+#### Default seed messages
+
+| ID | Message |
+|---|---|
+| 1 | Temporarily Out Of Stock |
+| 2 | Back-Ordered: ETA 2 Weeks |
+| 3 | Back-Ordered: ETA 4 Weeks |
+| 4 | Item Discontinued |
+| 5 | Event Sold-Out |
+| 6 | Invoice Paid |
+| 7 | Registration is no longer available for this event. |
+
+#### Database
+
+| Table | Key Columns |
+|---|---|
+| `product_inventory_alerts` | `id`, `message`, `is_active`, `sort_order` |
+| `products` | `inventory_alert_id` (nullable FK → `product_inventory_alerts.id`, `nullOnDelete`) |
+
+#### File Reference
+
+| File | Purpose |
+|---|---|
+| `database/migrations/2026_08_04_000002_create_product_inventory_alerts_table.php` | Schema + 7 default seed messages |
+| `database/migrations/2026_08_04_000003_add_inventory_alert_to_products_table.php` | Adds FK column to `products` |
+| `app/Models/ProductInventoryAlert.php` | Model with `scopeActive()`, `scopeOrdered()`, `products()` HasMany |
+| `app/Models/Product.php` | Added `inventoryAlert()` BelongsTo + `inventory_alert_id` in `$fillable` |
+| `app/Livewire/AdminInventoryAlerts.php` | Full CRUD Livewire — create, edit, toggle active, delete with confirm |
+| `app/Livewire/AdminProductEdit.php` | Advanced Settings tab: dropdown + live preview badge |
+| `app/Livewire/ProductDetails.php` | `inventoryAlert` added to eager-load chain (no N+1) |
+| `resources/views/livewire/admin-inventory-alerts.blade.php` | Manager page blade |
+| `resources/views/livewire/admin-product-edit.blade.php` | Advanced Settings tab — out-of-stock dropdown |
+| `resources/views/livewire/partials/product-buy-box.blade.php` | Storefront amber notice badge + fallback logic |
+| `routes/web.php` | `admin.inventory-alerts.index` |
+
+---
+
+### FAQ Manager + FAQ Accordion Display Plugin
+
+A **full CMS FAQ system** with a drag-to-sort admin manager and a display plugin that renders an animated accordion on any page.
+
+#### Admin Manager (`/admin/faqs`)
+
+- **Full CRUD** — inline create/edit slide-in form (no separate page); delete with a confirmation overlay
+- **Live search** — `wire:model.live.debounce.300ms` filters both `question` and `answer` text in real-time
+- **Drag-to-sort** — Alpine.js + SortableJS drag handles update `sort_order` instantly via `$wire.updateFaqOrder(order)`. Drag is automatically disabled (with an amber notice) when the search filter is active, since filtered results are not the full list
+- **Active/inactive toggle** — inline pill switch on each row
+- **Accessible from** both the **CMS left sidebar** and the **CMS top-nav CMS dropdown**
+
+#### Display Plugin — `[plugin:faqs-2026]`
+
+Embed the FAQ accordion on any CMS page body, product description, or any shortcode-enabled content area:
+
+```
+[plugin:faqs-2026]
+[plugin:faqs-2026 header="Product FAQs" max=10]
+[plugin:faqs-2026 open_first=1 allow_multiple=1]
+[plugin:faqs-2026 custom_css=".faq-accordion { border-radius: 1rem; }"]
+```
+
+Only **active** FAQs are displayed, in `sort_order` ascending order.
+
+| Shortcode Param | Plugin Setting Key | Default | Description |
+|---|---|---|---|
+| `header` | `header_title` | `Frequently Asked Questions` | Section heading shown above the accordion |
+| `show_header` | `show_header` | `1` (on) | Toggle visibility of the section heading |
+| `open_first` | `open_first` | `0` (off) | Auto-expand the first item on page load |
+| `allow_multiple` | `allow_multiple` | `0` (off) | Allow multiple items open simultaneously; default is single-open |
+| `max` | `max_items` | `0` (all) | Limit the number of FAQs shown |
+| `custom_css` | `custom_css` | — | CSS injected as a `<style>` block; also configurable via Admin → Plugins settings panel |
+
+**Accordion behaviour:**
+- Plus icon (`+`) rotates 45° to become a cross (`×`) when open — CSS `rotate-45` via Alpine.js `:class` binding
+- Smooth height animation via Alpine.js `x-collapse` plugin (loaded on-demand if not already present)
+- Single-open mode: parent `x-data` tracks `activeItem` index; siblings close automatically
+- Multi-open mode: each item has its own independent `x-data="{ open: false }"`
+- Full Tailwind light (`bg-white border-slate-200`) and dark (`dark:bg-slate-800 dark:border-slate-700`) mode support
+
+#### Database
+
+| Table | Key Columns |
+|---|---|
+| `cms_faqs` | `id`, `question` (text), `answer` (longText), `is_active` (bool), `sort_order` (int) |
+| `plugins` | `shortcode = 'faqs-2026'` — registered with `activation_status = 1` |
+| `plugin_options` | 6 option fields: `header_title`, `show_header`, `open_first`, `allow_multiple`, `max_items`, `custom_css` |
+
+#### File Reference
+
+| File | Purpose |
+|---|---|
+| `database/migrations/2026_08_04_000004_create_cms_faqs_table.php` | `cms_faqs` schema + plugin registration + plugin_options schema |
+| `app/Models/CmsFaq.php` | Eloquent model — `scopeActive()`, `scopeOrdered()` |
+| `app/Livewire/AdminFaqs.php` | Full CRUD Livewire — create, edit, toggle, delete, `updateFaqOrder()` |
+| `app/Plugins/Display/FaqsPlugin.php` | Shortcode renderer — builds accordion HTML with Alpine.js directives |
+| `app/Providers/PluginServiceProvider.php` | Registers `FaqsPlugin` (and `ModalDisplayPlugin`) |
+| `resources/views/livewire/admin-faqs.blade.php` | Manager list blade — SortableJS drag handles, live search, inline form |
+| `routes/web.php` | `admin.faqs.index` |
+| `resources/views/layouts/cms-sidebar.blade.php` | "FAQs" nav link |
+| `resources/views/livewire/layout/navigation.blade.php` | "FAQs" in CMS dropdown + active state |
+
+---

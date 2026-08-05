@@ -47,6 +47,7 @@ class Product extends Model
         'custom_amount_min',
         'custom_amount_max',
         'custom_amount_options',
+        'inventory_alert_id',
     ];
 
     /** Fields automatically translated when translations relation is loaded. */
@@ -77,6 +78,7 @@ class Product extends Model
         'custom_amount_min' => 'float',
         'custom_amount_max' => 'float',
         'custom_amount_options' => 'string',
+        'inventory_alert_id' => 'integer',
     ];
 
     protected static function booted(): void
@@ -259,6 +261,16 @@ class Product extends Model
     public function crossSells(): HasMany
     {
         return $this->hasMany(ProductCrossSell::class, 'product_id')->orderBy('sort_order')->orderBy('id');
+    }
+
+    /**
+     * The out-of-stock alert message assigned to this product.
+     * Returns null when no alert is assigned OR when the assigned alert has been deleted
+     * (nullOnDelete FK constraint ensures no orphan references).
+     */
+    public function inventoryAlert(): BelongsTo
+    {
+        return $this->belongsTo(ProductInventoryAlert::class, 'inventory_alert_id');
     }
 
     public function getParsedShortDescriptionAttribute(): string

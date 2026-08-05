@@ -156,6 +156,76 @@ class CmsSetting extends Model
     }
 
     /**
+     * Resolve the favicon URL or SVG HTML from cms_settings.
+     * Returns an array: ['type' => 'url'|'svg'|null, 'value' => '...']
+     * Returns ['type' => null, 'value' => null] if no favicon is configured.
+     */
+    public static function resolveFaviconUrl(): array
+    {
+        $settings = static::allCached();
+        $type = $settings['favicon_type'] ?? null;
+        $path = $settings['favicon_path'] ?? null;
+        $cdnUrl = $settings['favicon_cdn_url'] ?? null;
+        $svgHtml = $settings['favicon_svg_html'] ?? null;
+
+        if (!$type) {
+            return ['type' => null, 'value' => null];
+        }
+
+        switch ($type) {
+            case 'local':
+                if ($path) {
+                    return ['type' => 'url', 'value' => asset('storage/' . ltrim($path, '/'))];
+                }
+                break;
+
+            case 's3':
+                if ($path) {
+                    $bucket = config('filesystems.disks.s3.bucket', '');
+                    $region = config('filesystems.disks.s3.region', 'us-east-1');
+                    $url = "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+                    if ($cdnUrl) {
+                        $url = rtrim($cdnUrl, '/') . '/' . ltrim($path, '/');
+                    }
+                    return ['type' => 'url', 'value' => $url];
+                }
+                break;
+
+            case 'custom_s3':
+                $bucket  = $settings['favicon_s3_bucket'] ?? '';
+                $region  = $settings['favicon_s3_region'] ?? 'us-east-1';
+                if ($bucket && $path) {
+                    $url = "https://{$bucket}.s3.{$region}.amazonaws.com/" . ltrim($path, '/');
+                    if ($cdnUrl) {
+                        $url = rtrim($cdnUrl, '/') . '/' . ltrim($path, '/');
+                    }
+                    return ['type' => 'url', 'value' => $url];
+                }
+                break;
+
+            case 'cdn':
+                if ($cdnUrl && $path) {
+                    return ['type' => 'url', 'value' => rtrim($cdnUrl, '/') . '/' . ltrim($path, '/')];
+                }
+                break;
+
+            case 'url':
+                if ($path) {
+                    return ['type' => 'url', 'value' => $path];
+                }
+                break;
+
+            case 'svg':
+                if ($svgHtml) {
+                    return ['type' => 'svg', 'value' => $svgHtml];
+                }
+                break;
+        }
+
+        return ['type' => null, 'value' => null];
+    }
+
+    /**
      * Resolve the page background image URL from cms_settings.
      * Direct URL overrides all other upload sources if provided.
      */

@@ -478,8 +478,10 @@
                                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Sort By</label>
                                 <select wire:model.live="filterSortBy"
                                         class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
-                                    <option value="newest">Newest First</option>
-                                    <option value="oldest">Oldest First</option>
+                                    <option value="last_modified">Recently Modified</option>
+                                    <option value="oldest_modified">Oldest Modification</option>
+                                    <option value="newest">Newest First (Date Created)</option>
+                                    <option value="oldest">Oldest First (Date Created)</option>
                                     <option value="alpha_asc">A → Z</option>
                                     <option value="alpha_desc">Z → A</option>
                                     <option value="price_asc">Price: Low → High</option>

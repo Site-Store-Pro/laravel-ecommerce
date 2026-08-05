@@ -426,3 +426,80 @@ html, body {
 .faq-accordion details[open] .group-open\:opacity-0  { opacity: 0 !important; }
 .faq-accordion details[open] .group-open\:opacity-100 { opacity: 1 !important; }
 
+
+/* ==========================================================
+   Prose Dark Mode Overrides
+   Applied when .dark is on <html> and content uses .prose.
+   ========================================================== */
+.dark .prose,
+.dark .prose-slate {
+    color: #cbd5e1; /* slate-300 */
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4,
+.dark .prose h5,
+.dark .prose h6 {
+    color: #f1f5f9; /* slate-100 */
+}
+
+.dark .prose p,
+.dark .prose li,
+.dark .prose dd,
+.dark .prose dt {
+    color: #cbd5e1; /* slate-300 */
+}
+
+.dark .prose strong,
+.dark .prose b {
+    color: #f1f5f9; /* slate-100 */
+}
+
+.dark .prose a {
+    color: #818cf8; /* indigo-400 */
+}
+.dark .prose a:hover {
+    color: #a5b4fc; /* indigo-300 */
+}
+
+.dark .prose blockquote {
+    color: #94a3b8; /* slate-400 */
+    border-left-color: #475569; /* slate-600 */
+    background: rgba(30, 41, 59, 0.5);
+}
+
+.dark .prose code,
+.dark .prose pre code {
+    color: #e2e8f0; /* slate-200 */
+    background: #1e293b; /* slate-800 */
+}
+
+.dark .prose pre {
+    background: #1e293b;
+    border: 1px solid #334155;
+}
+
+.dark .prose hr {
+    border-color: #334155; /* slate-700 */
+}
+
+.dark .prose table thead {
+    background: #1e293b;
+}
+.dark .prose table thead th {
+    color: #94a3b8; /* slate-400 */
+    border-color: #334155;
+}
+.dark .prose table tbody td {
+    color: #cbd5e1;
+    border-color: #334155;
+}
+.dark .prose table tbody tr:nth-child(even) {
+    background: rgba(30, 41, 59, 0.4);
+}
+
+.dark .prose figcaption {
+    color: #64748b; /* slate-500 */
+}

@@ -30,12 +30,25 @@ class AdminSettings extends Component
     public string $logo_s3_region = 'us-east-1';
     public $logo_upload = null;           // Livewire temporary upload
 
+    // Favicon Configuration
+    public string $favicon_type = '';     // local|s3|custom_s3|cdn|url|svg
+    public string $favicon_path = '';
+    public string $favicon_cdn_url = '';
+    public string $favicon_svg_html = '';
+    public string $favicon_s3_bucket = '';
+    public string $favicon_s3_key = '';
+    public string $favicon_s3_secret = '';
+    public string $favicon_s3_region = 'us-east-1';
+    public $favicon_upload = null;        // Livewire temporary upload
+
     // Appearance
     public bool $frontend_dark_mode = false;
     public bool $admin_dark_mode = false;
-    public string $theme_primary_color = '#4f46e5';
-    public string $theme_hover_color = '#4338ca';
-    public string $theme_text_color = '#ffffff';
+    public string $theme_primary_color = '';
+    public string $theme_hover_color = '';
+    public string $theme_text_color = '';
+    public string $theme_primary_border_color = '';
+    public string $theme_primary_hover_text_color = '';
     public string $theme_border_radius = '0.75rem';
     public string $theme_secondary_bg_color = 'transparent';
     public string $theme_secondary_text_color = '#4f46e5';
@@ -134,6 +147,9 @@ class AdminSettings extends Component
     public string $theme_h3_font_family = '';
     public string $theme_h3_font_size = '';
     public string $theme_h3_font_color = '';
+    public string $theme_link_color = '';
+    public string $theme_link_hover_color = '';
+    public string $theme_link_active_color = '';
 
     // Site Theme Customization: Content Cards
     public string $theme_content_bg_color = '';
@@ -176,21 +192,33 @@ class AdminSettings extends Component
         $this->logo_s3_secret= $settings['logo_s3_secret'] ?? '';
         $this->logo_s3_region= $settings['logo_s3_region'] ?? 'us-east-1';
 
+        // Favicon Configuration
+        $this->favicon_type     = $settings['favicon_type'] ?? '';
+        $this->favicon_path     = $settings['favicon_path'] ?? '';
+        $this->favicon_cdn_url  = $settings['favicon_cdn_url'] ?? '';
+        $this->favicon_svg_html = $settings['favicon_svg_html'] ?? '';
+        $this->favicon_s3_bucket= $settings['favicon_s3_bucket'] ?? '';
+        $this->favicon_s3_key   = $settings['favicon_s3_key'] ?? '';
+        $this->favicon_s3_secret= $settings['favicon_s3_secret'] ?? '';
+        $this->favicon_s3_region= $settings['favicon_s3_region'] ?? 'us-east-1';
+
         // Appearance
         $this->frontend_dark_mode          = (bool) ($settings['frontend_dark_mode'] ?? false);
         $this->admin_dark_mode             = (bool) ($settings['admin_dark_mode'] ?? false);
-        $this->theme_primary_color         = $settings['theme_primary_color'] ?? '#4f46e5';
-        $this->theme_hover_color           = $settings['theme_hover_color'] ?? '#4338ca';
-        $this->theme_text_color            = $settings['theme_text_color'] ?? '#ffffff';
+        $this->theme_primary_color         = $settings['theme_primary_color'] ?? '';
+        $this->theme_hover_color           = $settings['theme_hover_color'] ?? '';
+        $this->theme_text_color            = $settings['theme_text_color'] ?? '';
+        $this->theme_primary_border_color  = $settings['theme_primary_border_color'] ?? '';
+        $this->theme_primary_hover_text_color = $settings['theme_primary_hover_text_color'] ?? '';
         $this->theme_border_radius         = $settings['theme_border_radius'] ?? '0.75rem';
         $this->theme_secondary_bg_color    = $settings['theme_secondary_bg_color'] ?? 'transparent';
-        $this->theme_secondary_text_color  = $settings['theme_secondary_text_color'] ?? '#4f46e5';
-        $this->theme_secondary_border_color= $settings['theme_secondary_border_color'] ?? '#4f46e5';
-        $this->theme_secondary_hover_bg_color   = $settings['theme_secondary_hover_bg_color'] ?? '#4f46e5';
+        $this->theme_secondary_text_color  = $settings['theme_secondary_text_color'] ?? '#1e3a8a';
+        $this->theme_secondary_border_color= $settings['theme_secondary_border_color'] ?? '#1e3a8a';
+        $this->theme_secondary_hover_bg_color   = $settings['theme_secondary_hover_bg_color'] ?? '#1e3a8a';
         $this->theme_secondary_hover_text_color = $settings['theme_secondary_hover_text_color'] ?? '#ffffff';
 
-        $this->backtop_bg_color            = $settings['backtop_bg_color'] ?? '#026C80';
-        $this->backtop_hover_bg_color      = $settings['backtop_hover_bg_color'] ?? '#76B5C5';
+        $this->backtop_bg_color            = $settings['backtop_bg_color'] ?? '';
+        $this->backtop_hover_bg_color      = $settings['backtop_hover_bg_color'] ?? '';
         $this->backtop_icon_color          = $settings['backtop_icon_color'] ?? '#FFFFFF';
 
         $this->shop_view_mode_active_bg    = $settings['shop_view_mode_active_bg'] ?? '#e2e8f0';
@@ -284,6 +312,9 @@ class AdminSettings extends Component
         $this->theme_h3_font_family        = $settings['theme_h3_font_family'] ?? '';
         $this->theme_h3_font_size          = $settings['theme_h3_font_size'] ?? '';
         $this->theme_h3_font_color         = $settings['theme_h3_font_color'] ?? '';
+        $this->theme_link_color            = $settings['theme_link_color'] ?? '';
+        $this->theme_link_hover_color      = $settings['theme_link_hover_color'] ?? '';
+        $this->theme_link_active_color     = $settings['theme_link_active_color'] ?? '';
 
         $this->theme_content_bg_color      = $settings['theme_content_bg_color'] ?? '';
         $this->theme_card_bg_color         = $settings['theme_card_bg_color'] ?? '';
@@ -364,16 +395,30 @@ class AdminSettings extends Component
             'logo_s3_key'         => 'nullable|string|max:255',
             'logo_s3_secret'      => 'nullable|string|max:255',
             'logo_s3_region'      => 'nullable|string|max:100',
+            'favicon_type'        => 'nullable|string|in:local,s3,custom_s3,cdn,url,svg,',
+            'favicon_path'        => 'nullable|string|max:500',
+            'favicon_cdn_url'     => 'nullable|url|max:500',
+            'favicon_svg_html'    => 'nullable|string',
+            'favicon_s3_bucket'   => 'nullable|string|max:255',
+            'favicon_s3_key'      => 'nullable|string|max:255',
+            'favicon_s3_secret'   => 'nullable|string|max:255',
+            'favicon_s3_region'   => 'nullable|string|max:100',
             'google_fonts_url'    => 'nullable|string',
             'google_analytics_id' => 'nullable|string|max:50',
             'custom_js_loader'    => 'nullable|string',
             'timezone'            => ['required', 'string', \Illuminate\Validation\Rule::in(TimezoneHelper::all())],
-            'theme_primary_color' => 'required|string|regex:/^#[0-9a-fA-F]{6}$/',
-            'theme_hover_color'   => 'required|string|regex:/^#[0-9a-fA-F]{6}$/',
-            'theme_text_color'    => 'required|string|regex:/^#[0-9a-fA-F]{6}$/',
-            'theme_border_radius' => 'required|string|max:50',
-            'backtop_bg_color'       => 'nullable|string|regex:/^#[0-9a-fA-F]{6}$/',
-            'backtop_hover_bg_color' => 'nullable|string|regex:/^#[0-9a-fA-F]{6}$/',
+            'theme_primary_color'            => 'nullable|string|max:100',
+            'theme_hover_color'              => 'nullable|string|max:100',
+            'theme_text_color'               => 'nullable|string|max:100',
+            'theme_primary_border_color'     => 'nullable|string|max:100',
+            'theme_primary_hover_text_color' => 'nullable|string|max:100',
+            'theme_link_color'               => 'nullable|string|max:100',
+            'theme_link_hover_color'         => 'nullable|string|max:100',
+            'theme_link_active_color'        => 'nullable|string|max:100',
+            'theme_border_radius'            => 'required|string|max:50',
+            'backtop_bg_color'       => 'nullable|string|max:100',
+            'backtop_hover_bg_color' => 'nullable|string|max:100',
+            'backtop_icon_color'     => 'nullable|string|max:100',
             'enable_reviews'      => 'boolean',
             'third_party_reviews_js' => 'nullable|string',
             'file_icon_pack'      => 'required|string|in:vivid,classic,square',
@@ -386,6 +431,12 @@ class AdminSettings extends Component
         if ($this->logo_upload) {
             $path = $this->handleFileUpload($this->logo_upload, $this->logo_type, 'logos', $this->logo_s3_bucket, $this->logo_s3_key, $this->logo_s3_secret, $this->logo_s3_region);
             if ($path) $this->logo_path = $path;
+        }
+
+        // Handle favicon file upload (local, s3, custom_s3)
+        if ($this->favicon_upload) {
+            $path = $this->handleFileUpload($this->favicon_upload, $this->favicon_type, 'favicons', $this->favicon_s3_bucket, $this->favicon_s3_key, $this->favicon_s3_secret, $this->favicon_s3_region);
+            if ($path) $this->favicon_path = $path;
         }
 
         // Handle page background image upload (local, s3, custom_s3)
@@ -410,6 +461,15 @@ class AdminSettings extends Component
             'logo_s3_key'        => trim($this->logo_s3_key),
             'logo_s3_secret'     => trim($this->logo_s3_secret),
             'logo_s3_region'     => trim($this->logo_s3_region) ?: 'us-east-1',
+
+            'favicon_type'       => $this->favicon_type,
+            'favicon_path'       => trim($this->favicon_path),
+            'favicon_cdn_url'    => trim($this->favicon_cdn_url),
+            'favicon_svg_html'   => trim($this->favicon_svg_html),
+            'favicon_s3_bucket'  => trim($this->favicon_s3_bucket),
+            'favicon_s3_key'     => trim($this->favicon_s3_key),
+            'favicon_s3_secret'  => trim($this->favicon_s3_secret),
+            'favicon_s3_region'  => trim($this->favicon_s3_region) ?: 'us-east-1',
 
             // Site Theme Customization: Background Media
             'page_bg_mode'            => $this->page_bg_mode,
@@ -451,6 +511,9 @@ class AdminSettings extends Component
             'theme_h3_font_family'        => trim($this->theme_h3_font_family),
             'theme_h3_font_size'          => trim($this->theme_h3_font_size),
             'theme_h3_font_color'         => trim($this->theme_h3_font_color),
+            'theme_link_color'            => trim($this->theme_link_color),
+            'theme_link_hover_color'      => trim($this->theme_link_hover_color),
+            'theme_link_active_color'     => trim($this->theme_link_active_color),
 
             // Site Theme Customization: Content Cards
             'theme_content_bg_color'      => trim($this->theme_content_bg_color),
@@ -461,10 +524,12 @@ class AdminSettings extends Component
 
             'frontend_dark_mode' => $this->frontend_dark_mode  ? '1' : '0',
             'admin_dark_mode'    => $this->admin_dark_mode      ? '1' : '0',
-            'theme_primary_color' => $this->theme_primary_color,
-            'theme_hover_color'   => $this->theme_hover_color,
-            'theme_text_color'    => $this->theme_text_color,
-            'theme_border_radius' => $this->theme_border_radius,
+            'theme_primary_color'            => trim($this->theme_primary_color),
+            'theme_hover_color'              => trim($this->theme_hover_color),
+            'theme_text_color'               => trim($this->theme_text_color),
+            'theme_primary_border_color'     => trim($this->theme_primary_border_color),
+            'theme_primary_hover_text_color' => trim($this->theme_primary_hover_text_color),
+            'theme_border_radius'            => $this->theme_border_radius,
             'theme_secondary_bg_color'         => $this->theme_secondary_bg_color,
             'theme_secondary_text_color'       => $this->theme_secondary_text_color,
             'theme_secondary_border_color'     => $this->theme_secondary_border_color,
@@ -639,6 +704,31 @@ class AdminSettings extends Component
         $this->logo_svg_html = '';
         Cache::forget('cms_settings_all');
         $this->dispatch('toast', message: 'Logo cleared — default icon will be shown.', type: 'success');
+    }
+
+    public function clearFavicon(): void
+    {
+        CmsSetting::setMany([
+            'favicon_type' => '',
+            'favicon_path' => '',
+            'favicon_cdn_url' => '',
+            'favicon_svg_html' => '',
+            'favicon_s3_bucket' => '',
+            'favicon_s3_key' => '',
+            'favicon_s3_secret' => '',
+            'favicon_s3_region' => 'us-east-1',
+        ]);
+        $this->favicon_type = '';
+        $this->favicon_path = '';
+        $this->favicon_cdn_url = '';
+        $this->favicon_svg_html = '';
+        $this->favicon_s3_bucket = '';
+        $this->favicon_s3_key = '';
+        $this->favicon_s3_secret = '';
+        $this->favicon_s3_region = 'us-east-1';
+        $this->favicon_upload = null;
+        Cache::forget('cms_settings_all');
+        $this->dispatch('toast', message: 'Favicon cleared — default favicon.ico will be used.', type: 'success');
     }
 
     public function clearBgImage(): void
