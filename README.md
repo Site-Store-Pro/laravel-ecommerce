@@ -1,6 +1,6 @@
 # Platform README
 
-> **Full documentation:** [`help-doc.md`](./help-doc.md)
+> **Full documentation:** [`Di Sute`](https://docs.sitestorepro.com)
 
 ---
 
