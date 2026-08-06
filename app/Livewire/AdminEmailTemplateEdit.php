@@ -148,7 +148,7 @@ class AdminEmailTemplateEdit extends Component
             session()->flash('status', 'Email template created successfully.');
         }
 
-        return redirect()->route('admin.email-templates.index', navigate: true);
+        return redirect()->route('admin.email-templates.index');
     }
 
     public function setEditingLanguage(?int $languageId): void

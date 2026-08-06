@@ -73,7 +73,7 @@
                         <a href="{{ route('admin.discounts.config') }}" wire:navigate class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition duration-150">
                             Configure Store
                         </a>
-                        <a href="{{ route('admin.discounts.create') }}" wire:navigate class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-150 transition duration-150">
+                        <a href="{{ route('admin.discounts.create') }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-150 transition duration-150">
                             (+) Add Discount
                         </a>
                     </div>
@@ -120,7 +120,7 @@
                                 @forelse($discounts as $disc)
                                     <tr class="hover:bg-slate-50/50 transition">
                                         <td class="px-6 py-4 font-bold text-slate-900">
-                                            <a href="{{ route('admin.discounts.edit', $disc->id) }}" wire:navigate class="hover:text-indigo-600">
+                                            <a href="{{ route('admin.discounts.edit', $disc->id) }}" class="hover:text-indigo-600">
                                                 {{ $disc->name }}
                                             </a>
                                         </td>
@@ -157,7 +157,7 @@
                                         </td>
                                         <td class="px-6 py-4 text-right">
                                             <div class="flex justify-end gap-1.5">
-                                                <a href="{{ route('admin.discounts.edit', $disc->id) }}" wire:navigate class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 transition-colors">
+                                                <a href="{{ route('admin.discounts.edit', $disc->id) }}" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 transition-colors">
                                                     Edit
                                                 </a>
                                                 <button wire:click="deleteDiscount({{ $disc->id }})" wire:confirm="Are you sure you want to delete this discount?" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-100 transition-colors">

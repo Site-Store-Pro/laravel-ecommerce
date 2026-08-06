@@ -6,7 +6,7 @@
             <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Manage dynamic custom email notifications sent from your online store.</p>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{{ route('admin.email-templates.create') }}" wire:navigate class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-md shadow-indigo-200 dark:shadow-none transition-all duration-150">
+            <a href="{{ route('admin.email-templates.create') }}" class="inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-md shadow-indigo-200 dark:shadow-none transition-all duration-150">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 New Email Template
             </a>
@@ -54,7 +54,7 @@
                         </div>
                     </div>
                     <div>
-                        <a href="{{ route('admin.email-templates.create', ['type_id' => $type->id]) }}" wire:navigate class="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
+                        <a href="{{ route('admin.email-templates.create', ['type_id' => $type->id]) }}" class="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Add Profile
                         </a>
@@ -99,7 +99,7 @@
                                     @endif
 
                                     <!-- Edit Link -->
-                                    <a href="{{ route('admin.email-templates.edit', $tpl->id) }}" wire:navigate class="inline-flex items-center justify-center p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Edit Template">
+                                    <a href="{{ route('admin.email-templates.edit', $tpl->id) }}" class="inline-flex items-center justify-center p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors" title="Edit Template">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </a>
 

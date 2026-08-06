@@ -39,14 +39,14 @@ new class extends Component
                 @endif
 
                 <!-- Navigation Links -->
-                <div class="hidden admin:flex flex-wrap items-center gap-x-2 gap-y-1 -my-px ms-2 admin:ms-6">
+                <div class="hidden admin:flex flex-wrap items-center gap-x-2 gap-y-1 -my-px ms-2 admin:ms-6 h-full">
                     @auth
                         @if(auth()->user()->isAdmin() || auth()->user()->isOrderProcessor())
-                            <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')" wire:navigate class="text-sm font-semibold transition-all inline-flex items-center justify-center p-2" title="Admin Dashboard" aria-label="Admin Dashboard">
-                                <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <a href="{{ route('admin.dashboard') }}" wire:navigate class="inline-flex items-center justify-center p-2 rounded-xl border-b-2 border-transparent text-slate-700 dark:text-sky-400 hover:text-slate-900 dark:hover:text-sky-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition duration-150 ease-in-out my-auto" title="Admin Dashboard" aria-label="Admin Dashboard">
+                                <svg class="w-5 h-5 {{ request()->routeIs('admin.dashboard') ? 'text-indigo-600 dark:text-sky-300' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                                 </svg>
-                            </x-nav-link>
+                            </a>
                         @endif
 
                         @if(auth()->user()->role_id === \App\Enums\UserRole::User)
@@ -76,38 +76,38 @@ new class extends Component
                                     || request()->routeIs('admin.ecommerce.inventory') 
                                     || request()->routeIs('admin.inventory-alerts.*');
                             @endphp
-                            <div class="inline-flex items-center relative z-20">
+                            <div class="inline-flex items-center relative z-20 h-full">
                                 <x-dropdown align="left" width="56">
                                     <x-slot name="trigger">
-                                        <button class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer h-full focus:outline-none {{ $productsActive ? 'border-indigo-500 text-slate-900 dark:text-slate-100 focus:border-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 focus:text-slate-700 focus:border-slate-300' }}">
+                                        <button class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer h-full focus:outline-none {{ $productsActive ? 'border-indigo-500 text-slate-900 dark:text-sky-300 dark:border-sky-400' : 'border-transparent text-slate-700 hover:text-slate-900 hover:border-slate-300 dark:text-sky-400 dark:hover:text-sky-300' }}">
                                             <span>{{ __('Products') }}</span>
-                                            <svg class="ms-1.5 h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <svg class="ms-1.5 h-4 w-4 text-slate-400 dark:text-sky-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                             </svg>
                                         </button>
                                     </x-slot>
 
                                     <x-slot name="content">
-                                        <div class="py-1 space-y-0.5">
-                                            <x-dropdown-link :href="route('admin.ecommerce.products')" wire:navigate class="!text-xs !font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
+                                        <div class="py-1 space-y-0.5 min-w-[200px]">
+                                            <x-dropdown-link :href="route('admin.ecommerce.products')" wire:navigate class="!text-xs !font-semibold whitespace-nowrap text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
                                                 {{ __('Products Manager') }}
                                             </x-dropdown-link>
-                                            <x-dropdown-link :href="route('admin.ecommerce.product-create')" wire:navigate class="!text-xs !font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
+                                            <x-dropdown-link :href="route('admin.ecommerce.product-create')" class="!text-xs !font-semibold whitespace-nowrap text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
                                                 {{ __('Add New Product') }}
                                             </x-dropdown-link>
-                                            <x-dropdown-link :href="route('admin.ecommerce.brands')" wire:navigate class="!text-xs !font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
+                                            <x-dropdown-link :href="route('admin.ecommerce.brands')" wire:navigate class="!text-xs !font-semibold whitespace-nowrap text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
                                                 {{ __('Brands Manager') }}
                                             </x-dropdown-link>
-                                            <x-dropdown-link :href="route('admin.ecommerce.categories')" wire:navigate class="!text-xs !font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
+                                            <x-dropdown-link :href="route('admin.ecommerce.categories')" wire:navigate class="!text-xs !font-semibold whitespace-nowrap text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
                                                 {{ __('Categories Manager') }}
                                             </x-dropdown-link>
-                                            <x-dropdown-link :href="route('admin.ecommerce.import')" wire:navigate class="!text-xs !font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
+                                            <x-dropdown-link :href="route('admin.ecommerce.import')" wire:navigate class="!text-xs !font-semibold whitespace-nowrap text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
                                                 {{ __('Import Products') }}
                                             </x-dropdown-link>
-                                            <x-dropdown-link :href="route('admin.ecommerce.inventory')" wire:navigate class="!text-xs !font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
+                                            <x-dropdown-link :href="route('admin.ecommerce.inventory')" wire:navigate class="!text-xs !font-semibold whitespace-nowrap text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
                                                 {{ __('Inventory Manager') }}
                                             </x-dropdown-link>
-                                            <x-dropdown-link :href="route('admin.inventory-alerts.index')" wire:navigate class="!text-xs !font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
+                                            <x-dropdown-link :href="route('admin.inventory-alerts.index')" wire:navigate class="!text-xs !font-semibold whitespace-nowrap text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-700/60 py-2 px-3.5 transition-colors">
                                                 {{ __('Out of Stock Messages') }}
                                             </x-dropdown-link>
                                         </div>
@@ -137,12 +137,12 @@ new class extends Component
                             </x-nav-link>
 
                             <!-- Checkout Dropdown -->
-                            <div class="inline-flex items-center relative z-20">
+                            <div class="inline-flex items-center relative z-20 h-full">
                                 <x-dropdown align="left" width="48">
                                     <x-slot name="trigger">
-                                        <button class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer h-full focus:outline-none {{ request()->routeIs('admin.ecommerce.shipping*') || request()->routeIs('admin.ecommerce.checkout.*') ? 'border-indigo-500 text-slate-900 dark:text-slate-100 focus:border-indigo-700' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 focus:text-slate-700 focus:border-slate-300' }}">
+                                        <button class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer h-full focus:outline-none {{ request()->routeIs('admin.ecommerce.shipping*') || request()->routeIs('admin.ecommerce.checkout.*') ? 'border-indigo-500 text-slate-900 dark:text-sky-300 dark:border-sky-400' : 'border-transparent text-slate-700 hover:text-slate-900 hover:border-slate-300 dark:text-sky-400 dark:hover:text-sky-300' }}">
                                             <span>{{ __('Checkout') }}</span>
-                                            <svg class="ms-1.5 h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <svg class="ms-1.5 h-4 w-4 text-slate-400 dark:text-sky-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                             </svg>
                                         </button>
@@ -157,7 +157,7 @@ new class extends Component
                                         </x-dropdown-link>
                                     </x-slot>
                                 </x-dropdown>
-            </div>
+                            </div>
 
                             <x-nav-link :href="route('admin.email-templates.index')" :active="request()->routeIs('admin.email-templates.*')" wire:navigate class="text-sm font-semibold transition-all">
                                 {{ __('Emails') }}
@@ -167,7 +167,7 @@ new class extends Component
                             @php
                                 $cmsActive = request()->routeIs('admin.cms-pages.*') || request()->routeIs('admin.cms-categories.*') || request()->routeIs('admin.cms-tags.*') || request()->routeIs('admin.cms-slideshows.*') || request()->routeIs('admin.cms-list-menus.*') || request()->routeIs('admin.cms-downloads.*') || request()->routeIs('admin.cms-embeds.*') || request()->routeIs('admin.cms-forms.*') || request()->routeIs('admin.kb.*') || request()->routeIs('admin.nav-builder.*') || request()->routeIs('admin.cms-header-footer.*') || request()->routeIs('admin.testimonials.*') || request()->routeIs('admin.faqs.*') || request()->routeIs('admin.modals.*') || request()->routeIs('admin.inventory-alerts.*') || request()->routeIs('admin.site-labels.*') || request()->routeIs('admin.languages.*');
                             @endphp
-                            <div class="inline-flex items-center relative z-30"
+                            <div class="inline-flex items-center relative z-30 h-full"
                                  x-data="{ open: false }"
                                  @mouseenter="open = true"
                                  @mouseleave="open = false"
@@ -175,9 +175,9 @@ new class extends Component
 
                                 {{-- Trigger button --}}
                                 <button @click="open = !open"
-                                        class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer h-full focus:outline-none {{ $cmsActive ? 'border-indigo-500 text-slate-900 dark:text-slate-100' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300' }}">
+                                        class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer h-full focus:outline-none {{ $cmsActive ? 'border-indigo-500 text-slate-900 dark:text-sky-300 dark:border-sky-400' : 'border-transparent text-slate-700 hover:text-slate-900 hover:border-slate-300 dark:text-sky-400 dark:hover:text-sky-300' }}">
                                     <span>{{ __('CMS') }}</span>
-                                    <svg class="ms-1.5 h-4 w-4 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': open }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg class="ms-1.5 h-4 w-4 text-slate-400 dark:text-sky-400 transition-transform duration-200" :class="{ 'rotate-180': open }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                     </svg>
                                 </button>
@@ -452,7 +452,7 @@ new class extends Component
                         @endif
 
                         @if (auth()->user()->isAdmin())
-                            <x-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings')" wire:navigate class="text-sm font-semibold transition-all">
+                            <x-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings')" class="text-sm font-semibold transition-all">
                                 {{ __('Settings') }}
                             </x-nav-link>
                         @endif   
@@ -677,7 +677,7 @@ new class extends Component
                 @endif
 
                 @if (auth()->user()->isAdmin())
-                    <x-responsive-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings')" wire:navigate>
+                    <x-responsive-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings')">
                         {{ __('Settings') }}
                     </x-responsive-nav-link>
                 @endif

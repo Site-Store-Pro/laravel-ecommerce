@@ -71,7 +71,7 @@
                         </h1>
                         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage, search, edit, and organize all catalog products.</p>
                     </div>
-                    <a href="{{ route('admin.ecommerce.product-create') }}" wire:navigate
+                    <a href="{{ route('admin.ecommerce.product-create') }}"
                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-2xl shadow-md shadow-indigo-100 transition shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
