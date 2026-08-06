@@ -57,7 +57,7 @@
             <div class="lg:col-span-9 space-y-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Categories Management</h1>
+                        <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Categories Management</h1>
                         <p class="text-slate-500 text-sm mt-1">Organize products into recursive nested catalog collections.</p>
                     </div>
                     <button wire:click="startCreate" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-md flex items-center gap-2 transition duration-150">

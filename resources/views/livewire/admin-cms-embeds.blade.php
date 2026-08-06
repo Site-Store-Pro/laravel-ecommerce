@@ -4,7 +4,7 @@
         {{-- Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-2xl font-extrabold text-slate-900">Code &amp; Video Embeds</h1>
+                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Code &amp; Video Embeds</h1>
                 <p class="text-sm text-slate-500 mt-0.5">
                     Reusable HTML &amp; video embed snippets inserted into pages via shortcode —
                     never edited by TinyMCE.

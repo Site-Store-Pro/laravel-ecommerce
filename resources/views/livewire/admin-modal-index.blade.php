@@ -4,7 +4,7 @@
         {{-- Header --}}
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
             <div>
-                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">
+                <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">
                     Modal Manager
                 </h1>
                 <p class="text-sm text-slate-500 mt-1">Manage popup and slide-in modal windows embedded via <code class="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono">[plugin:modal id=N]</code> shortcode.</p>

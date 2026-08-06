@@ -11,7 +11,7 @@
         <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+                <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
                     <span>{{ $language->flag_emoji }}</span>
                     {{ $language->name }}
                     <span class="text-lg font-normal text-slate-400">— Translation Dashboard</span>

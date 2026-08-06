@@ -4,7 +4,7 @@
     <!-- Page Header & Tab Navigation -->
     <div class="space-y-4 border-b border-slate-200 dark:border-slate-700 pb-6">
         <div>
-            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 bg-gradient-to-r from-slate-900 to-indigo-950 dark:from-slate-100 dark:to-indigo-200 bg-clip-text text-transparent">
+            <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 bg-gradient-to-r from-slate-900 to-indigo-950 dark:from-slate-100 dark:to-indigo-200 bg-clip-text text-transparent">
                 Analytics &amp; Standalone Reports
             </h1>
             <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">

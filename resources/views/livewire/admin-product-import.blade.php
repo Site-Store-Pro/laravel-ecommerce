@@ -71,7 +71,7 @@
                                 </svg>
                             </span>
                             <div>
-                                <h1 class="text-xl font-extrabold text-slate-800 dark:text-slate-100">Product Bulk Import System</h1>
+                                <h1 class="text-2xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">Product Bulk Import System</h1>
                                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Import products and variants from CSV (`.csv`) or Excel (`.xlsx`, `.xls`) files.</p>
                             </div>
                         </div>

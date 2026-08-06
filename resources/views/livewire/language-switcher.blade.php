@@ -5,7 +5,7 @@
     {{-- Trigger button --}}
     <button @click="open = !open"
             type="button"
-            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors focus:outline-none"
+            class="flex items-center gap-1.5 px-1.5 sm:px-2.5 py-1 sm:py-1.5 max-[500px]:px-1 max-[500px]:py-1 max-[500px]:gap-0.5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors focus:outline-none"
             aria-label="Switch language">
         <span class="fi fi-{{ strtolower($current->flag_emoji) }} rounded-sm text-base" style="width:1.25em;height:0.95em;"></span>
         <span class="hidden sm:inline text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">{{ $current->code }}</span>

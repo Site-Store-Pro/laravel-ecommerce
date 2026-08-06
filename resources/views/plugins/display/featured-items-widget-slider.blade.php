@@ -64,10 +64,11 @@
                 background: #fee2e2; color: #dc2626;
                 border: 1px solid #fecaca;
             }
-            #{{ $instanceId }}_outer .fi-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+            #{{ $instanceId }}_outer .fi-body { padding: 10px 16px 16px 16px; flex: 1; display: flex; flex-direction: column; }
             #{{ $instanceId }}_outer .fi-title {
                 font-size: 13px; font-weight: 700;
                 color: #0f172a; line-height: 1.4;
+                text-decoration: none !important;
                 display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
                 transition: color 0.2s;
             }
@@ -192,7 +193,7 @@
                                     <a href="{{ route('shop.brand', $product->brand->slug) }}" style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#4f46e5;margin-bottom:4px;display:block;text-decoration:none;">{{ $product->brand->name }}</a>
                                 @endif
                                 <h3 style="margin:0;padding:0;">
-                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-title" style="text-decoration:none;">
+                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-title !no-underline" style="text-decoration:none !important;">
                                         {{ $product->title }}
                                     </a>
                                 </h3>

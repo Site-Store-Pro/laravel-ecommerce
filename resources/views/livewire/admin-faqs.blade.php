@@ -4,7 +4,7 @@
         {{-- Page Header --}}
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
             <div>
-                <h1 class="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 to-indigo-900 dark:from-white dark:to-indigo-300 bg-clip-text text-transparent">
+                <h1 class="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 to-indigo-900 dark:from-white dark:to-indigo-300 bg-clip-text text-transparent">
                     FAQ Manager
                 </h1>
                 <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">

@@ -8,7 +8,7 @@
         {{-- Header --}}
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
             <div>
-                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-teal-900 bg-clip-text text-transparent">
+                <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-teal-900 bg-clip-text text-transparent">
                     CMS Downloads
                 </h1>
                 <p class="mt-2 text-sm text-slate-500">

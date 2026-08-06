@@ -3,7 +3,7 @@
     {{-- Header --}}
     <div class="flex items-center justify-between mb-8">
         <div>
-            <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Navigation Builder</h1>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Navigation Builder</h1>
             <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Build and manage dynamic site navigation menus.</p>
         </div>
         <button wire:click="$set('showCreateForm', true)"

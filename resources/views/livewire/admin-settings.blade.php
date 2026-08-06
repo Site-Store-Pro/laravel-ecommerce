@@ -17,7 +17,7 @@
         $el.addEventListener('input', () => { hasUnsavedChanges = true; });
     "
     @settings-saved.window="hasUnsavedChanges = false"
-    class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10"
+    class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10"
 >
     <x-toast-alert />
 
@@ -220,7 +220,7 @@
 
     {{-- Page Header --}}
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Global Settings</h1>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Global Settings</h1>
         <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage global site identity, theme customization, full-page background media, typography, appearance, and integrations.</p>
     </div>
 

@@ -23,7 +23,7 @@
                     </svg>
                     Back to Modals
                 </a>
-                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">
+                <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">
                     {{ $modalId ? 'Edit Modal' : 'Create Modal' }}
                 </h1>
             </div>

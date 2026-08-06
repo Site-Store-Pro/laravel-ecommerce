@@ -67,7 +67,7 @@
                         <a href="{{ route('admin.ecommerce.products') }}" wire:navigate class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline mb-2">
                             &larr; Back to Products Manager
                         </a>
-                        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 bg-gradient-to-r from-slate-900 to-indigo-950 dark:from-slate-100 dark:to-indigo-200 bg-clip-text text-transparent">
+                        <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 bg-gradient-to-r from-slate-900 to-indigo-950 dark:from-slate-100 dark:to-indigo-200 bg-clip-text text-transparent">
                             Add New Product
                         </h1>
                         <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Create a new product entry. Afterwards, you will be redirected to configure pricing and variants.</p>

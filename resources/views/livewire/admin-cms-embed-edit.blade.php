@@ -10,7 +10,7 @@
                 </svg>
             </a>
             <div>
-                <h1 class="text-2xl font-extrabold text-slate-900">
+                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
                     {{ $embedId ? 'Edit Code Embed' : 'New Code Embed' }}
                 </h1>
                 <p class="text-sm text-slate-500 mt-0.5">

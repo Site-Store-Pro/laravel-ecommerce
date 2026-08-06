@@ -5,7 +5,7 @@
         <div class="flex items-center gap-4">
            
             <div>
-                <h1 class="text-2xl font-extrabold text-slate-900">Processors &amp; Payments</h1>
+                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Processors &amp; Payments</h1>
                 <p class="text-sm text-slate-500 mt-0.5">Configure active payment processors, checkout minimums, and manage the payment gateway list.</p>
             </div>
         </div>

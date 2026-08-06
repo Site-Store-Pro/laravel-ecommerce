@@ -2,7 +2,7 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                 {{ $templateId ? 'Edit Email Template' : 'New Email Template' }}
             </h1>
             <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">

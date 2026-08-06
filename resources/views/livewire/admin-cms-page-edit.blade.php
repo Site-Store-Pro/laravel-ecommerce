@@ -41,7 +41,7 @@
                     </svg>
                     Back to Pages
                 </a>
-                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">
+                <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">
                     {{ $pageId ? 'Edit CMS Page' : 'Create Custom Page' }}
                 </h1>
             </div>
@@ -1271,7 +1271,7 @@ rightCol: @entangle('right_col'),
                             @endif
 
                             <div class="w-full lg:flex-1 bg-white p-8 rounded-2xl border border-slate-200/60 shadow-sm">
-                                <h1 class="text-3xl font-extrabold mb-4">{{ $previewingRevision->title }}</h1>
+                                <h1 class="text-2xl font-extrabold mb-4 tracking-tight">{{ $previewingRevision->title }}</h1>
                                 {!! $previewingRevision->content !!}
                             </div>
 

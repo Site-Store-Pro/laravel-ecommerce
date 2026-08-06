@@ -13,7 +13,7 @@
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
         </a>
         <div>
-            <h1 class="text-xl font-bold text-slate-900 dark:text-slate-100">{{ $menu->name }}</h1>
+            <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">{{ $menu->name }}</h1>
             <p class="text-xs text-slate-400 dark:text-slate-500">slug: <code class="font-mono">{{ $menu->slug }}</code></p>
         </div>
         @if($menu->is_primary)

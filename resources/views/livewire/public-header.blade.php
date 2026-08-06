@@ -313,9 +313,9 @@
                                 @endif
 
                                 {{-- Features Bar / Icons & Mobile Hamburger Toggle --}}
-                                <div id="header_features_bar" class="flex items-center gap-2 sm:gap-3 shrink-0 self-center ml-auto min-w-[140px] justify-end">
+                                <div id="header_features_bar" class="flex items-center gap-1 sm:gap-3 max-[500px]:gap-0.5 shrink-0 self-center ml-auto min-w-[100px] sm:min-w-[140px] justify-end">
                                     @if($featuresPlacement === 'main_header' && (!isset($parsedBlocks['header_features']) || $parsedBlocks['header_features']['block']->isActiveForDevice($deviceView)))
-                                        <div id="header_features_icons" class="flex items-center gap-2 sm:gap-3">
+                                        <div id="header_features_icons" class="flex items-center gap-1 sm:gap-3 max-[500px]:gap-0.5">
                                             @livewire('language-switcher')
                                             @php $showDarkModeSwitcher = \App\Models\CmsSetting::isEnabled('show_frontend_dark_mode_switcher'); @endphp
                                             @if($showDarkModeSwitcher)
@@ -327,7 +327,7 @@
                                                             document.documentElement.classList.toggle('dark', isDark);
                                                             $wire.toggleFrontendDarkMode();
                                                         "
-                                                        class="p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none flex items-center justify-center"
+                                                        class="p-1 sm:p-2 max-[500px]:p-1 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none flex items-center justify-center"
                                                         :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
                                                         aria-label="Toggle dark mode"
                                                     >
@@ -340,7 +340,7 @@
                                                     </button>
                                                 </div>
                                             @endif
-                                            <button type="button" wire:click.prevent="$dispatch('open-cart')" @click="$dispatch('open-cart')" class="relative p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none" aria-label="Shopping Cart">
+                                            <button type="button" wire:click.prevent="$dispatch('open-cart')" @click="$dispatch('open-cart')" class="relative p-1 sm:p-2 max-[500px]:p-1 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none" aria-label="Shopping Cart">
                                                 {!! !empty($cssVars['custom_cart_icon_svg']) ? $cssVars['custom_cart_icon_svg'] : '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>' !!}
                                                 @if($cartCount > 0)
                                                     <span class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
@@ -350,7 +350,7 @@
                                             </button>
 
                                                 <a href="{{ auth()->check() ? route('dashboard') : route('login') }}"
-                                               class="p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                               class="p-1 sm:p-2 max-[500px]:p-1 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                                title="{{ auth()->check() ? auth()->user()->name : siteLabel('nav.sign_in', 'Sign In') }}"
                                                aria-label="{{ auth()->check() ? auth()->user()->name : siteLabel('nav.sign_in', 'Sign In') }}">
                                                 {!! !empty($cssVars['custom_account_icon_svg']) ? $cssVars['custom_account_icon_svg'] : '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>' !!}
