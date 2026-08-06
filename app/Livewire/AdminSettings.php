@@ -44,6 +44,8 @@ class AdminSettings extends Component
     // Appearance
     public bool $frontend_dark_mode = false;
     public bool $admin_dark_mode = false;
+    public bool $show_frontend_dark_mode_switcher = false;
+    public bool $show_admin_dark_mode_switcher = true;
     public string $theme_primary_color = '';
     public string $theme_hover_color = '';
     public string $theme_text_color = '';
@@ -176,6 +178,21 @@ class AdminSettings extends Component
     public string $product_image_orientation = '16:9'; // 16:9 | 1:1
     public bool   $disable_shop_landing = false;
     public bool   $enable_advanced_shop_search = false;
+    public bool   $enable_abandoned_cart_reminder_1 = true;
+    public bool   $enable_abandoned_cart_reminder_2 = true;
+
+    // Breadcrumbs & Shop Customization
+    public bool   $show_product_details_breadcrumbs = true;
+    public bool   $show_shop_breadcrumbs = true;
+    public bool   $shop_disable_default_product_listing = false;
+    public bool   $shop_hide_filters_until_applied = false;
+    public string $shop_header_custom_html = '';
+
+    // Admin Area Button Colours — isolated from frontend theme
+    public ?string $admin_btn_primary_bg       = '#4f46e5';
+    public ?string $admin_btn_primary_text      = '#ffffff';
+    public ?string $admin_btn_primary_hover_bg  = '#4338ca';
+    public ?string $admin_btn_primary_border    = '#4f46e5';
 
     public function mount(): void
     {
@@ -203,8 +220,10 @@ class AdminSettings extends Component
         $this->favicon_s3_region= $settings['favicon_s3_region'] ?? 'us-east-1';
 
         // Appearance
-        $this->frontend_dark_mode          = (bool) ($settings['frontend_dark_mode'] ?? false);
-        $this->admin_dark_mode             = (bool) ($settings['admin_dark_mode'] ?? false);
+        $this->frontend_dark_mode                  = (bool) ($settings['frontend_dark_mode'] ?? false);
+        $this->admin_dark_mode                     = (bool) ($settings['admin_dark_mode'] ?? false);
+        $this->show_frontend_dark_mode_switcher    = (bool) ($settings['show_frontend_dark_mode_switcher'] ?? false);
+        $this->show_admin_dark_mode_switcher       = (bool) ($settings['show_admin_dark_mode_switcher'] ?? true);
         $this->theme_primary_color         = $settings['theme_primary_color'] ?? '';
         $this->theme_hover_color           = $settings['theme_hover_color'] ?? '';
         $this->theme_text_color            = $settings['theme_text_color'] ?? '';
@@ -269,9 +288,22 @@ class AdminSettings extends Component
         $this->file_icon_pack = $settings['file_icon_pack'] ?? 'vivid';
 
         // Shop Display
-        $this->product_image_orientation    = $settings['product_image_orientation'] ?? '16:9';
-        $this->disable_shop_landing         = (bool) ($settings['disable_shop_landing'] ?? false);
-        $this->enable_advanced_shop_search  = (bool) ($settings['enable_advanced_shop_search'] ?? false);
+        $this->product_image_orientation            = $settings['product_image_orientation'] ?? '16:9';
+        $this->disable_shop_landing                 = (bool) ($settings['disable_shop_landing'] ?? false);
+        $this->enable_advanced_shop_search          = (bool) ($settings['enable_advanced_shop_search'] ?? false);
+        $this->enable_abandoned_cart_reminder_1     = (bool) ($settings['enable_abandoned_cart_reminder_1'] ?? true);
+        $this->enable_abandoned_cart_reminder_2     = (bool) ($settings['enable_abandoned_cart_reminder_2'] ?? true);
+        $this->show_product_details_breadcrumbs      = (bool) ($settings['show_product_details_breadcrumbs'] ?? true);
+        $this->show_shop_breadcrumbs                 = (bool) ($settings['show_shop_breadcrumbs'] ?? true);
+        $this->shop_disable_default_product_listing  = (bool) ($settings['shop_disable_default_product_listing'] ?? false);
+        $this->shop_hide_filters_until_applied       = (bool) ($settings['shop_hide_filters_until_applied'] ?? false);
+        $this->shop_header_custom_html               = (string) ($settings['shop_header_custom_html'] ?? '');
+
+        // Admin area button colours
+        $this->admin_btn_primary_bg      = $settings['admin_btn_primary_bg']      ?? '#4f46e5';
+        $this->admin_btn_primary_text    = $settings['admin_btn_primary_text']    ?? '#ffffff';
+        $this->admin_btn_primary_hover_bg= $settings['admin_btn_primary_hover_bg']?? '#4338ca';
+        $this->admin_btn_primary_border  = $settings['admin_btn_primary_border']  ?? '#4f46e5';
 
         // Site Theme Customization
         $this->page_bg_mode                = $settings['page_bg_mode'] ?? 'default';
@@ -425,6 +457,14 @@ class AdminSettings extends Component
             'product_image_orientation' => 'required|string|in:16:9,1:1',
             'disable_shop_landing' => 'boolean',
             'enable_advanced_shop_search' => 'boolean',
+            'enable_abandoned_cart_reminder_1' => 'boolean',
+            'enable_abandoned_cart_reminder_2' => 'boolean',
+            'show_frontend_dark_mode_switcher' => 'boolean',
+            'show_admin_dark_mode_switcher'    => 'boolean',
+            'admin_btn_primary_bg'       => 'nullable|string|max:100',
+            'admin_btn_primary_text'     => 'nullable|string|max:100',
+            'admin_btn_primary_hover_bg' => 'nullable|string|max:100',
+            'admin_btn_primary_border'   => 'nullable|string|max:100',
         ]);
 
         // Handle logo file upload (local, s3, custom_s3)
@@ -522,8 +562,10 @@ class AdminSettings extends Component
             'theme_card_shadow'           => trim($this->theme_card_shadow),
             'top_nav_sticky'              => $this->top_nav_sticky ? '1' : '0',
 
-            'frontend_dark_mode' => $this->frontend_dark_mode  ? '1' : '0',
-            'admin_dark_mode'    => $this->admin_dark_mode      ? '1' : '0',
+            'frontend_dark_mode'               => $this->frontend_dark_mode               ? '1' : '0',
+            'admin_dark_mode'                  => $this->admin_dark_mode                  ? '1' : '0',
+            'show_frontend_dark_mode_switcher' => $this->show_frontend_dark_mode_switcher ? '1' : '0',
+            'show_admin_dark_mode_switcher'    => $this->show_admin_dark_mode_switcher    ? '1' : '0',
             'theme_primary_color'            => trim($this->theme_primary_color),
             'theme_hover_color'              => trim($this->theme_hover_color),
             'theme_text_color'               => trim($this->theme_text_color),
@@ -575,6 +617,18 @@ class AdminSettings extends Component
             'product_image_orientation' => $this->product_image_orientation,
             'disable_shop_landing'      => $this->disable_shop_landing ? '1' : '0',
             'enable_advanced_shop_search' => $this->enable_advanced_shop_search ? '1' : '0',
+            'enable_abandoned_cart_reminder_1' => $this->enable_abandoned_cart_reminder_1 ? '1' : '0',
+            'enable_abandoned_cart_reminder_2' => $this->enable_abandoned_cart_reminder_2 ? '1' : '0',
+            'show_product_details_breadcrumbs'     => $this->show_product_details_breadcrumbs ? '1' : '0',
+            'show_shop_breadcrumbs'                => $this->show_shop_breadcrumbs ? '1' : '0',
+            'shop_disable_default_product_listing'  => $this->shop_disable_default_product_listing ? '1' : '0',
+            'shop_hide_filters_until_applied'      => $this->shop_hide_filters_until_applied ? '1' : '0',
+            'shop_header_custom_html'              => $this->shop_header_custom_html ?? '',
+            // Admin area button colours
+            'admin_btn_primary_bg'       => trim($this->admin_btn_primary_bg)      ?: '#4f46e5',
+            'admin_btn_primary_text'     => trim($this->admin_btn_primary_text)    ?: '#ffffff',
+            'admin_btn_primary_hover_bg' => trim($this->admin_btn_primary_hover_bg)?: '#4338ca',
+            'admin_btn_primary_border'   => trim($this->admin_btn_primary_border)  ?: '#4f46e5',
         ]);
 
         \App\Services\HeaderFooterCssManager::clearCompiledCssCache();
@@ -589,6 +643,7 @@ class AdminSettings extends Component
         }
 
         $this->dispatch('toast', message: 'Settings saved successfully.', type: 'success');
+        $this->dispatch('settings-saved');
     }
 
     /**
@@ -791,10 +846,14 @@ class AdminSettings extends Component
         $this->dispatch('toast', message: 'Page background video settings cleared and reset to default.', type: 'success');
     }
 
+    public string $shortcodeSearchScope = 'all';
+    public string $shortcodeSearchQuery = '';
+
     public function render()
     {
         return view('livewire.admin-settings', [
             'timezoneGroups' => TimezoneHelper::grouped(),
+            'displayPlugins' => \App\Models\Plugin::where('type', 'display')->get(),
         ])->layout('layouts.app');
     }
 }

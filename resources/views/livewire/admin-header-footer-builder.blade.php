@@ -693,25 +693,43 @@
                         </div>
 
                         {{-- Bottom Copyright Bar --}}
-                        @php $bCopy = $footerBlocks->firstWhere('target_element', 'copyright_container'); @endphp
-                        <div class="rounded-xl border-2 border-dashed {{ $bCopy && $bCopy->isActiveForDevice($deviceView) ? 'border-indigo-500 bg-slate-800' : 'border-slate-700 bg-slate-800/30' }} p-3">
-                            <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">Copyright &amp; Bottom Links Bar (copyright_container)</div>
-                            @if($bCopy && $bCopy->isActiveForDevice($deviceView))
-                                <div class="flex items-center justify-between gap-3 p-2 bg-slate-900 rounded border border-slate-700">
-                                    <span class="text-xs text-slate-300 font-semibold truncate">{{ $bCopy->title }}</span>
-                                    <div class="flex items-center gap-1 shrink-0">
-                                        <button wire:click="editBlock({{ $bCopy->id }})" class="px-2 py-1 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition flex items-center gap-1" title="Edit Block">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        @php
+                            $bCopy = $footerBlocks->firstWhere('target_element', 'copyright_container')
+                                ?? $footerBlocks->firstWhere('target_element', 'footer_row4');
+                        @endphp
+                        <div class="rounded-xl border-2 border-dashed {{ $bCopy && $bCopy->isActiveForDevice($deviceView) ? 'border-indigo-500 bg-slate-800' : 'border-amber-500/70 bg-slate-800/60' }} p-3">
+                            <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+                                <span>Copyright &amp; Bottom Links Bar (copyright_container / footer_row4)</span>
+                                @if($bCopy && $bCopy->isActiveForDevice($deviceView))
+                                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold">Active on {{ ucfirst($deviceView) }}</span>
+                                @else
+                                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-extrabold">Custom Bar Disabled (Using Site Default)</span>
+                                @endif
+                            </div>
+
+                            @if($bCopy)
+                                <div class="flex items-center justify-between gap-3 p-3 bg-slate-900 rounded-lg border border-slate-700">
+                                    <div>
+                                        <span class="text-xs text-slate-200 font-bold block">{{ $bCopy->title }}</span>
+                                        <span class="text-2xs font-mono text-slate-400 block mt-0.5">{{ $bCopy->target_element }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <button wire:click="editBlock({{ $bCopy->id }})" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center gap-1" title="Edit Copyright Content">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                             <span>Edit</span>
                                         </button>
-                                        <button wire:click="toggleActive({{ $bCopy->id }})" class="px-2 py-1 rounded-lg bg-rose-500 text-white text-xs font-medium hover:bg-rose-600 transition flex items-center gap-1" title="Remove">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            <span>Remove</span>
+                                        <button wire:click="toggleActive({{ $bCopy->id }})" class="px-3 py-1.5 rounded-lg {{ $bCopy->isActiveForDevice($deviceView) ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white' }} text-xs font-bold transition flex items-center gap-1">
+                                            <span>{{ $bCopy->isActiveForDevice($deviceView) ? 'Deactivate' : 'Activate' }}</span>
                                         </button>
                                     </div>
                                 </div>
                             @else
-                                <div class="text-xs text-slate-500 text-center py-2">Copyright Bar (Inactive)</div>
+                                <div class="flex items-center justify-between gap-3 p-3 bg-slate-900 rounded-lg border border-slate-700">
+                                    <span class="text-xs text-slate-400 font-medium">Standard site copyright active. Click to enable custom editor block:</span>
+                                    <button wire:click="enableCopyrightBlock" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">
+                                        + Enable &amp; Edit Copyright Bar
+                                    </button>
+                                </div>
                             @endif
                         </div>
                     </div>

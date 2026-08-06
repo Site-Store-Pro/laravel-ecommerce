@@ -1,5 +1,108 @@
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+<div
+    x-data="{
+        scrolled: false,
+        hasUnsavedChanges: false,
+        showWidgetLibrary: false,
+        showPluginsPanel: false,
+        showLinkGenerator: false,
+        showShortcodeGenerator: false,
+        checkScroll() {
+            this.scrolled = window.scrollY >= 200;
+        }
+    }"
+    x-init="
+        checkScroll();
+        window.addEventListener('scroll', () => checkScroll(), { passive: true });
+        $el.addEventListener('change', () => { hasUnsavedChanges = true; });
+        $el.addEventListener('input', () => { hasUnsavedChanges = true; });
+    "
+    @settings-saved.window="hasUnsavedChanges = false"
+    class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10"
+>
     <x-toast-alert />
+
+    {{-- ── FLOATING SAVE BUTTON (FIXED RIGHT SIDE, 200px SCROLLED DOWN) ────────── --}}
+    <div
+        x-show="scrolled"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-x-12 scale-90"
+        x-transition:enter-end="opacity-100 translate-x-0 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-x-0 scale-100"
+        x-transition:leave-end="opacity-0 translate-x-12 scale-90"
+        class="fixed top-36 right-6 sm:right-8 z-40 flex flex-col items-end gap-2 pointer-events-auto"
+        style="display: none;"
+    >
+        <button
+            type="button"
+            wire:click="save"
+            wire:loading.attr="disabled"
+            wire:target="save"
+            class="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 px-5 py-3 text-sm font-bold text-white shadow-xl shadow-indigo-500/30 hover:shadow-2xl hover:shadow-indigo-500/45 hover:scale-105 active:scale-95 transition-all duration-200 border border-white/20 backdrop-blur-sm cursor-pointer group"
+            title="Save Settings"
+        >
+            <svg wire:loading.remove wire:target="save" class="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            <svg wire:loading wire:target="save" class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            <span wire:loading.remove wire:target="save">Save Settings</span>
+            <span wire:loading wire:target="save">Saving…</span>
+
+            {{-- Dot indicator for unsaved changes --}}
+            <span x-show="hasUnsavedChanges" class="relative flex h-2.5 w-2.5 ml-0.5" style="display: none;">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+            </span>
+        </button>
+    </div>
+
+    {{-- ── UNSAVED SETTINGS ALERT BANNER ───────────────────────────────────────── --}}
+    <div
+        x-show="hasUnsavedChanges"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 -translate-y-4 scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 -translate-y-4 scale-95"
+        class="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/80 border-2 border-amber-300 dark:border-amber-700/80 shadow-lg shadow-amber-500/10 flex items-center justify-between gap-4"
+        style="display: none;"
+    >
+        <div class="flex items-center gap-3">
+            <div class="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 shrink-0">
+                <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <div>
+                <h4 class="text-sm font-bold text-amber-900 dark:text-amber-200">Unsaved Setting Changes</h4>
+                <p class="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                    You have toggled or modified settings on this page. Please click <strong>Save Settings</strong> for your changes to take effect.
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+            <button
+                type="button"
+                wire:click="save"
+                wire:loading.attr="disabled"
+                wire:target="save"
+                class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+            >
+                <svg wire:loading.remove wire:target="save" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <svg wire:loading wire:target="save" class="animate-spin w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                Save Settings
+            </button>
+        </div>
+    </div>
 
     {{-- ── DEMO STORE CONTENT BANNER ─────────────────────────────────────────────── --}}
     {{-- Only visible when the database contains is_demo=1 records (DemoStoreSeeder was run) --}}
@@ -126,7 +229,7 @@
         <div class="text-3xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2.5 px-1">
             Quick Section Navigation
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
             <a href="#site-identity" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-600/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-1.5 text-center">
                 <svg class="w-3.5 h-3.5 text-violet-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span>Site Identity</span>
@@ -150,6 +253,10 @@
             <a href="#general-settings" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-600/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-1.5 text-center">
                 <svg class="w-3.5 h-3.5 text-sky-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.572c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 <span>General Settings</span>
+            </a>
+            <a href="#shop-settings" class="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-600/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all flex items-center justify-center gap-1.5 text-center">
+                <svg class="w-3.5 h-3.5 text-violet-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                <span>Shop Settings</span>
             </a>
         </div>
     </div>
@@ -971,6 +1078,40 @@
                     @error('admin_dark_mode') <span class="text-xs text-red-500 mt-1 block">{{ $message }}</span> @enderror
                 </div>
 
+                {{-- Front-End Dark Mode Switcher --}}
+                <div class="flex items-center justify-between px-6 py-5">
+                    <div>
+                        <p class="text-sm font-medium text-slate-800 dark:text-slate-100">Front-End Dark Mode Switcher</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Show a sun/moon icon toggle button in the public navigation cart area so visitors can switch between light and dark mode themselves.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-6">
+                        <input
+                            type="checkbox"
+                            wire:model="show_frontend_dark_mode_switcher"
+                            id="toggle-show-frontend-switcher"
+                            class="sr-only peer"
+                        >
+                        <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                {{-- Admin Dark Mode Switcher --}}
+                <div class="flex items-center justify-between px-6 py-5">
+                    <div>
+                        <p class="text-sm font-medium text-slate-800 dark:text-slate-100">Admin Dark Mode Switcher</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Show a sun/moon icon toggle button in the admin navigation header so admins can instantly switch the panel between light and dark mode.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-6">
+                        <input
+                            type="checkbox"
+                            wire:model="show_admin_dark_mode_switcher"
+                            id="toggle-show-admin-switcher"
+                            class="sr-only peer"
+                        >
+                        <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
                 {{-- Button Color Picker & Border Radius Theme Customizer --}}
                 <div class="px-6 py-6 space-y-4">
                     <div class="flex items-center justify-between">
@@ -1186,6 +1327,71 @@
                                     <input type="text" wire:model.live="backtop_icon_color"
                                            placeholder="#ffffff"
                                            class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Admin Area Button Styling Manager --}}
+                    <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Admin Area Button Styling Manager</p>
+                                <p class="text-xs text-slate-400">Configure the primary action buttons used inside the admin panel (Save, Update, Add, etc.). These colours are <strong class="text-slate-500">completely isolated</strong> from the front-end button theme — changing the storefront button colour will never affect admin buttons.</p>
+                            </div>
+                            <button type="button"
+                                    class="shrink-0 text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition-all"
+                                    style="background-color: {{ $admin_btn_primary_bg ?? '#4f46e5' }}; color: {{ $admin_btn_primary_text ?? '#ffffff' }}; border: 1px solid {{ $admin_btn_primary_border ?? '#4f46e5' }};">
+                                Preview Admin Button
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            {{-- Admin Button Background --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Background Color</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="admin_btn_primary_bg"
+                                           class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="admin_btn_primary_bg"
+                                           placeholder="#4f46e5"
+                                           class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+
+                            {{-- Admin Button Text --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Text Color</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="admin_btn_primary_text"
+                                           class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="admin_btn_primary_text"
+                                           placeholder="#ffffff"
+                                           class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+
+                            {{-- Admin Button Hover Background --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Hover Background</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="admin_btn_primary_hover_bg"
+                                           class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="admin_btn_primary_hover_bg"
+                                           placeholder="#4338ca"
+                                           class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
+                                </div>
+                            </div>
+
+                            {{-- Admin Button Border --}}
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Border Color</label>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="color" wire:model.live="admin_btn_primary_border"
+                                           class="w-7 h-7 shrink-0 border border-slate-200 rounded-lg cursor-pointer bg-transparent p-0">
+                                    <input type="text" wire:model.live="admin_btn_primary_border"
+                                           placeholder="#4f46e5"
+                                           class="min-w-0 flex-1 px-2.5 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-800 dark:text-slate-100 text-xs font-mono uppercase focus:outline-none">
                                 </div>
                             </div>
                         </div>
@@ -1719,8 +1925,52 @@
             </div>
         </div>
 
+        {{-- Product Breadcrumbs --}}
+        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </span>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Product Breadcrumbs</h3>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Control visibility of category breadcrumb navigation paths on product detail and shop catalog pages.</p>
+                </div>
+            </div>
+            <div class="p-6 space-y-5">
+                {{-- Product Details Page Breadcrumbs Toggle --}}
+                <div class="flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Show Breadcrumbs on Product Details Page</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, displays full ancestor category hierarchy trail (e.g. <code class="px-1 py-0.5 bg-slate-100 dark:bg-slate-700 rounded font-mono text-[11px]">Shop &gt; Category &gt; Sub-Category &gt; Product Title</code>) on the product details page.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="show_product_details_breadcrumbs" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                {{-- Shop Page Breadcrumbs Toggle --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Show Breadcrumbs on Shop / Catalog Page</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, displays breadcrumbs navigation bar on the main shop catalog page (<code class="px-1 py-0.5 bg-slate-100 dark:bg-slate-700 rounded font-mono text-[11px]">/shop</code>).
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="show_shop_breadcrumbs" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
         {{-- Shop Display --}}
-        <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
+        <div id="shop-settings" class="scroll-mt-24 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-3">
                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1728,8 +1978,8 @@
                     </svg>
                 </span>
                 <div>
-                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Shop Display</h3>
-                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Configure how product images are displayed across the storefront and plugins.</p>
+                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100">Shop Settings & Display</h3>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Configure product listing behaviors, filter visibility, custom header content, and image ratios.</p>
                 </div>
             </div>
             <div class="p-6 space-y-5">
@@ -1812,7 +2062,7 @@
                 {{-- Disable Shop Landing Page Toggle --}}
                 <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Disable Shop Landing Page</label>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Disable Shop Landing Page (Redirect to Home)</label>
                         <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
                             When enabled, visitors navigating to the main shop landing page (<code class="px-1 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-300 font-mono text-[11px]">/shop</code>) without any active category, brand, or search filters will automatically be redirected to the home page.
                         </p>
@@ -1820,6 +2070,34 @@
                     <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
                         <input type="checkbox" wire:model="disable_shop_landing" class="sr-only peer">
                         <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-violet-600"></div>
+                    </label>
+                </div>
+
+                {{-- Disable Default Product Listing on Shop Toggle --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Disable Default Product Listing on Shop Page</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, no products will appear on the main <code class="px-1 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-300 font-mono text-[11px]">/shop</code> page when viewed directly until the customer applies a search term or filter (category, brand, price slider, etc.).
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="shop_disable_default_product_listing" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                {{-- Hide All Filters Until Filter Applied Toggle --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Hide All Filters Until Filter Applied</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, hides the filter sidebars and the advanced search filter toggle button on the shop page until a filter or search is active.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="shop_hide_filters_until_applied" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
                     </label>
                 </div>
 
@@ -1837,11 +2115,127 @@
                     </label>
                 </div>
 
+                {{-- Abandoned Cart 24-Hour Reminder Toggle --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Enable 24-Hour Abandoned Cart Reminder Emails</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            Automatically sends the 1st abandoned cart email notification to customers 24 hours after their cart is abandoned without checkout.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="enable_abandoned_cart_reminder_1" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                {{-- Abandoned Cart 7-Day Reminder Toggle --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Enable 7-Day Abandoned Cart Reminder Emails</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            Automatically sends the 2nd abandoned cart email notification to customers 1 week (7 days) after their cart is abandoned.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="enable_abandoned_cart_reminder_2" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                {{-- Shop Header Custom HTML (TinyMCE) --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Shop Header Custom HTML Content</label>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button"
+                                    @click.stop="showWidgetLibrary = !showWidgetLibrary; showPluginsPanel = false; showShortcodeGenerator = false; showLinkGenerator = false"
+                                    class="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 transition border border-indigo-200/60 flex items-center gap-1 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                                <span>Widgets</span>
+                            </button>
+                            <button type="button"
+                                    @click.stop="showPluginsPanel = !showPluginsPanel; showWidgetLibrary = false; showShortcodeGenerator = false; showLinkGenerator = false"
+                                    class="px-2.5 py-1 text-xs font-bold rounded-lg bg-violet-50 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 hover:bg-violet-100 transition border border-violet-200/60 flex items-center gap-1 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                <span>Plugins</span>
+                            </button>
+                            <button type="button"
+                                    @click.stop="showShortcodeGenerator = !showShortcodeGenerator; showWidgetLibrary = false; showPluginsPanel = false; showLinkGenerator = false"
+                                    class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 transition border border-emerald-200/60 flex items-center gap-1 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                                <span>Shortcodes</span>
+                            </button>
+                            <button type="button"
+                                    @click.stop="showLinkGenerator = !showLinkGenerator; showWidgetLibrary = false; showPluginsPanel = false; showShortcodeGenerator = false"
+                                    class="px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 hover:bg-amber-100 transition border border-amber-200/60 flex items-center gap-1 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                <span>Links</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div wire:ignore x-data="{
+                        content: @entangle('shop_header_custom_html'),
+                        initEditor() {
+                            if (typeof tinymce === 'undefined') return;
+                            tinymce.remove('#shop_header_custom_html_editor');
+                            tinymce.init({
+                                selector: '#shop_header_custom_html_editor',
+                                license_key: 'gpl',
+                                promotion: false,
+                                height: 380,
+                                menubar: 'insert format tools table',
+                                content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } .prose, .prose-slate { max-width: none !important; }',
+                                content_css: [
+                                    'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
+                                    '/css/prose.css'
+                                ],
+                                plugins: 'advlist autolink lists link image charmap preview anchor searchreplace wordcount visualblocks supercode fullscreen insertdatetime media table help emoticons pagebreak directionality',
+                                toolbar: [
+                                    'supercode fullscreen | undo redo | styles blocks | bold italic underline strikethrough | forecolor backcolor',
+                                    'fontfamily fontsize lineheight | alignleft aligncenter alignright alignjustify | outdent indent | removeformat | numlist bullist | pagebreak | charmap emoticons | link image media anchor | ltr rtl | preview'
+                                ],
+                                toolbar_mode: 'wrap',
+                                supercode: { theme: 'monokai', fontSize: 14, autocomplete: true, dark: true },
+                                branding: false,
+                                contextmenu: 'link image imagetools',
+                                style_formats: [
+                                    { title: 'Callout (Yellow/Warning)', block: 'div', classes: 'p-4 bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 text-amber-900 dark:text-amber-200 rounded-r-lg my-4' },
+                                    { title: 'Callout (Blue/Info)', block: 'div', classes: 'p-4 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 text-blue-900 dark:text-blue-200 rounded-r-lg my-4' },
+                                    { title: 'Callout (Green/Success)', block: 'div', classes: 'p-4 bg-emerald-50 dark:bg-emerald-950/20 border-l-4 border-emerald-500 text-emerald-900 dark:text-emerald-200 rounded-r-lg my-4' },
+                                    { title: 'Callout (Red/Danger)', block: 'div', classes: 'p-4 bg-rose-50 dark:bg-rose-950/20 border-l-4 border-rose-500 text-rose-900 dark:text-rose-200 rounded-r-lg my-4' },
+                                    { title: 'Feature Card', block: 'div', classes: 'p-6 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl shadow-sm my-6' },
+                                    { title: 'Premium Button (Primary)', selector: 'a', classes: 'inline-block px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors no-underline' },
+                                    { title: 'Premium Button (Outline)', selector: 'a', classes: 'inline-block px-5 py-2.5 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium rounded-xl transition-colors no-underline' },
+                                    { title: 'Badge Primary', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full' },
+                                    { title: 'Badge Success', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full' },
+                                    { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
+                                    { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
+                                ],
+                                extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
+                                convert_urls: false,
+                                relative_urls: false,
+                                remove_script_host: false,
+                                valid_children: '+a[button]',
+                                setup: (editor) => {
+                                    editor.on('init', () => {
+                                        editor.setContent(this.content || '');
+                                    });
+                                    editor.on('change blur keyup NodeChange SetContent Undo Redo', () => {
+                                        this.content = editor.getContent();
+                                    });
+                                }
+                            });
+                        }
+                    }" x-init="initEditor()">
+                        <textarea id="shop_header_custom_html_editor" wire:model="shop_header_custom_html" class="w-full h-64 border rounded-xl p-3"></textarea>
+                    </div>
+                </div>
+
             </div>
         </div>
 
         {{-- Save Button --}}
-
 
         <div class="flex items-center justify-end gap-4 pt-2">
             <div wire:loading wire:target="save" class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
@@ -1864,6 +2258,59 @@
         </div>
 
     </form>
+
+    {{-- Slide-Out Drawers for Widgets, Plugins, Shortcodes, Links --}}
+    @include('partials.html-widgets-drawer')
+    @include('partials.display-plugins-drawer')
+    @include('partials.link-generator-drawer')
+    @include('partials.shortcodes-generator-drawer')
+
+    <script src="{{ asset('build/node_modules/tinymce/tinymce.min.js') }}"></script>
+    <script>
+        window.insertHtmlWidget = function(htmlString) {
+            let editor = tinymce.activeEditor || tinymce.get('shop_header_custom_html_editor');
+            if (editor) {
+                editor.undoManager.transact(() => {
+                    let body = editor.getBody();
+                    let tempDiv = editor.dom.create('div', {}, htmlString);
+                    while (tempDiv.firstChild) {
+                        body.appendChild(tempDiv.firstChild);
+                    }
+                    let trailingSpacer = editor.dom.create('p', {}, '<br data-mce-bogus="1">');
+                    body.appendChild(trailingSpacer);
+                });
+                editor.focus();
+                editor.selection.select(editor.getBody(), true);
+                editor.selection.collapse(false);
+                editor.selection.scrollIntoView();
+                editor.nodeChanged();
+                editor.dispatch('change');
+            } else {
+                alert('TinyMCE editor is not initialized.');
+            }
+        };
+
+        window.insertPluginShortcode = function(shortcodeString) {
+            let editor = tinymce.activeEditor || tinymce.get('shop_header_custom_html_editor');
+            if (editor) {
+                editor.undoManager.transact(() => {
+                    let body = editor.getBody();
+                    let shortcodeParagraph = editor.dom.create('p', {}, shortcodeString);
+                    body.appendChild(shortcodeParagraph);
+                    let trailingSpacer = editor.dom.create('p', {}, '<br data-mce-bogus="1">');
+                    body.appendChild(trailingSpacer);
+                });
+                editor.focus();
+                editor.selection.select(editor.getBody(), true);
+                editor.selection.collapse(false);
+                editor.selection.scrollIntoView();
+                editor.nodeChanged();
+                editor.dispatch('change');
+            } else {
+                alert('TinyMCE editor is not initialized.');
+            }
+        };
+    </script>
 
 </div>
 

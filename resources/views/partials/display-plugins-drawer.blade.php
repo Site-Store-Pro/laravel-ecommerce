@@ -1,3 +1,7 @@
+@php
+    $displayPlugins = $displayPlugins ?? (\App\Models\Plugin::where('type', 'display')->get() ?? collect());
+@endphp
+
     <!-- Slide-Out Plugins Library Drawer -->
     <div x-cloak 
          x-show="showPluginsPanel" 

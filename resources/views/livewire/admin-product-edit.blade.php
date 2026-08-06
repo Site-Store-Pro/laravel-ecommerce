@@ -150,12 +150,12 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Product Title</label>
-                                <input type="text" wire:model="title" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                <input type="text" wire:model.live.debounce.300ms="title" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                 @error('title') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">SEO Slug</label>
-                                <input type="text" wire:model="seo_slug" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                <input type="text" wire:model.live.debounce.300ms="seo_slug" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                             </div>
                         </div>
 
@@ -288,12 +288,11 @@
                                                          el.style.setProperty('width', '100%');
                                                      });
                                                  });
-                                                 editor.on('change', () => {
-                                                     this.long_description = editor.getContent();
-                                                 });
-                                                 editor.on('blur', () => {
-                                                     this.long_description = editor.getContent();
-                                                 });
+                                                 editor.on('change blur keyup NodeChange SetContent Undo Redo', () => {
+                                                      let content = editor.getContent();
+                                                      this.long_description = content;
+                                                      $wire.set('long_description', content, false);
+                                                  });
                                                  editor.on('NodeChange', () => {
                                                      setTimeout(() => {
                                                          let node = editor.selection.getNode();
@@ -1447,4 +1446,22 @@
             }
         };
     </script>
+
+    <!-- Floating Save All Sections Button -->
+    <div class="fixed bottom-8 right-8 z-40">
+        <button @click="if (typeof tinymce !== 'undefined') { let ed = tinymce.get('long_description_editor'); if (ed) $wire.set('long_description', ed.getContent()); }"
+                wire:click="saveAllSections"
+                wire:loading.attr="disabled"
+                type="button"
+                class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-extrabold text-sm rounded-2xl shadow-xl hover:shadow-2xl flex items-center gap-2.5 transition-all duration-200 group border border-indigo-500/30 backdrop-blur-sm">
+            <svg wire:loading.remove wire:target="saveAllSections" class="w-5 h-5 text-indigo-200 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+            </svg>
+            <svg wire:loading wire:target="saveAllSections" class="animate-spin w-5 h-5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Save All Sections</span>
+        </button>
+    </div>
 </div>

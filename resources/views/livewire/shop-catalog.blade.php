@@ -81,8 +81,43 @@
                 </div>
             </div>
         </div>
+        <!-- Shop Breadcrumbs Bar -->
+        @if(\App\Models\CmsSetting::isEnabled('show_shop_breadcrumbs', true))
+            <div class="mb-6 flex items-center gap-2 text-xs font-semibold text-slate-400 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 px-4 py-2.5 rounded-2xl shadow-xs">
+                <a href="{{ route('shop.index') }}" wire:navigate class="text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    @label('shop.breadcrumb_home', 'Home')
+                </a>
+                <svg class="w-3 h-3 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                </svg>
+                <span class="text-slate-800 dark:text-slate-200 font-bold">
+                    @label('shop.breadcrumb_shop', 'Shop')
+                </span>
+                @if($activeCategory)
+                    <svg class="w-3 h-3 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    <span class="text-slate-800 dark:text-slate-200 font-bold">{{ $activeCategory->name }}</span>
+                @elseif($activeBrand)
+                    <svg class="w-3 h-3 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    <span class="text-slate-800 dark:text-slate-200 font-bold">{{ $activeBrand->name }}</span>
+                @endif
+            </div>
+        @endif
+
+        @php
+            $shopHeaderHtml = \App\Models\CmsSetting::get('shop_header_custom_html');
+            $hideFiltersUntilApplied = \App\Models\CmsSetting::isEnabled('shop_hide_filters_until_applied');
+            $hideFiltersNow = $hideFiltersUntilApplied && !$this->hasActiveFilters;
+        @endphp
+
         <!-- Header Section -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
             <div>
                 <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{{ $pageTitle }}</h1>
                 @if($pageDescription)
@@ -92,7 +127,7 @@
 
             <!-- Filter Controls (Top Right) -->
             <div class="flex items-center justify-end gap-3 w-full md:w-auto">
-                @if($advancedSearchEnabled)
+                @if($advancedSearchEnabled && !$hideFiltersNow)
                     <button @click="slideoutOpen = true" type="button" class="relative inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
@@ -107,6 +142,13 @@
                 @endif
             </div>
         </div>
+
+        {{-- Shop Header Custom HTML Content --}}
+        @if(!empty(trim($shopHeaderHtml)))
+            <div class="mb-8 p-6 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 rounded-3xl shadow-sm prose dark:prose-invert max-w-none">
+                {!! \App\Services\ContentParserService::parse($shopHeaderHtml) !!}
+            </div>
+        @endif
 
         @if($userType == 2)
             <div class="mb-8 p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-100 dark:border-emerald-900/60 flex items-center gap-3">
@@ -201,7 +243,7 @@
         @endif
 
         {{-- Category Drill-Down --}}
-        @if($filterCategories->isNotEmpty())
+        @if($filterCategories->isNotEmpty() && !$hideFiltersNow)
             <div class="mb-6 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm overflow-hidden">
                 <div class="px-5 py-3 border-b border-slate-50 dark:border-slate-700/60 flex items-center gap-2">
                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -259,7 +301,7 @@
         @endif
 
         {{-- Brand Filter Strip --}}
-        @if($filterBrands->count() > 1)
+        @if($filterBrands->count() > 1 && !$hideFiltersNow)
             <div class="mb-6 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-3xl shadow-sm overflow-hidden">
                 <div class="px-5 py-3 border-b border-slate-50 dark:border-slate-700/60 flex items-center gap-2">
                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -271,10 +313,11 @@
                     <div class="flex items-center gap-2 flex-wrap">
                         @foreach($filterBrands as $fb)
                             @php
-                                $fbLogoUrl = $fb->brand_icon
-                                    ? ($fb->brand_logo_s3
-                                        ? \Illuminate\Support\Facades\Storage::disk('s3')->url($fb->brand_icon)
-                                        : \Illuminate\Support\Facades\Storage::disk('public')->url($fb->brand_icon))
+                                $fbLogoUrl = ($fb->show_image && ($fb->brand_icon_direct_url || $fb->brand_icon))
+                                    ? ($fb->brand_icon_direct_url
+                                        ?: ($fb->brand_logo_s3
+                                            ? \Illuminate\Support\Facades\Storage::disk('s3')->url($fb->brand_icon)
+                                            : \Illuminate\Support\Facades\Storage::disk('public')->url($fb->brand_icon)))
                                     : null;
                             @endphp
                             <a href="{{ route('shop.index', array_filter(['category' => $category, 'brand' => $fb->slug])) }}"
@@ -291,14 +334,21 @@
             </div>
         @endif
 
+        @php
+            $disableDefaultListing = \App\Models\CmsSetting::isEnabled('shop_disable_default_product_listing');
+            $activeFilterCheck = $hasActiveFilters ?? ($this->hasActiveFilters ?? false);
+            $suppressResultsArea = $disableDefaultListing && !$activeFilterCheck;
+        @endphp
+
+        @if(!$suppressResultsArea)
         {{-- RESULTS TOOLBAR --}}
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
             <p class="text-sm text-slate-500 dark:text-slate-400">
-                @if($products->total() > 0)
+                @if($products->total() > 0 && $products->total() >= 6)
                     @label('catalog.showing', 'Showing')
                     <span class="font-semibold text-slate-800 dark:text-slate-200">{{ $products->firstItem() }}</span>–<span class="font-semibold text-slate-800 dark:text-slate-200">{{ $products->lastItem() }}</span>
                     @label('catalog.of', 'of') <span class="font-semibold text-slate-800 dark:text-slate-200">{{ $products->total() }}</span> @label('catalog.products', 'products')
-                @else
+                @elseif($products->total() === 0)
                     @label('catalog.no_products_found', 'No products found')
                 @endif
             </p>
@@ -416,10 +466,10 @@
                                         @endif
                                     @endif
                                 </div>
-                                @if($product->is_donation_or_bill_pay)
-                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all">@label('catalog.select_options', 'Select Options')</a>
+                                @if($product->requiresOptions())
+                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">@label('catalog.view_options', 'View Options')</a>
                                 @elseif($firstVariant && $inStock)
-                                    <button wire:click="buyNow({{ $firstVariant->id }})" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all">@label('catalog.buy_now', 'Buy Now')</button>
+                                    <button wire:click="buyNow({{ $firstVariant->id }})" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">@label('catalog.buy_now', 'Buy Now')</button>
                                 @else
                                     <span class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">@label('catalog.out_of_stock', 'Out of Stock')</span>
                                 @endif
@@ -442,7 +492,7 @@
                                     <img src="{{ $thumbUrl }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-600">
-                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2-2v12a2 2 0 002 2z"/></svg>
                                     </div>
                                 @endif
                             </a>
@@ -474,10 +524,12 @@
                                         @endif
                                     </div>
                                 @endif
-                                @if($product->is_donation_or_bill_pay)
-                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all">@label('catalog.select_options', 'Select Options')</a>
+                                @if($product->requiresOptions())
+                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">@label('catalog.view_options', 'View Options')</a>
                                 @elseif($firstVariant && $inStock)
-                                    <button wire:click="buyNow({{ $firstVariant->id }})" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all">@label('catalog.buy_now', 'Buy Now')</button>
+                                    <button wire:click="buyNow({{ $firstVariant->id }})" class="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">@label('catalog.buy_now', 'Buy Now')</button>
+                                @else
+                                    <span class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">@label('catalog.out_of_stock', 'Out of Stock')</span>
                                 @endif
                             </div>
                         </div>
@@ -488,6 +540,7 @@
             <div class="mt-8">
                 {{ $products->links() }}
             </div>
+        @endif
         @endif
     </div>
 

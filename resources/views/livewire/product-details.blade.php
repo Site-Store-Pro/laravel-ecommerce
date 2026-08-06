@@ -1,39 +1,41 @@
 <div class="pt-4 pb-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Breadcrumbs -->
-        <div class="mb-8 flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-100 px-4 py-2.5 rounded-2xl shadow-sm">
-            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
-                <a href="{{ route('shop.index') }}" wire:navigate class="text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    @label('product.breadcrumb_shop', 'Shop')
-                </a>
-                @foreach($breadcrumbs as $bc)
+        @if(\App\Models\CmsSetting::isEnabled('show_product_details_breadcrumbs', true))
+            <div class="mb-8 flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-100 px-4 py-2.5 rounded-2xl shadow-sm">
+                <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-400">
+                    <a href="{{ route('shop.index') }}" wire:navigate class="text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        @label('product.breadcrumb_shop', 'Shop')
+                    </a>
+                    @foreach($breadcrumbs as $bc)
+                        <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                        </svg>
+                        <a href="{{ route('shop.category', ['category_slug' => $bc->slug]) }}" wire:navigate class="text-slate-500 hover:text-indigo-600 transition-colors">
+                            {{ $bc->name }}
+                        </a>
+                    @endforeach
                     <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
                     </svg>
-                    <a href="{{ route('shop.category', ['category_slug' => $bc->slug]) }}" wire:navigate class="text-slate-500 hover:text-indigo-600 transition-colors">
-                        {{ $bc->name }}
+                    <span class="text-slate-800 font-bold truncate max-w-[200px] sm:max-w-xs">
+                        {{ $product->title }}
+                    </span>
+                </div>
+                @if(auth()->check() && auth()->user()->isAdmin())
+                    <a href="{{ route('admin.ecommerce.product-edit', ['id' => $product->id]) }}" target="admin_product_edit"
+                       class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-md transition duration-150">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        @label('product.admin_edit_button', 'Edit Product (Admin)')
                     </a>
-                @endforeach
-                <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                </svg>
-                <span class="text-slate-800 font-bold truncate max-w-[200px] sm:max-w-xs">
-                    {{ $product->title }}
-                </span>
+                @endif
             </div>
-            @if(auth()->check() && auth()->user()->isAdmin())
-                <a href="{{ route('admin.ecommerce.product-edit', ['id' => $product->id]) }}" target="admin_product_edit"
-                   class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-md transition duration-150">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                    </svg>
-                    @label('product.admin_edit_button', 'Edit Product (Admin)')
-                </a>
-            @endif
-        </div>
+        @endif
 
         <!-- Alerts -->
         @if(session()->has('status'))

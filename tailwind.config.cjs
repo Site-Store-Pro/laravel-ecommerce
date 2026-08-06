@@ -16,8 +16,12 @@ module.exports = {
             fontFamily: {
                 sans: ['Plus Jakarta Sans', ...defaultTheme.fontFamily.sans],
             },
+            screens: {
+                'admin': '1025px',
+            },
         },
     },
+
 
     plugins: [forms, typography],
 };

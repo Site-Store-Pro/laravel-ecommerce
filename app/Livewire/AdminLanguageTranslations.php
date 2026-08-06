@@ -55,11 +55,30 @@ class AdminLanguageTranslations extends Component
             'email_templates'        => $service->translationStats(\App\Models\EmailTemplate::class, $this->languageId),
             'modals'                 => $service->translationStats(\App\Models\CmsModal::class, $this->languageId),
             'builder_blocks'         => $service->translationStats(\App\Models\CmsBuilderBlock::class, $this->languageId),
+            'inventory_alerts'       => $service->translationStats(\App\Models\ProductInventoryAlert::class, $this->languageId),
+            'plugins'                => $service->pluginTranslationStats($this->languageId),
         ];
     }
 
     public function translateType(string $type): void
     {
+        if ($type === 'plugins') {
+            $plugins = \App\Models\Plugin::all();
+            $count = 0;
+            foreach ($plugins as $plugin) {
+                if (!empty($plugin->getTranslatableFields())) {
+                    \App\Jobs\TranslatePluginJob::dispatch($plugin->id, $this->languageId);
+                    $count++;
+                }
+            }
+            $this->dispatch('toast',
+                message: "{$count} plugin translation jobs queued.",
+                type: 'success'
+            );
+            $this->loadStats();
+            return;
+        }
+
         // Variant attribute and personalization translations use the dedicated job.
         if ($type === 'variant_attributes' || $type === 'variant_personalization') {
             $variantIds = \App\Models\ProductVariant::pluck('id');
@@ -88,6 +107,7 @@ class AdminLanguageTranslations extends Component
             'kb_categories'      => \App\Models\KbCategory::class,
             'email_templates'    => \App\Models\EmailTemplate::class,
             'builder_blocks'     => \App\Models\CmsBuilderBlock::class,
+            'inventory_alerts'   => \App\Models\ProductInventoryAlert::class,
         ];
 
         $modelClass = $map[$type] ?? null;
@@ -107,6 +127,15 @@ class AdminLanguageTranslations extends Component
 
     public function translateSingle(string $type, int $modelId): void
     {
+        if ($type === 'plugins') {
+            $plugin = \App\Models\Plugin::find($modelId);
+            if ($plugin) {
+                \App\Jobs\TranslatePluginJob::dispatch($plugin->id, $this->languageId);
+                $this->dispatch('toast', message: 'Translation job queued for ' . $plugin->name . '.', type: 'success');
+            }
+            return;
+        }
+
         // Variant types use the dedicated job.
         if ($type === 'variant_attributes' || $type === 'variant_personalization') {
             \App\Jobs\TranslateVariantJob::dispatch($modelId, $this->languageId);
@@ -128,6 +157,7 @@ class AdminLanguageTranslations extends Component
             'kb_categories'      => \App\Models\KbCategory::class,
             'email_templates'    => \App\Models\EmailTemplate::class,
             'builder_blocks'     => \App\Models\CmsBuilderBlock::class,
+            'inventory_alerts'   => \App\Models\ProductInventoryAlert::class,
         ];
         $modelClass = $map[$type] ?? null;
         if ($modelClass) {
@@ -141,10 +171,10 @@ class AdminLanguageTranslations extends Component
         // Load untranslated items for the active type.
         // Variant types show a list of variants with pending attribute/personalization translations.
         $standardMap = [
-            'cms_pages'          => [\App\Models\CmsPage::class,          'cms_page_id',              'title'],
+            'cms_pages'          => [\App\Models\CmsPage::class,           'cms_page_id',              'title'],
             'products'           => [\App\Models\Product::class,           'product_id',               'title'],
             'kb_articles'        => [\App\Models\KbArticle::class,         'kb_article_id',            'title'],
-            'testimonials'       => [\App\Models\CmsTestimonial::class,    'testimonial_id',           'author_name'],
+            'testimonials'       => [\App\Models\CmsTestimonial::class,    'testimonial_id',           'author_title'],
             'nav_items'          => [\App\Models\NavItem::class,           'nav_item_id',              'label'],
             'list_menus'         => [\App\Models\CmsListMenuItem::class,   'cms_list_menu_item_id',    'list_item'],
             'site_labels'        => [\App\Models\SiteLabel::class,         'site_label_id',            'label_key'],
@@ -154,6 +184,7 @@ class AdminLanguageTranslations extends Component
             'kb_categories'      => [\App\Models\KbCategory::class,        'kb_category_id',           'name'],
             'email_templates'    => [\App\Models\EmailTemplate::class,     'email_template_id',        'profile_name'],
             'builder_blocks'     => [\App\Models\CmsBuilderBlock::class,   'cms_builder_block_id',     'title'],
+            'inventory_alerts'   => [\App\Models\ProductInventoryAlert::class, 'product_inventory_alert_id', 'message'],
         ];
 
         $items = collect();
@@ -183,6 +214,24 @@ class AdminLanguageTranslations extends Component
 
             $items = $query->with('product:id,title')->limit(50)->get(['id', 'sku', 'attributes', 'product_id', 'personalization_label']);
             $labelField = 'sku';
+        } elseif ($this->activeType === 'plugins') {
+            $labelField = 'name';
+            $allPlugins = \App\Models\Plugin::all();
+            $untranslatedPlugins = collect();
+            foreach ($allPlugins as $p) {
+                $fields = $p->getTranslatableFields();
+                if (empty($fields)) continue;
+                $transCount = \App\Models\PluginSettingTranslation::where('plugin_id', $p->id)
+                    ->where('language_id', $this->languageId)
+                    ->whereIn('field_name', array_keys($fields))
+                    ->whereNotNull('field_value')
+                    ->where('field_value', '!=', '')
+                    ->count();
+                if ($transCount < count($fields)) {
+                    $untranslatedPlugins->push($p);
+                }
+            }
+            $items = $untranslatedPlugins;
         } elseif (isset($standardMap[$this->activeType])) {
             [$modelClass, $fk, $lf] = $standardMap[$this->activeType];
             $labelField = $lf;
@@ -197,7 +246,8 @@ class AdminLanguageTranslations extends Component
 
         $allTypes = array_merge(
             ['variant_attributes', 'variant_personalization'],
-            array_keys($standardMap)
+            array_keys($standardMap),
+            ['plugins']
         );
 
         return view('livewire.admin-language-translations', [

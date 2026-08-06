@@ -620,7 +620,13 @@ class ShopCatalog extends Component
                 break;
         }
 
-        $products = $productsQuery->withCurrentTranslations()->paginate($this->perPage);
+        if (\App\Models\CmsSetting::isEnabled('shop_disable_default_product_listing') && !$this->hasActiveFilters) {
+            $products = new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->perPage, 1, [
+                'path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath(),
+            ]);
+        } else {
+            $products = $productsQuery->withCurrentTranslations()->paginate($this->perPage);
+        }
 
         // ── Filter panel data ───────────────────────────────────────────────
         $filterCategories = collect();
@@ -856,6 +862,7 @@ class ShopCatalog extends Component
             'catalogMaxPrice'            => $catalogMaxPrice,
             'advancedSearchEnabled'      => $advancedSearchEnabled,
             'activeFilterCount'          => $activeFilterCount,
+            'hasActiveFilters'           => $this->hasActiveFilters,
             'activeCategory'             => $activeCategory,
             'activeBrand'                => $activeBrand,
             'pageTitle'                  => $pageTitle,

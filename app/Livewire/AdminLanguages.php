@@ -165,6 +165,7 @@ class AdminLanguages extends Component
             \App\Models\EmailTemplate::class,
             \App\Models\CmsModal::class,
             \App\Models\CmsBuilderBlock::class,
+            \App\Models\ProductInventoryAlert::class,
         ];
 
         $count = 0;
@@ -183,6 +184,15 @@ class AdminLanguages extends Component
         foreach ($variantIds as $variantId) {
             \App\Jobs\TranslateVariantJob::dispatch($variantId, $id);
             $count++;
+        }
+
+        // Dispatch plugin translation jobs
+        $plugins = \App\Models\Plugin::all();
+        foreach ($plugins as $plugin) {
+            if (!empty($plugin->getTranslatableFields())) {
+                \App\Jobs\TranslatePluginJob::dispatch($plugin->id, $id);
+                $count++;
+            }
         }
 
         $queueMonitorUrl = route('admin.languages.queue-monitor');
@@ -224,6 +234,8 @@ class AdminLanguages extends Component
             'email_templates'        => $service->translationStats(\App\Models\EmailTemplate::class, $languageId),
             'modals'                 => $service->translationStats(\App\Models\CmsModal::class, $languageId),
             'builder_blocks'         => $service->translationStats(\App\Models\CmsBuilderBlock::class, $languageId),
+            'inventory_alerts'       => $service->translationStats(\App\Models\ProductInventoryAlert::class, $languageId),
+            'plugins'                => $service->pluginTranslationStats($languageId),
         ];
     }
 

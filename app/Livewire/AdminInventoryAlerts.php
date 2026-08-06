@@ -19,6 +19,10 @@ class AdminInventoryAlerts extends Component
     public int     $sort_order  = 0;
     public bool    $is_active   = true;
 
+    // ── Translation state ───────────────────────────────────────────────────
+    public int   $tlLangId = 0;
+    public array $tlBuffer = [];
+
     // ── Delete confirmation ───────────────────────────────────────────────────
     public ?int $confirmingDeleteId = null;
 
@@ -40,6 +44,8 @@ class AdminInventoryAlerts extends Component
         $this->message    = '';
         $this->sort_order = ProductInventoryAlert::max('sort_order') + 1;
         $this->is_active  = true;
+        $this->tlLangId   = 0;
+        $this->tlBuffer   = [];
         $this->resetErrorBag();
     }
 
@@ -50,13 +56,70 @@ class AdminInventoryAlerts extends Component
         $this->message    = $alert->message;
         $this->sort_order = $alert->sort_order;
         $this->is_active  = (bool) $alert->is_active;
+        $this->tlLangId   = 0;
+        $this->tlBuffer   = [];
         $this->resetErrorBag();
     }
 
     public function cancelEdit(): void
     {
         $this->editingId = null;
+        $this->tlLangId  = 0;
+        $this->tlBuffer  = [];
         $this->resetErrorBag();
+    }
+
+    // ── Translation Methods ───────────────────────────────────────────────────
+
+    public function selectTlLang(int $id): void
+    {
+        $this->tlLangId = $id;
+        $this->tlBuffer = [];
+        if ($this->editingId) {
+            $this->loadTlFor($this->editingId);
+        }
+    }
+
+    public function loadTlFor(?int $modelId): void
+    {
+        if (!$modelId || $this->tlLangId === 0) {
+            return;
+        }
+        $existing = \App\Models\ProductInventoryAlertTranslation::where('product_inventory_alert_id', $modelId)
+            ->where('language_id', $this->tlLangId)
+            ->first();
+        $this->tlBuffer = $existing ? $existing->only(['message']) : [];
+    }
+
+    public function saveTlAlert(int $modelId): void
+    {
+        if ($this->tlLangId === 0) {
+            return;
+        }
+        \App\Models\ProductInventoryAlertTranslation::updateOrCreate(
+            ['product_inventory_alert_id' => $modelId, 'language_id' => $this->tlLangId],
+            array_merge($this->tlBuffer, ['translation_status' => 'reviewed', 'translated_at' => now()])
+        );
+        $this->dispatch('toast', type: 'success', message: 'Translation saved successfully.');
+    }
+
+    public function aiTlAlert(int $modelId): void
+    {
+        if ($this->tlLangId === 0) {
+            return;
+        }
+        $record = ProductInventoryAlert::findOrFail($modelId);
+        $lang   = \App\Models\Language::findOrFail($this->tlLangId);
+
+        try {
+            $svc = app(\App\Services\TranslationService::class);
+            if (!empty($record->message)) {
+                $this->tlBuffer['message'] = $svc->translateText($record->message, $lang->name, 'Inventory alert message (out-of-stock badge)');
+            }
+            $this->dispatch('toast', type: 'success', message: 'AI translation ready — review and click Save.');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', type: 'error', message: 'AI translation failed: ' . $e->getMessage());
+        }
     }
 
     // ── Save ─────────────────────────────────────────────────────────────────
@@ -118,6 +181,13 @@ class AdminInventoryAlerts extends Component
             ->withCount('products')
             ->get();
 
-        return view('livewire.admin-inventory-alerts', ['alerts' => $alerts]);
+        $activeLanguages = \App\Models\Language::where('is_active', true)
+            ->where('is_default', false)
+            ->get();
+
+        return view('livewire.admin-inventory-alerts', [
+            'alerts'          => $alerts,
+            'activeLanguages' => $activeLanguages,
+        ]);
     }
 }

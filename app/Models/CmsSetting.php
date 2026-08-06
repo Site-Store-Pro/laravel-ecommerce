@@ -61,9 +61,12 @@ class CmsSetting extends Model
     /**
      * Check if a boolean-type setting is truthy.
      */
-    public static function isEnabled(string $key): bool
+    public static function isEnabled(string $key, bool $default = false): bool
     {
-        $val = static::get($key, false);
+        $val = static::get($key, null);
+        if ($val === null) {
+            return $default;
+        }
         return in_array($val, ['1', 1, true, 'true'], true);
     }
 

@@ -52,6 +52,8 @@
                     'email_templates'        => 'Email Templates',
                     'modals'                 => 'Modals',
                     'builder_blocks'         => 'Header/Footer Blocks',
+                    'inventory_alerts'       => 'Inventory Alerts',
+                    'plugins'                => 'Plugins',
                 ];
             @endphp
             @foreach($typeMap as $type)

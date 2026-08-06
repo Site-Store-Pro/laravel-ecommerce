@@ -152,6 +152,10 @@
                                 'CMS Tags'               => $stats['cms_tags'],
                                 'KB Categories'          => $stats['kb_categories'],
                                 'Email Templates'        => $stats['email_templates'],
+                                'Modals'                 => $stats['modals'],
+                                'Header/Footer Blocks'   => $stats['builder_blocks'],
+                                'Inventory Alerts'       => $stats['inventory_alerts'],
+                                'Plugin Labels'          => $stats['plugins'],
                             ] as $label => $stat)
                                 @php
                                     $pct = $stat['total'] > 0 ? round(($stat['translated'] / $stat['total']) * 100) : 100;

@@ -53,7 +53,7 @@ class ProductDetails extends Component
                 'variants.inventory',
                 'variants.images',
                 'variants.translations'              => fn ($q) => $q->whereIn('language_id', $langIds),
-                'categories',
+                'categories.parent.parent.parent',
                 'fields.options',
                 'fields.translations'                => fn ($q) => $q->whereIn('language_id', $langIds),
                 'fields.options.translations'        => fn ($q) => $q->whereIn('language_id', $langIds),
@@ -742,8 +742,16 @@ class ProductDetails extends Component
             $selectedImageSet = $selectedVariant->images->firstWhere('id', $this->selectedImageSetId);
         }
 
-        $category = $this->product->categories->first();
-        $breadcrumbs = $category ? $category->ancestorsAndSelf()->withCurrentTranslations()->get()->reverse() : collect();
+        $bestChain = [];
+        if ($this->product->categories->isNotEmpty()) {
+            foreach ($this->product->categories as $cat) {
+                $chain = $cat->getBreadcrumbChain();
+                if (count($chain) > count($bestChain)) {
+                    $bestChain = $chain;
+                }
+            }
+        }
+        $breadcrumbs = $bestChain;
 
         // ── Related / recommended products — cross-sells with display_on_item_view ──
         $relatedProducts = collect();

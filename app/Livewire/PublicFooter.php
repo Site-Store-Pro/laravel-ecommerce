@@ -28,6 +28,8 @@ class PublicFooter extends Component
         return view('livewire.public-footer', [
             'footerBlocks' => $footerBlocks,
             'parsedBlocks' => $parsedBlocks,
+            'device'       => $device,
+            'deviceView'   => $device,
         ]);
     }
 }

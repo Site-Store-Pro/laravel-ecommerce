@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\Attributes\On;
+use App\Models\CmsSetting;
 use App\Models\ShoppingCartLog;
 use App\Models\NavMenu;
 use App\Models\NavItem;
@@ -14,6 +15,7 @@ class PublicNavigation extends Component
 {
     public int $cartCount = 0;
     public bool $mobileMenuOpen = false;
+    public bool $showDarkModeSwitcher = false;
 
     // NOTE: $navMenu and $navItems are intentionally NOT public Livewire properties.
     // Livewire serialises public properties to JSON between requests, which strips
@@ -35,6 +37,16 @@ class PublicNavigation extends Component
     public function mount(): void
     {
         $this->loadCartCount();
+        $this->showDarkModeSwitcher = CmsSetting::isEnabled('show_frontend_dark_mode_switcher');
+    }
+
+    /**
+     * Toggle the frontend dark mode setting and persist to DB.
+     */
+    public function toggleFrontendDarkMode(): void
+    {
+        $current = CmsSetting::isEnabled('frontend_dark_mode');
+        CmsSetting::set('frontend_dark_mode', $current ? '0' : '1');
     }
 
     private function loadCartCount(): void

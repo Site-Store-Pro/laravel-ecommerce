@@ -150,6 +150,32 @@ class AdminPlugins extends Component
         $this->errorMessage   = '';
     }
 
+    /**
+     * Trigger an OpenAI call to re-translate the selected plugin's fields for the selected language.
+     */
+    public function autoTranslatePlugin(): void
+    {
+        if (!$this->selectedPluginId || !$this->tlLangId) {
+            return;
+        }
+
+        $plugin = Plugin::findOrFail($this->selectedPluginId);
+        $lang = Language::find($this->tlLangId);
+        if (!$lang) {
+            return;
+        }
+
+        $service = app(\App\Services\TranslationService::class);
+        try {
+            $service->translatePlugin($plugin, $lang);
+            $this->selectTlLang($this->tlLangId);
+            $this->successMessage = 'Plugin translated using OpenAI for ' . $lang->name . '.';
+            $this->errorMessage = '';
+        } catch (\Throwable $e) {
+            $this->errorMessage = 'AI Translation failed: ' . $e->getMessage();
+        }
+    }
+
     public function saveSettings(): void
     {
         if (!$this->selectedPluginId) return;

@@ -44,6 +44,30 @@ class Category extends Model
     ];
 
 
+    public function parent()
+    {
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    /**
+     * Return ancestor categories starting from root down to self.
+     * e.g. [RootCategory, SubCategory, SubSubCategory]
+     */
+    public function getBreadcrumbChain(): array
+    {
+        $chain = [];
+        $visited = [];
+        $curr = $this;
+
+        while ($curr && !in_array($curr->id, $visited)) {
+            $visited[] = $curr->id;
+            array_unshift($chain, $curr);
+            $curr = $curr->parent;
+        }
+
+        return $chain;
+    }
+
     /**
      * Relationship: Products belonging to this category.
      */

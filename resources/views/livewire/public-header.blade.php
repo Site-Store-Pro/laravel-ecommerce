@@ -177,6 +177,29 @@
                                         @if($featuresPlacement === 'header_col1')
                                             <div id="header_features_icons_col1" class="flex items-center gap-3">
                                                 @livewire('language-switcher')
+                                                @php $showDarkModeSwitcher = \App\Models\CmsSetting::isEnabled('show_frontend_dark_mode_switcher'); @endphp
+                                                @if($showDarkModeSwitcher)
+                                                    <div x-data="{ isDark: document.documentElement.classList.contains('dark') }">
+                                                        <button
+                                                            type="button"
+                                                            @click="
+                                                                isDark = !isDark;
+                                                                document.documentElement.classList.toggle('dark', isDark);
+                                                                $wire.toggleFrontendDarkMode();
+                                                            "
+                                                            class="p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none flex items-center justify-center"
+                                                            :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+                                                            aria-label="Toggle dark mode"
+                                                        >
+                                                            <svg x-show="isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                                                            </svg>
+                                                            <svg x-show="!isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                @endif
                                                 <button type="button" wire:click.prevent="$dispatch('open-cart')" @click="$dispatch('open-cart')" class="relative p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 transition-colors focus:outline-none" aria-label="Shopping Cart">
                                                     {!! !empty($cssVars['custom_cart_icon_svg']) ? $cssVars['custom_cart_icon_svg'] : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>' !!}
                                                     @if($cartCount > 0)
@@ -249,6 +272,29 @@
                                         @if($featuresPlacement === 'header_col2')
                                             <div id="header_features_icons_col2" class="flex items-center gap-3">
                                                 @livewire('language-switcher')
+                                                @php $showDarkModeSwitcher = \App\Models\CmsSetting::isEnabled('show_frontend_dark_mode_switcher'); @endphp
+                                                @if($showDarkModeSwitcher)
+                                                    <div x-data="{ isDark: document.documentElement.classList.contains('dark') }">
+                                                        <button
+                                                            type="button"
+                                                            @click="
+                                                                isDark = !isDark;
+                                                                document.documentElement.classList.toggle('dark', isDark);
+                                                                $wire.toggleFrontendDarkMode();
+                                                            "
+                                                            class="p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none flex items-center justify-center"
+                                                            :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+                                                            aria-label="Toggle dark mode"
+                                                        >
+                                                            <svg x-show="isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                                                            </svg>
+                                                            <svg x-show="!isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                @endif
                                                 <button type="button" wire:click.prevent="$dispatch('open-cart')" @click="$dispatch('open-cart')" class="relative p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 transition-colors focus:outline-none" aria-label="Shopping Cart">
                                                     {!! !empty($cssVars['custom_cart_icon_svg']) ? $cssVars['custom_cart_icon_svg'] : '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>' !!}
                                                     @if($cartCount > 0)
@@ -271,6 +317,29 @@
                                     @if($featuresPlacement === 'main_header' && (!isset($parsedBlocks['header_features']) || $parsedBlocks['header_features']['block']->isActiveForDevice($deviceView)))
                                         <div id="header_features_icons" class="flex items-center gap-2 sm:gap-3">
                                             @livewire('language-switcher')
+                                            @php $showDarkModeSwitcher = \App\Models\CmsSetting::isEnabled('show_frontend_dark_mode_switcher'); @endphp
+                                            @if($showDarkModeSwitcher)
+                                                <div x-data="{ isDark: document.documentElement.classList.contains('dark') }">
+                                                    <button
+                                                        type="button"
+                                                        @click="
+                                                            isDark = !isDark;
+                                                            document.documentElement.classList.toggle('dark', isDark);
+                                                            $wire.toggleFrontendDarkMode();
+                                                        "
+                                                        class="p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none flex items-center justify-center"
+                                                        :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+                                                        aria-label="Toggle dark mode"
+                                                    >
+                                                        <svg x-show="isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                                                        </svg>
+                                                        <svg x-show="!isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            @endif
                                             <button type="button" wire:click.prevent="$dispatch('open-cart')" @click="$dispatch('open-cart')" class="relative p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none" aria-label="Shopping Cart">
                                                 {!! !empty($cssVars['custom_cart_icon_svg']) ? $cssVars['custom_cart_icon_svg'] : '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>' !!}
                                                 @if($cartCount > 0)

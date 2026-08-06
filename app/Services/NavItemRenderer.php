@@ -114,6 +114,7 @@ class NavItemRenderer
     protected function resolveCustomLink(NavItem $item): array
     {
         $url = $item->url ?? '#';
+        $url = str_replace(['[site_url]', '[site-url]', '[url]'], url('/'), $url);
         // If it looks like a relative path (no scheme), prepend root
         if ($url !== '#' && !str_contains($url, '//')) {
             $url = url('/' . ltrim($url, '/'));

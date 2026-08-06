@@ -188,7 +188,74 @@ class AdminHeaderFooterBuilder extends Component
                     'is_active_mobile'  => true,
                 ]
             );
+
+            CmsBuilderBlock::firstOrCreate(
+                ['target_element' => 'copyright_container', 'section_type' => 'footer'],
+                [
+                    'title'             => 'Copyright & Bottom Links Bar',
+                    'type'              => 4,
+                    'is_placeholder'    => false,
+                    'sort_desktop'      => 99,
+                    'sort_tablet'       => 99,
+                    'sort_mobile'       => 99,
+                    'content_desktop'   => '<div class="w-full flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"><div>© ' . date('Y') . ' [site_name]. All rights reserved.</div><div class="flex items-center gap-4"><a href="/privacy-policy" class="hover:underline">Privacy Policy</a><span class="opacity-40">•</span><a href="/terms" class="hover:underline">Terms of Service</a></div></div>',
+                    'content_tablet'    => '<div class="w-full flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"><div>© ' . date('Y') . ' [site_name]. All rights reserved.</div><div class="flex items-center gap-4"><a href="/privacy-policy" class="hover:underline">Privacy Policy</a><span class="opacity-40">•</span><a href="/terms" class="hover:underline">Terms of Service</a></div></div>',
+                    'content_mobile'    => '<div class="w-full text-center text-xs">© ' . date('Y') . ' [site_name]. All rights reserved.</div>',
+                    'is_active_desktop' => true,
+                    'is_active_tablet'  => true,
+                    'is_active_mobile'  => true,
+                ]
+            );
+
+            CmsBuilderBlock::firstOrCreate(
+                ['target_element' => 'footer_row4', 'section_type' => 'footer'],
+                [
+                    'title'             => 'Footer Row #4 (Copyright Bar)',
+                    'type'              => 4,
+                    'is_placeholder'    => false,
+                    'sort_desktop'      => 99,
+                    'sort_tablet'       => 99,
+                    'sort_mobile'       => 99,
+                    'content_desktop'   => '<div class="w-full flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"><div>© ' . date('Y') . ' [site_name]. All rights reserved.</div><div class="flex items-center gap-4"><a href="/privacy-policy" class="hover:underline">Privacy Policy</a><span class="opacity-40">•</span><a href="/terms" class="hover:underline">Terms of Service</a></div></div>',
+                    'content_tablet'    => '<div class="w-full flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"><div>© ' . date('Y') . ' [site_name]. All rights reserved.</div><div class="flex items-center gap-4"><a href="/privacy-policy" class="hover:underline">Privacy Policy</a><span class="opacity-40">•</span><a href="/terms" class="hover:underline">Terms of Service</a></div></div>',
+                    'content_mobile'    => '<div class="w-full text-center text-xs">© ' . date('Y') . ' [site_name]. All rights reserved.</div>',
+                    'is_active_desktop' => true,
+                    'is_active_tablet'  => true,
+                    'is_active_mobile'  => true,
+                ]
+            );
         }
+    }
+
+    public function enableCopyrightBlock(): void
+    {
+        $block = CmsBuilderBlock::whereIn('target_element', ['copyright_container', 'footer_row4'])->first();
+        if (!$block) {
+            $block = CmsBuilderBlock::create([
+                'title'             => 'Copyright & Bottom Links Bar',
+                'target_element'    => 'copyright_container',
+                'type'              => 4,
+                'section_type'      => 'footer',
+                'is_placeholder'    => false,
+                'sort_desktop'      => 99,
+                'sort_tablet'       => 99,
+                'sort_mobile'       => 99,
+                'content_desktop'   => '<div class="w-full flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"><div>© ' . date('Y') . ' [site_name]. All rights reserved.</div><div class="flex items-center gap-4"><a href="/privacy-policy" class="hover:underline">Privacy Policy</a><span class="opacity-40">•</span><a href="/terms" class="hover:underline">Terms of Service</a></div></div>',
+                'content_tablet'    => '<div class="w-full flex flex-col sm:flex-row items-center justify-between gap-4 text-xs"><div>© ' . date('Y') . ' [site_name]. All rights reserved.</div><div class="flex items-center gap-4"><a href="/privacy-policy" class="hover:underline">Privacy Policy</a><span class="opacity-40">•</span><a href="/terms" class="hover:underline">Terms of Service</a></div></div>',
+                'content_mobile'    => '<div class="w-full text-center text-xs">© ' . date('Y') . ' [site_name]. All rights reserved.</div>',
+                'is_active_desktop' => true,
+                'is_active_tablet'  => true,
+                'is_active_mobile'  => true,
+            ]);
+        } else {
+            $block->update([
+                'is_active_desktop' => true,
+                'is_active_tablet'  => true,
+                'is_active_mobile'  => true,
+            ]);
+        }
+
+        $this->editBlock($block->id);
     }
 
     public function toggleLivePreview(): void

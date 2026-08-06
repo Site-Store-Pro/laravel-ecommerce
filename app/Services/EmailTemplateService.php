@@ -52,6 +52,9 @@ class EmailTemplateService
         if (in_array($slug, ['order_confirmation', 'order_shipment', 'download_reminder']) && !str_contains($bodyText, 'order_items_table')) {
             $bodyText .= '<p>{{order_items_table}}</p>';
         }
+        if (in_array($slug, ['abandoned_cart_reminder_1', 'abandoned_cart_reminder_2']) && !str_contains($bodyText, 'cart_items_table') && !str_contains($bodyText, 'order_items_table')) {
+            $bodyText .= '<p>{{cart_items_table}}</p>';
+        }
 
         $data = [
             'subject' => self::renderSubject($tpl, $vars, $languageId),
@@ -91,5 +94,58 @@ class EmailTemplateService
             Log::error("Failed to send dynamic email '{$slug}': " . $e->getMessage());
             return false;
         }
+    }
+
+    public static function renderCartItemsHtml(string $cartLogSession): string
+    {
+        $items = \App\Models\ShoppingCartLog::where('cart_log_session', $cartLogSession)
+            ->where('order_id', 0)
+            ->get();
+
+        if ($items->isEmpty()) {
+            return '';
+        }
+
+        $html = '<div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">';
+        $html .= '<h3 style="font-size: 12px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-top: 0; margin-bottom: 16px; letter-spacing: 0.5px;">' . e(siteLabel('email.your_cart_items', 'YOUR CART ITEMS')) . '</h3>';
+        $html .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">';
+
+        foreach ($items as $item) {
+            $attributesText = '';
+            if (!empty($item->item_attributes)) {
+                $attrs = is_string($item->item_attributes) ? json_decode($item->item_attributes, true) : $item->item_attributes;
+                if (is_array($attrs) && !empty($attrs)) {
+                    $pairs = [];
+                    foreach ($attrs as $k => $v) {
+                        if (is_scalar($v)) {
+                            $pairs[] = e(ucfirst($k)) . ': ' . e($v);
+                        }
+                    }
+                    $attributesText = implode(', ', $pairs);
+                }
+            }
+
+            $price = (float)$item->item_price;
+            $qty   = (float)$item->item_qty;
+            $lineTotal = $price * $qty;
+
+            $html .= '<tr style="border-bottom: 1px solid #f1f5f9;">';
+            $html .= '<td style="padding: 12px 0; vertical-align: top;">';
+            $html .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . e($item->item_name) . '</strong>';
+            if (!empty($attributesText)) {
+                $html .= '<span style="color: #64748b; font-size: 12px; display: block; margin-top: 2px;">' . $attributesText . '</span>';
+            }
+            $html .= '<span style="color: #64748b; font-size: 12px; display: block; margin-top: 2px;">Qty: ' . (int)$qty . ' &times; ' . \App\Services\CurrencyService::format($price) . '</span>';
+            $html .= '</td>';
+            $html .= '<td style="padding: 12px 0; vertical-align: top;" align="right">';
+            $html .= '<strong style="color: #0f172a; font-size: 14px; display: block;">' . \App\Services\CurrencyService::format($lineTotal) . '</strong>';
+            $html .= '</td>';
+            $html .= '</tr>';
+        }
+
+        $html .= '</table>';
+        $html .= '</div>';
+
+        return $html;
     }
 }

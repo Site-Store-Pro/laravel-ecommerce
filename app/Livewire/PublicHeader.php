@@ -33,6 +33,13 @@ class PublicHeader extends Component
         $this->mobileMenuOpen = !$this->mobileMenuOpen;
     }
 
+    #[On('toggle-frontend-dark-mode')]
+    public function toggleFrontendDarkMode(): void
+    {
+        $current = \App\Models\CmsSetting::isEnabled('frontend_dark_mode');
+        \App\Models\CmsSetting::set('frontend_dark_mode', $current ? '0' : '1');
+    }
+
     public function setDeviceView(string $device): void
     {
         if (in_array($device, ['desktop', 'tablet', 'mobile'], true)) {
@@ -47,6 +54,7 @@ class PublicHeader extends Component
         $this->detectDeviceFromUserAgent();
         $this->loadCartCount();
         $this->loadDynamicNav();
+        \App\Services\AbandonedCartService::checkWebTriggeredReminders();
     }
 
     private function detectDeviceFromUserAgent(): void

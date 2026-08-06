@@ -300,11 +300,20 @@
                                     @error('brand_url') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
-                                <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                                    <input type="checkbox" id="is_visible_in_menu" wire:model="is_visible_in_menu" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
-                                    <label for="is_visible_in_menu" class="text-xs font-bold text-slate-700 cursor-pointer">
-                                        Visible in Menus &amp; Shop Filters
-                                    </label>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                                        <input type="checkbox" id="is_visible_in_menu" wire:model="is_visible_in_menu" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                                        <label for="is_visible_in_menu" class="text-xs font-bold text-slate-700 cursor-pointer">
+                                            Visible in Menus &amp; Shop Filters
+                                        </label>
+                                    </div>
+
+                                    <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                                        <input type="checkbox" id="show_image" wire:model="show_image" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+                                        <label for="show_image" class="text-xs font-bold text-slate-700 cursor-pointer">
+                                            Show Image in Menus
+                                        </label>
+                                    </div>
                                 </div>
 
                                 <div class="flex items-center gap-3 pt-4">

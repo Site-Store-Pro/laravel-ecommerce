@@ -188,9 +188,14 @@
 
                             {{-- Body --}}
                             <div class="fi-body">
-                                <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-title">
-                                    {{ $product->title }}
-                                </a>
+                                @if($product->brand)
+                                    <a href="{{ route('shop.brand', $product->brand->slug) }}" style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#4f46e5;margin-bottom:4px;display:block;text-decoration:none;">{{ $product->brand->name }}</a>
+                                @endif
+                                <h3 style="margin:0;padding:0;">
+                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-title" style="text-decoration:none;">
+                                        {{ $product->title }}
+                                    </a>
+                                </h3>
                                 @if($product->short_description)
                                     <p class="fi-desc">{{ strip_tags($product->short_description) }}</p>
                                 @endif
@@ -207,12 +212,9 @@
                                         @endif
                                     </div>
 
-                                    @if($product->is_donation_or_bill_pay || $product->variants->count() > 1)
-                                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-outline">
-                                            @label('plugin.options', 'Options')
-                                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                            </svg>
+                                    @if($product->requiresOptions())
+                                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-primary" style="text-decoration:none;">
+                                            @label('plugin.view_options', 'View Options')
                                         </a>
                                     @else
                                         @if(!$v->download_item && $avail <= 0)
@@ -225,9 +227,6 @@
                                                     class="fi-btn fi-btn-primary">
                                                 <span wire:loading.remove wire:target="buyNow({{ $v->id }})">
                                                     @label('plugin.buy_now', 'Buy Now')
-                                                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                                                    </svg>
                                                 </span>
                                                 <span wire:loading wire:target="buyNow({{ $v->id }})">@label('plugin.adding', 'Adding...')</span>
                                             </button>

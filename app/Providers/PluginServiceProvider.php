@@ -15,6 +15,7 @@ use App\Plugins\Display\LiveSearchPlugin;
 use App\Plugins\Display\EventsCalendarPlugin;
 use App\Plugins\Display\ModalDisplayPlugin;
 use App\Plugins\Display\FaqsPlugin;
+use App\Plugins\Display\OrderStatusTrackerPlugin;
 use App\Plugins\Shipping\FedExPlugin;
 use App\Plugins\Shipping\UpsPlugin;
 use App\Plugins\Shipping\UspsPlugin;
@@ -40,6 +41,7 @@ class PluginServiceProvider extends ServiceProvider
             $manager->register(EventsCalendarPlugin::class);
             $manager->register(ModalDisplayPlugin::class);
             $manager->register(FaqsPlugin::class);
+            $manager->register(OrderStatusTrackerPlugin::class);
             $manager->register(FedExPlugin::class);
             $manager->register(UpsPlugin::class);
             $manager->register(UspsPlugin::class);

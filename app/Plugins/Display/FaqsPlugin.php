@@ -25,12 +25,12 @@ class FaqsPlugin implements DisplayPlugin
             $settings = $plugin->getSettings();
 
             // ── Parameters (shortcode attrs override plugin settings) ──────────
-            $header      = $params['header']     ?? $settings['header_title'] ?? 'Frequently Asked Questions';
-            $showHeader  = strtolower($params['show_header']    ?? ($settings['show_header']    ?? '1')) !== '0';
-            $openFirst   = strtolower($params['open_first']     ?? ($settings['open_first']     ?? '0')) !== '0';
-            $allowMulti  = strtolower($params['allow_multiple'] ?? ($settings['allow_multiple'] ?? '0')) !== '0';
-            $max         = (int) ($params['max']   ?? $settings['max_items']  ?? 0);
-            $customCss   = $params['custom_css']   ?? $settings['custom_css'] ?? '';
+            $header      = $params['header'] ?? $params['header_title'] ?? $settings['header_title'] ?? 'Frequently Asked Questions';
+            $showHeader  = $this->isTruthy($params['show_header'] ?? ($settings['show_header'] ?? '1'), true);
+            $openFirst   = $this->isTruthy($params['open_first']  ?? ($settings['open_first']  ?? '0'), false);
+            $allowMulti  = $this->isTruthy($params['allow_multiple'] ?? ($params['multiple'] ?? ($settings['allow_multiple'] ?? '0')), false);
+            $max         = (int) ($params['max'] ?? $params['max_items'] ?? $settings['max_items'] ?? 0);
+            $customCss   = $params['custom_css'] ?? $settings['custom_css'] ?? '';
 
             // ── Fetch active FAQs ─────────────────────────────────────────────
             $query = CmsFaq::active()->ordered();
@@ -163,5 +163,17 @@ class FaqsPlugin implements DisplayPlugin
             Log::error('[FaqsPlugin] Render error: ' . $e->getMessage());
             return '<!-- [plugin-error: faqs-2026] ' . e($e->getMessage()) . ' -->';
         }
+    }
+
+    private function isTruthy(mixed $val, bool $default = false): bool
+    {
+        if ($val === null || $val === '') {
+            return $default;
+        }
+        if (is_bool($val)) {
+            return $val;
+        }
+        $str = strtolower(trim((string)$val));
+        return in_array($str, ['1', 'true', 'on', 'yes'], true);
     }
 }

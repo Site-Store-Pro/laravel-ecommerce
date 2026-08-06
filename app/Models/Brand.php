@@ -27,10 +27,12 @@ class Brand extends Model
         'brand_logo_access_key_id',
         'brand_logo_secret_access_key',
         'brand_icon_direct_url',
+        'show_image',
     ];
 
     protected $casts = [
         'is_visible_in_menu' => 'boolean',
+        'show_image'         => 'boolean',
         'sort_order'         => 'integer',
         'brand_logo_s3'      => 'integer',
     ];

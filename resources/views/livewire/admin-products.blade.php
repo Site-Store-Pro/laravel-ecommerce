@@ -63,6 +63,23 @@
 
             <!-- Main Panel Content -->
             <div class="lg:col-span-9 space-y-8">
+                <!-- Page Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 bg-gradient-to-r from-slate-900 to-indigo-950 dark:from-slate-100 dark:to-indigo-200 bg-clip-text text-transparent">
+                            Products Manager
+                        </h1>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage, search, edit, and organize all catalog products.</p>
+                    </div>
+                    <a href="{{ route('admin.ecommerce.product-create') }}" wire:navigate
+                       class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-2xl shadow-md shadow-indigo-100 transition shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add New Product
+                    </a>
+                </div>
+
                 <!-- Status/Success Notifications -->
                 @if(session()->has('status'))
                     <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3 text-emerald-800 text-sm font-semibold">
@@ -119,13 +136,13 @@
                                                 {{ $p->price_range }}
                                             </td>
                                             <!-- Last Modified -->
-                                            <td class="px-4 py-3 text-slate-500 font-mono text-[11px]">
-                                                {{ $p->updated_at->format('Y-m-d H:i') }}
+                                            <td class="px-4 py-3 text-slate-500 font-medium">
+                                                {{ $p->updated_at->diffForHumans() }}
                                             </td>
                                             <!-- Actions -->
-                                            <td class="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-                                                <a href="{{ route('admin.ecommerce.product-edit', ['id' => $p->id]) }}"
-                                                   class="inline-flex items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-extrabold rounded-lg transition duration-150 shadow-sm">
+                                            <td class="px-4 py-3 text-right space-x-2">
+                                                <a href="{{ route('admin.ecommerce.product-edit', ['id' => $p->id]) }}" wire:navigate
+                                                   class="inline-flex items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[11px] font-extrabold rounded-lg transition duration-150 border border-indigo-100 shadow-sm">
                                                     Edit
                                                 </a>
                                                 @if($p->seo_slug)
@@ -142,228 +159,6 @@
                         </div>
                     </div>
                 @endif
-
-                <!-- Add Product / Variant Forms -->
-                @if($isCreatingProduct)
-                    <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-                        <h3 class="text-lg font-bold text-slate-900 mb-6">Create New Product</h3>
-                        <form wire:submit.prevent="saveProduct" class="space-y-4">
-                            <div>
-                                <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Title</label>
-                                <input type="text" wire:model="title" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                @error('title') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Short Description</label>
-                                <input type="text" wire:model="short_description" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                            </div>
-                            <div>
-                                <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Long Description</label>
-
-                                @if ($showAiButton)
-                                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 mb-4 space-y-3 animate-fade-in">
-                                        <div>
-                                            <x-input-label for="aiPrompt" :value="__('AI Instruction Prompt')" class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1" />
-                                            <input type="text" wire:model="aiPrompt" id="aiPrompt"
-                                                   class="block w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 text-sm shadow-sm"
-                                                   placeholder="e.g. Please write a high-converting, detailed product description highlighting key features and benefits" />
-                                            <p class="text-slate-400 text-[10px] mt-1.5 leading-relaxed">
-                                                The 'Generate with OPENAI' button will send your prompt, product title, category, short &amp; long description context to OpenAI to return AI-generated content.
-                                            </p>
-                                            <x-input-error :messages="$errors->get('ai_content_error')" class="mt-2 text-xs" />
-                                        </div>
-                                        <div class="flex justify-end">
-                                            <button type="button" wire:click="generateAiContent" wire:loading.attr="disabled"
-                                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-sm">
-                                                <span wire:loading.remove wire:target="generateAiContent" class="flex items-center gap-1.5">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                                                    </svg>
-                                                    Generate with OPENAI
-                                                </span>
-                                                <span wire:loading wire:target="generateAiContent" class="flex items-center gap-1.5">
-                                                    <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
-                                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                    </svg>
-                                                    Processing...
-                                                </span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                @endif
-
-                                @if (!empty($aiResponse))
-                                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 mb-4 space-y-2 animate-fade-in"
-                                         x-data="{
-                                             copyToEditor() {
-                                                 let content = @js($aiResponse);
-                                                 let editor = typeof tinymce !== 'undefined' ? tinymce.get('new_product_long_description_editor') : null;
-                                                 if (editor) {
-                                                     editor.setContent(content);
-                                                     editor.triggerSave();
-                                                 }
-                                                 $wire.set('long_description', content);
-                                             }
-                                         }">
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                                AI Suggested Content
-                                            </span>
-                                            <button type="button" @click="copyToEditor()" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors border border-indigo-150 shadow-sm">
-                                                Copy to Editor
-                                            </button>
-                                        </div>
-                                        <textarea readonly rows="6" class="block w-full rounded-xl border-slate-200 bg-white text-sm text-slate-600 shadow-sm focus:ring-0 focus:border-slate-200">{{ $aiResponse }}</textarea>
-                                    </div>
-                                @endif
-
-                                <div wire:ignore
-                                     x-data="{
-                                         long_description: @entangle('long_description'),
-                                         initTiny() {
-                                             if (typeof tinymce === 'undefined') return;
-                                             let existing = tinymce.get('new_product_long_description_editor');
-                                             if (existing) existing.remove();
-                                             tinymce.init({
-                                                 selector: '#new_product_long_description_editor',
-                                                 license_key: 'gpl',
-                                                 promotion: false,
-                                                 height: 500,
-                                                 menubar: 'insert format tools table',
-                                                 content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } .btn-theme-primary { background-color: #4f46e5 !important; color: #ffffff !important; border-radius: 0.75rem !important; border: none !important; padding: 10px 20px !important; font-weight: 700 !important; font-family: inherit !important; cursor: pointer !important; display: inline-block !important; text-align: center !important; text-decoration: none !important; transition: background-color 0.2s !important; } .btn-theme-primary:hover { background-color: #4338ca !important; }',
-                                                 content_css: [
-                                                     'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
-                                                     '/css/prose.css'
-                                                 ],
-                                                 convert_urls: false,
-                                                 remove_script_host: false,
-                                                 images_upload_handler: window.cmsTinyMCEImageUploadHandler,
-                                                 plugins: 'advlist autolink lists link image charmap preview anchor searchreplace wordcount visualblocks supercode fullscreen insertdatetime media table help emoticons pagebreak directionality',
-                                                 toolbar: [
-                                                     'supercode fullscreen | undo redo | styles blocks | bold italic underline strikethrough | forecolor backcolor',
-                                                     'fontfamily fontsize lineheight | alignleft aligncenter alignright alignjustify | outdent indent | removeformat | numlist bullist | pagebreak | charmap emoticons | link image media anchor | ltr rtl | preview'
-                                                 ],
-                                                 toolbar_mode: 'wrap',
-                                                 cache_suffix: '?v=' + new Date().getTime(),
-                                                 protect: [
-                                                     /\{\{[\s\S]*?\}\}/g,
-                                                     /\{!![\s\S]*?!!\}/g,
-                                                     /@\w+(\([^)]*\))?/g
-                                                 ],
-                                                 branding: false,
-                                                 contextmenu: 'link image imagetools',
-                                                 style_formats: [
-                                                     { title: 'Callout (Yellow/Warning)', block: 'div', classes: 'p-4 bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 text-amber-900 dark:text-amber-200 rounded-r-lg my-4', wrapper: true },
-                                                     { title: 'Callout (Blue/Info)', block: 'div', classes: 'p-4 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 text-blue-900 dark:text-blue-200 rounded-r-lg my-4', wrapper: true },
-                                                     { title: 'Callout (Green/Success)', block: 'div', classes: 'p-4 bg-emerald-50 dark:bg-emerald-950/20 border-l-4 border-emerald-500 text-emerald-900 dark:text-emerald-200 rounded-r-lg my-4', wrapper: true },
-                                                     { title: 'Callout (Red/Danger)', block: 'div', classes: 'p-4 bg-rose-50 dark:bg-rose-950/20 border-l-4 border-rose-500 text-rose-900 dark:text-rose-200 rounded-r-lg my-4', wrapper: true },
-                                                     { title: 'Feature Card', block: 'div', classes: 'p-6 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl shadow-sm my-6', wrapper: true },
-                                                     { title: 'Premium Button (Primary)', selector: 'a', classes: 'inline-block px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors no-underline' },
-                                                     { title: 'Premium Button (Outline)', selector: 'a', classes: 'inline-block px-5 py-2.5 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium rounded-xl transition-colors no-underline' },
-                                                     { title: 'Badge Primary', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full' },
-                                                     { title: 'Badge Success', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full' },
-                                                     { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
-                                                     { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
-                                                 ],
-                                                 extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*]',
-                                                 supercode: {
-                                                     theme: 'monokai',
-                                                     fontSize: 14,
-                                                     autocomplete: true,
-                                                     dark: true
-                                                 },
-                                                 setup: (editor) => {
-                                                     editor.on('init', () => {
-                                                         if (this.long_description) {
-                                                             editor.setContent(this.long_description);
-                                                         }
-                                                     });
-                                                     editor.on('change blur', () => {
-                                                         this.long_description = editor.getContent();
-                                                     });
-                                                 }
-                                             });
-                                         },
-                                         destroy() {
-                                             let ed = tinymce.get('new_product_long_description_editor');
-                                             if (ed) ed.remove();
-                                         }
-                                     }"
-                                     x-init="$nextTick(() => initTiny())"
-                                     x-on:livewire:navigated.window="destroy()">
-                                    <textarea id="new_product_long_description_editor" wire:model="long_description" rows="8" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500"></textarea>
-                                </div>
-                            </div>
-                            
-
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">SEO Slug</label>
-                                    <input type="text" wire:model="seo_slug" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                    @error('seo_slug') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
-                                </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Meta Title</label>
-                                    <input type="text" wire:model="meta_title" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                    @error('meta_title') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Meta Description</label>
-                                <input type="text" wire:model="meta_description" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                @error('meta_description') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider font-sans">Assign Categories</label>
-                                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 h-40 overflow-y-auto space-y-1">
-                                        @if($categoryTree->isEmpty())
-                                            <span class="text-xs text-slate-400">No categories available.</span>
-                                        @else
-                                            @foreach($categoryTree as $node)
-                                                @include('livewire.category-checkbox-node', ['node' => $node, 'depth' => 0])
-                                            @endforeach
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider font-sans">Assign Brand</label>
-                                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 h-40 overflow-y-auto space-y-2">
-                                        <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
-                                            <input type="radio" wire:model="brand_id" value="" class="rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white">
-                                            <span class="text-slate-400 font-normal">None (No Brand)</span>
-                                        </label>
-                                        @if($brands->isEmpty())
-                                            <span class="text-xs text-slate-400">No brands available.</span>
-                                        @else
-                                            @foreach($brands as $brand)
-                                                <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
-                                                    <input type="radio" wire:model="brand_id" value="{{ $brand->id }}" class="rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white">
-                                                    <span>{{ $brand->name }}</span>
-                                                </label>
-                                            @endforeach
-                                        @endif
-                                    </div>
-                                    @error('brand_id') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-
-                            <div class="flex gap-4">
-                                <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-2xl shadow-md hover:opacity-90">Save Product</button>
-                                <button type="button" wire:click="toggleCreateProduct" class="px-6 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-2xl">Cancel</button>
-                            </div>
-                        </form>
-                    </div>
-                @endif
-
-
-
 
                 <!-- Products Table card -->
                 <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
@@ -409,15 +204,15 @@
                             @endif
 
                             {{-- New Product button --}}
-                            <button wire:click="toggleCreateProduct"
-                                    class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-sm hover:opacity-90 transition duration-150">
+                            <a href="{{ route('admin.ecommerce.product-create') }}" wire:navigate
+                               class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-sm hover:opacity-90 transition duration-150">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                 </svg>
-                                New Product
-                            </button>
+                                Add New Product
+                            </a>
                         </div>
-                    </div>
+                    </div>          </div>
 
                     {{-- ─── Advanced Filter Panel ─── --}}
                     @if($showAdvancedFilters)
@@ -728,14 +523,14 @@
                     <!-- New Product Title Input -->
                     <div>
                         <label class="text-xs font-bold text-slate-600 block mb-1 uppercase tracking-wider">New Product Title</label>
-                        <input type="text" wire:model.live="copyProductTitle" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-medium text-sm">
+                        <input type="text" wire:model.live.debounce.300ms="copyProductTitle" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-medium text-sm">
                         @error('copyProductTitle') <span class="text-xs text-red-500 font-bold block mt-1">{{ $message }}</span> @enderror
                     </div>
 
                     <!-- New SEO Slug Input -->
                     <div>
                         <label class="text-xs font-bold text-slate-600 block mb-1 uppercase tracking-wider">New SEO Slug</label>
-                        <input type="text" wire:model="copyProductSlug" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-medium text-sm font-mono">
+                        <input type="text" wire:model.live.debounce.300ms="copyProductSlug" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-medium text-sm font-mono">
                         @error('copyProductSlug') <span class="text-xs text-red-500 font-bold block mt-1">{{ $message }}</span> @enderror
                     </div>
 

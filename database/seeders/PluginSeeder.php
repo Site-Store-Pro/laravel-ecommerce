@@ -664,5 +664,92 @@ class PluginSeeder extends Seeder
                 PluginSetting::create(['plugin_id' => $eventsCalendarPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
             }
         }
+
+        // ── FAQs 2026 Plugin ────────────────────────────────────────────────
+        $faqsPlugin = Plugin::updateOrCreate(
+            ['shortcode' => 'faqs-2026'],
+            [
+                'filename'            => 'FaqsPlugin',
+                'name'                => 'FAQ Accordion Display (2026)',
+                'shortcode'           => 'faqs-2026',
+                'type'                => 'display',
+                'author'              => 'Built-in',
+                'version'             => '1.0',
+                'install_type'        => 1,
+                'activation_required' => 'no',
+                'activation_status'   => 1,
+                'description'         => 'Renders frequently asked questions in an interactive Alpine.js accordion layout. Shortcode: [plugin:faqs-2026]',
+                'usage_instructions'  => '<p>Add <strong>[plugin:faqs-2026]</strong> to any CMS page. Available options:</p>'
+                    . '<ul>'
+                    . '<li><code>header="Frequently Asked Questions"</code> — Section header title</li>'
+                    . '<li><code>show_header=1|0</code> — Show or hide the section header</li>'
+                    . '<li><code>open_first=1|0</code> — Open first FAQ item automatically on load</li>'
+                    . '<li><code>allow_multiple=1|0</code> — Allow multiple FAQ items open at once</li>'
+                    . '<li><code>max=0</code> — Maximum number of FAQs to display (0 for all)</li>'
+                    . '</ul>',
+            ]
+        );
+
+        $faqsDefaultCss = "/* FAQ Accordion 2026 Default Formatting */\n.faq-accordion {\n    width: 100%;\n}";
+
+        $faqsOptions = [
+            ['field_name' => 'header_title',   'field_label' => 'Header Title',               'field_type' => 'input',    'field_data_format' => 'string', 'sort_order' => 10, 'field_default_value' => 'Frequently Asked Questions'],
+            ['field_name' => 'show_header',     'field_label' => 'Show Section Header',        'field_type' => 'checkbox', 'field_data_format' => 'string', 'sort_order' => 20, 'field_default_value' => '1'],
+            ['field_name' => 'open_first',      'field_label' => 'Open First Item By Default', 'field_type' => 'checkbox', 'field_data_format' => 'string', 'sort_order' => 30, 'field_default_value' => '0'],
+            ['field_name' => 'allow_multiple',  'field_label' => 'Allow Multiple Open at Once','field_type' => 'checkbox', 'field_data_format' => 'string', 'sort_order' => 40, 'field_default_value' => '0'],
+            ['field_name' => 'max_items',       'field_label' => 'Max FAQs to Display (0 for all)', 'field_type' => 'input', 'field_data_format' => 'integer', 'sort_order' => 50, 'field_default_value' => '0'],
+            ['field_name' => 'custom_css',      'field_label' => 'Custom CSS Overrides',       'field_type' => 'textarea', 'field_editor' => 'css',       'sort_order' => 60, 'field_default_value' => ''],
+            ['field_name' => 'default_css',     'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 70, 'field_default_value' => $faqsDefaultCss],
+        ];
+
+        PluginOption::where('plugin_id', $faqsPlugin->id)->delete();
+        foreach ($faqsOptions as $opt) {
+            PluginOption::create(array_merge(['plugin_id' => $faqsPlugin->id], $opt));
+            if (!PluginSetting::where('plugin_id', $faqsPlugin->id)->where('field_name', $opt['field_name'])->exists()) {
+                PluginSetting::create(['plugin_id' => $faqsPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
+            }
+        }
+
+        // ── Order Status Tracker 2026 Plugin ─────────────────────────────────
+        $orderTrackerPlugin = Plugin::updateOrCreate(
+            ['filename' => 'order_tracker_2026'],
+            [
+                'name'                => 'Order Status Tracker (2026)',
+                'shortcode'           => 'order-tracker-2026',
+                'type'                => 'display',
+                'author'              => 'Built-in',
+                'version'             => '1.0',
+                'install_type'        => 1,
+                'activation_required' => 'no',
+                'activation_status'   => 1,
+                'description'         => 'Front-end order lookup widget allowing customers to enter order number and email to view current fulfillment status and items on the same page. Shortcode: [plugin:order-tracker-2026]',
+                'usage_instructions'  => '<p>Add <strong>[plugin:order-tracker-2026]</strong> to any CMS page to display the order status tracking form. Custom parameter override: <code>[plugin:order-tracker-2026 header="Track Your Order"]</code>.</p>',
+            ]
+        );
+
+        $orderTrackerDefaultCss = ".order-tracker-plugin-wrapper {\n    width: 100%;\n}";
+
+        $orderTrackerOptions = [
+            ['field_name' => 'header_title',       'field_label' => 'Form Header Title',              'field_type' => 'input',    'field_data_format' => 'string', 'sort_order' => 10, 'field_default_value' => 'Track Your Order'],
+            ['field_name' => 'order_number_label', 'field_label' => 'Order Number Field Label',       'field_type' => 'input',    'field_data_format' => 'string', 'sort_order' => 20, 'field_default_value' => 'Order Number'],
+            ['field_name' => 'email_label',        'field_label' => 'Email Address Field Label',      'field_type' => 'input',    'field_data_format' => 'string', 'sort_order' => 30, 'field_default_value' => 'Email Address'],
+            ['field_name' => 'button_label',       'field_label' => 'Submit Button Text',             'field_type' => 'input',    'field_data_format' => 'string', 'sort_order' => 40, 'field_default_value' => 'Track Order'],
+            ['field_name' => 'error_not_found',    'field_label' => 'Order Not Found Error Message',  'field_type' => 'textarea', 'field_data_format' => 'string', 'sort_order' => 50, 'field_default_value' => 'No order found matching the provided order number and email address.'],
+            ['field_name' => 'status_label',       'field_label' => 'Status Field Label',             'field_type' => 'input',    'field_data_format' => 'string', 'sort_order' => 60, 'field_default_value' => 'Order Status'],
+            ['field_name' => 'date_label',         'field_label' => 'Order Date Label',               'field_type' => 'input',    'field_data_format' => 'string', 'sort_order' => 70, 'field_default_value' => 'Order Date'],
+            ['field_name' => 'total_label',        'field_label' => 'Order Total Label',              'field_type' => 'input',    'field_data_format' => 'string', 'sort_order' => 80, 'field_default_value' => 'Order Total'],
+            ['field_name' => 'tracking_label',     'field_label' => 'Tracking Number Label',          'field_type' => 'input',    'field_data_format' => 'string', 'sort_order' => 90, 'field_default_value' => 'Shipping Tracking'],
+            ['field_name' => 'items_label',        'field_label' => 'Items List Label',               'field_type' => 'input',    'field_data_format' => 'string', 'sort_order' => 100, 'field_default_value' => 'Ordered Items'],
+            ['field_name' => 'custom_css',         'field_label' => 'Custom CSS Overrides',           'field_type' => 'textarea', 'field_editor' => 'css',       'sort_order' => 110, 'field_default_value' => ''],
+            ['field_name' => 'default_css',        'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 120, 'field_default_value' => $orderTrackerDefaultCss],
+        ];
+
+        PluginOption::where('plugin_id', $orderTrackerPlugin->id)->delete();
+        foreach ($orderTrackerOptions as $opt) {
+            PluginOption::create(array_merge(['plugin_id' => $orderTrackerPlugin->id], $opt));
+            if (!PluginSetting::where('plugin_id', $orderTrackerPlugin->id)->where('field_name', $opt['field_name'])->exists()) {
+                PluginSetting::create(['plugin_id' => $orderTrackerPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
+            }
+        }
     }
 }

@@ -244,12 +244,11 @@
                                                     <input
                                                         type="checkbox"
                                                         wire:model="settings.{{ $fieldName }}"
-                                                        value="1"
                                                         id="plugin_check_{{ $selectedPlugin->id }}_{{ $fieldName }}"
                                                         class="sr-only peer"
                                                     >
-                                                    <div class="w-10 h-6 bg-slate-200 dark:bg-slate-600 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:bg-indigo-600 transition-colors"></div>
-                                                    <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4 pointer-events-none"></div>
+                                                    <div class="w-11 h-6 bg-slate-200 dark:bg-slate-600 peer-focus:ring-2 peer-focus:ring-indigo-300 rounded-full peer peer-checked:bg-indigo-600 transition-colors"></div>
+                                                    <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5 pointer-events-none"></div>
                                                 </div>
                                                 <span class="text-sm text-slate-600 dark:text-slate-300 font-medium group-hover:text-slate-800 dark:group-hover:text-slate-100 transition-colors">
                                                     {{ $option->field_label }}
@@ -446,7 +445,7 @@
                                         @endif
                                     @endforeach
 
-                                    <div class="pt-2">
+                                    <div class="pt-2 flex flex-wrap items-center gap-3">
                                         <button
                                             wire:click="saveTlSettings"
                                             wire:loading.attr="disabled"
@@ -457,6 +456,21 @@
                                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                                             </svg>
                                             Save Translations
+                                        </button>
+
+                                        <button
+                                            wire:click="autoTranslatePlugin"
+                                            wire:loading.attr="disabled"
+                                            class="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-xl text-sm transition-all shadow-sm flex items-center gap-2"
+                                        >
+                                            <svg wire:loading wire:target="autoTranslatePlugin" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                                            </svg>
+                                            <svg wire:loading.remove wire:target="autoTranslatePlugin" class="w-4 h-4 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                            </svg>
+                                            Re-translate with AI (OpenAI)
                                         </button>
                                     </div>
                                 </div>

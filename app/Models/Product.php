@@ -307,4 +307,31 @@ class Product extends Model
         }
         return '$' . number_format($prices->min(), 2) . ' - $' . number_format($prices->max(), 2);
     }
+
+    /**
+     * Check if a product requires selecting options or filling required customization fields
+     * before adding to cart (e.g. multiple variants, required custom fields, or donation product).
+     */
+    public function requiresOptions(): bool
+    {
+        if ($this->is_donation_or_bill_pay) {
+            return true;
+        }
+
+        if ($this->variants->count() > 1) {
+            return true;
+        }
+
+        if ($this->relationLoaded('fields')) {
+            if ($this->fields->where('is_required', 1)->isNotEmpty()) {
+                return true;
+            }
+        } else {
+            if ($this->fields()->where('is_required', 1)->exists()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

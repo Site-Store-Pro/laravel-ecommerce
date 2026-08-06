@@ -41,64 +41,59 @@
                 $isFromPrice = $hasVariantPricing;
             @endphp
 
-            <div class="group bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md hover:border-slate-200 transition-all duration-200 flex items-center gap-0 overflow-hidden">
+            <div class="group bg-white dark:bg-slate-800 rounded-3xl border border-slate-150 dark:border-slate-700/60 p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-6 hover:shadow-lg transition">
 
                 {{-- Thumbnail --}}
                 <a href="{{ route('shop.product', $product->seo_slug) }}"
-                   class="{{ $listSizeClass }} shrink-0 bg-gradient-to-br from-indigo-50/60 to-violet-50/60 flex items-center justify-center relative overflow-hidden">
+                   class="{{ $listSizeClass }} shrink-0 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 flex items-center justify-center relative">
                     @if($product->primaryThumbnailUrl())
                         <img src="{{ $product->primaryThumbnailUrl() }}"
                              alt="{{ $product->title }}"
                              class="w-full h-full {{ $objectClass }} group-hover:scale-105 transition-transform duration-500">
                     @else
-                        <span class="text-indigo-400 group-hover:scale-110 transition-all duration-300">
-                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                      d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                            </svg>
+                        <span class="text-slate-300 dark:text-slate-600 group-hover:scale-110 transition-all duration-300">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
                     @endif
                     @if($showBadge ?? true)
-                    <span class="absolute top-1.5 left-1.5 px-1.5 py-0.5 text-[9px] font-bold text-white bg-amber-400 rounded-full">★</span>
+                    <span class="absolute top-1.5 left-1.5 px-2 py-0.5 text-[9px] font-extrabold text-white bg-amber-400 rounded-full shadow-sm">★ Featured</span>
                     @endif
                     @if($defaultVariant && $defaultVariant->on_sale)
-                        <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 text-[10px] font-bold text-red-600 bg-red-50 rounded-full border border-red-100">@label('plugin.sale', 'Sale')</span>
+                        <span class="absolute top-1.5 right-1.5 px-2 py-0.5 text-[10px] font-bold text-white bg-gradient-to-r from-rose-500 to-pink-500 rounded-full shadow-sm">@label('plugin.sale', 'Sale')</span>
                     @endif
                 </a>
 
                 {{-- Info --}}
-                <div class="flex-1 min-w-0 px-5 py-4">
-                    <h3 class="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
-                        <a href="{{ route('shop.product', $product->seo_slug) }}">{{ $product->title }}</a>
+                <div class="flex-1 min-w-0 text-center sm:text-left">
+                    @if($product->brand)
+                        <a href="{{ route('shop.brand', $product->brand->slug) }}" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline uppercase tracking-wider block mb-1">{{ $product->brand->name }}</a>
+                    @endif
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition truncate">
+                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="no-underline text-inherit hover:text-indigo-600 dark:hover:text-indigo-400">{{ $product->title }}</a>
                     </h3>
                     @if($product->short_description)
-                        <p class="mt-1 text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                            {{ strip_tags($product->short_description) }}
-                        </p>
-                    @endif
-                    @if($product->variants->count() > 1)
-                        <p class="mt-1.5 text-[11px] text-indigo-500 font-semibold">{{ $product->variants->count() }} @label('plugin.variants_available', 'variants available')</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{{ strip_tags($product->short_description) }}</p>
                     @endif
                 </div>
 
                 {{-- Price + Action --}}
-                <div class="shrink-0 flex items-center gap-4 pr-5">
+                <div class="flex items-center gap-4 shrink-0">
                     <div class="text-right">
                         @if(!$product->is_donation_or_bill_pay && $defaultVariant)
-                            <div class="text-base font-extrabold text-slate-900">
+                            <span class="block text-lg font-extrabold text-slate-900 dark:text-slate-200">
                                 @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
-                            </div>
+                            </span>
                             @if($priceToShow < $originalPrice)
-                                <div class="text-xs text-slate-400 line-through">${{ number_format($originalPrice, 2) }}</div>
+                                <span class="block text-xs text-slate-400 line-through font-semibold">${{ number_format($originalPrice, 2) }}</span>
                             @endif
                         @elseif(!$product->is_donation_or_bill_pay)
-                            <span class="text-xs text-slate-400">@label('plugin.out_of_stock', 'Out of Stock')</span>
+                            <span class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">@label('plugin.out_of_stock', 'Out of Stock')</span>
                         @endif
                     </div>
 
-                    @if($product->is_donation_or_bill_pay || $product->variants->count() > 1)
+                    @if($product->requiresOptions())
                         <a href="{{ route('shop.product', $product->seo_slug) }}"
-                           class="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition duration-150 whitespace-nowrap">
+                           class="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">
                             @label('plugin.view_options', 'View Options')
                         </a>
                     @else
@@ -109,14 +104,14 @@
                                 : 999);
                         @endphp
                         @if(!$v->download_item && $avail <= 0)
-                            <button disabled class="px-4 py-2 text-xs font-bold text-slate-400 bg-slate-100 rounded-xl cursor-not-allowed whitespace-nowrap">
+                            <span class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">
                                 @label('plugin.out_of_stock', 'Out of Stock')
-                            </button>
+                            </span>
                         @else
                             <button wire:click="buyNow({{ $v->id }})"
                                     wire:loading.attr="disabled"
                                     wire:target="buyNow({{ $v->id }})"
-                                    class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition duration-150 shadow-sm whitespace-nowrap">
+                                    class="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">
                                 <span wire:loading.remove wire:target="buyNow({{ $v->id }})">@label('plugin.buy_now', 'Buy Now')</span>
                                 <span wire:loading wire:target="buyNow({{ $v->id }})">@label('plugin.adding', 'Adding...')</span>
                             </button>

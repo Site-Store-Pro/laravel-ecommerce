@@ -24,6 +24,9 @@ class ShortcodeProcessor
      */
     public function process(string $content): string
     {
+        // Pass -1 — Site URL shortcodes
+        $content = str_replace(['[site_url]', '[site-url]', '[url]'], url('/'), $content);
+
         // Pass 0 — CMS Form shortcodes
         $content = $this->processCmsForms($content);
 

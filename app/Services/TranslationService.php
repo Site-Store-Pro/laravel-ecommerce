@@ -187,6 +187,9 @@ class TranslationService
                 'content_tablet'  => 'header or footer HTML block content for tablet — preserve all HTML and shortcodes exactly',
                 'content_mobile'  => 'header or footer HTML block content for mobile — preserve all HTML and shortcodes exactly',
             ],
+            'ProductInventoryAlert' => [
+                'message' => 'Custom out of stock message for products — clear, concise customer notification',
+            ],
         ];
 
         return $map[class_basename($record)] ?? [];
@@ -195,20 +198,21 @@ class TranslationService
     private function getForeignKeyFor(Model $record): string
     {
         $overrides = [
-            'CmsTestimonial'  => 'testimonial_id',
-            'KbArticle'       => 'kb_article_id',
-            'CmsListMenuItem' => 'cms_list_menu_item_id',
-            'NavItem'         => 'nav_item_id',
-            'CmsPage'         => 'cms_page_id',
-            'Product'         => 'product_id',
-            'SiteLabel'       => 'site_label_id',
-            'Category'        => 'category_id',
-            'CmsPagesCategory'=> 'cms_pages_category_id',
-            'CmsPagesTag'     => 'cms_pages_tag_id',
-            'KbCategory'      => 'kb_category_id',
-            'EmailTemplate'   => 'email_template_id',
-            'CmsModal'        => 'cms_modal_id',
-            'CmsBuilderBlock' => 'cms_builder_block_id',
+            'CmsTestimonial'        => 'testimonial_id',
+            'KbArticle'             => 'kb_article_id',
+            'CmsListMenuItem'       => 'cms_list_menu_item_id',
+            'NavItem'               => 'nav_item_id',
+            'CmsPage'               => 'cms_page_id',
+            'Product'               => 'product_id',
+            'SiteLabel'             => 'site_label_id',
+            'Category'              => 'category_id',
+            'CmsPagesCategory'      => 'cms_pages_category_id',
+            'CmsPagesTag'           => 'cms_pages_tag_id',
+            'KbCategory'            => 'kb_category_id',
+            'EmailTemplate'         => 'email_template_id',
+            'CmsModal'              => 'cms_modal_id',
+            'CmsBuilderBlock'       => 'cms_builder_block_id',
+            'ProductInventoryAlert' => 'product_inventory_alert_id',
         ];
         return $overrides[class_basename($record)] ?? $record->getForeignKey();
     }
@@ -234,6 +238,74 @@ class TranslationService
         $pending    = $total - $translated;
 
         return compact('total', 'translated', 'pending', 'reviewed');
+    }
+
+    /**
+     * Translate all translatable settings/fields for a plugin into a target language via OpenAI.
+     */
+    public function translatePlugin(\App\Models\Plugin $plugin, Language $language): bool
+    {
+        $fields = $plugin->getTranslatableFields();
+        if (empty($fields)) {
+            return false;
+        }
+
+        $baseSettings = $plugin->getSettings();
+        $translations = [];
+
+        foreach ($fields as $fieldName => $label) {
+            $original = $baseSettings[$fieldName] ?? $plugin->getSetting($fieldName, '');
+            if (empty(trim(strip_tags((string)$original)))) {
+                continue;
+            }
+            try {
+                $translations[$fieldName] = $this->translateText(
+                    (string)$original,
+                    $language->name,
+                    'plugin UI label or error message for ' . ($plugin->name ?? $plugin->shortcode) . ' (' . $label . ')'
+                );
+            } catch (\Throwable $e) {
+                Log::error('[TranslationService] Failed to translate plugin field ' . $fieldName . ': ' . $e->getMessage());
+            }
+        }
+
+        if (!empty($translations)) {
+            $plugin->saveSettingsForLanguage($language->id, $translations);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Count translation statistics for active plugins that have translatable fields.
+     */
+    public function pluginTranslationStats(int $languageId): array
+    {
+        $plugins = \App\Models\Plugin::all();
+        $total = 0;
+        $translated = 0;
+
+        foreach ($plugins as $plugin) {
+            $fields = $plugin->getTranslatableFields();
+            if (empty($fields)) {
+                continue;
+            }
+            $total += count($fields);
+
+            $existing = \App\Models\PluginSettingTranslation::where('plugin_id', $plugin->id)
+                ->where('language_id', $languageId)
+                ->whereIn('field_name', array_keys($fields))
+                ->whereNotNull('field_value')
+                ->where('field_value', '!=', '')
+                ->count();
+
+            $translated += $existing;
+        }
+
+        $pending = max(0, $total - $translated);
+
+        return ['total' => $total, 'translated' => $translated, 'pending' => $pending, 'reviewed' => 0];
     }
 
     // ── Translation class resolution ─────────────────────────────────────────

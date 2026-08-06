@@ -81,7 +81,12 @@ class AdminProducts extends Component
 
     public function updatedTitle(string $value): void
     {
-        $this->seo_slug = Str::slug($value);
+        $this->seo_slug = \App\Helpers\SeoSlugHelper::generate($value);
+    }
+
+    public function updatedSeoSlug(string $value): void
+    {
+        $this->seo_slug = \App\Helpers\SeoSlugHelper::generate($value);
     }
 
     public bool $isCreatingProduct = false;
@@ -115,6 +120,8 @@ class AdminProducts extends Component
 
     public function saveProduct(): void
     {
+        $this->seo_slug = \App\Helpers\SeoSlugHelper::generate($this->seo_slug ?: $this->title);
+
         $this->validate([
             'title' => 'required|string|max:255',
             'short_description' => 'nullable|string',
@@ -144,8 +151,6 @@ class AdminProducts extends Component
         session()->flash('status', 'Product created successfully.');
     }
 
-
-
     // Copy / Duplicate Product Form Properties
     public bool $showCopyModal = false;
     public ?int $copyProductId = null;
@@ -163,7 +168,7 @@ class AdminProducts extends Component
         $this->copyOriginalTitle = $product->title;
         $this->copyProductTitle = $product->title . ' - Copy ' . $randomCode;
 
-        $baseSlug = Str::slug($product->seo_slug ?: $product->title);
+        $baseSlug = \App\Helpers\SeoSlugHelper::generate($product->seo_slug ?: $product->title);
         $candidateSlug = $baseSlug . '-copy-' . strtolower($randomCode);
         while (Product::where('seo_slug', $candidateSlug)->exists()) {
             $randomCode = Str::upper(Str::random(4));
@@ -187,7 +192,7 @@ class AdminProducts extends Component
     public function updatedCopyProductTitle(string $value): void
     {
         if (!empty($value)) {
-            $this->copyProductSlug = Str::slug($value);
+            $this->copyProductSlug = \App\Helpers\SeoSlugHelper::generate($value);
         }
     }
 

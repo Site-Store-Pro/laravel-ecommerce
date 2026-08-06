@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 
 class ProductInventoryAlert extends Model
 {
+    use HasTranslations;
+
     protected $table = 'product_inventory_alerts';
+
+    public array $translatable = ['message'];
 
     protected $fillable = [
         'message',

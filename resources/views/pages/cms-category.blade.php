@@ -40,7 +40,7 @@
                         <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 uppercase tracking-widest">
                             @label('cms.category_archives', 'Category Archives')
                         </span>
-                        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">
+                        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-snug pb-2 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent">
                             {{ $category->name }}
                         </h1>
                         <p class="text-base text-slate-500 leading-relaxed font-medium">

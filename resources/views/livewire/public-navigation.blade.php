@@ -109,10 +109,35 @@
                     </a>
                 @endauth
             @endif
+
+            {{-- Front-End Dark Mode Switcher --}}
+            @if($showDarkModeSwitcher)
+            <div x-data="{ isDark: document.documentElement.classList.contains('dark') }" class="ml-2">
+                <button
+                    type="button"
+                    id="frontend-dark-mode-toggle"
+                    @click="
+                        isDark = !isDark;
+                        document.documentElement.classList.toggle('dark', isDark);
+                        $wire.toggleFrontendDarkMode();
+                    "
+                    class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none transition-all duration-200 shadow-sm backdrop-blur-sm"
+                    :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+                    aria-label="Toggle dark mode"
+                >
+                    <svg x-show="isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                    </svg>
+                    <svg x-show="!isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </button>
+            </div>
+            @endif
         </nav>
 
         <!-- Hamburger & Mobile Utility (Mobile Only) -->
-        <div class="flex items-center gap-4 md:hidden">
+        <div class="flex items-center gap-3 md:hidden">
             <!-- Mobile Cart Shortcut -->
             @if(true)
                 <button wire:click.prevent="$dispatch('open-cart')" class="text-slate-600 hover:text-indigo-600 transition-colors flex items-center gap-1 relative focus:outline-none">
@@ -123,6 +148,29 @@
                         <span class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[10px] font-bold text-white bg-indigo-600 rounded-full leading-none">{{ number_format($cartCount, 0) }}</span>
                     @endif
                 </button>
+            @endif
+
+            {{-- Mobile Front-End Dark Mode Switcher --}}
+            @if($showDarkModeSwitcher)
+            <div x-data="{ isDark: document.documentElement.classList.contains('dark') }">
+                <button
+                    type="button"
+                    @click="
+                        isDark = !isDark;
+                        document.documentElement.classList.toggle('dark', isDark);
+                        $wire.toggleFrontendDarkMode();
+                    "
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-xl text-slate-500 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none"
+                    :aria-label="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+                >
+                    <svg x-show="isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                    </svg>
+                    <svg x-show="!isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </button>
+            </div>
             @endif
 
             <button wire:click="toggleMobileMenu" type="button" class="text-slate-500 hover:text-slate-900 focus:outline-none" aria-label="Toggle menu">

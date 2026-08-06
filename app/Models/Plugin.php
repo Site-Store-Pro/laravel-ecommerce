@@ -67,7 +67,20 @@ class Plugin extends Model
 
     public function getSettings(): array
     {
-        return $this->settings()->pluck('field_value', 'field_name')->toArray();
+        $settings = $this->settings()->pluck('field_value', 'field_name')->toArray();
+
+        foreach ($this->options as $option) {
+            if (!array_key_exists($option->field_name, $settings)) {
+                $settings[$option->field_name] = $option->field_default_value;
+            }
+
+            if ($option->field_type === 'checkbox') {
+                $val = $settings[$option->field_name] ?? $option->field_default_value;
+                $settings[$option->field_name] = in_array(strtolower(trim((string)$val)), ['1', 'true', 'on', 'yes'], true);
+            }
+        }
+
+        return $settings;
     }
 
     public function getSetting(string $field, mixed $default = null): mixed
@@ -88,9 +101,12 @@ class Plugin extends Model
     public function saveSettings(array $values): void
     {
         foreach ($values as $key => $value) {
+            if (is_bool($value)) {
+                $value = $value ? '1' : '0';
+            }
             PluginSetting::updateOrCreate(
                 ['plugin_id' => $this->id, 'field_name' => $key],
-                ['field_value' => $value]
+                ['field_value' => (string) $value]
             );
         }
     }
@@ -108,13 +124,56 @@ class Plugin extends Model
     public function getTranslatableFields(): array
     {
         $map = [
+            'order-tracker-2026' => [
+                'header_title'       => 'Form Header Title',
+                'order_number_label' => 'Order Number Field Label',
+                'email_label'        => 'Email Address Field Label',
+                'button_label'       => 'Submit Button Text',
+                'error_not_found'    => 'Order Not Found Error Message',
+                'status_label'       => 'Status Field Label',
+                'date_label'         => 'Order Date Label',
+                'total_label'        => 'Order Total Label',
+                'tracking_label'     => 'Tracking Number Label',
+                'items_label'        => 'Items List Label',
+            ],
             'live-search-2026' => [
                 'button_label' => 'Button Label',
                 'placeholder'  => 'Placeholder Text',
             ],
+            'testimonials-2026' => [
+                'header_title' => 'Header Title',
+            ],
+            'events-calendar-2026' => [
+                'header_title' => 'Header Title',
+            ],
+            'faqs-2026' => [
+                'header_title' => 'Header Title',
+            ],
+            'featured-items-2026' => [
+                'header_title' => 'Header Title',
+            ],
+            'categories-2026' => [
+                'header_title' => 'Header Title',
+            ],
+            'brands-2026' => [
+                'header_title' => 'Header Title',
+            ],
         ];
 
-        return $map[$this->shortcode] ?? [];
+        if (isset($map[$this->shortcode])) {
+            return $map[$this->shortcode];
+        }
+
+        $fields = [];
+        foreach ($this->options as $opt) {
+            if (in_array($opt->field_type, ['input', 'textarea', 'wysiwyg', 'tinymce'])) {
+                if (preg_match('/(title|label|heading|text|placeholder|message|msg|header)/i', $opt->field_name)) {
+                    $fields[$opt->field_name] = $opt->field_label ?: $opt->field_name;
+                }
+            }
+        }
+
+        return $fields;
     }
 
     /**

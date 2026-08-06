@@ -278,7 +278,27 @@ class AdminProductEdit extends Component
         $this->inventory_alert_id    = $this->product->inventory_alert_id ? (int) $this->product->inventory_alert_id : null;
     }
 
-    public function updateProduct(): void
+    public function updatedTitle(string $value): void
+    {
+        $this->seo_slug = \App\Helpers\SeoSlugHelper::generate($value);
+    }
+
+    public function updatedSeoSlug(string $value): void
+    {
+        $this->seo_slug = \App\Helpers\SeoSlugHelper::generate($value);
+    }
+
+    /**
+     * Internal helper: validates and saves all core product sections
+     * (Details, Advanced Settings, Layout & Video, and Variant Label)
+     * simultaneously so no unsaved section changes are lost when any save button is clicked.
+     */
+    /**
+     * Internal helper: validates and saves all core product sections
+     * (Details, Advanced Settings, Layout & Video, Variant Label, and any open Variant edit)
+     * simultaneously so no unsaved section changes are lost when any save button is clicked.
+     */
+    private function saveCoreProductSections(bool $saveVariantIfOpen = true): bool
     {
         $this->validate([
             'title' => 'required|string|max:255',
@@ -286,98 +306,25 @@ class AdminProductEdit extends Component
             'short_description' => 'nullable|string',
             'long_description' => 'nullable|string',
             'brand_id' => 'nullable|integer|exists:product_brands,id',
-        ]);
-
-        $this->product->update([
-            'title' => $this->title,
-            'short_description' => $this->short_description,
-            'long_description' => $this->long_description,
-            'meta_title' => $this->meta_title,
-            'meta_description' => $this->meta_description ?: $this->short_description,
-            'seo_slug' => $this->seo_slug ?: Str::slug($this->title),
-            'brand_id' => $this->brand_id,
-            'product_search_index' => $this->product_search_index,
-            'product_search_index_locked' => $this->product_search_index_locked,
-            'variant_label' => trim($this->variant_label) ?: 'Select Option:',
-        ]);
-
-        $this->product->categories()->sync($this->selectedCategories);
-
-        session()->flash('status', 'Product details updated successfully.');
-        $this->loadProduct();
-    }
-
-    public function rebuildIndexKeywords(): void
-    {
-        $this->product->loadMissing(['brand', 'categories', 'variants']);
-        $this->product->fill([
-            'title' => $this->title,
-            'short_description' => $this->short_description,
-            'long_description' => $this->long_description,
-            'meta_title' => $this->meta_title,
-            'meta_description' => $this->meta_description,
-            'seo_slug' => $this->seo_slug,
-            'product_search_index_locked' => false,
-        ]);
-        $this->product_search_index = $this->product->rebuildSearchIndex(force: true);
-        $this->dispatch('toast', type: 'info', message: 'Product search index keywords generated.');
-    }
-
-    /**
-     * Dedicated save for the variant selector label.
-     * Called by the inline save button above the variant list in the admin.
-     */
-    public function updateVariantLabel(): void
-    {
-        $this->validate(['variant_label' => 'nullable|string|max:255']);
-
-        $this->product->update([
-            'variant_label' => trim($this->variant_label) ?: 'Select Option:',
-        ]);
-
-        $this->dispatch('toast', type: 'success', message: 'Variant selector label saved.');
-        $this->loadProduct();
-    }
-
-    /**
-     * Save layout type and video embed. Separated from updateAdvancedSettings()
-     * so it has its own dedicated save button in the Layout & Video section card.
-     */
-    public function updateLayoutSettings(): void
-    {
-        $this->validate([
-            'layout_type'         => 'required|integer|in:1,2,3,4,5,6',
+            'variant_label' => 'nullable|string|max:255',
+            'layout_type' => 'required|integer|in:1,2,3,4,5,6',
             'product_video_embed' => 'nullable|string|max:10000',
-        ]);
-
-        $this->product->update([
-            'layout_type'         => (int) $this->layout_type,
-            'product_video_embed' => trim($this->product_video_embed) ?: null,
-        ]);
-
-        $this->dispatch('toast', type: 'success', message: 'Layout settings saved.');
-        $this->loadProduct();
-    }
-
-    public function updateAdvancedSettings(): void
-    {
-        $this->validate([
-            'max_qty'               => 'nullable|boolean',
-            'checkout_redirect'     => 'nullable|boolean',
-            'completion_redirect'         => 'nullable|string|max:1000',
-            'completion_redirect_label'   => 'nullable|string|max:255',
-            'standalone_purchase'   => 'nullable|boolean',
-            'dependent_variants'    => 'nullable|boolean',
+            'max_qty' => 'nullable|boolean',
+            'checkout_redirect' => 'nullable|boolean',
+            'completion_redirect' => 'nullable|string|max:1000',
+            'completion_redirect_label' => 'nullable|string|max:255',
+            'standalone_purchase' => 'nullable|boolean',
+            'dependent_variants' => 'nullable|boolean',
             'hide_inventory_levels' => 'nullable|boolean',
-            'reviews_enabled'       => 'boolean',
-            'featured_item'         => 'nullable|boolean',
-            'show_item_total'       => 'nullable|boolean',
+            'reviews_enabled' => 'boolean',
+            'featured_item' => 'nullable|boolean',
+            'show_item_total' => 'nullable|boolean',
             'is_donation_or_bill_pay' => 'boolean',
-            'allow_custom_amount'    => 'boolean',
-            'custom_amount_min'      => 'nullable|numeric|min:0',
-            'custom_amount_max'      => 'nullable|numeric|min:0',
-            'custom_amount_options'  => 'nullable|string|max:500',
-            'inventory_alert_id'     => 'nullable|integer|exists:product_inventory_alerts,id',
+            'allow_custom_amount' => 'boolean',
+            'custom_amount_min' => 'nullable|numeric|min:0',
+            'custom_amount_max' => 'nullable|numeric|min:0',
+            'custom_amount_options' => 'nullable|string|max:500',
+            'inventory_alert_id' => 'nullable|integer|exists:product_inventory_alerts,id',
         ]);
 
         // Validate preset options format when custom amount entry is disabled
@@ -387,31 +334,110 @@ class AdminProductEdit extends Component
                 $clean = trim($part);
                 if ($clean !== '' && (!is_numeric($clean) || floatval($clean) <= 0)) {
                     $this->addError('custom_amount_options', "Preset amounts must contain valid positive numbers separated by commas (e.g. '10, 25, 50, 100'). Invalid value: '{$clean}'");
-                    return;
+                    return false;
                 }
             }
         }
 
+        $formattedSlug = \App\Helpers\SeoSlugHelper::generate($this->seo_slug ?: $this->title);
+        $this->seo_slug = $formattedSlug;
+
         $this->product->update([
-            'max_qty'               => (int) $this->max_qty,
-            'checkout_redirect'     => (int) $this->checkout_redirect,
-            'completion_redirect'         => trim($this->completion_redirect) ?: null,
-            'completion_redirect_label'   => trim($this->completion_redirect_label) ?: null,
-            'standalone_purchase'   => (int) $this->standalone_purchase,
-            'dependent_variants'    => (int) $this->dependent_variants,
+            // Details
+            'title' => $this->title,
+            'short_description' => $this->short_description,
+            'long_description' => $this->long_description,
+            'meta_title' => $this->meta_title,
+            'meta_description' => $this->meta_description ?: $this->short_description,
+            'seo_slug' => $formattedSlug,
+            'brand_id' => $this->brand_id,
+            'product_search_index' => $this->product_search_index,
+            'product_search_index_locked' => $this->product_search_index_locked,
+            'variant_label' => trim($this->variant_label) ?: 'Select Option:',
+
+            // Layout & Video
+            'layout_type' => (int) $this->layout_type,
+            'product_video_embed' => trim($this->product_video_embed) ?: null,
+
+            // Advanced Settings
+            'max_qty' => (int) $this->max_qty,
+            'checkout_redirect' => (int) $this->checkout_redirect,
+            'completion_redirect' => trim($this->completion_redirect) ?: null,
+            'completion_redirect_label' => trim($this->completion_redirect_label) ?: null,
+            'standalone_purchase' => (int) $this->standalone_purchase,
+            'dependent_variants' => (int) $this->dependent_variants,
             'hide_inventory_levels' => (int) $this->hide_inventory_levels,
-            'reviews_enabled'       => (int) $this->reviews_enabled,
-            'featured_item'         => (int) $this->featured_item,
-            'show_item_total'       => (int) $this->show_item_total,
+            'reviews_enabled' => (int) $this->reviews_enabled,
+            'featured_item' => (int) $this->featured_item,
+            'show_item_total' => (int) $this->show_item_total,
             'is_donation_or_bill_pay' => (bool) $this->is_donation_or_bill_pay,
-            'allow_custom_amount'    => (bool) $this->allow_custom_amount,
-            'custom_amount_min'      => $this->custom_amount_min !== null && $this->custom_amount_min !== '' ? (float) $this->custom_amount_min : null,
-            'custom_amount_max'      => $this->custom_amount_max !== null && $this->custom_amount_max !== '' ? (float) $this->custom_amount_max : null,
-            'custom_amount_options'  => trim($this->custom_amount_options) ?: null,
-            'inventory_alert_id'     => $this->inventory_alert_id ?: null,
+            'allow_custom_amount' => (bool) $this->allow_custom_amount,
+            'custom_amount_min' => $this->custom_amount_min !== null && $this->custom_amount_min !== '' ? (float) $this->custom_amount_min : null,
+            'custom_amount_max' => $this->custom_amount_max !== null && $this->custom_amount_max !== '' ? (float) $this->custom_amount_max : null,
+            'custom_amount_options' => trim($this->custom_amount_options) ?: null,
+            'inventory_alert_id' => $this->inventory_alert_id ?: null,
         ]);
 
-        $this->dispatch('toast', type: 'success', message: 'Advanced settings saved.');
+        $this->product->categories()->sync($this->selectedCategories);
+
+        if ($saveVariantIfOpen) {
+            if ($this->selectedVariantId && $this->selectedVariantId > 0) {
+                $this->updateVariant(false);
+            } elseif ($this->isCreatingVariant) {
+                $this->saveVariant(false);
+            }
+        }
+
+        return true;
+    }
+
+    public function saveAllSections(): void
+    {
+        if ($this->saveCoreProductSections(true)) {
+            session()->flash('status', 'All product sections and active variant edits saved successfully.');
+            $this->dispatch('toast', type: 'success', message: 'All product sections and active variant edits saved successfully.');
+            $this->loadProduct();
+        }
+    }
+
+    public function updateProduct(): void
+    {
+        if (!$this->saveCoreProductSections()) {
+            return;
+        }
+
+        session()->flash('status', 'Product details and all page sections saved successfully.');
+        $this->dispatch('toast', type: 'success', message: 'Product details and all page sections saved successfully.');
+        $this->loadProduct();
+    }
+
+    public function updateVariantLabel(): void
+    {
+        if (!$this->saveCoreProductSections()) {
+            return;
+        }
+
+        $this->dispatch('toast', type: 'success', message: 'Variant selector label and all product sections saved.');
+        $this->loadProduct();
+    }
+
+    public function updateLayoutSettings(): void
+    {
+        if (!$this->saveCoreProductSections()) {
+            return;
+        }
+
+        $this->dispatch('toast', type: 'success', message: 'Layout settings and all product sections saved.');
+        $this->loadProduct();
+    }
+
+    public function updateAdvancedSettings(): void
+    {
+        if (!$this->saveCoreProductSections()) {
+            return;
+        }
+
+        $this->dispatch('toast', type: 'success', message: 'Advanced settings and all product sections saved.');
         $this->loadProduct();
     }
 
@@ -705,8 +731,14 @@ class AdminProductEdit extends Component
         $this->loadProduct();
     }
 
-    public function saveVariant(): void
+    public function saveVariant(bool $saveCoreFirst = true): void
     {
+        if ($saveCoreFirst) {
+            if (!$this->saveCoreProductSections(false)) {
+                return;
+            }
+        }
+
         $this->validate([
             'sku' => 'required|string|max:255|unique:product_variants,sku',
             'public_price' => 'required|numeric|min:0',
@@ -1034,8 +1066,14 @@ class AdminProductEdit extends Component
         $this->qtyDiscounts = [];
     }
 
-    public function updateVariant(): void
+    public function updateVariant(bool $saveCoreFirst = true): void
     {
+        if ($saveCoreFirst) {
+            if (!$this->saveCoreProductSections(false)) {
+                return;
+            }
+        }
+
         // Sync inline attributes back to JSON string before validation
         $this->updatedInlineAttributes();
 
@@ -1722,6 +1760,10 @@ class AdminProductEdit extends Component
 
     public function saveCustomField(): void
     {
+        if (!$this->saveCoreProductSections()) {
+            return;
+        }
+
         $this->validate([
             'customFieldLabel' => 'required|string|max:255',
             'customFieldType' => 'required|string|in:text,textarea,select,radio,checkbox,multiselect_checkbox',
@@ -1874,6 +1916,10 @@ class AdminProductEdit extends Component
 
     public function saveReview(): void
     {
+        if (!$this->saveCoreProductSections()) {
+            return;
+        }
+
         $this->validate([
             'reviewName' => 'required|string|max:255',
             'reviewLocation' => 'nullable|string|max:255',

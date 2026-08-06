@@ -156,7 +156,7 @@
                     <div class="max-w-5xl mx-auto px-6 pt-8 pb-0 w-full flex flex-col {{ $classes['horizontal'] }}">
                         <div class="border-b border-slate-200/80 pb-0 mb-6 w-full flex flex-col {{ $classes['horizontal'] }} {{ $classes['text'] }}">
                             @if($page->show_title)
-                                <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent dark:bg-none dark:text-slate-200 mb-4">
+                                <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 leading-snug pb-2 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent dark:bg-none dark:text-slate-200 mb-4">
                                     {{ $page->alternate_page_title ?: $page->title }}
                                 </h1>
                             @endif

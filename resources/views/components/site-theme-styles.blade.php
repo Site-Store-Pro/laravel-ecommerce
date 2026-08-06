@@ -35,6 +35,12 @@
     $darkLinkHoverColor = !empty($rawLinkHoverColor) ? $rawLinkHoverColor : '#93c5fd';
     $darkLinkActiveColor= !empty($rawLinkActiveColor) ? $rawLinkActiveColor : '#bfdbfe';
 
+    // Admin area button colours — isolated from the frontend theme so admin UX is always safe
+    $adminBtnBg      = \App\Models\CmsSetting::get('admin_btn_primary_bg',      '#4f46e5');
+    $adminBtnText    = \App\Models\CmsSetting::get('admin_btn_primary_text',    '#ffffff');
+    $adminBtnHoverBg = \App\Models\CmsSetting::get('admin_btn_primary_hover_bg','#4338ca');
+    $adminBtnBorder  = \App\Models\CmsSetting::get('admin_btn_primary_border',  '#4f46e5');
+
     $rawStyles = ":root {
         --theme-primary: {$primaryColor};
         --theme-primary-hover: {$hoverColor};
@@ -53,49 +59,54 @@
         --theme-dark-link-color: {$darkLinkColor};
         --theme-dark-link-hover-color: {$darkLinkHoverColor};
         --theme-dark-link-active-color: {$darkLinkActiveColor};
+        /* Admin-area button vars — safe defaults, overridable via admin settings */
+        --admin-btn-bg: {$adminBtnBg};
+        --admin-btn-text: {$adminBtnText};
+        --admin-btn-hover-bg: {$adminBtnHoverBg};
+        --admin-btn-border: {$adminBtnBorder};
     }
 
-    /* Primary Buttons & Background Utilities */
-    .bg-indigo-600, .bg-purple-600, .bg-violet-600,
-    [class*='from-indigo-600'], [class*='from-purple-600'], [class*='from-violet-600'] {
+    /* Primary Buttons & Background Utilities — EXCLUDED on admin-area pages */
+    body:not(.admin-area) .bg-indigo-600, body:not(.admin-area) .bg-purple-600, body:not(.admin-area) .bg-violet-600,
+    body:not(.admin-area) [class*='from-indigo-600'], body:not(.admin-area) [class*='from-purple-600'], body:not(.admin-area) [class*='from-violet-600'] {
         background-image: none !important;
         background-color: var(--theme-primary) !important;
         color: var(--theme-text, #ffffff) !important;
     }
-    .hover\:bg-indigo-500:hover, .hover\:bg-indigo-700:hover, .hover\:bg-purple-500:hover, .hover\:bg-purple-700:hover, .hover\:bg-violet-700:hover,
-    [class*='hover:from-indigo-700']:hover, [class*='hover:from-purple-700']:hover {
+    body:not(.admin-area) .hover\:bg-indigo-500:hover, body:not(.admin-area) .hover\:bg-indigo-700:hover, body:not(.admin-area) .hover\:bg-purple-500:hover, body:not(.admin-area) .hover\:bg-purple-700:hover, body:not(.admin-area) .hover\:bg-violet-700:hover,
+    body:not(.admin-area) [class*='hover:from-indigo-700']:hover, body:not(.admin-area) [class*='hover:from-purple-700']:hover {
         background-image: none !important;
         background-color: var(--theme-primary-hover) !important;
         color: var(--theme-primary-hover-text, var(--theme-text, #ffffff)) !important;
     }
-    .border-indigo-500, .border-purple-500, .border-violet-500, .border-indigo-600, .border-purple-600, .border-violet-600 {
+    body:not(.admin-area) .border-indigo-500, body:not(.admin-area) .border-purple-500, body:not(.admin-area) .border-violet-500, body:not(.admin-area) .border-indigo-600, body:not(.admin-area) .border-purple-600, body:not(.admin-area) .border-violet-600 {
         border-color: var(--theme-primary) !important;
     }
-    .hover\:border-indigo-300:hover, .hover\:border-purple-300:hover, .hover\:border-violet-300:hover {
+    body:not(.admin-area) .hover\:border-indigo-300:hover, body:not(.admin-area) .hover\:border-purple-300:hover, body:not(.admin-area) .hover\:border-violet-300:hover {
         border-color: var(--theme-primary-hover) !important;
     }
-    .focus\:ring-indigo-500:focus, .focus\:ring-purple-500:focus, .focus\:ring-violet-500:focus {
+    body:not(.admin-area) .focus\:ring-indigo-500:focus, body:not(.admin-area) .focus\:ring-purple-500:focus, body:not(.admin-area) .focus\:ring-violet-500:focus {
         --tw-ring-color: var(--theme-primary) !important;
         outline-color: var(--theme-primary) !important;
     }
 
-    /* Button Border Radius & Shape */
-    button:not(nav[role='navigation'] button),
-    .btn,
-    .btn-primary,
-    a.bg-indigo-600,
-    a.bg-purple-600,
-    a.bg-violet-600,
-    a.bg-indigo-50,
-    a.bg-purple-50,
-    a.bg-violet-50,
-    input[type=\"submit\"],
-    input[type=\"button\"] {
+    /* Button Border Radius & Shape — EXCLUDED on admin-area pages */
+    body:not(.admin-area) button:not(nav[role='navigation'] button),
+    body:not(.admin-area) .btn,
+    body:not(.admin-area) .btn-primary,
+    body:not(.admin-area) a.bg-indigo-600,
+    body:not(.admin-area) a.bg-purple-600,
+    body:not(.admin-area) a.bg-violet-600,
+    body:not(.admin-area) a.bg-indigo-50,
+    body:not(.admin-area) a.bg-purple-50,
+    body:not(.admin-area) a.bg-violet-50,
+    body:not(.admin-area) input[type=\"submit\"],
+    body:not(.admin-area) input[type=\"button\"] {
         border-radius: var(--theme-border-radius) !important;
     }
 
-    /* Primary Theme Button */
-    .btn-theme-primary {
+    /* Primary Theme Button — EXCLUDED on admin-area pages */
+    body:not(.admin-area) .btn-theme-primary {
         background-color: var(--theme-primary) !important;
         color: var(--theme-text, #ffffff) !important;
         border: 1px solid var(--theme-primary-border, var(--theme-primary)) !important;
@@ -109,18 +120,18 @@
         text-decoration: none !important;
         transition: background-color 0.2s, color 0.2s, border-color 0.2s !important;
     }
-    .btn-theme-primary:hover {
+    body:not(.admin-area) .btn-theme-primary:hover {
         background-color: var(--theme-primary-hover) !important;
         color: var(--theme-primary-hover-text, var(--theme-text, #ffffff)) !important;
         border-color: var(--theme-primary-hover) !important;
     }
-    .btn-theme-primary *,
-    .btn-primary * {
+    body:not(.admin-area) .btn-theme-primary *,
+    body:not(.admin-area) .btn-primary * {
         color: inherit !important;
     }
 
-    /* Secondary Theme Button */
-    .btn-secondary, .btn-theme-secondary {
+    /* Secondary Theme Button — EXCLUDED on admin-area pages */
+    body:not(.admin-area) .btn-secondary, body:not(.admin-area) .btn-theme-secondary {
         background-color: var(--theme-secondary-bg) !important;
         color: var(--theme-secondary-text) !important;
         border: 1px solid var(--theme-secondary-border) !important;
@@ -135,10 +146,92 @@
         gap: 0.5rem !important;
         transition: all 0.2s ease-in-out !important;
     }
-    .btn-secondary:hover, .btn-theme-secondary:hover,
-    .btn-secondary.active, .btn-theme-secondary.active {
+    body:not(.admin-area) .btn-secondary:hover, body:not(.admin-area) .btn-theme-secondary:hover,
+    body:not(.admin-area) .btn-secondary.active, body:not(.admin-area) .btn-theme-secondary.active {
         background-color: var(--theme-secondary-hover-bg) !important;
         color: var(--theme-secondary-hover-text) !important;
+    }
+
+    /* ── Admin-Area Button Classes ────────────────────────────────────────────
+       These use --admin-btn-* vars (set above in :root) and are NEVER overridden
+       by the frontend theme. Admin buttons keep their own safe colour scheme.
+       ─────────────────────────────────────────────────────────────────────── */
+    .admin-btn-primary {
+        background-color: var(--admin-btn-bg, #4f46e5) !important;
+        color: var(--admin-btn-text, #ffffff) !important;
+        border: 1px solid var(--admin-btn-border, #4f46e5) !important;
+        border-radius: 0.75rem !important;
+        padding: 8px 18px !important;
+        font-size: 0.8125rem !important;
+        font-weight: 700 !important;
+        font-family: inherit !important;
+        cursor: pointer !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.4rem !important;
+        text-decoration: none !important;
+        transition: background-color 0.15s, border-color 0.15s !important;
+        white-space: nowrap !important;
+    }
+    .admin-btn-primary:hover, .admin-btn-primary:focus {
+        background-color: var(--admin-btn-hover-bg, #4338ca) !important;
+        border-color: var(--admin-btn-hover-bg, #4338ca) !important;
+        color: var(--admin-btn-text, #ffffff) !important;
+    }
+    .admin-btn-primary * { color: inherit !important; }
+
+    /* ── Admin Top-Nav Link Colours ───────────────────────────────────────────
+       Override the x-nav-link component's hardcoded gray Tailwind classes so
+       admin nav tabs follow the admin dark/light mode and never inherit the
+       storefront link colour theme.
+       ─────────────────────────────────────────────────────────────────────── */
+    body.admin-area nav a.border-b-2.border-transparent {
+        color: #64748b !important; /* slate-500 */
+    }
+    body.admin-area nav a.border-b-2.border-transparent:hover {
+        color: #1e293b !important; /* slate-800 */
+        border-color: #cbd5e1 !important; /* slate-300 */
+    }
+    body.admin-area nav a.border-b-2.border-indigo-400,
+    body.admin-area nav a.border-b-2.border-indigo-500 {
+        color: #1e293b !important; /* slate-800 */
+        border-color: var(--admin-btn-bg, #4f46e5) !important;
+    }
+    /* Dark-mode overrides for admin nav links */
+    html.dark body.admin-area nav a.border-b-2.border-transparent {
+        color: #94a3b8 !important; /* slate-400 */
+    }
+    html.dark body.admin-area nav a.border-b-2.border-transparent:hover {
+        color: #e2e8f0 !important; /* slate-200 */
+        border-color: #475569 !important; /* slate-600 */
+    }
+    html.dark body.admin-area nav a.border-b-2.border-indigo-400,
+    html.dark body.admin-area nav a.border-b-2.border-indigo-500 {
+        color: #f1f5f9 !important; /* slate-100 */
+        border-color: var(--admin-btn-bg, #818cf8) !important;
+    }
+    /* Also fix dropdown trigger buttons in the admin nav bar */
+    body.admin-area nav button.border-b-2.border-transparent {
+        color: #64748b !important;
+    }
+    body.admin-area nav button.border-b-2.border-transparent:hover {
+        color: #1e293b !important;
+        border-color: #cbd5e1 !important;
+    }
+    body.admin-area nav button.border-b-2.border-indigo-500 {
+        color: #1e293b !important;
+        border-color: var(--admin-btn-bg, #4f46e5) !important;
+    }
+    html.dark body.admin-area nav button.border-b-2.border-transparent {
+        color: #94a3b8 !important;
+    }
+    html.dark body.admin-area nav button.border-b-2.border-transparent:hover {
+        color: #e2e8f0 !important;
+        border-color: #475569 !important;
+    }
+    html.dark body.admin-area nav button.border-b-2.border-indigo-500 {
+        color: #f1f5f9 !important;
+        border-color: var(--admin-btn-bg, #818cf8) !important;
     }
 
     /* Standard Hyperlinks Only (Excludes ALL Buttons, Badges, Tabs & Explicitly Colored Text) */

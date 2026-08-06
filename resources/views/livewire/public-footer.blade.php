@@ -69,9 +69,13 @@
     @endif
 
     {{-- Footer Row #4 (Copyright / Bottom Bar) --}}
-    @if(isset($parsedBlocks['footer_row4']) && $parsedBlocks['footer_row4']['block']->is_active_desktop)
+    @php
+        $copyBlock = $parsedBlocks['copyright_container'] ?? $parsedBlocks['footer_row4'] ?? null;
+        $activeDev = $device ?? $deviceView ?? 'desktop';
+    @endphp
+    @if($copyBlock && isset($copyBlock['block']) && $copyBlock['block']->isActiveForDevice($activeDev) && !empty($copyBlock['content']))
         <div class="footer_row4">
-            {!! $parsedBlocks['footer_row4']['content'] !!}
+            {!! $copyBlock['content'] !!}
         </div>
     @else
         <div class="footer_row4">

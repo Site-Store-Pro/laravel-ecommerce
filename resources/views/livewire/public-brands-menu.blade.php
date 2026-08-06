@@ -44,7 +44,7 @@
                        class="flex items-center gap-3 p-2.5 rounded-2xl text-slate-800 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-slate-700 border border-transparent hover:border-slate-100 dark:hover:border-slate-600 hover:shadow-sm transition duration-150 group">
 
                         <!-- Brand Logo Image (Only rendered if image uploaded) -->
-                        @if($logoUrl)
+                        @if($logoUrl && $brand->show_image)
                             <div class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-200/60 dark:border-slate-600/60 overflow-hidden flex items-center justify-center text-slate-500 font-bold shrink-0 transition group-hover:scale-105">
                                 <img src="{{ $logoUrl }}" alt="{{ $brand->name }}" class="w-full h-full object-contain p-1">
                             </div>
@@ -85,7 +85,7 @@
                        wire:navigate
                        class="flex items-center gap-3 p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-slate-700 border border-transparent hover:border-slate-100 dark:hover:border-slate-600 transition group">
 
-                        @if($logoUrl)
+                        @if($logoUrl && $brand->show_image)
                             <div class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 border border-slate-200/60 dark:border-slate-600/60 overflow-hidden flex items-center justify-center text-slate-500 font-bold shrink-0">
                                 <img src="{{ $logoUrl }}" alt="{{ $brand->name }}" class="w-full h-full object-contain p-1">
                             </div>

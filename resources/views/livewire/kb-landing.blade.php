@@ -2,7 +2,7 @@
     <div class="bg-white border border-slate-200/80 rounded-[2rem] p-6 sm:p-10 md:p-14 shadow-sm">
         {{-- Hero/Search Section --}}
         <div class="text-center max-w-3xl mx-auto mb-16 space-y-6">
-        <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 bg-clip-text text-transparent sm:text-5xl">
+        <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 bg-clip-text text-transparent sm:text-5xl pb-2 leading-snug">
             @label('kb.help_heading', 'How can we help you today?')
         </h1>
         <p class="text-base text-slate-500 max-w-2xl mx-auto leading-relaxed">
