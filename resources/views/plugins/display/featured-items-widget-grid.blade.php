@@ -1,7 +1,6 @@
 {{--
     Featured Items Widget — Grid View (Livewire-aware version)
-    Used by FeaturedItemsWidget Livewire component.
-    Buy Now calls wire:click="buyNow()" so the modal can fire in-place.
+    Copied 100% from Cross-Sell List Widget Grid display.
 --}}
 @php
     use App\Services\DiscountService;
@@ -65,23 +64,13 @@
                             </div>
                         @endif
 
-                        {{-- Featured badge --}}
-                        @if($showBadge ?? true)
-                        <span class="absolute top-3 left-3 bg-amber-400 text-white text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md">
-                            @label('plugin.featured', '★ Featured')
-                        </span>
-                        @endif
-
                         @if($defaultVariant && $defaultVariant->on_sale)
-                            <span class="absolute top-3 right-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md">@label('plugin.sale', 'Sale')</span>
+                            <span class="absolute top-3 left-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md">@label('plugin.sale', 'Sale')</span>
                         @endif
                     </a>
 
                     {{-- Product Info --}}
-                    <div class="px-5 pt-2.5 pb-4">
-                        @if($product->brand)
-                            <a href="{{ route('shop.brand', $product->brand->slug) }}" class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 hover:underline mb-1 block">{{ $product->brand->name }}</a>
-                        @endif
+                    <div class="p-5 pb-4">
                         <h3 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2">
                             <a href="{{ route('shop.product', $product->seo_slug) }}" class="!no-underline no-underline text-inherit hover:text-indigo-600 dark:hover:text-indigo-400" style="text-decoration: none !important;">{{ $product->title }}</a>
                         </h3>
@@ -94,7 +83,7 @@
                 </div>
 
                 {{-- Price + Button --}}
-                <div class="p-5 pt-0 border-t border-slate-50 dark:border-slate-700/60 mt-auto flex items-center justify-between gap-3">
+                <div class="p-5 pt-4 border-t border-slate-100 dark:border-slate-700/80 mt-auto flex items-center justify-between gap-3 dark:pt-4">
                     <div>
                         @if(!$product->is_donation_or_bill_pay && $defaultVariant)
                             <div class="flex items-baseline gap-1.5">

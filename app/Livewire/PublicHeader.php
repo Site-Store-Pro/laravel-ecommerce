@@ -118,7 +118,7 @@ class PublicHeader extends Component
         $hasBlocksTable = Schema::hasTable('cms_builder_blocks');
         $singleHeader   = (\App\Models\CmsSetting::get('single_header_config', '0') === '1');
         $device         = $singleHeader ? 'desktop' : (in_array($this->deviceView, ['desktop', 'tablet', 'mobile']) ? $this->deviceView : 'desktop');
-        $headerBlocks   = $hasBlocksTable ? CmsBuilderBlock::header()->where(function($q) use ($singleHeader) {
+        $headerBlocks   = $hasBlocksTable ? CmsBuilderBlock::header()->withCurrentTranslations()->where(function($q) use ($singleHeader) {
             if ($singleHeader) {
                 $q->where('is_active_desktop', true);
             } else {

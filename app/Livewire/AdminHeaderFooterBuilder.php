@@ -50,6 +50,16 @@ class AdminHeaderFooterBuilder extends Component
     public bool $editIsActiveTablet = true;
     public bool $editIsActiveMobile = true;
 
+    // Block translation state
+    public ?string $activeLangCode = null;
+    public ?int $activeLangId = null;
+    public string $trans_title = '';
+    public string $trans_content_desktop = '';
+    public string $trans_content_tablet = '';
+    public string $trans_content_mobile = '';
+    public string $trans_status = 'pending';
+    public ?string $trans_translated_at = null;
+
     // Block creation state
     public bool $isCreating = false;
     public string $newTitle = '';
@@ -363,6 +373,117 @@ class AdminHeaderFooterBuilder extends Component
         $this->editIsActiveDesktop = (bool) $block->is_active_desktop;
         $this->editIsActiveTablet  = (bool) $block->is_active_tablet;
         $this->editIsActiveMobile  = (bool) $block->is_active_mobile;
+
+        $activeLangs = \App\Models\Language::where('is_active', true)->where('is_default', false)->get();
+        if ($activeLangs->isNotEmpty()) {
+            $first = $activeLangs->first();
+            $this->selectTranslationLang($first->code, $first->id);
+        } else {
+            $this->activeLangCode = null;
+            $this->activeLangId   = null;
+        }
+    }
+
+    public function selectTranslationLang(string $code, int $id): void
+    {
+        $this->activeLangCode = $code;
+        $this->activeLangId   = $id;
+
+        if (!$this->editingBlockId) return;
+
+        $t = \App\Models\CmsBuilderBlockTranslation::where('cms_builder_block_id', $this->editingBlockId)
+            ->where('language_id', $id)
+            ->first();
+
+        if ($t) {
+            $this->trans_title           = $t->title ?? '';
+            $this->trans_content_desktop = $t->content_desktop ?? '';
+            $this->trans_content_tablet  = $t->content_tablet ?? '';
+            $this->trans_content_mobile  = $t->content_mobile ?? '';
+            $this->trans_status          = $t->translation_status ?? 'pending';
+            $this->trans_translated_at  = $t->translated_at ? $t->translated_at->format('M j, Y g:i A') : null;
+        } else {
+            $this->trans_title           = '';
+            $this->trans_content_desktop = '';
+            $this->trans_content_tablet  = '';
+            $this->trans_content_mobile  = '';
+            $this->trans_status          = 'pending';
+            $this->trans_translated_at  = null;
+        }
+    }
+
+    public function saveTranslation(): void
+    {
+        if (!$this->editingBlockId || !$this->activeLangId) return;
+
+        \App\Models\CmsBuilderBlockTranslation::updateOrCreate(
+            [
+                'cms_builder_block_id' => $this->editingBlockId,
+                'language_id'          => $this->activeLangId,
+            ],
+            [
+                'title'              => trim($this->trans_title),
+                'content_desktop'    => $this->trans_content_desktop,
+                'content_tablet'     => $this->trans_content_tablet,
+                'content_mobile'     => $this->trans_content_mobile,
+                'translation_status' => 'reviewed',
+                'translated_at'      => now(),
+            ]
+        );
+
+        $this->trans_status        = 'reviewed';
+        $this->trans_translated_at = now()->format('M j, Y g:i A');
+        $this->dispatch('toast', message: 'Block translation saved successfully.', type: 'success');
+    }
+
+    public function aiTranslateBlockInline(): void
+    {
+        if (!$this->editingBlockId || !$this->activeLangId) return;
+
+        $block = CmsBuilderBlock::find($this->editingBlockId);
+        $lang  = \App\Models\Language::find($this->activeLangId);
+
+        if (!$block || !$lang) return;
+
+        try {
+            $svc      = app(\App\Services\TranslationService::class);
+            $langName = $lang->name;
+
+            if (!empty($block->title)) {
+                $this->trans_title = $svc->translateText($block->title, $langName, 'block title');
+            }
+            if (!empty($block->content_desktop)) {
+                $this->trans_content_desktop = $svc->translateText($block->content_desktop, $langName, 'desktop header/footer block HTML content — preserve shortcodes');
+            }
+            if (!empty($block->content_tablet)) {
+                $this->trans_content_tablet = $svc->translateText($block->content_tablet, $langName, 'tablet header/footer block HTML content — preserve shortcodes');
+            } elseif (!empty($block->content_desktop)) {
+                $this->trans_content_tablet = $this->trans_content_desktop;
+            }
+            if (!empty($block->content_mobile)) {
+                $this->trans_content_mobile = $svc->translateText($block->content_mobile, $langName, 'mobile header/footer block HTML content — preserve shortcodes');
+            } elseif (!empty($block->content_desktop)) {
+                $this->trans_content_mobile = $this->trans_content_desktop;
+            }
+
+            $this->trans_status = 'ai_translated';
+            $this->dispatch('toast', message: 'AI block translation ready — review fields below and click Save Translation.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
+        }
+    }
+
+    public function autoTranslateBlock(): void
+    {
+        if (!$this->editingBlockId || !$this->activeLangId) return;
+
+        \App\Jobs\TranslateContentJob::dispatch(
+            CmsBuilderBlock::class,
+            $this->editingBlockId,
+            $this->activeLangId
+        );
+
+        $this->dispatch('toast', message: 'Translation job queued for background processing.', type: 'success');
     }
 
     public function cancelEditing(): void

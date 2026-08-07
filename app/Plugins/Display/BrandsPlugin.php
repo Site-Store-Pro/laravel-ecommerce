@@ -55,7 +55,7 @@ class BrandsPlugin implements DisplayPlugin
                     : '';
 
                 $html .= <<<HTML
-<div class="brands-plugin-slider-outer relative" id="{$instanceId}_outer">
+<div class="brands-plugin-slider-outer relative px-8 sm:px-12" id="{$instanceId}_outer">
 <style>
 #{$instanceId}_outer .brands-swiper { width:100%; overflow:hidden; }
 #{$instanceId}_outer .swiper-slide { height:auto; }
@@ -82,8 +82,8 @@ html.dark #{$instanceId}_outer .brands-swiper-prev,
 html.dark #{$instanceId}_outer .brands-swiper-next { background:#1e293b; border-color:#475569; }
 #{$instanceId}_outer .brands-swiper-prev:hover,
 #{$instanceId}_outer .brands-swiper-next:hover { background:#4f46e5; border-color:#4f46e5; color:#fff; }
-#{$instanceId}_outer .brands-swiper-prev { left:-.75rem; }
-#{$instanceId}_outer .brands-swiper-next { right:-.75rem; }
+#{$instanceId}_outer .brands-swiper-prev { left:0.25rem; }
+#{$instanceId}_outer .brands-swiper-next { right:0.25rem; }
 #{$instanceId}_outer .swiper-pagination { margin-top:12px; position:relative; text-align:center; }
 #{$instanceId}_outer .swiper-pagination-bullet { background:#cbd5e1; opacity:1; }
 #{$instanceId}_outer .swiper-pagination-bullet-active { background:#4f46e5; }

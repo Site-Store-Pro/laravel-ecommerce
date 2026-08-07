@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class CmsBuilderBlock extends Model
 {
+    use HasTranslations;
+
     protected $table = 'cms_builder_blocks';
 
     protected $fillable = [
@@ -24,6 +27,13 @@ class CmsBuilderBlock extends Model
         'is_active_desktop',
         'is_active_tablet',
         'is_active_mobile',
+    ];
+
+    protected array $translatable = [
+        'title',
+        'content_desktop',
+        'content_tablet',
+        'content_mobile',
     ];
 
     protected $casts = [
@@ -71,10 +81,33 @@ class CmsBuilderBlock extends Model
 
     /**
      * Get content for specific device with fallback to desktop content.
+     * Automatically resolves current language translation when active language is non-default.
      */
     public function getContentForDevice(string $device = 'desktop'): string
     {
-        $content = match (strtolower($device)) {
+        $deviceKey = strtolower($device);
+        $langService = app(\App\Services\LanguageService::class);
+
+        if (!$langService->isDefault()) {
+            $trans = $this->translation($langService->currentId());
+            if ($trans) {
+                $transContent = match ($deviceKey) {
+                    'tablet', 'medium' => $trans->content_tablet,
+                    'mobile', 'small'  => $trans->content_mobile,
+                    default            => $trans->content_desktop,
+                };
+
+                if ($transContent === null || $transContent === '') {
+                    $transContent = $trans->content_desktop ?? '';
+                }
+
+                if ($transContent !== null && $transContent !== '') {
+                    return $transContent;
+                }
+            }
+        }
+
+        $content = match ($deviceKey) {
             'tablet', 'medium' => $this->content_tablet,
             'mobile', 'small'  => $this->content_mobile,
             default            => $this->content_desktop,
@@ -99,3 +132,4 @@ class CmsBuilderBlock extends Model
         };
     }
 }
+

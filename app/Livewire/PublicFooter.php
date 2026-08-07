@@ -15,7 +15,7 @@ class PublicFooter extends Component
     {
         $hasBlocksTable = Schema::hasTable('cms_builder_blocks');
         $device         = in_array($this->deviceView, ['desktop', 'tablet', 'mobile']) ? $this->deviceView : 'desktop';
-        $footerBlocks   = $hasBlocksTable ? CmsBuilderBlock::footer()->activeForDevice($device)->sortForDevice($device)->get() : collect();
+        $footerBlocks   = $hasBlocksTable ? CmsBuilderBlock::footer()->withCurrentTranslations()->activeForDevice($device)->sortForDevice($device)->get() : collect();
 
         $parsedBlocks = [];
         foreach ($footerBlocks as $block) {

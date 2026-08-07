@@ -437,7 +437,7 @@
                                         <span class="absolute top-3 left-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md">@label('catalog.sale', 'Sale')</span>
                                     @endif
                                 </a>
-                                <div class="p-5">
+                                <div class="p-5 pb-4">
                                     @if($product->brand)
                                         <a href="{{ route('shop.brand', $product->brand->slug) }}" class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 hover:underline mb-1 block">{{ $product->brand->name }}</a>
                                     @endif
@@ -449,7 +449,7 @@
                                     @endif
                                 </div>
                             </div>
-                            <div class="p-5 pt-0 border-t border-slate-50 dark:border-slate-700/60 mt-auto flex items-center justify-between gap-3">
+                            <div class="p-5 pt-4 border-t border-slate-100 dark:border-slate-700/80 mt-auto flex items-center justify-between gap-3 dark:pt-4">
                                 <div>
                                     @if(!$product->is_donation_or_bill_pay && $firstVariant)
                                         @php

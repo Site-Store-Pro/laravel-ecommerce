@@ -179,17 +179,14 @@
                                     </svg>
                                 @endif
                                 @if($defaultVariant && $defaultVariant->on_sale)
-                                    <span class="fi-badge-sale">@label('plugin.sale', 'Sale')</span>
+                                    <span class="absolute top-3 left-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md z-10">@label('plugin.sale', 'Sale')</span>
                                 @endif
                             </a>
 
                             {{-- Body --}}
                             <div class="fi-body">
-                                @if($product->brand)
-                                    <a href="{{ route('shop.brand', $product->brand->slug) }}" style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#4f46e5;margin-bottom:4px;display:block;text-decoration:none;">{{ $product->brand->name }}</a>
-                                @endif
                                 <h3 style="margin:0;padding:0;">
-                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-title" style="text-decoration:none;">
+                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-title !no-underline" style="text-decoration:none !important;">
                                         {{ $product->title }}
                                     </a>
                                 </h3>

@@ -1,5 +1,5 @@
 <div class="py-12" x-data="{ sidebarOpen: false, showWidgetLibrary: false, showPluginsPanel: false, showLinkGenerator: false, showShortcodeGenerator: false }">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-[1800px] w-full mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="flex items-center gap-3 mb-8">
             <a href="{{ route('admin.ecommerce.products') }}" wire:navigate

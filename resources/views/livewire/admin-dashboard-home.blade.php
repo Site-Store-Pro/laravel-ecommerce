@@ -173,9 +173,9 @@
                 Reset Layout
             </button>
 
-            <a href="{{ url('/') }}" target="_blank" class="btn-theme-primary !text-xs !py-2 !px-4 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
-                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                <span class="whitespace-nowrap shrink-0">View Public Site</span>
+            <a href="{{ url('/') }}" target="_blank" class="inline-flex flex-row items-center justify-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-2xl shadow-sm transition whitespace-nowrap shrink-0" style="display: inline-flex !important; flex-direction: row !important; align-items: center !important;">
+                <span class="whitespace-nowrap">View Public Site</span>
+                <svg class="w-4 h-4 shrink-0 me-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
             </a>
             <a href="{{ route('admin.ecommerce.orders') }}" wire:navigate class="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-2xl shadow-sm transition">
                 <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>

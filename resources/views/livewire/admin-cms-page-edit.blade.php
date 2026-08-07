@@ -1579,12 +1579,84 @@ rightCol: @entangle('right_col'),
                                        placeholder="Translated alternate heading..."
                                        class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-indigo-400">
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Content (HTML)</label>
-                                <textarea wire:model="trans_content" rows="12"
-                                          placeholder="Translated page content (HTML supported)..."
-                                          class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 font-mono focus:outline-none focus:border-indigo-400"></textarea>
-                                <p class="text-xs text-slate-400 mt-1">HTML is supported. Plugin shortcodes [plugin:...] are preserved automatically during AI translation.</p>
+                            <div wire:ignore wire:key="trans-editor-container-{{ $activeLangCode }}"
+                                 x-data="{
+                                     transContent: @entangle('trans_content'),
+                                     initTiny() {
+                                         if (tinymce.get('cms_page_trans_content_editor')) {
+                                             tinymce.remove('#cms_page_trans_content_editor');
+                                         }
+                                         tinymce.init({
+                                             selector: '#cms_page_trans_content_editor',
+                                             license_key: 'gpl',
+                                             promotion: false,
+                                             height: 650,
+                                             menubar: 'insert format tools table',
+                                             content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } :root { --theme-primary: {{ $primaryColor }}; --theme-primary-hover: {{ $hoverColor }}; --theme-text: {{ $textColor }}; --theme-border-radius: {{ $borderRadius }}; } .btn-theme-primary { background-color: var(--theme-primary) !important; color: var(--theme-text) !important; border-radius: var(--theme-border-radius) !important; border: none !important; padding: 10px 20px !important; font-weight: 700 !important; font-family: inherit !important; cursor: pointer !important; display: inline-block !important; text-align: center !important; text-decoration: none !important; transition: background-color 0.2s !important; } .btn-theme-primary:hover { background-color: var(--theme-primary-hover) !important; }',
+                                             content_css: [
+                                                 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
+                                                 '/css/prose.css'
+                                             ],
+                                             images_upload_handler: window.cmsTinyMCEImageUploadHandler,
+                                             plugins: 'advlist autolink lists link image charmap preview anchor searchreplace wordcount visualblocks supercode fullscreen insertdatetime media table help emoticons pagebreak directionality',
+                                             toolbar: [
+                                                 'supercode fullscreen | undo redo | styles blocks | bold italic underline strikethrough | forecolor backcolor',
+                                                 'fontfamily fontsize lineheight | alignleft aligncenter alignright alignjustify | outdent indent | removeformat | numlist bullist | pagebreak | charmap emoticons | link image media anchor | ltr rtl | preview'
+                                             ],
+                                             toolbar_mode: 'wrap',
+                                             supercode: { theme: 'monokai', fontSize: 14, autocomplete: true, dark: true },
+                                             branding: false,
+                                             contextmenu: 'link image imagetools',
+                                             style_formats: [
+                                                 { title: 'Callout (Yellow/Warning)', block: 'div', classes: 'p-4 bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 text-amber-900 dark:text-amber-200 rounded-r-lg my-4' },
+                                                 { title: 'Callout (Blue/Info)', block: 'div', classes: 'p-4 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 text-blue-900 dark:text-blue-200 rounded-r-lg my-4' },
+                                                 { title: 'Callout (Green/Success)', block: 'div', classes: 'p-4 bg-emerald-50 dark:bg-emerald-950/20 border-l-4 border-emerald-500 text-emerald-900 dark:text-emerald-200 rounded-r-lg my-4' },
+                                                 { title: 'Callout (Red/Danger)', block: 'div', classes: 'p-4 bg-rose-50 dark:bg-rose-950/20 border-l-4 border-rose-500 text-rose-900 dark:text-rose-200 rounded-r-lg my-4' },
+                                                 { title: 'Feature Card', block: 'div', classes: 'p-6 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl shadow-sm my-6' },
+                                                 { title: 'Premium Button (Primary)', selector: 'a', classes: 'inline-block px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors no-underline' },
+                                                 { title: 'Premium Button (Outline)', selector: 'a', classes: 'inline-block px-5 py-2.5 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium rounded-xl transition-colors no-underline' },
+                                                 { title: 'Badge Primary', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full' },
+                                                 { title: 'Badge Success', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full' },
+                                                 { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
+                                                 { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
+                                             ],
+                                             extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
+                                             convert_urls: false,
+                                             relative_urls: false,
+                                             remove_script_host: false,
+                                             valid_children: '+a[button]',
+                                             setup: (editor) => {
+                                                 editor.on('init', () => {
+                                                     const html = this.transContent || '';
+                                                     editor.setContent(window.ensureProseWrapper(html));
+                                                     editor.getBody().querySelectorAll('.prose').forEach(el => {
+                                                         el.style.setProperty('max-width', 'none', 'important');
+                                                         el.style.setProperty('width', '100%');
+                                                     });
+                                                 });
+                                                 editor.on('change', () => {
+                                                     this.transContent = editor.getContent();
+                                                 });
+                                                 editor.on('blur', () => {
+                                                     this.transContent = editor.getContent();
+                                                 });
+                                             }
+                                         });
+                                         this.$watch('transContent', (val) => {
+                                             let editor = tinymce.get('cms_page_trans_content_editor');
+                                             if (editor && editor.getContent() !== val) {
+                                                 editor.setContent(window.ensureProseWrapper(val || ''));
+                                             }
+                                         });
+                                     },
+                                     destroy() {
+                                         tinymce.remove('#cms_page_trans_content_editor');
+                                     }
+                                 }"
+                                 x-init="initTiny()">
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Content (HTML Editor)</label>
+                                <textarea id="cms_page_trans_content_editor" class="w-full"></textarea>
+                                <p class="text-xs text-slate-400 mt-1">Rich visual editor enabled. Plugin shortcodes [plugin:...] are preserved automatically during AI translation.</p>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>

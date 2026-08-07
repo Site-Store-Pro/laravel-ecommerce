@@ -1,15 +1,13 @@
 {{--
     Featured Items Widget — Swiper Slider View (Livewire-aware version)
-    Used by FeaturedItemsWidget Livewire component.
-    Buy Now calls wire:click="buyNow()" so the modal can fire in-place.
-    wire:ignore on the swiper wrapper prevents Livewire from re-rendering the slider DOM.
+    Copied 100% from Cross-Sell List Widget Slider display.
 --}}
 @php
     use App\Services\DiscountService;
     $user = auth()->user();
-    $imgOrientation = \App\Models\CmsSetting::get('product_image_orientation', '16:9');
-    $cssAspectRatio = $imgOrientation === '1:1' ? '1/1' : '16/10';
-    $cssObjectFit   = $imgOrientation === '1:1' ? 'contain' : 'cover';
+    $imgOrientation   = \App\Models\CmsSetting::get('product_image_orientation', '16:9');
+    $cssAspectRatio   = $imgOrientation === '1:1' ? '1/1' : '16/10';
+    $cssObjectFit     = $imgOrientation === '1:1' ? 'contain' : 'cover';
 @endphp
 
 <div class="featured-items-plugin-section py-8">
@@ -50,25 +48,10 @@
             }
             #{{ $instanceId }}_outer .fi-img-wrap img { width: 100%; height: 100%; object-fit: {{ $cssObjectFit }}; transition: transform 0.5s; }
             #{{ $instanceId }}_outer .fi-card:hover .fi-img-wrap img { transform: scale(1.05); }
-            #{{ $instanceId }}_outer .fi-badge-featured {
-                position: absolute; top: 10px; left: 10px;
-                padding: 2px 8px; border-radius: 99px;
-                font-size: 10px; font-weight: 700;
-                background: #fbbf24; color: #fff;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-            }
-            #{{ $instanceId }}_outer .fi-badge-sale {
-                position: absolute; top: 10px; right: 10px;
-                padding: 2px 8px; border-radius: 99px;
-                font-size: 10px; font-weight: 700;
-                background: #fee2e2; color: #dc2626;
-                border: 1px solid #fecaca;
-            }
-            #{{ $instanceId }}_outer .fi-body { padding: 10px 16px 16px 16px; flex: 1; display: flex; flex-direction: column; }
+            #{{ $instanceId }}_outer .fi-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
             #{{ $instanceId }}_outer .fi-title {
                 font-size: 13px; font-weight: 700;
                 color: #0f172a; line-height: 1.4;
-                text-decoration: none !important;
                 display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
                 transition: color 0.2s;
             }
@@ -133,9 +116,6 @@
             .dark #{{ $instanceId }}_outer .fi-footer { border-top-color: rgba(51,65,85,0.6); }
             .dark #{{ $instanceId }}_outer .fi-price { color: #e2e8f0; }
             .dark #{{ $instanceId }}_outer .fi-price-orig { color: #475569; }
-            .dark #{{ $instanceId }}_outer .fi-badge-sale {
-                background: rgba(153,27,27,0.3); color: #fca5a5; border-color: rgba(153,27,27,0.3);
-            }
             .dark #{{ $instanceId }}_outer .fi-btn-disabled { background: #334155; color: #64748b; }
             .dark #{{ $instanceId }}_outer .fi-btn-outline { background: rgba(79,70,229,0.15); color: #818cf8; }
             .dark #{{ $instanceId }}_outer .fi-btn-outline:hover { background: rgba(79,70,229,0.25); }
@@ -179,19 +159,13 @@
                                               d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                     </svg>
                                 @endif
-                                @if($showBadge ?? true)
-                                <span class="fi-badge-featured">@label('plugin.featured', '★ Featured')</span>
-                                @endif
                                 @if($defaultVariant && $defaultVariant->on_sale)
-                                    <span class="fi-badge-sale">@label('plugin.sale', 'Sale')</span>
+                                    <span class="absolute top-3 left-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md z-10">@label('plugin.sale', 'Sale')</span>
                                 @endif
                             </a>
 
                             {{-- Body --}}
                             <div class="fi-body">
-                                @if($product->brand)
-                                    <a href="{{ route('shop.brand', $product->brand->slug) }}" style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#4f46e5;margin-bottom:4px;display:block;text-decoration:none;">{{ $product->brand->name }}</a>
-                                @endif
                                 <h3 style="margin:0;padding:0;">
                                     <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-title !no-underline" style="text-decoration:none !important;">
                                         {{ $product->title }}
@@ -221,7 +195,6 @@
                                         @if(!$v->download_item && $avail <= 0)
                                             <span class="fi-btn fi-btn-disabled">@label('plugin.out_of_stock', 'Out of Stock')</span>
                                         @else
-                                            {{-- wire:click works here because this whole blade is inside the FeaturedItemsWidget Livewire component --}}
                                             <button wire:click="buyNow({{ $v->id }})"
                                                     wire:loading.attr="disabled"
                                                     wire:target="buyNow({{ $v->id }})"
@@ -255,51 +228,61 @@
             @endif
         </div>
 
-        {{-- Pagination dots --}}
-        <div class="swiper-pagination" id="{{ $instanceId }}_pag" style="margin-top: 16px; position: relative;"></div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                initSwiper_{{ $instanceId }}();
+            });
+            document.addEventListener('livewire:navigated', function() {
+                initSwiper_{{ $instanceId }}();
+            });
+
+            function initSwiper_{{ $instanceId }}() {
+                var el = document.getElementById('{{ $instanceId }}');
+                if (!el) return;
+                if (el.swiper) return; // already initialized
+
+                var slides = {{ $slides }};
+                var autoplayOption = {{ $autoplay === 'on' ? "{ delay: {$speed}, disableOnInteraction: false }" : 'false' }};
+
+                function createSwiper() {
+                    new Swiper('#{{ $instanceId }}', {
+                        slidesPerView: 1,
+                        spaceBetween: 16,
+                        loop: false,
+                        autoplay: autoplayOption,
+                        navigation: {
+                            nextEl: '#{{ $instanceId }}_next',
+                            prevEl: '#{{ $instanceId }}_prev',
+                        },
+                        breakpoints: {
+                            640:  { slidesPerView: Math.min(2, slides), spaceBetween: 16 },
+                            1024: { slidesPerView: Math.min(3, slides), spaceBetween: 20 },
+                            1280: { slidesPerView: slides, spaceBetween: 24 }
+                        }
+                    });
+                }
+
+                if (typeof Swiper !== 'undefined') {
+                    createSwiper();
+                } else {
+                    if (!document.getElementById('swiper-css')) {
+                        var css = document.createElement('link');
+                        css.id = 'swiper-css';
+                        css.rel = 'stylesheet';
+                        css.href = 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css';
+                        document.head.appendChild(css);
+                    }
+                    if (!document.getElementById('swiper-js')) {
+                        var js = document.createElement('script');
+                        js.id = 'swiper-js';
+                        js.src = 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js';
+                        js.onload = createSwiper;
+                        document.head.appendChild(js);
+                    } else {
+                        document.getElementById('swiper-js').addEventListener('load', createSwiper);
+                    }
+                }
+            }
+        </script>
     </div>
 </div>
-
-<script>
-(function () {
-    function initFeaturedItemsSwiper_{{ $instanceId }}() {
-        if (typeof Swiper === 'undefined') {
-            setTimeout(initFeaturedItemsSwiper_{{ $instanceId }}, 100);
-            return;
-        }
-        const opts = {
-            slidesPerView: 1.2,
-            spaceBetween: 0,
-            loop: {{ $products->count() > $slides ? 'true' : 'false' }},
-            observeParents: true,
-            observer: true,
-            breakpoints: {
-                480:  { slidesPerView: 2, spaceBetween: 0 },
-                768:  { slidesPerView: 3, spaceBetween: 0 },
-                1024: { slidesPerView: {{ $slides }}, spaceBetween: 0 }
-            },
-            @if($autoplay !== 'off')
-            autoplay: { delay: {{ $speed }}, disableOnInteraction: false, pauseOnMouseEnter: true },
-            @endif
-            @if($nav !== 'off')
-            navigation: {
-                prevEl: '#{{ $instanceId }}_prev',
-                nextEl: '#{{ $instanceId }}_next',
-            },
-            @endif
-            pagination: {
-                el: '#{{ $instanceId }}_pag',
-                clickable: true,
-                dynamicBullets: true,
-            },
-        };
-        new Swiper('#{{ $instanceId }}', opts);
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initFeaturedItemsSwiper_{{ $instanceId }});
-    } else {
-        initFeaturedItemsSwiper_{{ $instanceId }}();
-    }
-})();
-</script>

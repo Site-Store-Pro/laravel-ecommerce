@@ -56,17 +56,14 @@
                         </span>
                     @endif
                     @if($defaultVariant && $defaultVariant->on_sale)
-                        <span class="absolute top-1.5 right-1.5 px-2 py-0.5 text-[10px] font-bold text-white bg-gradient-to-r from-rose-500 to-pink-500 rounded-full shadow-sm">@label('plugin.sale', 'Sale')</span>
+                        <span class="absolute top-1.5 left-1.5 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white bg-gradient-to-r from-rose-500 to-pink-500 rounded-full shadow-md">@label('plugin.sale', 'Sale')</span>
                     @endif
                 </a>
 
                 {{-- Info --}}
                 <div class="flex-1 min-w-0 text-center sm:text-left">
-                    @if($product->brand)
-                        <a href="{{ route('shop.brand', $product->brand->slug) }}" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline uppercase tracking-wider block mb-1">{{ $product->brand->name }}</a>
-                    @endif
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition truncate">
-                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="no-underline text-inherit hover:text-indigo-600 dark:hover:text-indigo-400">{{ $product->title }}</a>
+                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="!no-underline no-underline text-inherit hover:text-indigo-600 dark:hover:text-indigo-400" style="text-decoration: none !important;">{{ $product->title }}</a>
                     </h3>
                     @if($product->short_description)
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{{ strip_tags($product->short_description) }}</p>
