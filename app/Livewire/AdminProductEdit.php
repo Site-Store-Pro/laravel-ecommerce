@@ -50,6 +50,7 @@ class AdminProductEdit extends Component
     public int    $layout_type          = 1;
     public int    $featured_item        = 0;
     public int    $show_item_total      = 0;  // Show live item total (price × qty) below Add to Cart
+    public int    $show_variant_selector_thumbnail = 0;  // Show variant thumbnail image in flat selector rows
     public string $variant_label        = 'Select Option:';  // Label above variant selector on storefront
     public string $product_video_embed  = '';               // Embed code/shortcode for layout types 3 & 5
     public bool   $is_donation_or_bill_pay = false;
@@ -276,6 +277,7 @@ class AdminProductEdit extends Component
         $this->custom_amount_max = $this->product->custom_amount_max !== null ? (float) $this->product->custom_amount_max : null;
         $this->custom_amount_options = (string) ($this->product->custom_amount_options ?? '');
         $this->inventory_alert_id    = $this->product->inventory_alert_id ? (int) $this->product->inventory_alert_id : null;
+        $this->show_variant_selector_thumbnail = (int) ($this->product->show_variant_selector_thumbnail ?? 0);
     }
 
     public function updatedTitle(string $value): void
@@ -325,6 +327,7 @@ class AdminProductEdit extends Component
             'custom_amount_max' => 'nullable|numeric|min:0',
             'custom_amount_options' => 'nullable|string|max:500',
             'inventory_alert_id' => 'nullable|integer|exists:product_inventory_alerts,id',
+            'show_variant_selector_thumbnail' => 'nullable|boolean',
         ]);
 
         // Validate preset options format when custom amount entry is disabled
@@ -376,6 +379,7 @@ class AdminProductEdit extends Component
             'custom_amount_max' => $this->custom_amount_max !== null && $this->custom_amount_max !== '' ? (float) $this->custom_amount_max : null,
             'custom_amount_options' => trim($this->custom_amount_options) ?: null,
             'inventory_alert_id' => $this->inventory_alert_id ?: null,
+            'show_variant_selector_thumbnail' => (int) $this->show_variant_selector_thumbnail,
         ]);
 
         $this->product->categories()->sync($this->selectedCategories);

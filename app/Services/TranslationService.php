@@ -181,6 +181,15 @@ class TranslationService
                 'title' => 'modal popup window title',
                 'body'  => 'modal popup window body content (HTML)',
             ],
+            'CmsFaq'           => [
+                'question' => 'frequently asked question title/prompt',
+                'answer'   => 'frequently asked question answer (HTML)',
+            ],
+            'CmsSlide'         => [
+                'slide_heading'              => 'slideshow slide heading / title text displayed over the slide image',
+                'slide_sub_heading'          => 'slideshow slide sub-heading / description text displayed under the heading',
+                'slide_callout_button_label' => 'slideshow slide call-to-action button label — keep it short and action-oriented',
+            ],
             'CmsBuilderBlock'  => [
                 'title'           => 'header/footer builder block title (internal label)',
                 'content_desktop' => 'header or footer HTML block content for desktop — preserve all HTML and shortcodes exactly',
@@ -211,6 +220,8 @@ class TranslationService
             'KbCategory'            => 'kb_category_id',
             'EmailTemplate'         => 'email_template_id',
             'CmsModal'              => 'cms_modal_id',
+            'CmsFaq'                => 'cms_faq_id',
+            'CmsSlide'              => 'cms_slide_id',
             'CmsBuilderBlock'       => 'cms_builder_block_id',
             'ProductInventoryAlert' => 'product_inventory_alert_id',
         ];

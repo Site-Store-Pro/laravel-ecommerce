@@ -27,6 +27,7 @@ class EventsCalendarPlugin implements DisplayPlugin
             $header    = $params['header']     ?? $settings['header_title']   ?? 'Upcoming Events Calendar';
             $layout    = strtolower($params['layout']     ?? $settings['default_layout'] ?? 'month');
             $max       = max(1, (int) ($params['max']      ?? $settings['max_events']     ?? 50));
+            $defaultCss = $plugin->getSetting('default_css', '');
             $customCss = $params['custom_css'] ?? $settings['custom_css']    ?? '';
 
             // Query product variant events
@@ -116,6 +117,7 @@ class EventsCalendarPlugin implements DisplayPlugin
                 'layout'      => $layout,
                 'eventsJson'  => $eventsJson,
                 'instanceId'  => $instanceId,
+                'defaultCss'  => $defaultCss,
                 'customCss'   => $customCss,
                 'eventsCount' => count($eventsPayload),
             ])->render();

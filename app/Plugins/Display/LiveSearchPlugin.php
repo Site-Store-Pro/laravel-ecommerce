@@ -41,12 +41,12 @@ class LiveSearchPlugin implements DisplayPlugin
             $layout      = strtolower($params['layout']      ?? $settings['layout']       ?? 'list');
             $placeholder = $params['placeholder']            ?? $settings['placeholder']  ?? null;
             $btnLabel    = $params['button_label']           ?? $settings['button_label'] ?? null;
-            $defaultCss  = $plugin->getSetting('default_css', '');
-            $customCss   = $params['custom_css']             ?? $settings['custom_css']   ?? '';
-            $customJs    = $params['custom_js']              ?? $settings['custom_js']    ?? '';
+            $defaultCss  = $params['default_css'] ?? $plugin->getSetting('default_css', '');
+            $customCss   = $params['custom_css']  ?? ($settings['custom_css'] ?? '');
+            $customJs    = $params['custom_js']   ?? $settings['custom_js']  ?? $plugin->getSetting('custom_js', '');
 
             if ($mode === 'results') {
-                return $this->renderResultsView($params, $layout, $langId, $defaultLangId);
+                return $this->renderResultsView($params, $layout, $langId, $defaultLangId, $defaultCss, $customCss, $customJs);
             }
 
             return $this->renderInputWidget($placeholder, $btnLabel, $defaultCss, $customCss, $customJs);
@@ -82,7 +82,7 @@ class LiveSearchPlugin implements DisplayPlugin
         }
 
         $html .= '
-        <div id="' . $uniqueId . '" class="live-search-2026-wrapper relative w-full max-w-2xl mx-auto"
+        <div id="' . $uniqueId . '" class="live-search-2026-wrapper relative w-full mx-auto"
              x-data="{
                  query: \'\',
                  results: [],
@@ -115,7 +115,7 @@ class LiveSearchPlugin implements DisplayPlugin
                        @input.debounce.300ms="fetchResults()"
                        @focus="if (results.length > 0) open = true"
                        placeholder="' . e($placeholder) . '" 
-                       class="w-full max-w-[250px] py-3 px-4 bg-transparent text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none font-medium"
+                       class="w-full py-3 px-4 bg-transparent text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none font-medium"
                        autocomplete="off" />
                 
                 <button type="submit" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-sm transition-colors duration-150 flex items-center justify-center shrink-0 border-l border-indigo-700 rounded-r-xl rounded-l-none !rounded-tl-none !rounded-bl-none">
@@ -181,7 +181,7 @@ class LiveSearchPlugin implements DisplayPlugin
      * Render the Multi-Content Search Results View.
      * All search and translation logic is delegated to LiveSearchService.
      */
-    private function renderResultsView(array $params, string $layout, int $langId = 0, int $defaultLangId = 0): string
+    private function renderResultsView(array $params, string $layout, int $langId = 0, int $defaultLangId = 0, string $defaultCss = '', string $customCss = '', string $customJs = ''): string
     {
         $queryStr = trim($params['query'] ?? request()->query('q') ?? request()->query('search') ?? '');
 
@@ -215,7 +215,7 @@ class LiveSearchPlugin implements DisplayPlugin
 
         // Search Input Bar
         // Pass null so renderInputWidget() uses siteLabel() fallbacks (respects active language)
-        $html .= $this->renderInputWidget(null, null, '', '');
+        $html .= $this->renderInputWidget(null, null, $defaultCss, $customCss, $customJs);
         $html .= '</div>';
 
         if (empty($queryStr)) {

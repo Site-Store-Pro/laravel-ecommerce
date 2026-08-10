@@ -60,6 +60,7 @@ class HeaderFooterCssManager
             'header_padding_bottom'                          => '14px',
             'nav_inside_main_header'                         => '0',
             'top_nav_sticky'                                 => '1',
+            'sticky_body_offset'                             => '0px',
             'search_placement_desktop'                       => 'main_header',
             'search_placement_tablet'                        => 'main_header',
             'mobile_search_position'                         => 'top',
@@ -215,6 +216,7 @@ class HeaderFooterCssManager
   --header-min-height: {$v['header_min_height']};
   --header-padding-top: {$v['header_padding_top']};
   --header-padding-bottom: {$v['header_padding_bottom']};
+  --sticky-body-offset: {$v['sticky_body_offset']};
   --shop-view-active-bg: {$v['shop_view_mode_active_bg']};
   --shop-view-active-text: {$v['shop_view_mode_active_text']};
   --shop-view-inactive-bg: {$v['shop_view_mode_inactive_bg']};
@@ -371,6 +373,28 @@ nav[role='navigation'] a:not(.btn-view-mode):hover,
 nav[role='navigation'] button:not(.btn-view-mode):not(#header_mobile_toggle):not(.header_mobile_toggle):not([aria-current='page']):hover {
     background-color: var(--pagination-hover-bg, #e0e7ff) !important;
     color: var(--pagination-active-bg, var(--theme-primary, #4f46e5)) !important;
+}
+
+/* Inactive (non-active) Pagination Page Buttons */
+nav[role='navigation'] a:not(.btn-view-mode),
+nav[role='navigation'] button:not(.btn-view-mode):not(#header_mobile_toggle):not(.header_mobile_toggle):not([aria-current='page']),
+nav[role='navigation'] span:not([aria-current='page']),
+.pagination-unit a,
+.pagination-unit button:not([aria-current='page']),
+.pagination-unit span:not([aria-current='page']),
+.page-item:not(.active) .page-link {
+    background-color: var(--pagination-inactive-bg, #ffffff) !important;
+    color: var(--pagination-inactive-text, #334155) !important;
+}
+html.dark nav[role='navigation'] a:not(.btn-view-mode),
+html.dark nav[role='navigation'] button:not(.btn-view-mode):not(#header_mobile_toggle):not(.header_mobile_toggle):not([aria-current='page']),
+html.dark nav[role='navigation'] span:not([aria-current='page']),
+html.dark .pagination-unit a,
+html.dark .pagination-unit button:not([aria-current='page']),
+html.dark .pagination-unit span:not([aria-current='page']),
+html.dark .page-item:not(.active) .page-link {
+    background-color: var(--pagination-inactive-bg, #1e293b) !important;
+    color: var(--pagination-inactive-text, #94a3b8) !important;
 }
 
 /* Header & Site Container Rules */

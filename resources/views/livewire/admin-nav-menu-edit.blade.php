@@ -77,15 +77,19 @@
                      class="space-y-1.5"
                      x-data
                      x-init="
-                        new Sortable($el, {
-                            animation: 150,
-                            handle: '.drag-handle',
-                            ghostClass: 'opacity-40',
-                            onEnd: (e) => {
-                                const ids = [...$el.querySelectorAll('[data-item-id]')].map(el => parseInt(el.dataset.itemId));
-                                $wire.reorderItems(ids, null);
-                            }
-                        });
+                        const initTopSort = () => {
+                            if (typeof Sortable === 'undefined') return setTimeout(initTopSort, 50);
+                            new Sortable($el, {
+                                animation: 150,
+                                handle: '.drag-handle',
+                                ghostClass: 'opacity-40',
+                                onEnd: (e) => {
+                                    const ids = [...$el.children].filter(el => el.hasAttribute('data-item-id')).map(el => parseInt(el.dataset.itemId));
+                                    $wire.reorderItems(ids, null);
+                                }
+                            });
+                        };
+                        initTopSort();
                      ">
                     @foreach($items as $topItem)
                     <div data-item-id="{{ $topItem->id }}" wire:key="top-{{ $topItem->id }}">
@@ -138,15 +142,19 @@
                              id="nav-sortable-children-{{ $topItem->id }}"
                              x-data
                              x-init="
-                                new Sortable($el, {
-                                    animation: 150,
-                                    handle: '.drag-handle',
-                                    ghostClass: 'opacity-40',
-                                    onEnd: (e) => {
-                                        const ids = [...$el.querySelectorAll('[data-item-id]')].map(el => parseInt(el.dataset.itemId));
-                                        $wire.reorderItems(ids, {{ $topItem->id }});
-                                    }
-                                });
+                                const initChildSort = () => {
+                                    if (typeof Sortable === 'undefined') return setTimeout(initChildSort, 50);
+                                    new Sortable($el, {
+                                        animation: 150,
+                                        handle: '.drag-handle',
+                                        ghostClass: 'opacity-40',
+                                        onEnd: (e) => {
+                                            const ids = [...$el.children].filter(el => el.hasAttribute('data-item-id')).map(el => parseInt(el.dataset.itemId));
+                                            $wire.reorderItems(ids, {{ $topItem->id }});
+                                        }
+                                    });
+                                };
+                                initChildSort();
                              ">
                             @foreach($topItem->children as $child)
                             <div data-item-id="{{ $child->id }}" wire:key="child-{{ $child->id }}"
@@ -455,11 +463,28 @@
                     </label>
                 </div>
 
-                <div class="p-3 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-xl border border-indigo-100 dark:border-indigo-800 text-xs text-indigo-900 dark:text-indigo-200 flex items-center justify-between gap-3">
-                    <span class="font-medium">ℹ️ <strong>Sticky Header Navigation</strong> is configured sitewide under Dynamic Header CSS / Layout Builder &amp; Appearance Settings.</span>
-                    <a href="{{ route('admin.header-footer-builder') }}" class="px-3 py-1 bg-indigo-600 text-white rounded-lg font-bold text-2xs uppercase tracking-wider hover:bg-indigo-700 transition shrink-0">
-                        Header CSS Settings →
-                    </a>
+                {{-- Menu Sticky & Body Offset Options --}}
+                <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-800 space-y-4">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <h4 class="text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">Sticky Header Navigation (This Menu)</h4>
+                            <p class="text-2xs text-slate-500 dark:text-slate-400 mt-0.5">Enable sticky positioning and main content top padding offset for this menu.</p>
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer shrink-0">
+                            <input wire:model="menuSticky" type="checkbox" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                            <span class="text-xs font-bold text-indigo-700 dark:text-indigo-300">Sticky Active</span>
+                        </label>
+                    </div>
+
+                    <div class="pt-3 border-t border-indigo-100 dark:border-indigo-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Main Content Top Padding Offset</label>
+                            <p class="text-2xs text-slate-500 dark:text-slate-400">Adds top padding to prevent content from sliding under the sticky menu (e.g. <code>80px</code>, <code>120px</code>, or <code>0px</code>).</p>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <input type="text" wire:model="stickyBodyOffset" placeholder="0px" class="w-32 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                        </div>
+                    </div>
                 </div>
             </div>
 

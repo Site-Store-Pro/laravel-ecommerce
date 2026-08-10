@@ -75,6 +75,12 @@ class AdminPlugins extends Component
 
     public function selectPlugin(int $id): void
     {
+        // Toggle: clicking the already-open plugin closes the panel.
+        if ($this->selectedPluginId === $id) {
+            $this->closePanel();
+            return;
+        }
+
         $plugin = Plugin::findOrFail($id);
         $this->selectedPluginId = $id;
         $this->settings = $plugin->getSettings();

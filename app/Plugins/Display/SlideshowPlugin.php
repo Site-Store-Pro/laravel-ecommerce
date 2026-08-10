@@ -38,14 +38,15 @@ class SlideshowPlugin implements DisplayPlugin
         $speed = $params['speed'] ?? '5000';
         $effect = $params['effect'] ?? 'fade';
 
-        $slides = $slideshow->slides()->where('Active', 1)->orderBy('ImageSort')->get();
+        $slides = $slideshow->slides()->where('Active', 1)->orderBy('ImageSort')->withCurrentTranslations()->get();
 
         if ($slides->isEmpty()) {
             return '';
         }
 
+        $settings   = $plugin->getSettings();
         $defaultCss = $plugin->getSetting('default_css', '');
-        $customCss  = $params['custom_css'] ?? $plugin->getSetting('custom_css', $plugin->getSetting('live_css', ''));
+        $customCss  = $params['custom_css'] ?? ($settings['custom_css'] ?? '');
         $swiperId   = 'swiper_' . $slideshow->slideshow_id;
 
         return view('plugins.display.slideshow', compact('slideshow', 'slides', 'params', 'plugin', 'swiperId', 'defaultCss', 'customCss', 'nav', 'paging', 'autoplay', 'speed', 'effect'))->render();

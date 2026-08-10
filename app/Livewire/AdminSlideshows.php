@@ -69,14 +69,12 @@ class AdminSlideshows extends Component
             'slideshow_name'       => 'required|string|max:255',
             'slideshow_active'     => 'required|integer|in:0,1',
             'sort_order'           => 'required|integer|min:0',
-            'slide_show_alignment' => 'required|string',
         ]);
 
         $data = [
             'slideshow_name'       => trim($this->slideshow_name),
             'slideshow_active'     => $this->slideshow_active,
             'sort_order'           => $this->sort_order,
-            'slide_show_alignment' => $this->slide_show_alignment,
         ];
 
         if ($this->isEditing && $this->slideshowId) {

@@ -128,6 +128,7 @@ class AdminSettings extends Component
 
     // Header Navigation Settings
     public bool $top_nav_sticky = true;
+    public string $sticky_body_offset = '0px';
 
     // Overlay Tint
     public string $page_bg_overlay_color = '#000000';
@@ -354,6 +355,7 @@ class AdminSettings extends Component
         $this->theme_card_shadow           = $settings['theme_card_shadow'] ?? '';
 
         $this->top_nav_sticky              = ($settings['top_nav_sticky'] ?? '1') !== '0';
+        $this->sticky_body_offset          = $settings['sticky_body_offset'] ?? '0px';
     }
 
     private function handleFileUpload($fileUpload, string $type, string $targetFolder, ?string $s3Bucket = null, ?string $s3Key = null, ?string $s3Secret = null, ?string $s3Region = null): ?string
@@ -629,6 +631,9 @@ class AdminSettings extends Component
             'admin_btn_primary_text'     => trim($this->admin_btn_primary_text)    ?: '#ffffff',
             'admin_btn_primary_hover_bg' => trim($this->admin_btn_primary_hover_bg)?: '#4338ca',
             'admin_btn_primary_border'   => trim($this->admin_btn_primary_border)  ?: '#4f46e5',
+            // Sticky Header & Offset
+            'top_nav_sticky'             => $this->top_nav_sticky ? '1' : '0',
+            'sticky_body_offset'         => trim($this->sticky_body_offset) ?: '0px',
         ]);
 
         \App\Services\HeaderFooterCssManager::clearCompiledCssCache();

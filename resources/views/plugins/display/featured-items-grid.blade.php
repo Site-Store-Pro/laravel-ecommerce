@@ -48,12 +48,11 @@
                     && $product->variants->pluck('public_price')->unique()->count() > 1;
                 $isFromPrice = $hasVariantPricing;
             @endphp
-
-            <div class="group bg-white dark:bg-slate-800 rounded-3xl border border-slate-150 dark:border-slate-700/60 overflow-hidden hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition duration-300 flex flex-col justify-between">
+            <div class="fi-card group bg-white dark:bg-slate-800 rounded-3xl border border-slate-150 dark:border-slate-700/60 overflow-hidden hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition duration-300 flex flex-col justify-between">
                 <div>
                     {{-- Product Image --}}
                     <a href="{{ route('shop.product', $product->seo_slug) }}"
-                       class="block relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 {{ $aspectClass }}">
+                       class="fi-img-wrap block relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 {{ $aspectClass }}">
                         @if($product->primaryThumbnailUrl())
                             <img src="{{ $product->primaryThumbnailUrl() }}"
                                  alt="{{ $product->title }}"
@@ -65,17 +64,19 @@
                         @endif
 
                         @if($defaultVariant && $defaultVariant->on_sale)
-                            <span class="absolute top-3 left-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md">@label('plugin.sale', 'Sale')</span>
+                            <span class="absolute top-3 left-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md z-10">@label('plugin.sale', 'Sale')</span>
                         @endif
                     </a>
 
                     {{-- Product Info --}}
-                    <div class="p-5 pb-4">
-                        <h3 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2">
-                            <a href="{{ route('shop.product', $product->seo_slug) }}" class="!no-underline no-underline text-inherit hover:text-indigo-600 dark:hover:text-indigo-400" style="text-decoration: none !important;">{{ $product->title }}</a>
+                    <div class="fi-body p-4">
+                        <h3 class="m-0 p-0">
+                            <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-title text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2 !no-underline" style="font-size: 13px; font-weight: 700; line-height: 1.4; text-decoration: none !important;">
+                                {{ $product->title }}
+                            </a>
                         </h3>
                         @if($product->short_description)
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">
+                            <p class="fi-desc text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2" style="font-size: 11px; color: #94a3b8;">
                                 {{ strip_tags($product->short_description) }}
                             </p>
                         @endif
@@ -83,25 +84,22 @@
                 </div>
 
                 {{-- Price + Button --}}
-                <div class="p-5 pt-4 border-t border-slate-100 dark:border-slate-700/80 mt-auto flex items-center justify-between gap-3 dark:pt-4">
+                <div class="fi-footer p-4 pt-3 border-t border-slate-100 dark:border-slate-700/80 mt-auto flex items-center justify-between gap-2">
                     <div>
                         @if(!$product->is_donation_or_bill_pay && $defaultVariant)
-                            <div class="flex items-baseline gap-1.5">
-                                <span class="text-lg font-extrabold text-slate-900 dark:text-slate-200">
-                                    @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
-                                </span>
-                                @if($priceToShow < $originalPrice)
-                                    <span class="text-xs text-slate-400 line-through font-semibold">${{ number_format($originalPrice, 2) }}</span>
-                                @endif
+                            <div class="fi-price text-slate-900 dark:text-slate-200" style="font-size: 15px; font-weight: 800;">
+                                @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
                             </div>
+                            @if($priceToShow < $originalPrice)
+                                <div class="fi-price-orig text-xs text-slate-400 line-through" style="font-size: 11px; color: #94a3b8;">${{ number_format($originalPrice, 2) }}</div>
+                            @endif
                         @elseif(!$product->is_donation_or_bill_pay)
-                            <span class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">@label('plugin.out_of_stock', 'Out of Stock')</span>
+                            <span class="fi-btn fi-btn-disabled" style="font-size:12px;color:#94a3b8">@label('plugin.out_of_stock', 'Out of Stock')</span>
                         @endif
                     </div>
 
                     @if($product->requiresOptions())
-                        <a href="{{ route('shop.product', $product->seo_slug) }}"
-                           class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">
+                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-primary btn-primary" style="text-decoration:none;">
                             @label('plugin.view_options', 'View Options')
                         </a>
                     @else
@@ -112,14 +110,12 @@
                                 : 999);
                         @endphp
                         @if(!$v->download_item && $avail <= 0)
-                            <button disabled class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 rounded-xl cursor-not-allowed whitespace-nowrap shrink-0">
-                                @label('plugin.out_of_stock', 'Out of Stock')
-                            </button>
+                            <span class="fi-btn fi-btn-disabled">@label('plugin.out_of_stock', 'Out of Stock')</span>
                         @else
                             <button wire:click="buyNow({{ $v->id }})"
                                     wire:loading.attr="disabled"
                                     wire:target="buyNow({{ $v->id }})"
-                                    class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">
+                                    class="fi-btn fi-btn-primary btn-primary">
                                 <span wire:loading.remove wire:target="buyNow({{ $v->id }})">@label('plugin.buy_now', 'Buy Now')</span>
                                 <span wire:loading wire:target="buyNow({{ $v->id }})">@label('plugin.adding', 'Adding...')</span>
                             </button>

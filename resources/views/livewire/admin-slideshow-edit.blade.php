@@ -100,11 +100,8 @@
 
                                 {{-- Thumbnail --}}
                                 <div class="w-16 h-12 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700 shrink-0 flex items-center justify-center">
-                                    @if($slide->Thumbnail)
+                                    @if($slide->thumbnailUrl())
                                         <img src="{{ $slide->thumbnailUrl() }}" alt="{{ $slide->Title }}"
-                                             class="w-full h-full object-cover">
-                                    @elseif($slide->LargeImage)
-                                        <img src="{{ $slide->desktopImageUrl() }}" alt="{{ $slide->Title }}"
                                              class="w-full h-full object-cover">
                                     @else
                                         <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -257,7 +254,23 @@
                             {{-- ── Settings ──────────────────────────────────── --}}
                             <div class="border-t border-slate-100 dark:border-slate-700 pt-6">
                                 <h3 class="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Settings</h3>
-                                <div class="grid grid-cols-2 gap-4 items-center">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                                    <div class="space-y-1">
+                                        <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Overlay Alignment</label>
+                                        <select wire:model="slide_alignment"
+                                                class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-xs font-semibold">
+                                            <option value="top-left">Top Left</option>
+                                            <option value="top-center">Top Center</option>
+                                            <option value="top-right">Top Right</option>
+                                            <option value="middle-left">Middle Left</option>
+                                            <option value="middle-center">Middle Center</option>
+                                            <option value="middle-right">Middle Right</option>
+                                            <option value="bottom-left">Bottom Left</option>
+                                            <option value="bottom-center">Bottom Center</option>
+                                            <option value="bottom-right">Bottom Right</option>
+                                        </select>
+                                        @error('slide_alignment') <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p> @enderror
+                                    </div>
                                     <div class="space-y-1">
                                         <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Sort Order</label>
                                         <input type="number" wire:model="ImageSort" step="0.5" min="0"
@@ -409,47 +422,10 @@
                                         </div>
                                     </div>
 
-                                    {{-- Thumbnail --}}
+                                    {{-- Mobile Image (Required) --}}
                                     <div class="p-4 bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600 rounded-2xl space-y-3">
                                         <div class="flex items-center justify-between">
-                                            <label class="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Thumbnail</label>
-                                            @if($existing_thumbnail)
-                                                <button wire:click="removeThumbnailImage" wire:confirm="Remove the thumbnail?"
-                                                        class="text-[10px] text-rose-500 hover:text-rose-700 font-bold transition">Remove</button>
-                                            @endif
-                                        </div>
-
-                                        {{-- External URL override --}}
-                                        <div class="space-y-1">
-                                            <label class="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
-                                                External URL Override
-                                            </label>
-                                            <input type="url" wire:model="cdn_thumbnail"
-                                                   placeholder="https://example.com/thumb.jpg — if set, overrides file upload"
-                                                   class="w-full px-3 py-2 bg-white dark:bg-slate-800 border {{ $cdn_thumbnail ? 'border-amber-400 dark:border-amber-500' : 'border-slate-200 dark:border-slate-600' }} text-slate-800 dark:text-white rounded-xl focus:outline-none focus:border-amber-500 text-xs font-semibold">
-                                            @if($cdn_thumbnail)
-                                                <p class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">⚡ External URL active — file upload below will be ignored.</p>
-                                            @endif
-                                            @error('cdn_thumbnail') <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p> @enderror
-                                        </div>
-                                        @if($existing_thumbnail && $slide)
-                                            <div class="flex items-center gap-3 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl">
-                                                <img src="{{ $slide->thumbnailUrl() }}" alt="Thumbnail" class="w-12 h-8 object-cover rounded-lg">
-                                                <span class="text-[10px] text-slate-500 font-mono truncate">{{ basename($existing_thumbnail) }}</span>
-                                            </div>
-                                        @endif
-                                        <div>
-                                            <input type="file" wire:model="thumbnailFile" accept="image/*"
-                                                   class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-600 dark:file:bg-indigo-900/30 dark:file:text-indigo-300 hover:file:bg-indigo-100 cursor-pointer">
-                                            @error('thumbnailFile') <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p> @enderror
-                                        </div>
-                                    </div>
-
-                                    {{-- Mobile Image --}}
-                                    <div class="p-4 bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600 rounded-2xl space-y-3">
-                                        <div class="flex items-center justify-between">
-                                            <label class="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Mobile Image <span class="normal-case font-normal text-slate-400">(optional)</span></label>
+                                            <label class="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Mobile Image <span class="text-rose-500 font-bold">* Required</span></label>
                                             @if($existing_mobile_image)
                                                 <button wire:click="removeMobileImage" wire:confirm="Remove the mobile image?"
                                                         class="text-[10px] text-rose-500 hover:text-rose-700 font-bold transition">Remove</button>
@@ -482,6 +458,44 @@
                                             @error('mobileImageFile') <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p> @enderror
                                         </div>
                                     </div>
+
+                                    {{-- Thumbnail (Optional — admin display only) --}}
+                                    <div class="p-4 bg-slate-50 dark:bg-slate-700/30 border border-slate-200 dark:border-slate-600 rounded-2xl space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <label class="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Thumbnail <span class="normal-case font-normal text-slate-400">(Optional — admin display only)</span></label>
+                                            @if($existing_thumbnail)
+                                                <button wire:click="removeThumbnailImage" wire:confirm="Remove the thumbnail?"
+                                                        class="text-[10px] text-rose-500 hover:text-rose-700 font-bold transition">Remove</button>
+                                            @endif
+                                        </div>
+                                        <p class="text-[10px] text-slate-400 font-medium">Used for admin management preview list only. If left empty, desktop/mobile image will be used as preview thumbnail.</p>
+
+                                        {{-- External URL override --}}
+                                        <div class="space-y-1">
+                                            <label class="text-[9px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                                                External URL Override
+                                            </label>
+                                            <input type="url" wire:model="cdn_thumbnail"
+                                                   placeholder="https://example.com/thumb.jpg — if set, overrides file upload"
+                                                   class="w-full px-3 py-2 bg-white dark:bg-slate-800 border {{ $cdn_thumbnail ? 'border-amber-400 dark:border-amber-500' : 'border-slate-200 dark:border-slate-600' }} text-slate-800 dark:text-white rounded-xl focus:outline-none focus:border-amber-500 text-xs font-semibold">
+                                            @if($cdn_thumbnail)
+                                                <p class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5">⚡ External URL active — file upload below will be ignored.</p>
+                                            @endif
+                                            @error('cdn_thumbnail') <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p> @enderror
+                                        </div>
+                                        @if($existing_thumbnail && $slide)
+                                            <div class="flex items-center gap-3 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl">
+                                                <img src="{{ $slide->thumbnailUrl() }}" alt="Thumbnail" class="w-12 h-8 object-cover rounded-lg">
+                                                <span class="text-[10px] text-slate-500 font-mono truncate">{{ basename($existing_thumbnail) }}</span>
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <input type="file" wire:model="thumbnailFile" accept="image/*"
+                                                   class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-600 dark:file:bg-indigo-900/30 dark:file:text-indigo-300 hover:file:bg-indigo-100 cursor-pointer">
+                                            @error('thumbnailFile') <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p> @enderror
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -503,6 +517,144 @@
 
                         </div>{{-- /p-8 --}}
                     </div>{{-- /form card --}}
+
+                    {{-- ══════════════════════════════════════════════════════ --}}
+                    {{-- ── Translation Panel (editing only) ─────────────────── --}}
+                    {{-- ══════════════════════════════════════════════════════ --}}
+                    @php
+                        $activeLangs = \App\Models\Language::where('is_active', true)->where('is_default', false)->orderBy('sort_order')->orderBy('name')->get();
+                    @endphp
+                    @if($activeLangs->isNotEmpty())
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-sm overflow-hidden mt-1">
+
+                            {{-- Panel header --}}
+                            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200">Slide Translations</h3>
+                                    @if($trans_status === 'reviewed')
+                                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">Reviewed</span>
+                                    @elseif($trans_status === 'ai_translated')
+                                        <span class="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-bold">AI Draft</span>
+                                    @else
+                                        <span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-bold">Pending</span>
+                                    @endif
+                                </div>
+                                <button wire:click="translateAllLanguages"
+                                        wire:loading.attr="disabled"
+                                        wire:target="translateAllLanguages"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-slate-600 dark:text-slate-300 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-xl text-[10px] font-bold transition">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
+                                    Translate All Languages
+                                </button>
+                            </div>
+
+                            {{-- Language tab switcher --}}
+                            <div class="flex overflow-x-auto border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                                @foreach($activeLangs as $lang)
+                                    <button wire:click="selectTranslationLang('{{ $lang->code }}', {{ $lang->id }})"
+                                            class="px-5 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition {{ $activeLangCode === $lang->code ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-800' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-700/50' }}">
+                                        {{ $lang->flag_emoji }} {{ $lang->name }}
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            {{-- Translation fields --}}
+                            <div class="p-6 space-y-4">
+
+                                @if($trans_translated_at)
+                                    <p class="text-[10px] text-slate-400">Last translated: {{ $trans_translated_at }}</p>
+                                @endif
+
+                                {{-- Heading --}}
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                        Heading
+                                        @if($slide_heading)
+                                            <span class="ml-2 font-normal text-slate-400 normal-case tracking-normal">Original: "{{ Str::limit($slide_heading, 60) }}"</span>
+                                        @endif
+                                    </label>
+                                    <input type="text"
+                                           wire:model="trans_slide_heading"
+                                           placeholder="Translated heading…"
+                                           class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-xs font-semibold">
+                                </div>
+
+                                {{-- Sub-heading --}}
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                        Sub-heading
+                                        @if($slide_sub_heading)
+                                            <span class="ml-2 font-normal text-slate-400 normal-case tracking-normal">Original: "{{ Str::limit($slide_sub_heading, 60) }}"</span>
+                                        @endif
+                                    </label>
+                                    <textarea wire:model="trans_slide_sub_heading"
+                                              rows="2"
+                                              placeholder="Translated sub-heading…"
+                                              class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-xs font-semibold resize-none"></textarea>
+                                </div>
+
+                                {{-- CTA Button Label --}}
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                        CTA Button Label
+                                        @if($slide_callout_button_label)
+                                            <span class="ml-2 font-normal text-slate-400 normal-case tracking-normal">Original: "{{ $slide_callout_button_label }}"</span>
+                                        @endif
+                                    </label>
+                                    <input type="text"
+                                           wire:model="trans_button_label"
+                                           placeholder="Translated button label…"
+                                           class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-xs font-semibold">
+                                </div>
+
+                                {{-- Action buttons --}}
+                                <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+                                    <button wire:click="aiTranslateSlideInline"
+                                            wire:loading.attr="disabled"
+                                            wire:target="aiTranslateSlideInline"
+                                            class="inline-flex items-center gap-2 px-4 py-2 bg-violet-50 hover:bg-violet-100 dark:bg-violet-900/20 dark:hover:bg-violet-900/40 text-violet-700 dark:text-violet-300 rounded-xl text-xs font-bold transition">
+                                        <svg wire:loading wire:target="aiTranslateSlideInline" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <svg wire:loading.remove wire:target="aiTranslateSlideInline" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                        </svg>
+                                        <span wire:loading.remove wire:target="aiTranslateSlideInline">Translate with AI</span>
+                                        <span wire:loading wire:target="aiTranslateSlideInline">Translating…</span>
+                                    </button>
+
+                                    <button wire:click="saveTranslation"
+                                            wire:loading.attr="disabled"
+                                            wire:target="saveTranslation"
+                                            class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition">
+                                        <svg wire:loading wire:target="saveTranslation" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <svg wire:loading.remove wire:target="saveTranslation" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        Save Translation
+                                    </button>
+
+                                    <button wire:click="autoTranslateSlide"
+                                            wire:loading.attr="disabled"
+                                            wire:target="autoTranslateSlide"
+                                            class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-bold transition">
+                                        Queue Background Job
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>{{-- /translation panel --}}
+                    @endif
+
                 @else
                     {{-- Empty state placeholder --}}
                     <div class="bg-white dark:bg-slate-800 border border-dashed border-slate-200 dark:border-slate-700 rounded-3xl p-12 text-center hidden xl:flex flex-col items-center justify-center h-full min-h-[300px]">

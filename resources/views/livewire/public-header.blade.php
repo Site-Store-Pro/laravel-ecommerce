@@ -138,7 +138,7 @@
                     {{-- Main Site Header Bar --}}
                     @elseif($rowBlock->target_element === 'site_header_container')
                         <div id="site_header_container" class="site_header_container w-full transition-all duration-300 {{ $rowVisClass }}">
-                            <div class="site_header_contents container mx-auto px-4 flex flex-nowrap items-center justify-between gap-4 relative">
+                            <div class="site_header_contents container mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-4 relative h-auto min-h-max">
                                 {{-- Logo --}}
                                 @if(isset($parsedBlocks['header_logo']) && $parsedBlocks['header_logo']['block']->isActiveForDevice($deviceView))
                                     <div class="header_logo shrink-0 flex items-center justify-start my-auto mr-auto min-w-[140px]">
@@ -152,15 +152,15 @@
                                     $showCol1 = ($bCol1 && $bCol1->isActiveForDevice($deviceView)) || $navPlacement === 'header_col1' || $activeSearchPlacement === 'header_col1' || $featuresPlacement === 'header_col1' || !empty($parsedBlocks['header_col1']['content'] ?? '');
                                 @endphp
                                 @if($showCol1)
-                                    <div class="header_col1 flex-1 min-w-0 shrink transition-all duration-300 flex items-center gap-3">
+                                    <div class="header_col1 flex-1 min-w-0 shrink transition-all duration-300 flex flex-wrap items-center gap-3">
                                         {!! $parsedBlocks['header_col1']['content'] ?? '' !!}
                                         @if($navPlacement === 'header_col1')
-                                            <nav class="top_nav_container flex-1 min-w-0 hidden lg:flex items-center">
-                                                <div id="top_nav_area_col1" class="w-full">
+                                            <nav class="top_nav_container flex-1 min-w-0 hidden lg:flex flex-wrap items-center">
+                                                <div id="top_nav_area_col1" class="w-full flex flex-wrap items-center">
                                                     @if($navMenu && $navItems && (is_object($navItems) ? $navItems->isNotEmpty() : count($navItems) > 0))
                                                         <x-nav-dynamic :menu="$navMenu" :items="$navItems" :cartCount="$cartCount" :user="auth()->user()" :embedded="true" />
                                                     @else
-                                                        <div class="py-1 px-2 flex items-center gap-4 text-xs font-semibold">
+                                                        <div class="py-1 px-2 flex flex-wrap items-center gap-4 text-xs font-semibold">
                                                             <a href="{{ url('/') }}" class="hover:text-indigo-600 font-semibold">@label('nav.home', 'Home')</a>
                                                             <a href="{{ route('shop.index') }}" class="hover:text-indigo-600 font-semibold">@label('nav.shop', 'Shop')</a>
                                                             <a href="{{ route('kb.index') }}" class="hover:text-indigo-600 font-semibold">@label('nav.knowledge_base', 'Knowledge Base')</a>
@@ -219,12 +219,12 @@
 
                                 {{-- Embedded Navigation Bar (Center Flex) --}}
                                 @if($navPlacement === 'main_header' || empty($navPlacement))
-                                    <nav class="top_nav_container flex-1 min-w-0 hidden lg:flex items-center justify-center mx-auto text-center">
-                                        <div id="top_nav_area_main" class="w-full flex items-center justify-center text-center">
+                                    <nav class="top_nav_container flex-1 min-w-0 hidden lg:flex flex-wrap items-center justify-center mx-auto text-center">
+                                        <div id="top_nav_area_main" class="w-full flex flex-wrap items-center justify-center text-center">
                                             @if($navMenu && $navItems && (is_object($navItems) ? $navItems->isNotEmpty() : count($navItems) > 0))
                                                 <x-nav-dynamic :menu="$navMenu" :items="$navItems" :cartCount="$cartCount" :user="auth()->user()" :embedded="true" />
                                             @else
-                                                <div class="py-2 px-3 flex items-center justify-center gap-6 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                                <div class="py-2 px-3 flex flex-wrap items-center justify-center gap-6 text-sm font-semibold text-slate-700 dark:text-slate-200">
                                                     <a href="{{ url('/') }}" class="hover:text-indigo-600 font-semibold transition-colors">@label('nav.home', 'Home')</a>
                                                     <a href="{{ route('shop.index') }}" class="hover:text-indigo-600 font-semibold transition-colors">@label('nav.shop', 'Shop')</a>
                                                     <a href="{{ route('kb.index') }}" class="hover:text-indigo-600 font-semibold transition-colors">@label('nav.knowledge_base', 'Knowledge Base')</a>
@@ -247,15 +247,15 @@
                                     $showCol2 = ($bCol2 && $bCol2->isActiveForDevice($deviceView)) || $navPlacement === 'header_col2' || $activeSearchPlacement === 'header_col2' || $featuresPlacement === 'header_col2' || !empty($parsedBlocks['header_col2']['content'] ?? '');
                                 @endphp
                                 @if($showCol2)
-                                    <div class="header_col2 flex-1 min-w-0 shrink transition-all duration-300 flex items-center justify-end gap-3">
+                                    <div class="header_col2 flex-1 min-w-0 shrink transition-all duration-300 flex flex-wrap items-center justify-end gap-3">
                                         {!! $parsedBlocks['header_col2']['content'] ?? '' !!}
                                         @if($navPlacement === 'header_col2')
-                                            <nav class="top_nav_container flex-1 min-w-0 hidden lg:flex items-center justify-end">
-                                                <div id="top_nav_area_col2" class="w-full flex justify-end">
+                                            <nav class="top_nav_container flex-1 min-w-0 hidden lg:flex flex-wrap items-center justify-end">
+                                                <div id="top_nav_area_col2" class="w-full flex flex-wrap items-center justify-end">
                                                     @if($navMenu && $navItems && (is_object($navItems) ? $navItems->isNotEmpty() : count($navItems) > 0))
                                                         <x-nav-dynamic :menu="$navMenu" :items="$navItems" :cartCount="$cartCount" :user="auth()->user()" :embedded="true" />
                                                     @else
-                                                        <div class="py-1 px-2 flex items-center gap-4 text-xs font-semibold">
+                                                        <div class="py-1 px-2 flex flex-wrap items-center gap-4 text-xs font-semibold">
                                                             <a href="{{ url('/') }}" class="hover:text-indigo-600 font-semibold">@label('nav.home', 'Home')</a>
                                                             <a href="{{ route('shop.index') }}" class="hover:text-indigo-600 font-semibold">@label('nav.shop', 'Shop')</a>
                                                             <a href="{{ route('kb.index') }}" class="hover:text-indigo-600 font-semibold">@label('nav.knowledge_base', 'Knowledge Base')</a>

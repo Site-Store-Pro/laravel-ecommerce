@@ -385,14 +385,16 @@ class PluginSeeder extends Seeder
         $brandsDefaultCss = "/* Brands 2026 Default Formatting */\n.brands-plugin-wrapper {\n    width: 100%;\n}\n.brands-plugin-card img {\n    filter: grayscale(100%);\n    transition: filter 0.3s ease;\n}\n.brands-plugin-card:hover img {\n    filter: grayscale(0%);\n}";
 
         $brandsOptions = [
-            ['field_name' => 'display_type', 'field_label' => 'Display Mode', 'field_type' => 'select', 'field_selections' => 'slider,grid,list', 'sort_order' => 10, 'field_default_value' => 'slider'],
-            ['field_name' => 'max_brands',   'field_label' => 'Max Brands',   'field_type' => 'input',  'field_data_format' => 'integer', 'sort_order' => 20, 'field_default_value' => '12'],
-            ['field_name' => 'columns',      'field_label' => 'Columns',      'field_type' => 'select', 'field_selections' => '2,3,4,5,6',     'sort_order' => 30, 'field_default_value' => '4'],
-            ['field_name' => 'header_title', 'field_label' => 'Header Title', 'field_type' => 'input',  'field_data_format' => 'string',  'sort_order' => 40, 'field_default_value' => 'Featured Brands'],
-            ['field_name' => 'autoplay',     'field_label' => 'Autoplay (Slider)',  'field_type' => 'select', 'field_selections' => 'on,off', 'sort_order' => 45, 'field_default_value' => 'on', 'field_help' => 'Auto-advance slides in slider mode.'],
-            ['field_name' => 'show_label',   'field_label' => 'Show Brand Name Label', 'field_type' => 'checkbox', 'sort_order' => 47, 'field_default_value' => '1', 'field_help' => 'Display the brand text name below the logo image.'],
-            ['field_name' => 'custom_css',   'field_label' => 'Custom CSS Overrides',    'field_type' => 'textarea', 'field_editor' => 'css', 'sort_order' => 50, 'field_default_value' => ''],
-            ['field_name' => 'default_css',  'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 55, 'field_default_value' => $brandsDefaultCss],
+            ['field_name' => 'display_type',    'field_label' => 'Display Mode',              'field_type' => 'select',   'field_selections' => 'slider,grid,list', 'sort_order' => 10, 'field_default_value' => 'slider'],
+            ['field_name' => 'max_brands',      'field_label' => 'Max Brands',                'field_type' => 'input',    'field_data_format' => 'integer', 'sort_order' => 20, 'field_default_value' => '12'],
+            ['field_name' => 'columns',         'field_label' => 'Columns',                   'field_type' => 'select',   'field_selections' => '2,3,4,5,6', 'sort_order' => 30, 'field_default_value' => '4'],
+            ['field_name' => 'header_title',    'field_label' => 'Header Title',              'field_type' => 'input',    'field_data_format' => 'string',  'sort_order' => 40, 'field_default_value' => 'Featured Brands'],
+            ['field_name' => 'autoplay',        'field_label' => 'Autoplay (Slider)',         'field_type' => 'select',   'field_selections' => 'on,off', 'sort_order' => 45, 'field_default_value' => 'on',  'field_help' => 'Auto-advance slides in slider mode.'],
+            ['field_name' => 'show_label',      'field_label' => 'Show Brand Name Label',     'field_type' => 'checkbox', 'sort_order' => 47, 'field_default_value' => '1',  'field_help' => 'Display the brand text name below the logo image.'],
+            ['field_name' => 'show_navigation', 'field_label' => 'Show Navigation Arrows',    'field_type' => 'checkbox', 'sort_order' => 48, 'field_default_value' => '1',  'field_help' => 'Show prev/next arrow buttons on the slider.'],
+            ['field_name' => 'show_pagination', 'field_label' => 'Show Pagination Dots',      'field_type' => 'checkbox', 'sort_order' => 49, 'field_default_value' => '1',  'field_help' => 'Show clickable pagination dots below the slider.'],
+            ['field_name' => 'custom_css',      'field_label' => 'Custom CSS Overrides',      'field_type' => 'textarea', 'field_editor' => 'css', 'sort_order' => 50, 'field_default_value' => ''],
+            ['field_name' => 'default_css',     'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only', 'sort_order' => 55, 'field_default_value' => $brandsDefaultCss],
         ];
 
         PluginOption::where('plugin_id', $brandsPlugin->id)->delete();
@@ -749,6 +751,39 @@ class PluginSeeder extends Seeder
             PluginOption::create(array_merge(['plugin_id' => $orderTrackerPlugin->id], $opt));
             if (!PluginSetting::where('plugin_id', $orderTrackerPlugin->id)->where('field_name', $opt['field_name'])->exists()) {
                 PluginSetting::create(['plugin_id' => $orderTrackerPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
+            }
+        }
+
+        // ── CMS Modal Display Plugin ──────────────────────────────────────────
+        $modalPlugin = Plugin::updateOrCreate(
+            ['shortcode' => 'modal'],
+            [
+                'filename'            => 'modal_display',
+                'name'                => 'CMS Modal Display',
+                'shortcode'           => 'modal',
+                'type'                => 'display',
+                'author'              => 'Built-in',
+                'version'             => '1.0',
+                'install_type'        => 1,
+                'activation_required' => 'no',
+                'activation_status'   => 1,
+                'description'         => 'Renders a CMS Modal popup by ID. Supports auto-open, trigger selectors, cookie lifetime, and position (center, left, right, bottom).',
+                'usage_instructions'  => '<p>Add <strong>[plugin:modal id=1]</strong> to any CMS page to render a modal by its ID. The modal must be active in the CMS Modals manager.</p>',
+            ]
+        );
+
+        $modalDefaultCss = ".cms-modal-panel {\n    /* Scoped panel styles are applied inline per-modal instance. */\n    /* Add global overrides here, e.g. custom fonts or colours. */\n}";
+
+        $modalOptions = [
+            ['field_name' => 'custom_css', 'field_label' => 'Custom CSS Overrides',                    'field_type' => 'textarea', 'field_editor' => 'css', 'sort_order' => 10, 'field_default_value' => ''],
+            ['field_name' => 'default_css', 'field_label' => 'Default Plugin CSS (Read-Only Reference)', 'field_type' => 'text-only',                        'sort_order' => 20, 'field_default_value' => $modalDefaultCss],
+        ];
+
+        PluginOption::where('plugin_id', $modalPlugin->id)->delete();
+        foreach ($modalOptions as $opt) {
+            PluginOption::create(array_merge(['plugin_id' => $modalPlugin->id], $opt));
+            if (!PluginSetting::where('plugin_id', $modalPlugin->id)->where('field_name', $opt['field_name'])->exists()) {
+                PluginSetting::create(['plugin_id' => $modalPlugin->id, 'field_name' => $opt['field_name'], 'field_value' => $opt['field_default_value']]);
             }
         }
     }

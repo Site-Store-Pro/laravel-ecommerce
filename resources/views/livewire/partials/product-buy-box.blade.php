@@ -225,7 +225,17 @@
                             @endphp
                             <label class="flex items-center justify-between p-4 bg-white border {{ $selectedVariantId == $variant->id ? 'border-indigo-500 ring-2 ring-indigo-500/10 bg-indigo-50/10' : 'border-slate-200' }} rounded-2xl cursor-pointer hover:border-indigo-300 transition duration-150">
                                 <div class="flex items-center gap-3">
-                                    <input type="radio" wire:model.live="selectedVariantId" name="variant" value="{{ $variant->id }}" class="text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                    <input type="radio" wire:model.live="selectedVariantId" name="variant" value="{{ $variant->id }}" class="text-indigo-600 focus:ring-indigo-500 h-4 w-4 shrink-0">
+                                    @if($product->show_variant_selector_thumbnail)
+                                        @php $varThumbUrl = $variant->thumbnailImageUrl(); @endphp
+                                        @if($varThumbUrl)
+                                            <img src="{{ $varThumbUrl }}" alt="{{ $variant->sku }}" class="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-100 shadow-sm">
+                                        @else
+                                            <div class="w-12 h-12 rounded-xl bg-slate-100 shrink-0 flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                            </div>
+                                        @endif
+                                    @endif
                                     <div>
                                         <span class="text-sm font-bold text-slate-800">{{ $variant->sku }}</span>
                                         @if($attrStr)

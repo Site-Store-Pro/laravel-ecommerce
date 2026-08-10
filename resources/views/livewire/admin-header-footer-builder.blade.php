@@ -2,7 +2,9 @@
     showLinkGenerator: false,
     showShortcodeGenerator: false,
     showPluginsPanel: false,
-    showWidgetLibrary: false
+    showWidgetLibrary: false,
+    draggingIndex: null,
+    targetIndex: null
 }" class="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6 relative">
 
     {{-- TinyMCE Library --}}
@@ -895,9 +897,6 @@
                                     license_key: 'gpl',
                                     promotion: false,
                                     height: 420,
-                                    forced_root_block: false,
-                                    force_p_newlines: false,
-                                    force_br_newlines: true,
                                     menubar: 'insert format tools table',
                                     content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } :root { --theme-primary: #4f46e5; }',
                                     content_css: [
@@ -1158,18 +1157,30 @@
                 </div>
             </div>
 
-            {{-- Sticky Header Navigation Toggle --}}
-            <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-800 flex items-center justify-between gap-4">
-                <div>
-                    <h4 class="text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">Sticky Header Navigation</h4>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">When enabled, the primary site header and top navigation bar remain fixed at the top of the browser window as visitors scroll down.</p>
+            {{-- Sticky Header Navigation Toggle & Body Offset --}}
+            <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-800 space-y-4">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <h4 class="text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">Sticky Header Navigation</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">When enabled, the primary site header and top navigation bar remain fixed at the top of the browser window as visitors scroll down.</p>
+                    </div>
+                    <label class="flex items-center gap-2 cursor-pointer shrink-0">
+                        <input type="checkbox" wire:model.live="topNavSticky" wire:change="saveCssVars" class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-xs font-bold {{ $topNavSticky ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-400' }}">
+                            {{ $topNavSticky ? 'Sticky Header Active' : 'Sticky Header Off' }}
+                        </span>
+                    </label>
                 </div>
-                <label class="flex items-center gap-2 cursor-pointer shrink-0">
-                    <input type="checkbox" wire:model.live="topNavSticky" wire:change="saveCssVars" class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                    <span class="text-xs font-bold {{ $topNavSticky ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-400' }}">
-                        {{ $topNavSticky ? 'Sticky Header Active' : 'Sticky Header Off' }}
-                    </span>
-                </label>
+
+                <div class="pt-3 border-t border-indigo-100 dark:border-indigo-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Sticky Header Content Offset (Top Padding)</label>
+                        <p class="text-2xs text-slate-500 dark:text-slate-400">Adds top padding to the main page content area so content doesn't slide under the fixed header (e.g. <code>80px</code>, <code>120px</code>, <code>5rem</code>, or <code>0px</code> for none).</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <input type="text" wire:model="cssVars.sticky_body_offset" wire:change="saveCssVars" placeholder="0px" class="w-32 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    </div>
+                </div>
             </div>
 
             {{-- 1. Header & Footer Background Images (CDN URL or File Upload) --}}

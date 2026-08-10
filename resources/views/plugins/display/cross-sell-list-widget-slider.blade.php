@@ -207,7 +207,7 @@
                                     </div>
 
                                     @if($product->requiresOptions())
-                                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-primary" style="text-decoration:none;">
+                                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-primary btn-primary" style="text-decoration:none;">
                                             @label('plugin.view_options', 'View Options')
                                         </a>
                                     @else
@@ -218,7 +218,7 @@
                                             <button wire:click="buyNow({{ $v->id }})"
                                                     wire:loading.attr="disabled"
                                                     wire:target="buyNow({{ $v->id }})"
-                                                    class="fi-btn fi-btn-primary">
+                                                    class="fi-btn fi-btn-primary btn-primary">
                                                 <span wire:loading.remove wire:target="buyNow({{ $v->id }})">
                                                     @label('plugin.buy_now', 'Buy Now')
                                                 </span>

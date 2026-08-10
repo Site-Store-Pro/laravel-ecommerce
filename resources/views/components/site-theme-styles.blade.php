@@ -102,7 +102,7 @@
     body:not(.admin-area) a.bg-violet-50,
     body:not(.admin-area) input[type=\"submit\"],
     body:not(.admin-area) input[type=\"button\"] {
-        border-radius: var(--theme-border-radius) !important;
+        border-radius: var(--theme-border-radius);
     }
 
     /* Primary Theme Button — EXCLUDED on admin-area pages */
@@ -232,6 +232,57 @@
     html.dark body.admin-area nav button.border-b-2.border-indigo-500 {
         color: #f1f5f9 !important;
         border-color: var(--admin-btn-bg, #818cf8) !important;
+    }
+
+    /* ── Admin-Area Primary Button Colour Overrides ───────────────────────────
+       All admin action buttons use hardcoded Tailwind bg-indigo-600 classes.
+       These rules override those classes with the user-configured admin button
+       CSS variables, keeping admin theming isolated from the frontend palette.
+       ───────────────────────────────────────────────────────────────────────── */
+    body.admin-area button.bg-indigo-600,
+    body.admin-area button.bg-indigo-700,
+    body.admin-area a.bg-indigo-600,
+    body.admin-area a.bg-indigo-700,
+    body.admin-area input[type='submit'].bg-indigo-600,
+    body.admin-area input[type='button'].bg-indigo-600 {
+        background-color: var(--admin-btn-bg, #4f46e5) !important;
+        color: var(--admin-btn-text, #ffffff) !important;
+        border-color: var(--admin-btn-border, #4f46e5) !important;
+    }
+    body.admin-area button.bg-indigo-600:hover,
+    body.admin-area button.bg-indigo-700:hover,
+    body.admin-area button.hover\:bg-indigo-700:hover,
+    body.admin-area button.hover\:bg-indigo-800:hover,
+    body.admin-area a.bg-indigo-600:hover,
+    body.admin-area a.bg-indigo-700:hover,
+    body.admin-area a.hover\:bg-indigo-700:hover,
+    body.admin-area input[type='submit'].bg-indigo-600:hover,
+    body.admin-area input[type='button'].bg-indigo-600:hover {
+        background-color: var(--admin-btn-hover-bg, #4338ca) !important;
+        color: var(--admin-btn-text, #ffffff) !important;
+        border-color: var(--admin-btn-hover-bg, #4338ca) !important;
+    }
+    /* Dark-mode admin button overrides */
+    html.dark body.admin-area button.bg-indigo-600,
+    html.dark body.admin-area button.bg-indigo-700,
+    html.dark body.admin-area a.bg-indigo-600,
+    html.dark body.admin-area a.bg-indigo-700,
+    html.dark body.admin-area input[type='submit'].bg-indigo-600,
+    html.dark body.admin-area input[type='button'].bg-indigo-600 {
+        background-color: var(--admin-btn-bg, #4f46e5) !important;
+        color: var(--admin-btn-text, #ffffff) !important;
+        border-color: var(--admin-btn-border, #4f46e5) !important;
+    }
+    html.dark body.admin-area button.bg-indigo-600:hover,
+    html.dark body.admin-area button.bg-indigo-700:hover,
+    html.dark body.admin-area button.hover\:bg-indigo-700:hover,
+    html.dark body.admin-area a.bg-indigo-600:hover,
+    html.dark body.admin-area a.bg-indigo-700:hover,
+    html.dark body.admin-area input[type='submit'].bg-indigo-600:hover,
+    html.dark body.admin-area input[type='button'].bg-indigo-600:hover {
+        background-color: var(--admin-btn-hover-bg, #4338ca) !important;
+        color: var(--admin-btn-text, #ffffff) !important;
+        border-color: var(--admin-btn-hover-bg, #4338ca) !important;
     }
 
     /* Standard Hyperlinks Only (Excludes ALL Buttons, Badges, Tabs & Explicitly Colored Text) */

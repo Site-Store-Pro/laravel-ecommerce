@@ -30,7 +30,7 @@ class ShopCatalog extends Component
     public ?string $brand = null;
 
     #[Url]
-    public $perPage = 25;
+    public $perPage = 16;
 
     #[Url]
     public string $sort = 'price_asc';
@@ -59,10 +59,10 @@ class ShopCatalog extends Component
 
     public function sanitizePerPage(): void
     {
-        $allowed = [5, 10, 15, 25, 50, 75, 100];
+        $allowed = [4, 8, 16, 20, 24, 30, 48, 64, 96];
         $val = filter_var($this->perPage, FILTER_VALIDATE_INT);
         if ($val === false || !in_array($val, $allowed, true)) {
-            $this->perPage = 25;
+            $this->perPage = 16;
         } else {
             $this->perPage = $val;
         }
@@ -830,10 +830,10 @@ class ShopCatalog extends Component
             $pageDescription = '';
         } elseif ($activeCategory) {
             $pageTitle       = $categoryTitle;
-            $pageDescription = $activeCategory->description ?? $defaultDescription;
+            $pageDescription = !empty(trim($activeCategory->description ?? '')) ? trim($activeCategory->description) : '';
         } elseif ($activeBrand) {
             $pageTitle       = $activeBrand->name;
-            $pageDescription = $activeBrand->description ?? $defaultDescription;
+            $pageDescription = !empty(trim($activeBrand->description ?? '')) ? trim($activeBrand->description) : '';
         } elseif (!empty(trim($this->search))) {
             $pageTitle       = 'Search results for "' . trim($this->search) . '"';
             $pageDescription = 'Showing items matching your search.';

@@ -25,15 +25,16 @@ class FaqsPlugin implements DisplayPlugin
             $settings = $plugin->getSettings();
 
             // ── Parameters (shortcode attrs override plugin settings) ──────────
-            $header      = $params['header'] ?? $params['header_title'] ?? $settings['header_title'] ?? 'Frequently Asked Questions';
+            $rawHeader   = $params['header'] ?? $params['header_title'] ?? $settings['header_title'] ?? 'Frequently Asked Questions';
+            $header      = siteLabel('faqs.header_title', $rawHeader);
             $showHeader  = $this->isTruthy($params['show_header'] ?? ($settings['show_header'] ?? '1'), true);
             $openFirst   = $this->isTruthy($params['open_first']  ?? ($settings['open_first']  ?? '0'), false);
             $allowMulti  = $this->isTruthy($params['allow_multiple'] ?? ($params['multiple'] ?? ($settings['allow_multiple'] ?? '0')), false);
             $max         = (int) ($params['max'] ?? $params['max_items'] ?? $settings['max_items'] ?? 0);
             $customCss   = $params['custom_css'] ?? $settings['custom_css'] ?? '';
 
-            // ── Fetch active FAQs ─────────────────────────────────────────────
-            $query = CmsFaq::active()->ordered();
+            // ── Fetch active FAQs with translations ───────────────────────────
+            $query = CmsFaq::withCurrentTranslations()->active()->ordered();
             if ($max > 0) {
                 $query->limit($max);
             }
@@ -46,10 +47,18 @@ class FaqsPlugin implements DisplayPlugin
             // ── Unique instance ID (supports multiple accordions per page) ─────
             $instanceId = 'faq_' . substr(md5(uniqid('faq', true)), 0, 8);
 
-            // ── Custom CSS block ──────────────────────────────────────────────
+            // ── CSS block (default first, then custom overrides) ────────────
+            $defaultCss = $plugin->getSetting('default_css', '');
             $cssBlock = '';
-            if (!empty($customCss)) {
-                $cssBlock = '<style>' . \App\Services\CssMinifierService::minify($customCss) . '</style>';
+            if (!empty($defaultCss) || !empty($customCss)) {
+                $cssBlock = '<style>';
+                if (!empty($defaultCss)) {
+                    $cssBlock .= \App\Services\CssMinifierService::minify($defaultCss);
+                }
+                if (!empty($customCss)) {
+                    $cssBlock .= \App\Services\CssMinifierService::minify($customCss);
+                }
+                $cssBlock .= '</style>';
             }
 
             // ── Build HTML ────────────────────────────────────────────────────

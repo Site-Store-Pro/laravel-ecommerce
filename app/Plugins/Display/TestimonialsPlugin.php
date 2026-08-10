@@ -27,7 +27,9 @@ class TestimonialsPlugin implements DisplayPlugin
             $display    = strtolower($params['display']    ?? $settings['display_type'] ?? 'slider');
             $max        = max(1, (int) ($params['max']     ?? $settings['max_items']    ?? 6));
             $cols       = max(1, min(4, (int) ($params['cols'] ?? $settings['columns']  ?? 3)));
-            $header     = $params['header']                 ?? $settings['header_title'] ?? 'What Our Customers Say';
+            $header     = array_key_exists('header', $params)
+                            ? $params['header']
+                            : ($settings['header_title'] ?: 'What Our Customers Say');
             $quoteIcon  = $params['quote_icon']             ?? $settings['quote_icon']   ?? 'quote-left'; // 'quote-left', 'double-quote', 'none'
             $showRating = strtolower($params['rating']     ?? $settings['show_rating']  ?? 'on') === 'on';
 
@@ -126,43 +128,47 @@ class TestimonialsPlugin implements DisplayPlugin
                        .   'if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",init);}else{init();}'
                        . '})();</script>';
             } else {
-                // List / Grid layout
-                $gridColsClass = match ($cols) {
-                    1 => 'grid-cols-1',
-                    2 => 'grid-cols-1 md:grid-cols-2',
-                    4 => 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-                    default => 'grid-cols-1 md:grid-cols-3',
-                };
+                // ── List layout — horizontal rows matching the /shop product list style ──
+                $html .= '<div class="testimonials-plugin-list space-y-4 py-2">';
 
-                $html .= '<div class="grid ' . $gridColsClass . ' gap-6 py-2">';
                 foreach ($testimonials as $t) {
-                    $html .= '<div class="p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-sm flex flex-col justify-between">';
-                    $html .= '<div>';
+                    // Row wrapper
+                    $html .= '<div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700/60 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5 hover:shadow-lg transition-shadow duration-300">';
+
+                    // Left — avatar
+                    $html .= '<div class="shrink-0">';
+                    $html .= '<img src="' . e($t->getAvatarUrl()) . '" alt="' . e($t->author_name) . '" class="w-16 h-16 rounded-2xl object-cover border border-slate-200 dark:border-slate-600">';
+                    $html .= '</div>';
+
+                    // Middle — quote icon + content + author meta
+                    $html .= '<div class="flex-1 min-w-0">';
                     if ($quoteIcon !== 'none') {
-                        $html .= $quoteSvg;
+                        $html .= '<svg class="w-5 h-5 text-indigo-400/50 mb-1" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>';
                     }
+                    $html .= '<p class="text-slate-700 dark:text-slate-200 text-sm leading-relaxed font-medium italic line-clamp-3">&ldquo;' . e($t->content) . '&rdquo;</p>';
+                    $html .= '<div class="mt-2 flex items-center gap-2 flex-wrap">';
+                    $html .= '<span class="text-xs font-bold text-slate-900 dark:text-white">' . e($t->author_name) . '</span>';
+                    if ($t->author_title || $t->company_name) {
+                        $subtitle = implode(' · ', array_filter([$t->author_title, $t->company_name]));
+                        $html .= '<span class="text-[11px] text-slate-400 font-medium">' . e($subtitle) . '</span>';
+                    }
+                    $html .= '</div>';
+                    $html .= '</div>';
+
+                    // Right — star rating
                     if ($showRating) {
-                        $html .= '<div class="flex items-center text-amber-400 mb-3">';
+                        $html .= '<div class="flex items-center gap-0.5 shrink-0 self-start sm:self-center">';
                         for ($i = 1; $i <= 5; $i++) {
-                            $html .= '<svg class="w-4 h-4 ' . ($i <= $t->rating ? 'fill-current' : 'text-slate-200 dark:text-slate-600') . '" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+                            $cls = $i <= $t->rating ? 'text-amber-400 fill-current' : 'text-slate-200 dark:text-slate-600';
+                            $html .= '<svg class="w-4 h-4 ' . $cls . '" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
                         }
                         $html .= '</div>';
                     }
-                    $html .= '<p class="text-slate-700 dark:text-slate-200 text-sm leading-relaxed mb-6 font-medium italic">"' . e($t->content) . '"</p>';
-                    $html .= '</div>';
 
-                    $html .= '<div class="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/60">';
-                    $html .= '<img src="' . e($t->getAvatarUrl()) . '" alt="' . e($t->author_name) . '" class="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600 shrink-0">';
-                    $html .= '<div>';
-                    $html .= '<div class="font-bold text-slate-900 dark:text-white text-xs">' . e($t->author_name) . '</div>';
-                    if ($t->author_title || $t->company_name) {
-                        $subtitle = implode(' • ', array_filter([$t->author_title, $t->company_name]));
-                        $html .= '<div class="text-[11px] text-slate-400 font-medium">' . e($subtitle) . '</div>';
-                    }
-                    $html .= '</div></div>';
-                    $html .= '</div>';
+                    $html .= '</div>'; // row
                 }
-                $html .= '</div>';
+
+                $html .= '</div>'; // .testimonials-plugin-list
             }
 
             $defaultCss = $plugin->getSetting('default_css', '');

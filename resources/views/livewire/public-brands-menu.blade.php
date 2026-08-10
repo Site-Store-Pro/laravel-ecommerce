@@ -23,7 +23,7 @@
          x-transition:leave="transition ease-in duration-100"
          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
          x-transition:leave-end="opacity-0 translate-y-1 scale-95"
-         class="hidden md:block absolute left-0 mt-1 w-[32rem] bg-white/95 dark:bg-slate-800/95 border border-slate-200/80 dark:border-slate-700/80 rounded-3xl shadow-xl shadow-slate-100/50 dark:shadow-none py-6 px-6 z-50 backdrop-blur-md"
+         class="hidden md:block absolute left-0 mt-1 w-[32rem] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl shadow-none py-6 px-6 z-50 backdrop-blur-md"
          style="display: none;">
 
         @if($brands->isEmpty())
@@ -52,9 +52,6 @@
 
                         <div class="min-w-0">
                             <span class="block text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition truncate">{{ $brand->name }}</span>
-                            @if($brand->description)
-                                <span class="block text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[180px]">{{ $brand->description }}</span>
-                            @endif
                         </div>
                     </a>
                 @endforeach

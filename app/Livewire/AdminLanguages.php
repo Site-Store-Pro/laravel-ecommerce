@@ -164,6 +164,8 @@ class AdminLanguages extends Component
             \App\Models\KbCategory::class,
             \App\Models\EmailTemplate::class,
             \App\Models\CmsModal::class,
+            \App\Models\CmsFaq::class,
+            \App\Models\CmsSlide::class,
             \App\Models\CmsBuilderBlock::class,
             \App\Models\ProductInventoryAlert::class,
         ];
@@ -233,6 +235,7 @@ class AdminLanguages extends Component
             'kb_categories'          => $service->translationStats(\App\Models\KbCategory::class, $languageId),
             'email_templates'        => $service->translationStats(\App\Models\EmailTemplate::class, $languageId),
             'modals'                 => $service->translationStats(\App\Models\CmsModal::class, $languageId),
+            'cms_faqs'               => $service->translationStats(\App\Models\CmsFaq::class, $languageId),
             'builder_blocks'         => $service->translationStats(\App\Models\CmsBuilderBlock::class, $languageId),
             'inventory_alerts'       => $service->translationStats(\App\Models\ProductInventoryAlert::class, $languageId),
             'plugins'                => $service->pluginTranslationStats($languageId),

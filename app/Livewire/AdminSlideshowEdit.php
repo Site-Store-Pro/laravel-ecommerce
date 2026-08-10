@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\CmsSlide;
 use App\Models\CmsSlideshow;
+use App\Models\CmsSlideTranslation;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
@@ -28,6 +29,7 @@ class AdminSlideshowEdit extends Component
     public string $slide_callout_button_label = '';
     public string $slide_content_css = '';
     public string $slide_heading_css = '';
+    public string $slide_alignment = 'middle-center';
     public int $Active = 1;
     public float $ImageSort = 0;
 
@@ -65,6 +67,15 @@ class AdminSlideshowEdit extends Component
     public bool $isCreating = false;
     public ?int $confirmDeleteId = null;
 
+    // ── Translation state ───────────────────────────────────────────────────
+    public ?string $activeLangCode             = null;
+    public ?int    $activeLangId               = null;
+    public string  $trans_slide_heading        = '';
+    public string  $trans_slide_sub_heading    = '';
+    public string  $trans_button_label         = '';
+    public string  $trans_status               = 'pending';
+    public ?string $trans_translated_at        = null;
+
     public function mount(int $id): void
     {
         abort_unless(auth()->check() && auth()->user()->isAdmin(), 403);
@@ -85,6 +96,7 @@ class AdminSlideshowEdit extends Component
         $this->slide_callout_button_label = '';
         $this->slide_content_css = '';
         $this->slide_heading_css = '';
+        $this->slide_alignment = 'middle-center';
         $this->Active = 1;
         $this->ImageSort = 0;
 
@@ -115,6 +127,14 @@ class AdminSlideshowEdit extends Component
         $this->isEditing = false;
         $this->isCreating = false;
         $this->resetErrorBag();
+
+        $this->activeLangCode         = null;
+        $this->activeLangId           = null;
+        $this->trans_slide_heading    = '';
+        $this->trans_slide_sub_heading = '';
+        $this->trans_button_label     = '';
+        $this->trans_status           = 'pending';
+        $this->trans_translated_at    = null;
     }
 
     public function startCreate(): void
@@ -140,6 +160,7 @@ class AdminSlideshowEdit extends Component
         $this->slide_callout_button_label = $slide->slide_callout_button_label ?? '';
         $this->slide_content_css = $slide->slide_content_css ?? '';
         $this->slide_heading_css = $slide->slide_heading_css ?? '';
+        $this->slide_alignment = $slide->slide_alignment ?? 'middle-center';
         $this->Active = (int) ($slide->Active ?? 1);
         $this->ImageSort = (float) ($slide->ImageSort ?? 0);
 
@@ -164,6 +185,13 @@ class AdminSlideshowEdit extends Component
         $this->existing_mobile_image = $slide->mobile_image;
 
         $this->isEditing = true;
+
+        // Auto-select the first active non-default language for the translation panel
+        $activeLangs = \App\Models\Language::where('is_active', true)->where('is_default', false)->get();
+        if ($activeLangs->isNotEmpty()) {
+            $first = $activeLangs->first();
+            $this->selectTranslationLang($first->code, $first->id);
+        }
     }
 
     public function cancel(): void
@@ -221,26 +249,34 @@ class AdminSlideshowEdit extends Component
             'slide_sub_heading'           => 'nullable|string|max:1000',
             'slide_callout_button_label'  => 'nullable|string|max:255',
             'slide_content_css'           => 'nullable|string',
-            'slide_heading_css'           => 'nullable|string',
-            'Active'                      => 'required|integer|in:0,1',
-            'ImageSort'                   => 'required|numeric',
-            'image_s3'                    => 'required|integer|in:0,1,2',
-            'image_s3_region'             => 'nullable|string|max:255',
-            'image_s3_bucket'             => 'nullable|string|max:255',
-            'image_s3_key'                => 'nullable|string|max:255',
-            'image_s3_secret'             => 'nullable|string|max:500',
-            'cdn_url'                     => 'nullable|string|max:500',
-            'cdn_image_width'             => 'nullable|integer',
-            'cdn_image_height'            => 'nullable|integer',
-            'cdn_mobile_image_width'      => 'nullable|integer',
-            'cdn_mobile_image_height'     => 'nullable|integer',
-            'cdn_image'                   => 'nullable|url|max:2048',
-            'cdn_mobile_image'            => 'nullable|url|max:2048',
-            'cdn_thumbnail'               => 'nullable|url|max:2048',
-            'largeImageFile'              => 'nullable|image|max:10240',
-            'thumbnailFile'               => 'nullable|image|max:5120',
-            'mobileImageFile'             => 'nullable|image|max:5120',
+            'slide_heading_css'          => 'nullable|string',
+            'slide_alignment'            => 'required|string',
+            'Active'                     => 'required|integer|in:0,1',
+            'ImageSort'                  => 'required|numeric',
+            'image_s3'                   => 'required|integer|in:0,1,2',
+            'image_s3_region'            => 'nullable|string|max:255',
+            'image_s3_bucket'            => 'nullable|string|max:255',
+            'image_s3_key'               => 'nullable|string|max:255',
+            'image_s3_secret'            => 'nullable|string|max:500',
+            'cdn_url'                    => 'nullable|string|max:500',
+            'cdn_image_width'            => 'nullable|integer',
+            'cdn_image_height'           => 'nullable|integer',
+            'cdn_mobile_image_width'     => 'nullable|integer',
+            'cdn_mobile_image_height'    => 'nullable|integer',
+            'cdn_image'                  => 'nullable|url|max:2048',
+            'cdn_mobile_image'           => 'nullable|url|max:2048',
+            'cdn_thumbnail'              => 'nullable|url|max:2048',
+            'largeImageFile'             => 'nullable|image|max:10240',
+            'thumbnailFile'              => 'nullable|image|max:5120',
+            'mobileImageFile'            => 'nullable|image|max:5120',
         ]);
+
+        // Mobile image requirement check (either upload file, CDN URL, or existing saved image)
+        $hasMobileImage = !empty($this->cdn_mobile_image) || $this->mobileImageFile !== null || !empty($this->existing_mobile_image);
+        if (!$hasMobileImage) {
+            $this->addError('mobileImageFile', 'Mobile Image is required (upload a mobile image file or provide an external mobile image URL).');
+            return;
+        }
 
         $slideId = $this->isEditing ? $this->slideId : null;
         $diskName = $this->resolveDisk($this->image_s3, $slideId);
@@ -279,6 +315,7 @@ class AdminSlideshowEdit extends Component
                 'slide_callout_button_label' => $this->slide_callout_button_label ?: null,
                 'slide_content_css'          => $this->slide_content_css ?: null,
                 'slide_heading_css'          => $this->slide_heading_css ?: null,
+                'slide_alignment'            => $this->slide_alignment ?: 'middle-center',
                 'Active'                     => $this->Active,
                 'ImageSort'                  => $this->ImageSort,
                 'LargeImage'                 => $largePath,
@@ -314,6 +351,7 @@ class AdminSlideshowEdit extends Component
                 'slide_callout_button_label' => $this->slide_callout_button_label ?: null,
                 'slide_content_css'          => $this->slide_content_css ?: null,
                 'slide_heading_css'          => $this->slide_heading_css ?: null,
+                'slide_alignment'            => $this->slide_alignment ?: 'middle-center',
                 'Active'                     => $this->Active,
                 'ImageSort'                  => $this->ImageSort,
                 'LargeImage'                 => null,
@@ -435,6 +473,129 @@ class AdminSlideshowEdit extends Component
         $slide->update(['mobile_image' => null]);
         $this->existing_mobile_image = null;
         $this->dispatch('toast', message: 'Mobile image removed.', type: 'success');
+    }
+
+    // ── Translation ───────────────────────────────────────────────────────────
+
+    public function selectTranslationLang(string $code, int $id): void
+    {
+        $this->activeLangCode = $code;
+        $this->activeLangId   = $id;
+
+        if (!$this->slideId) return;
+
+        $t = CmsSlideTranslation::where('cms_slide_id', $this->slideId)
+            ->where('language_id', $id)
+            ->first();
+
+        if ($t) {
+            $this->trans_slide_heading    = $t->slide_heading ?? '';
+            $this->trans_slide_sub_heading = $t->slide_sub_heading ?? '';
+            $this->trans_button_label     = $t->slide_callout_button_label ?? '';
+            $this->trans_status           = $t->translation_status ?? 'pending';
+            $this->trans_translated_at    = $t->translated_at ? $t->translated_at->format('M j, Y g:i A') : null;
+        } else {
+            $this->trans_slide_heading    = '';
+            $this->trans_slide_sub_heading = '';
+            $this->trans_button_label     = '';
+            $this->trans_status           = 'pending';
+            $this->trans_translated_at    = null;
+        }
+    }
+
+    public function saveTranslation(): void
+    {
+        if (!$this->slideId || !$this->activeLangId) return;
+
+        CmsSlideTranslation::updateOrCreate(
+            [
+                'cms_slide_id' => $this->slideId,
+                'language_id'  => $this->activeLangId,
+            ],
+            [
+                'slide_heading'              => trim($this->trans_slide_heading),
+                'slide_sub_heading'          => trim($this->trans_slide_sub_heading),
+                'slide_callout_button_label' => trim($this->trans_button_label),
+                'translation_status'         => 'reviewed',
+                'translated_at'              => now(),
+            ]
+        );
+
+        $this->trans_status       = 'reviewed';
+        $this->trans_translated_at = now()->format('M j, Y g:i A');
+        $this->dispatch('toast', message: 'Slide translation saved.', type: 'success');
+    }
+
+    public function aiTranslateSlideInline(): void
+    {
+        if (!$this->slideId || !$this->activeLangId) return;
+
+        $slide = CmsSlide::find($this->slideId);
+        $lang  = \App\Models\Language::find($this->activeLangId);
+
+        if (!$slide || !$lang) return;
+
+        try {
+            $svc      = app(\App\Services\TranslationService::class);
+            $langName = $lang->name;
+
+            if (!empty($slide->slide_heading)) {
+                $this->trans_slide_heading = $svc->translateText(
+                    $slide->slide_heading,
+                    $langName,
+                    'slideshow slide heading / title text displayed over the slide image'
+                );
+            }
+            if (!empty($slide->slide_sub_heading)) {
+                $this->trans_slide_sub_heading = $svc->translateText(
+                    $slide->slide_sub_heading,
+                    $langName,
+                    'slideshow slide sub-heading / description text'
+                );
+            }
+            if (!empty($slide->slide_callout_button_label)) {
+                $this->trans_button_label = $svc->translateText(
+                    $slide->slide_callout_button_label,
+                    $langName,
+                    'slideshow slide call-to-action button label — keep it short and action-oriented'
+                );
+            }
+
+            $this->trans_status = 'ai_translated';
+            $this->dispatch('toast', message: 'AI translation generated — review and click Save Translation.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
+        }
+    }
+
+    public function autoTranslateSlide(): void
+    {
+        if (!$this->slideId || !$this->activeLangId) return;
+
+        \App\Jobs\TranslateContentJob::dispatch(
+            CmsSlide::class,
+            $this->slideId,
+            $this->activeLangId
+        );
+
+        $this->dispatch('toast', message: 'Slide translation job queued for background processing.', type: 'success');
+    }
+
+    public function translateAllLanguages(): void
+    {
+        if (!$this->slideId) return;
+
+        $languages = \App\Models\Language::where('is_active', true)->where('is_default', false)->get();
+        if ($languages->isEmpty()) {
+            $this->dispatch('toast', message: 'No active non-default languages found.', type: 'warning');
+            return;
+        }
+
+        foreach ($languages as $lang) {
+            \App\Jobs\TranslateContentJob::dispatch(CmsSlide::class, $this->slideId, $lang->id);
+        }
+
+        $this->dispatch('toast', message: $languages->count() . ' translation job(s) queued for this slide.', type: 'success');
     }
 
     // ── Render ────────────────────────────────────────────────────────────────

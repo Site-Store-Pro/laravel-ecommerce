@@ -102,7 +102,7 @@
 
                     @if($product->requiresOptions())
                         <a href="{{ route('shop.product', $product->seo_slug) }}"
-                           class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">
+                           class="btn-primary inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">
                             @label('plugin.view_options', 'View Options')
                         </a>
                     @else
@@ -120,7 +120,7 @@
                             <button wire:click="buyNow({{ $v->id }})"
                                     wire:loading.attr="disabled"
                                     wire:target="buyNow({{ $v->id }})"
-                                    class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">
+                                    class="btn-primary inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">
                                 <span wire:loading.remove wire:target="buyNow({{ $v->id }})">@label('plugin.buy_now', 'Buy Now')</span>
                                 <span wire:loading wire:target="buyNow({{ $v->id }})">@label('plugin.adding', 'Adding...')</span>
                             </button>

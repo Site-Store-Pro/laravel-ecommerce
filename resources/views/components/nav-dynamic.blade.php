@@ -30,17 +30,12 @@
 @endphp
 
 {{-- Scoped styles --}}
-@if($cssVarBlock || $customCss || ($menu->sticky && !empty($menu->sticky_body_offset) && $menu->sticky_body_offset !== '0px'))
+@if($cssVarBlock || $customCss)
 <style>
     /* Nav scheme: {{ $menu->color_scheme }} */
     {!! $cssVarBlock !!}
     /* Nav custom CSS */
     {!! $customCss !!}
-    @if($menu->sticky && !empty($menu->sticky_body_offset) && $menu->sticky_body_offset !== '0px')
-    main {
-        padding-top: {{ $menu->sticky_body_offset }} !important;
-    }
-    @endif
 </style>
 @endif
 
@@ -90,6 +85,8 @@ button.dyn-nav-link,
     color: var(--nav-badge-text, #fff);
 }
 /* Dropdown */
+.nav-dropdown,
+.nav-mega-menu,
 #top-nav-{{ $menu->slug }} .nav-dropdown,
 #top-nav-{{ $menu->slug }} .nav-mega-menu {
     display: none;
@@ -101,11 +98,12 @@ button.dyn-nav-link,
     background: var(--nav-dropdown-bg, #ffffff);
     border: 1px solid var(--nav-dropdown-border, #e2e8f0);
     border-radius: 0.75rem;
-    box-shadow: var(--nav-dropdown-shadow, 0 10px 40px rgba(0,0,0,.10));
+    box-shadow: var(--nav-dropdown-shadow, none);
     padding: 0.5rem;
     list-style: none;
     margin: 0;
 }
+.nav-mega-menu,
 #top-nav-{{ $menu->slug }} .nav-mega-menu {
     left: 0;
     right: 0;
@@ -113,12 +111,18 @@ button.dyn-nav-link,
     border-radius: 0 0 0.75rem 0.75rem;
     padding: 1.5rem;
 }
+.nav-item-wrap:hover > .nav-dropdown,
+.nav-item-wrap:focus-within > .nav-dropdown,
+.nav-item-wrap:hover > .nav-mega-menu,
+.nav-item-wrap:focus-within > .nav-mega-menu,
 #top-nav-{{ $menu->slug }} .nav-item-wrap:hover > .nav-dropdown,
 #top-nav-{{ $menu->slug }} .nav-item-wrap:focus-within > .nav-dropdown,
 #top-nav-{{ $menu->slug }} .nav-item-wrap:hover > .nav-mega-menu,
 #top-nav-{{ $menu->slug }} .nav-item-wrap:focus-within > .nav-mega-menu {
-    display: block;
+    display: block !important;
 }
+.nav-dropdown li a,
+.nav-dropdown li button,
 #top-nav-{{ $menu->slug }} .nav-dropdown li a,
 #top-nav-{{ $menu->slug }} .nav-dropdown li button {
     display: block;
@@ -135,6 +139,8 @@ button.dyn-nav-link,
     border: none;
     cursor: pointer;
 }
+.nav-dropdown li a:hover,
+.nav-dropdown li button:hover,
 #top-nav-{{ $menu->slug }} .nav-dropdown li a:hover,
 #top-nav-{{ $menu->slug }} .nav-dropdown li button:hover {
     background: var(--nav-dropdown-hover-bg, #f8fafc);
@@ -331,14 +337,20 @@ html.dark a.hover\:bg-indigo-700:hover {
     background-color: #1e3664;
 }
 /* Focus ring — keep it visible but toned down */
-html.dark button.focus\:ring-indigo-500:focus,
-html.dark a.focus\:ring-indigo-500:focus {
-    --tw-ring-color: rgba(44, 74, 124, 0.6);
+/* Auto height and overflow containment for wrapping header navigation */
+.header_container,
+.site_header_container,
+.site_header_contents,
+.top_nav_container,
+.top_nav_row {
+    height: auto !important;
+    min-height: max-content;
+    overflow: visible;
 }
 </style>
 
 @if($embedded ?? false)
-    <ul class="flex items-center gap-6 flex-1 {{ $alignmentClass }} list-none m-0 p-0">
+    <ul class="flex flex-wrap items-center gap-x-6 gap-y-[25px] flex-1 {{ $alignmentClass }} list-none m-0 p-0 py-1">
         @foreach($items as $item)
             @if(!$item->isVisibleFor($context['user'])) @continue @endif
             @if($item->hide_on_desktop) @continue @endif
@@ -350,7 +362,7 @@ html.dark a.focus\:ring-indigo-500:focus {
         x-data="{ mobileOpen: false }"
         role="navigation"
         aria-label="Main navigation">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
 
         {{-- Logo --}}
         @if($menu->show_logo)
@@ -360,8 +372,8 @@ html.dark a.focus\:ring-indigo-500:focus {
         @endif
 
         {{-- Desktop items --}}
-        <nav class="hidden lg:flex items-center gap-8 flex-1 {{ $alignmentClass }}" aria-label="Desktop navigation">
-            <ul class="flex items-center gap-6 flex-1 {{ $alignmentClass }} list-none m-0 p-0">
+        <nav class="hidden lg:flex flex-wrap items-center gap-6 flex-1 {{ $alignmentClass }}" aria-label="Desktop navigation">
+            <ul class="flex flex-wrap items-center gap-x-6 gap-y-[25px] flex-1 {{ $alignmentClass }} list-none m-0 p-0 py-1">
                 @foreach($items as $item)
                     @if(!$item->isVisibleFor($context['user'])) @continue @endif
                     @if($item->hide_on_desktop) @continue @endif

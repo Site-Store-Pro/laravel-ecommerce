@@ -28,11 +28,18 @@
             <div class="absolute top-[40%] right-[-15%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-indigo-100/30 to-purple-100/20 blur-3xl opacity-50"></div>
         </div>
 
+        @php
+            $stickySetting    = \App\Models\CmsSetting::get('css_var_top_nav_sticky') ?? \App\Models\CmsSetting::get('top_nav_sticky', '1');
+            $isStickyNav      = in_array($stickySetting, ['1', 1, true, 'true'], true);
+            $stickyBodyOffset = \App\Models\CmsSetting::get('css_var_sticky_body_offset') ?? \App\Models\CmsSetting::get('sticky_body_offset', '0px');
+            $stickyStyle      = ($isStickyNav && !empty($stickyBodyOffset) && $stickyBodyOffset !== '0px') ? 'padding-top: ' . $stickyBodyOffset . ';' : '';
+        @endphp
         <div class="min-h-[100dvh] flex flex-col justify-between relative">
-            <livewire:public-navigation />
+            <livewire:public-header />
 
-            <!-- Main Content Area -->
-            <main class="flex-1 py-16 lg:py-24">
+            <!-- Main Content Area Container -->
+            <div class="flex-1 flex flex-col p-0 m-0 w-full main-sticky-offset site-main-content" style="{{ $stickyStyle }}">
+                <main class="flex-1 py-16 lg:py-24">
                 <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
                     
                     <!-- Category Header Info -->
@@ -127,6 +134,7 @@
 
                 </div>
             </main>
+            </div><!-- end flex-1 main-sticky-offset container -->
 
             <!-- Footer -->
             @include('layouts.footer', ['theme' => 'light'])

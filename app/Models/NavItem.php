@@ -110,8 +110,8 @@ class NavItem extends Model
      */
     public static function buildTree(Collection $items): Collection
     {
-        $topLevel = $items->whereNull('parent_id')->sortBy('position');
-        $childMap = $items->whereNotNull('parent_id')->groupBy('parent_id');
+        $topLevel = $items->filter(fn($i) => empty($i->parent_id) || $i->parent_id == 0)->sortBy('position');
+        $childMap = $items->filter(fn($i) => !empty($i->parent_id) && $i->parent_id != 0)->groupBy('parent_id');
 
         return $topLevel->map(function (NavItem $item) use ($childMap) {
             $item->setRelation(

@@ -188,7 +188,7 @@
                                     </div>
 
                                     @if($product->requiresOptions())
-                                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-primary" style="text-decoration:none;">
+                                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-primary btn-primary" style="text-decoration:none;">
                                             @label('plugin.view_options', 'View Options')
                                         </a>
                                     @else
@@ -198,7 +198,7 @@
                                             <button wire:click="buyNow({{ $v->id }})"
                                                     wire:loading.attr="disabled"
                                                     wire:target="buyNow({{ $v->id }})"
-                                                    class="fi-btn fi-btn-primary">
+                                                    class="fi-btn fi-btn-primary btn-primary">
                                                 <span wire:loading.remove wire:target="buyNow({{ $v->id }})">
                                                     @label('plugin.buy_now', 'Buy Now')
                                                 </span>
@@ -213,20 +213,21 @@
                 @endforeach
             </div>
 
-            {{-- Navigation --}}
-            @if($nav !== 'off')
-                <div class="fi-swiper-prev" id="{{ $instanceId }}_prev" aria-label="Previous">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                </div>
-                <div class="fi-swiper-next" id="{{ $instanceId }}_next" aria-label="Next">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </div>
-            @endif
         </div>
+
+        {{-- Navigation — outside .swiper so they are not clipped by overflow:hidden --}}
+        @if($nav !== 'off')
+            <div class="fi-swiper-prev" id="{{ $instanceId }}_prev" aria-label="Previous">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </div>
+            <div class="fi-swiper-next" id="{{ $instanceId }}_next" aria-label="Next">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                </svg>
+            </div>
+        @endif
 
         <script>
             document.addEventListener('DOMContentLoaded', function() {

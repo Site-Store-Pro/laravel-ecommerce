@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Config;
@@ -9,6 +10,23 @@ use Illuminate\Support\Facades\Storage;
 
 class CmsSlide extends Model
 {
+    use HasTranslations;
+
+    /**
+     * Fields automatically translated when translations relation is eager-loaded
+     * and a non-default language is active.
+     */
+    protected array $translatable = [
+        'slide_heading',
+        'slide_sub_heading',
+        'slide_callout_button_label',
+    ];
+
+    protected function translationForeignKey(): string
+    {
+        return 'cms_slide_id';
+    }
+
     protected $table = 'cms_slides';
     protected $primaryKey = 'id';
 
@@ -24,6 +42,7 @@ class CmsSlide extends Model
         'slide_sub_heading',
         'slide_content_css',
         'slide_heading_css',
+        'slide_alignment',
         'slide_callout_button_label',
         'slideshow_id',
         'mobile_image',
@@ -156,6 +175,11 @@ class CmsSlide extends Model
             return $this->cdn_thumbnail;
         }
 
-        return $this->resolveStoredUrl($this->Thumbnail);
+        $stored = $this->resolveStoredUrl($this->Thumbnail);
+        if (!empty($stored)) {
+            return $stored;
+        }
+
+        return $this->desktopImageUrl() ?: $this->mobileImageUrl();
     }
 }

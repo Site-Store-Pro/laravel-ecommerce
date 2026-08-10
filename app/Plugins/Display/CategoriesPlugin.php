@@ -36,14 +36,20 @@ class CategoriesPlugin implements DisplayPlugin
                 ->where('is_visible_in_menu', true)
                 ->orderBy('sort_order', 'asc')
                 ->orderBy('name', 'asc')
-                ->limit($max)
                 ->get();
+
+            // Filter out categories where BOTH display_label_in_plugins AND display_image_in_plugins are disabled (false)
+            $categories = $categories->filter(function ($cat) {
+                $showLabel = filter_var($cat->display_label_in_plugins ?? true, FILTER_VALIDATE_BOOLEAN);
+                $showImg   = filter_var($cat->display_image_in_plugins ?? true, FILTER_VALIDATE_BOOLEAN);
+                return $showLabel || $showImg;
+            })->take($max);
 
             if ($categories->isEmpty()) {
                 return '<!-- [plugin:categories-2026] No top level categories found -->';
             }
 
-            $html = '';
+            $html = '<div class="categories-plugin-wrapper">';
             if (!empty($header)) {
                 $html .= '<div class="mb-4"><h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">' . e($header) . '</h3></div>';
             }
@@ -51,12 +57,19 @@ class CategoriesPlugin implements DisplayPlugin
             if ($display === 'list') {
                 $html .= '<div class="flex flex-wrap items-center gap-3 py-2">';
                 foreach ($categories as $cat) {
-                    $catUrl = route('shop.category', $cat->slug);
-                    $imgUrl = $cat->category_image ?: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=150&auto=format&fit=crop&q=80';
+                    $showLabel = filter_var($cat->display_label_in_plugins ?? true, FILTER_VALIDATE_BOOLEAN);
+                    $showImg   = filter_var($cat->display_image_in_plugins ?? true, FILTER_VALIDATE_BOOLEAN) && !empty($cat->category_image);
+                    if (!$showLabel && !$showImg) continue;
 
-                    $html .= '<a href="' . e($catUrl) . '" class="inline-flex items-center gap-2.5 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-indigo-500 hover:text-indigo-600 transition shadow-sm">';
-                    $html .= '<img src="' . e($imgUrl) . '" alt="' . e($cat->name) . '" class="category-logo-img w-6 h-6 object-cover rounded-md shrink-0">';
-                    $html .= '<span>' . e($cat->name) . '</span>';
+                    $catUrl = route('shop.category', $cat->slug);
+
+                    $html .= '<a href="' . e($catUrl) . '" class="categories-plugin-card inline-flex items-center gap-2.5 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-indigo-500 hover:text-indigo-600 transition shadow-sm">';
+                    if ($showImg) {
+                        $html .= '<img src="' . e($cat->category_image) . '" alt="' . e($cat->name) . '" class="category-logo-img w-6 h-6 object-cover rounded-md shrink-0">';
+                    }
+                    if ($showLabel) {
+                        $html .= '<span>' . e($cat->name) . '</span>';
+                    }
                     $html .= '</a>';
                 }
                 $html .= '</div>';
@@ -65,15 +78,22 @@ class CategoriesPlugin implements DisplayPlugin
                 $html .= '<div class="flex transition-transform duration-500 ease-out gap-4" :style="\'transform: translateX(-\' + (current * 100) + \'%);\'">';
 
                 foreach ($categories as $cat) {
+                    $showLabel = filter_var($cat->display_label_in_plugins ?? true, FILTER_VALIDATE_BOOLEAN);
+                    $showImg   = filter_var($cat->display_image_in_plugins ?? true, FILTER_VALIDATE_BOOLEAN) && !empty($cat->category_image);
+                    if (!$showLabel && !$showImg) continue;
+
                     $catUrl = route('shop.category', $cat->slug);
-                    $imgUrl = $cat->category_image ?: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=150&auto=format&fit=crop&q=80';
 
                     $html .= '<div class="shrink-0 p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm hover:shadow-md transition flex flex-col items-center text-center gap-3" style="width: calc((100% - ' . (($cols - 1) * 1) . 'rem) / ' . $cols . ');">';
-                    $html .= '<a href="' . e($catUrl) . '" class="group flex flex-col items-center gap-3 w-full">';
-                    $html .= '<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-100 dark:border-indigo-900 group-hover:border-indigo-500 transition-colors shadow-sm shrink-0">';
-                    $html .= '<img src="' . e($imgUrl) . '" alt="' . e($cat->name) . '" class="category-logo-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">';
-                    $html .= '</div>';
-                    $html .= '<span class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">' . e($cat->name) . '</span>';
+                    $html .= '<a href="' . e($catUrl) . '" class="categories-plugin-card group flex flex-col items-center gap-3 w-full">';
+                    if ($showImg) {
+                        $html .= '<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-100 dark:border-indigo-900 group-hover:border-indigo-500 transition-colors shadow-sm shrink-0">';
+                        $html .= '<img src="' . e($cat->category_image) . '" alt="' . e($cat->name) . '" class="category-logo-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">';
+                        $html .= '</div>';
+                    }
+                    if ($showLabel) {
+                        $html .= '<span class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">' . e($cat->name) . '</span>';
+                    }
                     $html .= '</a></div>';
                 }
 
@@ -90,21 +110,29 @@ class CategoriesPlugin implements DisplayPlugin
 
                 $html .= '<div class="grid ' . $gridColsClass . ' gap-4 py-2">';
                 foreach ($categories as $cat) {
-                    $catUrl = route('shop.category', $cat->slug);
-                    $imgUrl = $cat->category_image ?: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=150&auto=format&fit=crop&q=80';
+                    $showLabel = filter_var($cat->display_label_in_plugins ?? true, FILTER_VALIDATE_BOOLEAN);
+                    $showImg   = filter_var($cat->display_image_in_plugins ?? true, FILTER_VALIDATE_BOOLEAN) && !empty($cat->category_image);
+                    if (!$showLabel && !$showImg) continue;
 
-                    $html .= '<a href="' . e($catUrl) . '" class="group p-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-500 transition flex flex-col items-center text-center gap-3">';
-                    $html .= '<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-50 dark:border-indigo-950 group-hover:border-indigo-500 transition-colors shadow-sm shrink-0">';
-                    $html .= '<img src="' . e($imgUrl) . '" alt="' . e($cat->name) . '" class="category-logo-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">';
-                    $html .= '</div>';
-                    $html .= '<span class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">' . e($cat->name) . '</span>';
+                    $catUrl = route('shop.category', $cat->slug);
+
+                    $html .= '<a href="' . e($catUrl) . '" class="categories-plugin-card group p-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-500 transition flex flex-col items-center text-center gap-3">';
+                    if ($showImg) {
+                        $html .= '<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-50 dark:border-indigo-950 group-hover:border-indigo-500 transition-colors shadow-sm shrink-0">';
+                        $html .= '<img src="' . e($cat->category_image) . '" alt="' . e($cat->name) . '" class="category-logo-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">';
+                        $html .= '</div>';
+                    }
+                    if ($showLabel) {
+                        $html .= '<span class="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">' . e($cat->name) . '</span>';
+                    }
                     $html .= '</a>';
                 }
                 $html .= '</div>';
             }
+            $html .= '</div>'; // .categories-plugin-wrapper
 
             $defaultCss = $plugin->getSetting('default_css', '');
-            $customCss  = $params['custom_css'] ?? $settings['custom_css'] ?? '';
+            $customCss  = $params['custom_css'] ?? $settings['custom_css'] ?? $plugin->getSetting('custom_css', '');
 
             $cssHtml = '';
             if (!empty($defaultCss) || !empty($customCss)) {

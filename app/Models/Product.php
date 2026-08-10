@@ -48,6 +48,7 @@ class Product extends Model
         'custom_amount_max',
         'custom_amount_options',
         'inventory_alert_id',
+        'show_variant_selector_thumbnail',
     ];
 
     /** Fields automatically translated when translations relation is loaded. */
@@ -78,6 +79,7 @@ class Product extends Model
         'custom_amount_min' => 'float',
         'custom_amount_max' => 'float',
         'custom_amount_options' => 'string',
+        'show_variant_selector_thumbnail' => 'integer',
         'inventory_alert_id' => 'integer',
     ];
 

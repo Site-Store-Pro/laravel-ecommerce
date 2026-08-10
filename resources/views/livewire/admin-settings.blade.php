@@ -641,16 +641,28 @@
 
             <div class="divide-y divide-slate-100 dark:divide-slate-700 px-6 py-6 space-y-8">
 
-                {{-- STICKY HEADER NAVIGATION TOGGLE --}}
-                <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-800 flex items-center justify-between gap-4">
-                    <div>
-                        <h4 class="text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">Sticky Header Navigation</h4>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">When enabled, the primary site header and top navigation bar remain fixed at the top of the browser window as visitors scroll down.</p>
+                {{-- STICKY HEADER NAVIGATION TOGGLE & OFFSET --}}
+                <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-800 space-y-4">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <h4 class="text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">Sticky Header Navigation</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">When enabled, the primary site header and top navigation bar remain fixed at the top of the browser window as visitors scroll down.</p>
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer shrink-0">
+                            <input type="checkbox" wire:model="top_nav_sticky" class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-xs font-bold text-indigo-700 dark:text-indigo-300">Sticky Header Active</span>
+                        </label>
                     </div>
-                    <label class="flex items-center gap-2 cursor-pointer shrink-0">
-                        <input type="checkbox" wire:model="top_nav_sticky" class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                        <span class="text-xs font-bold text-indigo-700 dark:text-indigo-300">Sticky Header Active</span>
-                    </label>
+
+                    <div class="pt-3 border-t border-indigo-100 dark:border-indigo-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Sticky Header Content Offset (Top Padding)</label>
+                            <p class="text-2xs text-slate-500 dark:text-slate-400">Adds top padding to the main page content area so content doesn't slide under the fixed header (e.g. <code>80px</code>, <code>120px</code>, <code>5rem</code>, or <code>0px</code> for none).</p>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <input type="text" wire:model="sticky_body_offset" placeholder="0px" class="w-32 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                        </div>
+                    </div>
                 </div>
 
                 {{-- 1. FULL PAGE BACKGROUND MEDIA --}}

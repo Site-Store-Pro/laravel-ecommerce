@@ -51,6 +51,8 @@
                     'kb_categories'          => 'KB Categories',
                     'email_templates'        => 'Email Templates',
                     'modals'                 => 'Modals',
+                    'cms_faqs'               => 'CMS FAQs',
+                    'slideshow_slides'        => 'Slideshow Slides',
                     'builder_blocks'         => 'Header/Footer Blocks',
                     'inventory_alerts'       => 'Inventory Alerts',
                     'plugins'                => 'Plugins',

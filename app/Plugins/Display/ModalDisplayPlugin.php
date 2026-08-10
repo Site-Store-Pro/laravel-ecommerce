@@ -22,6 +22,8 @@ class ModalDisplayPlugin implements DisplayPlugin
     public function render(array $params, Plugin $plugin): string
     {
         try {
+            $settings = $plugin->getSettings();
+
             $id = $params['id'] ?? $params[0] ?? null;
 
             if (empty($id) || !is_numeric($id)) {
@@ -66,14 +68,30 @@ class ModalDisplayPlugin implements DisplayPlugin
                 ? ' style="max-width:' . e($modal->max_width) . ';width:100%;"'
                 : '';
 
-            // Scoped CSS
+            // ── Plugin-level CSS (default base + custom overrides) ────────────
+            $defaultCss = $plugin->getSetting('default_css', '');
+            $customCss  = $params['custom_css'] ?? ($settings['custom_css'] ?? '');
+
+            // Scoped CSS — per-instance modal rules
             $styleRules = '#cms-modal-outer-' . $mid . '{display:none;} ';
             $styleRules .= '#cms-modal-bd-' . $mid . '{position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(3px);z-index:99998;display:none;} ';
             if (!empty($modal->custom_css)) {
                 $styleRules .= '#cms-modal-outer-' . $mid . ' .cms-modal-panel{' . $modal->custom_css . '}';
             }
 
-            $html = '<style>' . $styleRules . '</style>' . "\n";
+            $html = '';
+            // Output plugin-level CSS first (default then custom overrides)
+            if (!empty($defaultCss) || !empty($customCss)) {
+                $html .= '<style>';
+                if (!empty($defaultCss)) {
+                    $html .= \App\Services\CssMinifierService::minify($defaultCss);
+                }
+                if (!empty($customCss)) {
+                    $html .= \App\Services\CssMinifierService::minify($customCss);
+                }
+                $html .= '</style>' . "\n";
+            }
+            $html .= '<style>' . $styleRules . '</style>' . "\n";
 
             // Backdrop for center/left/right
             if (in_array($modal->position, ['center', 'left', 'right'])) {

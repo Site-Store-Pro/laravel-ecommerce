@@ -54,6 +54,8 @@ class AdminLanguageTranslations extends Component
             'kb_categories'          => $service->translationStats(\App\Models\KbCategory::class, $this->languageId),
             'email_templates'        => $service->translationStats(\App\Models\EmailTemplate::class, $this->languageId),
             'modals'                 => $service->translationStats(\App\Models\CmsModal::class, $this->languageId),
+            'cms_faqs'               => $service->translationStats(\App\Models\CmsFaq::class, $this->languageId),
+            'slideshow_slides'        => $service->translationStats(\App\Models\CmsSlide::class, $this->languageId),
             'builder_blocks'         => $service->translationStats(\App\Models\CmsBuilderBlock::class, $this->languageId),
             'inventory_alerts'       => $service->translationStats(\App\Models\ProductInventoryAlert::class, $this->languageId),
             'plugins'                => $service->pluginTranslationStats($this->languageId),
@@ -106,6 +108,9 @@ class AdminLanguageTranslations extends Component
             'cms_tags'           => \App\Models\CmsPagesTag::class,
             'kb_categories'      => \App\Models\KbCategory::class,
             'email_templates'    => \App\Models\EmailTemplate::class,
+            'modals'             => \App\Models\CmsModal::class,
+            'cms_faqs'           => \App\Models\CmsFaq::class,
+            'slideshow_slides'    => \App\Models\CmsSlide::class,
             'builder_blocks'     => \App\Models\CmsBuilderBlock::class,
             'inventory_alerts'   => \App\Models\ProductInventoryAlert::class,
         ];
@@ -156,6 +161,9 @@ class AdminLanguageTranslations extends Component
             'cms_tags'           => \App\Models\CmsPagesTag::class,
             'kb_categories'      => \App\Models\KbCategory::class,
             'email_templates'    => \App\Models\EmailTemplate::class,
+            'modals'             => \App\Models\CmsModal::class,
+            'cms_faqs'           => \App\Models\CmsFaq::class,
+            'slideshow_slides'    => \App\Models\CmsSlide::class,
             'builder_blocks'     => \App\Models\CmsBuilderBlock::class,
             'inventory_alerts'   => \App\Models\ProductInventoryAlert::class,
         ];
@@ -183,6 +191,9 @@ class AdminLanguageTranslations extends Component
             'cms_tags'           => [\App\Models\CmsPagesTag::class,       'cms_pages_tag_id',         'name'],
             'kb_categories'      => [\App\Models\KbCategory::class,        'kb_category_id',           'name'],
             'email_templates'    => [\App\Models\EmailTemplate::class,     'email_template_id',        'profile_name'],
+            'modals'             => [\App\Models\CmsModal::class,          'cms_modal_id',             'title'],
+            'cms_faqs'           => [\App\Models\CmsFaq::class,            'cms_faq_id',               'question'],
+            'slideshow_slides'    => [\App\Models\CmsSlide::class,           'cms_slide_id',             'slide_heading'],
             'builder_blocks'     => [\App\Models\CmsBuilderBlock::class,   'cms_builder_block_id',     'title'],
             'inventory_alerts'   => [\App\Models\ProductInventoryAlert::class, 'product_inventory_alert_id', 'message'],
         ];

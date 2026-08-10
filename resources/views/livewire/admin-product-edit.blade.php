@@ -502,6 +502,16 @@
                                 </div>
                             </label>
 
+                            @if(!$dependent_variants)
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model.live="show_variant_selector_thumbnail" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold text-slate-700">Show Product Thumbnail in Variant Selector</span>
+                                    <span class="text-xs text-slate-400">Display the variant's product thumbnail image to the left of each option row in the flat variant selector. Has no effect when Drill-down style is enabled.</span>
+                                </div>
+                            </label>
+                            @endif
+
                             <label class="flex items-start gap-3 cursor-pointer">
                                 <input type="checkbox" wire:model="hide_inventory_levels" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
                                 <div class="flex flex-col">

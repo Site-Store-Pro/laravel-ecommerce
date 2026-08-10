@@ -23,7 +23,7 @@
          x-transition:leave="transition ease-in duration-100"
          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
          x-transition:leave-end="opacity-0 translate-y-1 scale-95"
-         class="hidden md:block absolute left-0 mt-1 w-64 bg-white/95 dark:bg-slate-800/95 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl shadow-xl shadow-slate-100/50 dark:shadow-none py-3 z-50 backdrop-blur-md"
+         class="hidden md:block absolute left-0 mt-1 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-none py-3 z-50 backdrop-blur-md"
          style="display: none;">
         
         @if($categories->isEmpty())

@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class CmsFaq extends Model
 {
+    use HasTranslations;
+
     protected $table = 'cms_faqs';
 
     protected $fillable = [
@@ -14,6 +17,14 @@ class CmsFaq extends Model
         'answer',
         'is_active',
         'sort_order',
+    ];
+
+    /**
+     * Fields automatically translated when translations relation is loaded.
+     */
+    protected array $translatable = [
+        'question',
+        'answer',
     ];
 
     protected $casts = [

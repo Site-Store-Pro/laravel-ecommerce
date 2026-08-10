@@ -8,9 +8,12 @@
     @foreach($children as $child)
         @if(!$child->isVisibleFor($context['user'] ?? null)) @continue @endif
         @if($child->hide_on_desktop) @continue @endif
-        @php $cr = $renderer->resolveLink($child, $context); @endphp
+        @php
+            $cr = $renderer->resolveLink($child, $context);
+            $hasSubChildren = $child->children && $child->children->isNotEmpty();
+        @endphp
         @if($cr['skip']) @continue @endif
-        <li role="menuitem">
+        <li role="menuitem" class="{{ $hasSubChildren ? 'nav-item-wrap relative group/sub' : '' }}">
             @if($child->item_type === 'separator')
                 <hr class="my-1" style="border-color: var(--nav-dropdown-border, #e2e8f0)">
             @elseif($child->item_type === 'login_logout')
@@ -34,10 +37,19 @@
                 @endif
             @else
                 <a href="{{ $cr['href'] }}"
+                   class="{{ $hasSubChildren ? 'flex items-center justify-between' : '' }}"
                    {{ $child->open_in_new_tab ? 'target="_blank" rel="noopener noreferrer"' : '' }}
                    {{ $child->aria_label ? 'aria-label="'.e($child->aria_label).'"' : '' }}>
-                    {!! $child->label !!}
+                    <span>{!! $cr['label'] !!}</span>
+                    @if($hasSubChildren)
+                        <svg class="w-3 h-3 opacity-60 ml-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                    @endif
                 </a>
+                @if($hasSubChildren)
+                    <div class="hidden group-hover/sub:block absolute left-full top-0 ml-1">
+                        @include('components.nav-children', ['children' => $child->children, 'renderer' => $renderer, 'context' => $context])
+                    </div>
+                @endif
             @endif
         </li>
     @endforeach

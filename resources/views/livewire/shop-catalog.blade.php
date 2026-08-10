@@ -143,8 +143,8 @@
             </div>
         </div>
 
-        {{-- Shop Header Custom HTML Content --}}
-        @if(!empty(trim($shopHeaderHtml)))
+        {{-- Shop Header Custom HTML Content (only rendered when no product search filters are applied) --}}
+        @if(!$this->hasActiveFilters && !empty(trim($shopHeaderHtml)))
             <div class="mb-8 p-6 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 rounded-3xl shadow-sm prose dark:prose-invert max-w-none">
                 {!! \App\Services\ContentParserService::parse($shopHeaderHtml) !!}
             </div>
@@ -367,12 +367,12 @@
                     </select>
                 </div>
 
-                @if($products->total() > 5)
+                @if($products->total() > 3)
                     <div class="flex items-center gap-1.5">
                         <label class="text-xs font-semibold text-slate-400 whitespace-nowrap">@label('catalog.show', 'Show')</label>
                         <select wire:model.live="perPage"
                                 class="py-1 px-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-sm transition duration-150">
-                            @foreach([5, 10, 15, 25, 50, 75, 100] as $num)
+                            @foreach([4, 8, 16, 20, 24, 30, 48, 64, 96] as $num)
                                 <option value="{{ $num }}">{{ $num }}</option>
                             @endforeach
                         </select>

@@ -5,9 +5,7 @@
                 {!! \App\Services\CssMinifierService::minify($defaultCss) !!}
             @endif
             @if(!empty($customCss))
-                #{{ $swiperId }}_wrapper {
-                    {!! \App\Services\CssMinifierService::minify($customCss) !!}
-                }
+                {!! \App\Services\CssMinifierService::minify($customCss) !!}
             @endif
         </style>
     @endif
@@ -27,7 +25,13 @@
                         'bottom-center' => 'align-items: flex-end; justify-content: center',
                         'bottom-right'  => 'align-items: flex-end; justify-content: flex-end',
                     ];
-                    $flexAlign = $alignMap[$slideshow->slide_show_alignment ?? 'middle-center'] ?? 'align-items: center; justify-content: center';
+                    $slideAlignKey = $slide->slide_alignment ?: ($slideshow->slide_show_alignment ?: 'middle-center');
+                    $flexAlign = $alignMap[$slideAlignKey] ?? 'align-items: center; justify-content: center';
+                    $textAlign = match(true) {
+                        str_contains($slideAlignKey, 'left')   => 'text-left',
+                        str_contains($slideAlignKey, 'right')  => 'text-right',
+                        default                               => 'text-center',
+                    };
                 @endphp
 
                 <div class="swiper-slide slideshow-plugin-slide" style="background-image: url('{{ $slide->desktopImageUrl() }}');">
@@ -38,8 +42,8 @@
                             }
                         }
                     </style>
-                    <div class="slideshow-plugin-overlay" style="{{ $flexAlign }}; pointer-events: none;">
-                        <div class="slideshow-plugin-content" style="pointer-events: auto; {{ $slide->slide_content_css }}">
+                    <div class="slideshow-plugin-overlay {{ $textAlign }}" style="{{ $flexAlign }}; pointer-events: none;">
+                        <div class="slideshow-plugin-content {{ $textAlign }}" style="pointer-events: auto; {{ $slide->slide_content_css }}">
                             @if($slide->Title || $slide->slide_heading)
                                 <h2 class="slideshow-plugin-heading" style="{{ $slide->slide_heading_css }}">{{ $slide->slide_heading ?: $slide->Title }}</h2>
                             @endif
@@ -47,7 +51,7 @@
                                 <p class="slideshow-plugin-subheading">{{ $slide->slide_sub_heading }}</p>
                             @endif
                             @if($slide->SlideURL && $slide->slide_callout_button_label)
-                                <a href="{{ $slide->SlideURL }}" class="slideshow-plugin-btn">{{ $slide->slide_callout_button_label }}</a>
+                                <a href="{{ $slide->SlideURL }}" class="slideshow-plugin-btn btn-primary">{{ $slide->slide_callout_button_label }}</a>
                             @endif
                         </div>
                     </div>

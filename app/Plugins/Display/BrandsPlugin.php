@@ -24,12 +24,14 @@ class BrandsPlugin implements DisplayPlugin
         try {
             $settings = $plugin->getSettings();
 
-            $display    = strtolower($params['display']    ?? $settings['display_type']  ?? 'slider');
-            $max        = max(1, (int) ($params['max']      ?? $settings['max_brands']    ?? 12));
-            $cols       = max(2, min(6, (int) ($params['cols'] ?? $settings['columns']   ?? 4)));
-            $header     = $params['header']                 ?? $settings['header_title']  ?? 'Featured Brands';
-            $autoplay   = strtolower($params['autoplay']    ?? $settings['autoplay']      ?? 'on');
-            $showLabel  = filter_var($params['show_label']  ?? $settings['show_label']    ?? true, FILTER_VALIDATE_BOOLEAN);
+            $display        = strtolower($params['display']         ?? $settings['display_type']     ?? 'slider');
+            $max            = max(1, (int) ($params['max']           ?? $settings['max_brands']       ?? 12));
+            $cols           = max(2, min(6, (int) ($params['cols']    ?? $settings['columns']          ?? 4)));
+            $header         = $params['header']                      ?? $settings['header_title']     ?? 'Featured Brands';
+            $autoplay       = strtolower($params['autoplay']         ?? $settings['autoplay']         ?? 'on');
+            $showLabel      = filter_var($params['show_label']       ?? $settings['show_label']       ?? true, FILTER_VALIDATE_BOOLEAN);
+            $showNavigation = filter_var($params['show_navigation']  ?? $settings['show_navigation']  ?? true, FILTER_VALIDATE_BOOLEAN);
+            $showPagination = filter_var($params['show_pagination']  ?? $settings['show_pagination']  ?? true, FILTER_VALIDATE_BOOLEAN);
 
             $brands = Brand::visibleInMenu()->orderBy('name')->limit($max)->get();
 
@@ -54,21 +56,23 @@ class BrandsPlugin implements DisplayPlugin
                     ? 'autoplay: { delay: 4000, disableOnInteraction: false, pauseOnMouseEnter: true },'
                     : '';
 
+                $outerPaddingClass = $showNavigation ? 'px-8 sm:px-12' : 'px-0';
+
                 $html .= <<<HTML
-<div class="brands-plugin-slider-outer relative px-8 sm:px-12" id="{$instanceId}_outer">
+<div class="brands-plugin-slider-outer relative {$outerPaddingClass}" id="{$instanceId}_outer">
 <style>
 #{$instanceId}_outer .brands-swiper { width:100%; overflow:hidden; }
 #{$instanceId}_outer .swiper-slide { height:auto; }
 #{$instanceId}_outer .brand-slide-card {
-    background:#fff; border:1px solid #f1f5f9; border-radius:1.25rem;
-    box-shadow:0 1px 3px rgba(0,0,0,.06); padding:1rem;
+    background:transparent; border:none; border-radius:1.25rem;
+    box-shadow:none; padding:1rem;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     text-align:center; gap:.5rem; height:100%;
-    transition:box-shadow .25s, border-color .25s;
+    transition:transform .2s ease;
 }
-html.dark #{$instanceId}_outer .brand-slide-card { background:#1e293b; border-color:#334155; }
-#{$instanceId}_outer .brand-slide-card:hover { box-shadow:0 4px 16px rgba(79,70,229,.12); border-color:#e0e7ff; }
-html.dark #{$instanceId}_outer .brand-slide-card:hover { border-color:#4f46e5; }
+html.dark #{$instanceId}_outer .brand-slide-card { background:transparent; border:none; box-shadow:none; }
+#{$instanceId}_outer .brand-slide-card:hover { box-shadow:none; border:none; }
+html.dark #{$instanceId}_outer .brand-slide-card:hover { border:none; box-shadow:none; }
 #{$instanceId}_outer .brands-swiper-prev,
 #{$instanceId}_outer .brands-swiper-next {
     position:absolute; top:50%; transform:translateY(-50%); z-index:10;
@@ -87,6 +91,11 @@ html.dark #{$instanceId}_outer .brands-swiper-next { background:#1e293b; border-
 #{$instanceId}_outer .swiper-pagination { margin-top:12px; position:relative; text-align:center; }
 #{$instanceId}_outer .swiper-pagination-bullet { background:#cbd5e1; opacity:1; }
 #{$instanceId}_outer .swiper-pagination-bullet-active { background:#4f46e5; }
+@media (max-width: 499px) {
+    #{$instanceId}_outer .brands-swiper { padding-left:1rem; padding-right:1rem; }
+    #{$instanceId}_outer .swiper-slide { display:flex; justify-content:center; }
+    #{$instanceId}_outer .brand-slide-card { width:100%; }
+}
 </style>
 HTML;
 
@@ -117,20 +126,27 @@ HTML;
                 $html .= '</div>'; // .swiper-wrapper
 
                 // Prev / Next arrows
-                $html .= '<div class="brands-swiper-prev" id="' . $instanceId . '_prev" aria-label="Previous">'
-                       . '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">'
-                       . '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>'
-                       . '</svg></div>';
-                $html .= '<div class="brands-swiper-next" id="' . $instanceId . '_next" aria-label="Next">'
-                       . '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">'
-                       . '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>'
-                       . '</svg></div>';
+                if ($showNavigation) {
+                    $html .= '<div class="brands-swiper-prev" id="' . $instanceId . '_prev" aria-label="Previous">'
+                           . '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">'
+                           . '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>'
+                           . '</svg></div>';
+                    $html .= '<div class="brands-swiper-next" id="' . $instanceId . '_next" aria-label="Next">'
+                           . '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">'
+                           . '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>'
+                           . '</svg></div>';
+                }
 
                 // Pagination dots
-                $html .= '<div class="swiper-pagination" id="' . $instanceId . '_pag"></div>';
+                if ($showPagination) {
+                    $html .= '<div class="swiper-pagination" id="' . $instanceId . '_pag"></div>';
+                }
 
                 $html .= '</div>'; // .swiper (#instanceId)
                 $html .= '</div>'; // wire:ignore
+
+                $navigationConfig = $showNavigation ? "navigation: { prevEl: '#{$instanceId}_prev', nextEl: '#{$instanceId}_next' }," : "";
+                $paginationConfig = $showPagination ? "pagination: { el: '#{$instanceId}_pag', clickable: true, dynamicBullets: true }," : "";
 
                 // Inline JS — polls until global Swiper is ready
                 $html .= <<<JS
@@ -142,26 +158,20 @@ HTML;
             return;
         }
         new Swiper('#{$instanceId}', {
-            slidesPerView: 1.3,
+            slidesPerView: 1,
+            centeredSlides: true,
             spaceBetween: 16,
             loop: {$loopEnabled},
             observer: true,
             observeParents: true,
             breakpoints: {
-                500:  { slidesPerView: 2,       spaceBetween: 16 },
-                640:  { slidesPerView: 3,       spaceBetween: 16 },
-                1024: { slidesPerView: {$cols}, spaceBetween: 16 },
+                500:  { slidesPerView: 2, spaceBetween: 16, centeredSlides: false },
+                640:  { slidesPerView: 3, spaceBetween: 16, centeredSlides: false },
+                1024: { slidesPerView: {$cols}, spaceBetween: 16, centeredSlides: false },
             },
             {$autoplayJs}
-            navigation: {
-                prevEl: '#{$instanceId}_prev',
-                nextEl: '#{$instanceId}_next',
-            },
-            pagination: {
-                el: '#{$instanceId}_pag',
-                clickable: true,
-                dynamicBullets: true,
-            },
+            {$navigationConfig}
+            {$paginationConfig}
         });
     }
     if (document.readyState === 'loading') {

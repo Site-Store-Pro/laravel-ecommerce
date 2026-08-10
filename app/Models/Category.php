@@ -28,6 +28,8 @@ class Category extends Model
         'parent_id',
         'sort_order',
         'is_visible_in_menu',
+        'display_label_in_plugins',
+        'display_image_in_plugins',
         'category_image_s3',
         'category_image_cdn_url',
         'category_image_region',
@@ -38,9 +40,11 @@ class Category extends Model
     ];
 
     protected $casts = [
-        'is_visible_in_menu' => 'boolean',
-        'sort_order'         => 'integer',
-        'category_image_s3'  => 'integer',
+        'is_visible_in_menu'       => 'boolean',
+        'display_label_in_plugins' => 'boolean',
+        'display_image_in_plugins' => 'boolean',
+        'sort_order'               => 'integer',
+        'category_image_s3'        => 'integer',
     ];
 
 

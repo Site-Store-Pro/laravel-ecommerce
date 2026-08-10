@@ -28,9 +28,9 @@ new class extends Component
 
 <nav x-data="{ open: false }" class="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50">
     <!-- Primary Navigation Menu -->
-    <div class="{{ (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->role_id === 3)) ? 'max-w-[1800px] w-full' : 'max-w-7xl' }} mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between min-h-16 h-auto py-2.5">
-            <div class="flex flex-1 min-w-0">
+    <div class="{{ (auth()->check() && (auth()->user()->isAdmin() || auth()->user()->role_id === 3)) ? 'max-w-[2000px] w-full' : 'max-w-7xl' }} mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center min-h-16 h-auto py-2.5">
+            <div class="flex flex-1 min-w-0 justify-center">
                 <!-- Logo -->
                 @if(!auth()->check() || auth()->user()->role_id === \App\Enums\UserRole::User->value)
                 <div class="shrink-0 flex items-center me-4">
@@ -39,7 +39,7 @@ new class extends Component
                 @endif
 
                 <!-- Navigation Links -->
-                <div class="flex flex-wrap items-center gap-x-3 gap-y-2 -my-px ms-2 admin:ms-6 py-1">
+                <div class="hidden admin:flex flex-wrap items-center gap-x-2.5 gap-y-[25px] -my-px ms-2 admin:ms-6 py-2">
                     @auth
                         @if(auth()->user()->isAdmin() || auth()->user()->isOrderProcessor())
                             <a href="{{ route('admin.dashboard') }}" wire:navigate class="inline-flex items-center justify-center p-2 rounded-xl border-b-2 border-transparent text-slate-700 dark:text-sky-400 hover:text-slate-900 dark:hover:text-sky-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition duration-150 ease-in-out my-auto" title="Admin Dashboard" aria-label="Admin Dashboard">
@@ -79,10 +79,10 @@ new class extends Component
                                     || request()->routeIs('admin.ecommerce.inventory') 
                                     || request()->routeIs('admin.inventory-alerts.*');
                             @endphp
-                            <div class="inline-flex items-center relative z-20 h-full">
+                            <div class="inline-flex items-center relative z-20 h-auto">
                                 <x-dropdown align="left" width="56">
                                     <x-slot name="trigger">
-                                        <button class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer h-full focus:outline-none {{ $productsActive ? 'border-indigo-500 text-slate-900 dark:text-sky-300 dark:border-sky-400' : 'border-transparent text-slate-700 hover:text-slate-900 hover:border-slate-300 dark:text-sky-400 dark:hover:text-sky-300' }}">
+                                        <button class="inline-flex items-center px-1 py-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer focus:outline-none {{ $productsActive ? 'border-indigo-500 text-slate-900 dark:text-sky-300 dark:border-sky-400' : 'border-transparent text-slate-700 hover:text-slate-900 hover:border-slate-300 dark:text-sky-400 dark:hover:text-sky-300' }}">
                                             <svg class="w-4 h-4 me-1.5 shrink-0 text-slate-500 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                                             <span>{{ __('Products') }}</span>
                                             <svg class="ms-1.5 h-4 w-4 text-slate-400 dark:text-sky-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -147,10 +147,10 @@ new class extends Component
                             @php
                                 $checkoutActive = request()->routeIs('admin.ecommerce.shipping*') || request()->routeIs('admin.ecommerce.checkout.*');
                             @endphp
-                            <div class="inline-flex items-center relative z-20 h-full">
+                            <div class="inline-flex items-center relative z-20 h-auto">
                                 <x-dropdown align="left" width="48">
                                     <x-slot name="trigger">
-                                        <button class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer h-full focus:outline-none {{ $checkoutActive ? 'border-indigo-500 text-slate-900 dark:text-sky-300 dark:border-sky-400' : 'border-transparent text-slate-700 hover:text-slate-900 hover:border-slate-300 dark:text-sky-400 dark:hover:text-sky-300' }}">
+                                        <button class="inline-flex items-center px-1 py-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer focus:outline-none {{ $checkoutActive ? 'border-indigo-500 text-slate-900 dark:text-sky-300 dark:border-sky-400' : 'border-transparent text-slate-700 hover:text-slate-900 hover:border-slate-300 dark:text-sky-400 dark:hover:text-sky-300' }}">
                                             <svg class="w-4 h-4 me-1.5 shrink-0 text-slate-500 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                             <span>{{ __('Checkout') }}</span>
                                             <svg class="ms-1.5 h-4 w-4 text-slate-400 dark:text-sky-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -179,7 +179,7 @@ new class extends Component
                             @php
                                 $cmsActive = request()->routeIs('admin.cms-pages.*') || request()->routeIs('admin.cms-categories.*') || request()->routeIs('admin.cms-tags.*') || request()->routeIs('admin.cms-slideshows.*') || request()->routeIs('admin.cms-list-menus.*') || request()->routeIs('admin.cms-downloads.*') || request()->routeIs('admin.cms-embeds.*') || request()->routeIs('admin.cms-forms.*') || request()->routeIs('admin.kb.*') || request()->routeIs('admin.nav-builder.*') || request()->routeIs('admin.cms-header-footer.*') || request()->routeIs('admin.testimonials.*') || request()->routeIs('admin.faqs.*') || request()->routeIs('admin.modals.*') || request()->routeIs('admin.inventory-alerts.*') || request()->routeIs('admin.site-labels.*') || request()->routeIs('admin.languages.*');
                             @endphp
-                            <div class="inline-flex items-center relative z-30 h-full"
+                            <div class="inline-flex items-center relative z-30 h-auto"
                                  x-data="{ open: false }"
                                  @mouseenter="open = true"
                                  @mouseleave="open = false"
@@ -187,7 +187,7 @@ new class extends Component
 
                                 {{-- Trigger button --}}
                                 <button @click="open = !open"
-                                        class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer h-full focus:outline-none {{ $cmsActive ? 'border-indigo-500 text-slate-900 dark:text-sky-300 dark:border-sky-400' : 'border-transparent text-slate-700 hover:text-slate-900 hover:border-slate-300 dark:text-sky-400 dark:hover:text-sky-300' }}">
+                                        class="inline-flex items-center px-1 py-1 border-b-2 text-sm font-semibold leading-5 transition duration-150 ease-in-out cursor-pointer focus:outline-none {{ $cmsActive ? 'border-indigo-500 text-slate-900 dark:text-sky-300 dark:border-sky-400' : 'border-transparent text-slate-700 hover:text-slate-900 hover:border-slate-300 dark:text-sky-400 dark:hover:text-sky-300' }}">
                                     <svg class="w-4 h-4 me-1.5 shrink-0 text-slate-500 dark:text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                                     <span>{{ __('CMS') }}</span>
                                     <svg class="ms-1.5 h-4 w-4 text-slate-400 dark:text-sky-400 transition-transform duration-200" :class="{ 'rotate-180': open }" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -515,9 +515,7 @@ new class extends Component
                         <x-slot name="trigger">
                             <button class="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 dark:border-slate-700 text-sm leading-4 font-medium rounded-xl text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:text-slate-900 hover:border-slate-300 focus:outline-none transition-all duration-150 shadow-sm" title="Account Menu" aria-label="Account Menu">
                                 <span class="h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span>
-                                <svg class="w-4 h-4 text-slate-600 dark:text-slate-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                </svg>
+                                
                                 <div class="ms-0.5">
                                     <svg class="fill-current h-4 w-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -718,7 +716,7 @@ new class extends Component
 
                 @if (auth()->user()->isAdmin())
                     <x-responsive-nav-link :href="route('admin.settings')" :active="request()->routeIs('admin.settings')">
-                        {{ __('Settings') }}
+                        {{ __('Config') }}
                     </x-responsive-nav-link>
                 @endif
             @endauth

@@ -67,10 +67,24 @@
             <div class="absolute top-[40%] right-[-15%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-indigo-100/30 to-purple-100/20 blur-3xl opacity-50"></div>
         </div>
 
+        @php
+            $stickySetting    = \App\Models\CmsSetting::get('css_var_top_nav_sticky') ?? \App\Models\CmsSetting::get('top_nav_sticky', '1');
+            $isStickyNav      = in_array($stickySetting, ['1', 1, true, 'true'], true);
+            $stickyBodyOffset = \App\Models\CmsSetting::get('css_var_sticky_body_offset') ?? \App\Models\CmsSetting::get('sticky_body_offset', '0px');
+            $stickyStyle      = ($isStickyNav && !empty($stickyBodyOffset) && $stickyBodyOffset !== '0px') ? 'padding-top: ' . $stickyBodyOffset . ';' : '';
+        @endphp
         <div class="min-h-screen flex flex-col p-0 m-0 w-full relative">
             <livewire:public-header />
 
-            <div class="flex-1 flex flex-col p-0 m-0 w-full">
+            <div class="flex-1 flex flex-col p-0 m-0 w-full main-sticky-offset site-main-content" style="{{ $stickyStyle }}">
+
+                <!-- Slideshow Plugin full width block -->
+                @if($page && !empty($page->include_slideshow))
+                    <div class="w-full p-0 m-0 leading-none">
+                        {!! \App\Services\ContentParserService::parse($page->include_slideshow) !!}
+                    </div>
+                @endif
+
                 <main class="flex-1 p-0 m-0 w-full">
                     @if($page)
                         {!! $page->parsed_content !!}
@@ -106,6 +120,7 @@
         @endif
 
         <livewire:slide-cart />
+        <x-cart-confirmation-modal />
         <x-toast-alert />
         <!-- Custom JS / Third-party scripts (DB-driven) -->
         <x-site-custom-js-loader />

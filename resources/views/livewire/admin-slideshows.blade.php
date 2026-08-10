@@ -58,18 +58,6 @@
                                 @error('sort_order') <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p> @enderror
                             </div>
 
-                            {{-- Alignment --}}
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Default Overlay Alignment</label>
-                                <select wire:model="slide_show_alignment"
-                                        class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 text-slate-850 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-xs font-semibold">
-                                    @foreach($alignmentOptions as $value => $label)
-                                        <option value="{{ $value }}">{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                                @error('slide_show_alignment') <p class="text-xs text-rose-500 font-semibold mt-1">{{ $message }}</p> @enderror
-                            </div>
-
                             {{-- Active toggle --}}
                             <div class="md:col-span-2 flex items-center gap-3">
                                 <label class="flex items-center gap-2.5 cursor-pointer group">

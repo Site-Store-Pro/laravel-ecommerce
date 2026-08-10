@@ -1,6 +1,11 @@
-@if(!empty($customCss))
+@if(!empty($defaultCss) || !empty($customCss))
     <style>
-        {!! $customCss !!}
+        @if(!empty($defaultCss))
+            {!! \App\Services\CssMinifierService::minify($defaultCss) !!}
+        @endif
+        @if(!empty($customCss))
+            {!! \App\Services\CssMinifierService::minify($customCss) !!}
+        @endif
     </style>
 @endif
 

@@ -25,6 +25,14 @@ class AdminFaqs extends Component
     public bool    $isEditing         = false;
     public ?int    $confirmingDeleteId = null;
 
+    // ── Translation state ──────────────────────────────────────────────────────
+    public ?string $activeLangCode   = null;
+    public ?int    $activeLangId     = null;
+    public string  $trans_question   = '';
+    public string  $trans_answer     = '';
+    public string  $trans_status     = 'pending';
+    public ?string $trans_translated_at = null;
+
     // ─────────────────────────────────────────────────────────────────────────
 
     public function mount(): void
@@ -48,6 +56,14 @@ class AdminFaqs extends Component
         $this->sort_order = 0;
         $this->isCreating = false;
         $this->isEditing  = false;
+
+        $this->activeLangCode   = null;
+        $this->activeLangId     = null;
+        $this->trans_question   = '';
+        $this->trans_answer     = '';
+        $this->trans_status     = 'pending';
+        $this->trans_translated_at = null;
+
         $this->resetErrorBag();
     }
 
@@ -69,6 +85,115 @@ class AdminFaqs extends Component
         $this->is_active  = (bool) $faq->is_active;
         $this->sort_order = $faq->sort_order;
         $this->isEditing  = true;
+
+        $activeLangs = \App\Models\Language::where('is_active', true)->where('is_default', false)->get();
+        if ($activeLangs->isNotEmpty()) {
+            $first = $activeLangs->first();
+            $this->selectTranslationLang($first->code, $first->id);
+        }
+    }
+
+    public function selectTranslationLang(string $code, int $id): void
+    {
+        $this->activeLangCode = $code;
+        $this->activeLangId   = $id;
+
+        if (!$this->faqId) return;
+
+        $t = \App\Models\CmsFaqTranslation::where('cms_faq_id', $this->faqId)
+            ->where('language_id', $id)
+            ->first();
+
+        if ($t) {
+            $this->trans_question     = $t->question ?? '';
+            $this->trans_answer       = $t->answer ?? '';
+            $this->trans_status       = $t->translation_status ?? 'pending';
+            $this->trans_translated_at = $t->translated_at ? $t->translated_at->format('M j, Y g:i A') : null;
+        } else {
+            $this->trans_question     = '';
+            $this->trans_answer       = '';
+            $this->trans_status       = 'pending';
+            $this->trans_translated_at = null;
+        }
+    }
+
+    public function saveTranslation(): void
+    {
+        if (!$this->faqId || !$this->activeLangId) return;
+
+        \App\Models\CmsFaqTranslation::updateOrCreate(
+            [
+                'cms_faq_id'  => $this->faqId,
+                'language_id' => $this->activeLangId,
+            ],
+            [
+                'question'           => trim($this->trans_question),
+                'answer'             => $this->trans_answer,
+                'translation_status' => 'reviewed',
+                'translated_at'      => now(),
+            ]
+        );
+
+        $this->trans_status        = 'reviewed';
+        $this->trans_translated_at = now()->format('M j, Y g:i A');
+        $this->dispatch('toast', message: 'FAQ translation saved successfully.', type: 'success');
+    }
+
+    public function aiTranslateFaqInline(): void
+    {
+        if (!$this->faqId || !$this->activeLangId) return;
+
+        $faq  = CmsFaq::find($this->faqId);
+        $lang = \App\Models\Language::find($this->activeLangId);
+
+        if (!$faq || !$lang) return;
+
+        try {
+            $svc      = app(\App\Services\TranslationService::class);
+            $langName = $lang->name;
+
+            if (!empty($faq->question)) {
+                $this->trans_question = $svc->translateText($faq->question, $langName, 'FAQ question prompt');
+            }
+            if (!empty($faq->answer)) {
+                $this->trans_answer = $svc->translateText($faq->answer, $langName, 'FAQ answer HTML content');
+            }
+
+            $this->trans_status = 'ai_translated';
+            $this->dispatch('toast', message: 'AI FAQ translation generated — review fields below and click Save Translation.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'AI translation failed: ' . $e->getMessage(), type: 'error');
+        }
+    }
+
+    public function autoTranslateFaq(): void
+    {
+        if (!$this->faqId || !$this->activeLangId) return;
+
+        \App\Jobs\TranslateContentJob::dispatch(
+            CmsFaq::class,
+            $this->faqId,
+            $this->activeLangId
+        );
+
+        $this->dispatch('toast', message: 'FAQ translation job queued for background processing.', type: 'success');
+    }
+
+    public function translateAllLanguages(): void
+    {
+        if (!$this->faqId) return;
+
+        $languages = \App\Models\Language::where('is_active', true)->where('is_default', false)->get();
+        if ($languages->isEmpty()) {
+            $this->dispatch('toast', message: 'No active non-default languages found.', type: 'warning');
+            return;
+        }
+
+        foreach ($languages as $lang) {
+            \App\Jobs\TranslateContentJob::dispatch(CmsFaq::class, $this->faqId, $lang->id);
+        }
+
+        $this->dispatch('toast', message: $languages->count() . ' translation job(s) queued for FAQ.', type: 'success');
     }
 
     public function cancel(): void

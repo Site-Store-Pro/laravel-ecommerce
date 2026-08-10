@@ -160,6 +160,16 @@
                                             <option value="{{ $h }}">{{ $h }}</option>
                                         @endforeach
                                     </select>
+                                    @if($stdKey === 'variant_attributes')
+                                        <p class="text-[10px] text-slate-400 leading-tight pt-0.5">
+                                            Format: <code class="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">Color:Black, Size:Large</code>
+                                            &mdash; or JSON: <code class="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">{"Color":"Black"}</code>
+                                        </p>
+                                    @elseif($stdKey === 'image_url_source')
+                                        <p class="text-[10px] text-slate-400 leading-tight pt-0.5">Value: <code class="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">1</code> = Direct URL &nbsp;|&nbsp; <code class="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">0</code> = Download &amp; store locally</p>
+                                    @elseif($stdKey === 'categories')
+                                        <p class="text-[10px] text-slate-400 leading-tight pt-0.5">Supports hierarchy: <code class="font-mono bg-slate-200 dark:bg-slate-700 px-1 rounded">Electronics &gt; Audio</code> &nbsp;or comma-separated</p>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
@@ -170,7 +180,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <h3 class="text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-200">3. Live Import Data Preview</h3>
-                                <p class="text-xs text-slate-400 mt-0.5">Previewing first 10 rows of {{ count($allRows) }} items ready to import.</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Previewing first 50 rows of {{ count($allRows) }} items ready to import.</p>
                             </div>
                         </div>
 
@@ -185,7 +195,8 @@
                                         <th class="py-3 px-4">Public Price</th>
                                         <th class="py-3 px-4">Wholesale Price</th>
                                         <th class="py-3 px-4">Variant SKU</th>
-                                        <th class="py-3 px-4">Variant Specs</th>
+                                        <th class="py-3 px-4">Variant Name / Label</th>
+                                        <th class="py-3 px-4">Variant Attributes</th>
                                         <th class="py-3 px-4">Img Mode</th>
                                     </tr>
                                 </thead>
@@ -198,6 +209,7 @@
                                             $mappedPub   = $columnMapping['public_price'] ?? null;
                                             $mappedWs    = $columnMapping['wholesale_price'] ?? null;
                                             $mappedSku   = $columnMapping['variant_sku'] ?? null;
+                                            $mappedVarName  = $columnMapping['variant_name'] ?? null;
                                             $mappedSpecs = $columnMapping['variant_attributes'] ?? null;
                                             $mappedImgSource = $columnMapping['image_url_source'] ?? null;
                                         @endphp
@@ -209,7 +221,49 @@
                                             <td class="py-2.5 px-4 font-mono font-bold">{{ $mappedPub ? ($r[$mappedPub] ?? '') : '' }}</td>
                                             <td class="py-2.5 px-4 font-mono font-bold text-slate-500">{{ $mappedWs ? ($r[$mappedWs] ?? '') : '' }}</td>
                                             <td class="py-2.5 px-4 font-mono text-emerald-600 dark:text-emerald-400">{{ $mappedSku ? ($r[$mappedSku] ?? '') : '' }}</td>
-                                            <td class="py-2.5 px-4 text-slate-500">{{ $mappedSpecs ? ($r[$mappedSpecs] ?? '') : '' }}</td>
+                                            <td class="py-2.5 px-4 text-violet-600 dark:text-violet-400 font-medium">
+                                                {{ $mappedVarName ? ($r[$mappedVarName] ?? '') : '' }}
+                                            </td>
+                                            <td class="py-2.5 px-4 text-slate-500">
+                                                @if($mappedSpecs && isset($r[$mappedSpecs]) && $r[$mappedSpecs] !== '')
+                                                    @php
+                                                        $rawAttr = $r[$mappedSpecs];
+                                                        $parsedAttrs = [];
+                                                        // Try JSON first
+                                                        if (str_starts_with(trim($rawAttr), '{')) {
+                                                            $decoded = json_decode($rawAttr, true);
+                                                            if (is_array($decoded)) { $parsedAttrs = $decoded; }
+                                                        }
+                                                        // Fall back to Key:Value, Key:Value parsing
+                                                        if (empty($parsedAttrs)) {
+                                                            foreach (preg_split('/[,|]+/', $rawAttr) as $pair) {
+                                                                $pair = trim($pair);
+                                                                if (str_contains($pair, ':')) {
+                                                                    [$k, $v] = explode(':', $pair, 2);
+                                                                    $parsedAttrs[trim($k)] = trim($v);
+                                                                } elseif (str_contains($pair, '=')) {
+                                                                    [$k, $v] = explode('=', $pair, 2);
+                                                                    $parsedAttrs[trim($k)] = trim($v);
+                                                                }
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    @if(!empty($parsedAttrs))
+                                                        <div class="flex flex-wrap gap-1">
+                                                            @foreach($parsedAttrs as $attrKey => $attrVal)
+                                                                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800 text-[10px] font-semibold">
+                                                                    <span class="text-slate-500 dark:text-slate-400">{{ $attrKey }}:</span>
+                                                                    <span class="text-indigo-700 dark:text-indigo-300">{{ $attrVal }}</span>
+                                                                </span>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <span class="text-slate-400 italic text-[10px]">{{ $rawAttr }}</span>
+                                                    @endif
+                                                @else
+                                                    <span class="text-slate-300 dark:text-slate-600 text-[10px] italic">—</span>
+                                                @endif
+                                            </td>
                                             <td class="py-2.5 px-4">
                                                 @php $imgSrc = $mappedImgSource ? ($r[$mappedImgSource] ?? '0') : '0'; @endphp
                                                 @if((int)$imgSrc === 1)

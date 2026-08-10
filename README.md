@@ -170,3 +170,151 @@ The platform features a central **Analytics & Standalone Reports** hub at `/admi
 ### 4. Products Catalog Export
 - **Import Compatibility**: Exports the entire products catalog into the **exact schema format** used by the Product Bulk Import tool (`AdminProductImport`).
 - **Export Formats**: Streamable **CSV** (`.csv`) or **Excel** (`.xlsx`).
+
+---
+
+## Plugin CSS System
+
+All display plugins support a **three-tier CSS precedence model** that gives you full control over styling — from a sensible built-in default through to inline shortcode overrides.
+
+### How it works
+
+Each display plugin outputs a scoped `<style>` block immediately before its HTML. CSS is layered in this order (later layers override earlier ones):
+
+| Layer | Source | Priority |
+|---|---|---|
+| 1 — Default CSS | `default_css` plugin setting (read-only reference) | Lowest |
+| 2 — Custom CSS | `custom_css` plugin setting (editable in admin) | Middle |
+| 3 — Shortcode CSS | `custom_css=` parameter in the shortcode | Highest |
+
+All CSS values are minified via `CssMinifierService` before output.
+
+---
+
+### Admin — Plugin Settings Panel
+
+Navigate to **Admin → Plugin Manager** and select any display plugin. The settings panel exposes two CSS fields:
+
+- **Default Plugin CSS (Read-Only Reference)** — displays the plugin's built-in base stylesheet. This field is informational only and cannot be edited. Copy rules from here into the Custom CSS field to customise them.
+- **Custom CSS Overrides** — a full CSS code editor (syntax-highlighted). Anything entered here is appended after the default CSS and will override matching rules. Leave empty to use only the default styles.
+
+Changes saved here apply **site-wide** to every instance of that plugin shortcode.
+
+---
+
+### Shortcode Parameter — `custom_css`
+
+Any individual shortcode can inject its own CSS by passing a `custom_css` parameter. This overrides **both** the default and admin custom CSS for that specific instance only.
+
+```
+[plugin:slideshow-2026 custom_css=".slideshow-plugin-heading { font-size: 3rem; }"]
+[plugin:faqs-2026 custom_css=".faq-accordion { background: #f0f4ff; border-radius: 1rem; }"]
+[plugin:brands-2026 display=grid custom_css=".brand-logo-img { filter: none; }"]
+```
+
+> **Note:** The `custom_css` shortcode value completely replaces the admin-level custom CSS for that render. The `default_css` is always output first regardless.
+
+---
+
+### Affected Plugins
+
+All plugins below support the full three-tier CSS system:
+
+| Plugin | Shortcode | PHP Class | Notes |
+|---|---|---|---|
+| Slideshow - Swiper Display | `slideshow-2026` | `SlideshowPlugin` | CSS scoped to the swiper wrapper; default includes responsive breakpoints |
+| Live Search Display | `live-search-2026` | `LiveSearchPlugin` | CSS scoped to `.live-search-2026-wrapper`; default includes form and button styles |
+| Featured Items Display | `featured-items` | `FeaturedItemsPlugin` | CSS prepended before Livewire component render |
+| Cross-Sell List Display | `cross-sell-list` | `CrossSellListPlugin` | CSS prepended before Livewire component render |
+| Brands Display | `brands-2026` | `BrandsPlugin` | Default CSS includes slider navigation, pagination, and responsive grid rules |
+| Events Calendar Display | `events-calendar-2026` | `EventsCalendarPlugin` | CSS output in blade view; default and custom both minified |
+| FAQ Accordion Display | `faqs-2026` | `FaqsPlugin` | CSS block prepended to accordion HTML; default and custom merged |
+| Testimonials Display | `testimonials-2026` | `TestimonialsPlugin` | CSS block prepended to slider/list HTML |
+| Top-Level Categories Display | `categories-2026` | `CategoriesPlugin` | CSS block prepended to grid/list/slider HTML |
+| CMS Modal Display | `modal` | `ModalDisplayPlugin` | Plugin-level CSS output before per-instance scoped modal rules; `custom_css` shortcode param also supported |
+
+---
+
+### Per-Plugin CSS Class Reference
+
+Use these class names as selectors when writing custom CSS in the admin or shortcode:
+
+#### Slideshow (`slideshow-2026`)
+```css
+.slideshow-plugin-wrapper   { /* outer container */ }
+.slideshow-plugin-slide     { /* each slide (background-image) */ }
+.slideshow-plugin-overlay   { /* alignment flex container over slide */ }
+.slideshow-plugin-content   { /* text/button content box */ }
+.slideshow-plugin-heading   { /* slide title h2 */ }
+.slideshow-plugin-subheading{ /* slide subtitle p */ }
+.slideshow-plugin-btn       { /* slide CTA button */ }
+```
+
+#### Live Search (`live-search-2026`)
+```css
+.live-search-2026-wrapper   { /* outer container */ }
+.live-search-form           { /* flex form row */ }
+.live-search-form input     { /* text input */ }
+.live-search-form button    { /* submit button */ }
+.live-search-results        { /* dropdown results panel */ }
+```
+
+#### Featured Items / Cross-Sell (`featured-items`, `cross-sell-list`)
+```css
+/* CSS is prepended before Livewire; use Tailwind utility overrides
+   or target the Livewire component's rendered classes directly. */
+```
+
+#### Brands (`brands-2026`)
+```css
+.brands-plugin-grid         { /* grid layout container */ }
+.brands-plugin-slider-outer { /* slider outer wrapper (with nav padding) */ }
+.brand-slide-card           { /* individual brand card */ }
+.brand-logo-img             { /* brand logo <img> */ }
+.brands-swiper-prev/next    { /* custom nav arrow buttons */ }
+```
+
+#### Events Calendar (`events-calendar-2026`)
+```css
+/* The calendar renders a rich Alpine.js component. Target the
+   wrapper ID (#cal_XXXXXXXX) for scoped rules or use the
+   .event-card, .cal-day-cell classes inside the view. */
+```
+
+#### FAQ Accordion (`faqs-2026`)
+```css
+.faq-accordion              { /* outer wrapper */ }
+.faq-item                   { /* individual question row */ }
+.faq-question               { /* question button/trigger */ }
+.faq-answer                 { /* collapsible answer panel */ }
+```
+
+#### Testimonials (`testimonials-2026`)
+```css
+.testimonials-plugin-section { /* slider outer wrapper */ }
+.testimonials-plugin-list    { /* list layout container */ }
+.tmn-card                    { /* individual testimonial card */ }
+```
+
+#### Top-Level Categories (`categories-2026`)
+```css
+.categories-plugin-wrapper  { /* outer container */ }
+.categories-plugin-card     { /* individual category link */ }
+.category-logo-img          { /* category image */ }
+```
+
+#### CMS Modal (`modal`)
+```css
+.cms-modal-panel            { /* modal panel container */ }
+/* Per-instance rules are scoped to #cms-modal-outer-{id}.
+   Plugin-level custom CSS applies globally to all modals. */
+```
+
+---
+
+### Implementation Details
+
+- **File:** `app/Plugins/Display/<PluginName>Plugin.php` — reads `default_css` and `custom_css` from `$plugin->getSetting()` / `$plugin->getSettings()`
+- **File:** `database/seeders/PluginSeeder.php` — defines the `default_css` (`text-only`, read-only) and `custom_css` (`textarea`, `field_editor: css`) options for each plugin
+- **Service:** `app/Services/CssMinifierService::minify()` — strips comments and collapses whitespace before inline output
+- **Priority rule:** shortcode `custom_css=` param → admin `custom_css` setting → `default_css` is always output as the base layer

@@ -43,15 +43,17 @@
 
         {{-- Cross-Sell Products Section --}}
         @if($addedProduct)
-            @livewire('cross-sell-list-widget', [
-                'productId'  => $addedProduct->id,
-                'display'    => 'grid',
-                'max'        => 8,
-                'sort'       => 'sort_order',
-                'header'     => 'You May Also Like',
-                'cols'       => 4,
-                'instanceId' => 'postcart_' . $addedProduct->id,
-            ])
+            <div class="flex justify-center">
+                @livewire('cross-sell-list-widget', [
+                    'productId'  => $addedProduct->id,
+                    'display'    => 'grid',
+                    'max'        => 8,
+                    'sort'       => 'sort_order',
+                    'header'     => 'You May Also Like',
+                    'cols'       => 4,
+                    'instanceId' => 'postcart_' . $addedProduct->id,
+                ])
+            </div>
         @endif
 
     </div>

@@ -27,6 +27,8 @@ class AdminEcommerceCategories extends Component
     public ?int $parent_id = null;
     public int $sort_order = 0;
     public bool $is_visible_in_menu = true;
+    public bool $display_label_in_plugins = true;
+    public bool $display_image_in_plugins = true;
 
     // Image storage settings
     public int $category_image_s3 = 0;   // 0=Local, 1=Global S3, 2=Custom S3
@@ -106,6 +108,8 @@ class AdminEcommerceCategories extends Component
         $this->parent_id = null;
         $this->sort_order = 0;
         $this->is_visible_in_menu = true;
+        $this->display_label_in_plugins = true;
+        $this->display_image_in_plugins = true;
         $this->isEditing = false;
         $this->isCreating = false;
         $this->category_image_s3 = 0;
@@ -140,6 +144,8 @@ class AdminEcommerceCategories extends Component
         $this->parent_id = $category->parent_id;
         $this->sort_order = $category->sort_order;
         $this->is_visible_in_menu = (bool) $category->is_visible_in_menu;
+        $this->display_label_in_plugins = (bool) ($category->display_label_in_plugins ?? true);
+        $this->display_image_in_plugins = (bool) ($category->display_image_in_plugins ?? true);
         $this->category_image_s3 = (int) ($category->category_image_s3 ?? 0);
         $this->category_image_cdn_url = $category->category_image_cdn_url ?? '';
         $this->category_image_region = $category->category_image_region ?? '';
@@ -208,6 +214,8 @@ class AdminEcommerceCategories extends Component
             'parent_id'                     => 'nullable|integer|exists:product_categories,id',
             'sort_order'                    => 'required|integer',
             'is_visible_in_menu'            => 'required|boolean',
+            'display_label_in_plugins'      => 'required|boolean',
+            'display_image_in_plugins'      => 'required|boolean',
             'category_image_s3'             => 'required|integer',
             'category_image_cdn_url'        => 'nullable|url|max:500',
             'category_image_direct_url'     => 'nullable|url|max:1000',
@@ -272,6 +280,8 @@ class AdminEcommerceCategories extends Component
             'parent_id'                        => $this->parent_id,
             'sort_order'                       => $this->sort_order,
             'is_visible_in_menu'               => $this->is_visible_in_menu,
+            'display_label_in_plugins'         => $this->display_label_in_plugins,
+            'display_image_in_plugins'         => $this->display_image_in_plugins,
             'category_image_s3'                => $this->category_image_s3,
             'category_image_cdn_url'           => $this->category_image_cdn_url ?: null,
             'category_image_region'            => $this->category_image_region ?: null,

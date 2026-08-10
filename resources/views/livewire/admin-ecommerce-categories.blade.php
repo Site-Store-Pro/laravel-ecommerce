@@ -253,6 +253,22 @@
                                     @error('is_visible_in_menu') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                 </div>
 
+                                <div class="space-y-2 pt-1 border-t border-slate-100">
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider font-sans mb-1">Plugin Display Controls</label>
+
+                                    <label class="flex items-center gap-2.5 cursor-pointer">
+                                        <input type="checkbox" wire:model="display_label_in_plugins" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-slate-50 border-slate-300">
+                                        <span class="text-xs font-bold text-slate-700 select-none">Display Title / Label in Plugins</span>
+                                    </label>
+                                    @error('display_label_in_plugins') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+
+                                    <label class="flex items-center gap-2.5 cursor-pointer">
+                                        <input type="checkbox" wire:model="display_image_in_plugins" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-slate-50 border-slate-300">
+                                        <span class="text-xs font-bold text-slate-700 select-none">Display Image in Plugins</span>
+                                    </label>
+                                    @error('display_image_in_plugins') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                </div>
+
                                 {{-- ─── Translations Section ──────────────────────────────────────────────── --}}
                                 @if($activeLanguages->isNotEmpty() && $categoryId)
                                 <div x-data="{ tlOpen: false }" class="border-t border-slate-100 dark:border-slate-700 pt-4 mt-6">
