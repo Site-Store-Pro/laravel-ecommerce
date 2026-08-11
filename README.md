@@ -1,4 +1,4 @@
-﻿# Platform README
+﻿# Site Store Pro Laravel eCommerce Platform README
 
 > **Full documentation:** [`View docs.sitestorepro.com`](https://docs.sitestorepro.com)
 
