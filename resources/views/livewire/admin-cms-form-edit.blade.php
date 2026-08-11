@@ -97,7 +97,7 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Send To Email <span class="text-slate-400 font-normal">(optional)</span></label>
-                    <input type="email" wire:model.blur="email_to" placeholder="admin@example.com"
+                    <input type="email" wire:model.blur="email_to" placeholder="admin@support.local"
                            class="w-full px-4 py-2.5 bg-slate-50 border @error('email_to') border-red-400 @else border-slate-200 @enderror rounded-2xl text-sm text-slate-800 focus:outline-none focus:border-indigo-400">
                     @error('email_to') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                 </div>

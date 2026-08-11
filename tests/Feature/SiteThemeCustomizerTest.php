@@ -19,7 +19,7 @@ class SiteThemeCustomizerTest extends TestCase
         // Create an admin user
         $this->admin = User::create([
             'name' => 'Admin User',
-            'email' => 'admin@example.com',
+            'email' => 'admin@support.local',
             'password' => bcrypt('password'),
             'role_id' => 1, // Admin role
         ]);

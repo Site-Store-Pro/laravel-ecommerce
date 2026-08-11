@@ -51,7 +51,7 @@ class ProductDetailsAdminEditTest extends TestCase
         // 3. Admin user (role_id = 3)
         $admin = User::create([
             'name' => 'Admin User',
-            'email' => 'admin@example.com',
+            'email' => 'admin@support.local',
             'password' => bcrypt('password'),
             'role_id' => 3,
             'email_verified_at' => now(),

@@ -15,7 +15,7 @@ class AdminNavBarTest extends TestCase
     {
         $admin = User::create([
             'name' => 'Admin User',
-            'email' => 'admin@example.com',
+            'email' => 'admin@support.local',
             'password' => bcrypt('password'),
             'role_id' => 3, // Admin
             'email_verified_at' => now(),
