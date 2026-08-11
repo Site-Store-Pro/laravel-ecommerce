@@ -157,7 +157,7 @@ After running migrations and seeding, your Site Store Pro installation includes 
 | Field | Value |
 | --- | --- |
 | **URL** | `/admin` |
-| **Email** | `admin@example.com` |
+| **Email** | `admin@support.local` |
 | **Password** | `SampleUser12345#` |
 
 > [!WARNING]
