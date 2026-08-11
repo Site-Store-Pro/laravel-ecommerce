@@ -4,7 +4,16 @@
 [![Laravel](https://img.shields.io/badge/Laravel-13-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4.svg)](https://php.net)
 
-Site Store Pro is a production-ready **eCommerce, CMS, and Helpdesk platform** built on **Laravel 13** and **Livewire 3**. It features a full site builder with AI content generation built-in, full multi-language support with batch auto-translation via OpenAI's API and manual translation editing for all content, dynamic page management, knowledge base system, sell unlimited products (digital, physical, events), advanced variants | inventory management, discounts, comprehensive tax and shipping options, multi-processor payment checkout (Stripe, Paddle, PayPal), complete support ticket system, and a powerful role-gated admin panel.
+Site Store Pro is a production-ready **eCommerce, CMS, and Helpdesk platform** built on **Laravel 13** and **Livewire 3**.
+
+| Capability | Highlights |
+| --- | --- |
+| **CMS & Site Builder** | Dynamic page management, drag-and-drop section builder, built-in **OpenAI AI Content Generation**. |
+| **Multi-Language & AI** | Full localization with manual translation suite and **1-click batch AI auto-translation** (OpenAI API). |
+| **eCommerce & Products** | Sell unlimited **Physical Goods**, **Digital Downloads**, and **Event Tickets** with dependent variants and inventory tracking. |
+| **Payments & Checkout** | Built-in support for **Stripe**, **Paddle**, and **PayPal** with tax, shipping, and discount code engines. |
+| **Support & Tickets** | Complete support ticketing platform, agent queue management, and a self-service **Knowledge Base**. |
+| **Administration** | Gated admin control panel with role-based access control. |
 
 ---
 
