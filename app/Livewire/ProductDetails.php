@@ -62,6 +62,8 @@ class ProductDetails extends Component
             ])
             ->firstOrFail();
 
+        $this->product->recalculateRatingIfZero();
+
         if ($this->product->variants->isNotEmpty()) {
             $this->selectedVariantId = $this->product->variants->first()->id;
             $this->initializeSelectedImageSet();

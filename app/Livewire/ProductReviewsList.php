@@ -70,6 +70,7 @@ class ProductReviewsList extends Component
     public function render(): View
     {
         $product = Product::findOrFail($this->productId);
+        $product->recalculateRatingIfZero();
 
         $query = $product->reviews()->where('approved', true);
 

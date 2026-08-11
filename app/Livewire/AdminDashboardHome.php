@@ -6,6 +6,7 @@ use Livewire\Component;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Illuminate\Support\Facades\DB;
+use App\Services\DemoPurgeService;
 
 #[Layout('layouts.app')]
 class AdminDashboardHome extends Component
@@ -19,14 +20,14 @@ class AdminDashboardHome extends Component
 
     public function getHasDemoContentProperty(): bool
     {
-        return \App\Services\DemoPurgeService::hasDemoContent();
+        return DemoPurgeService::hasDemoContent();
     }
 
     public function purgeDemoContent(): void
     {
         abort_unless(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->role_id == 3), 403);
 
-        \App\Services\DemoPurgeService::purgeDemoContent();
+        DemoPurgeService::purgeDemoContent();
 
         $this->confirmingDemoPurge = false;
         $this->dispatch('toast', message: 'All demo store content has been permanently deleted.', type: 'success');

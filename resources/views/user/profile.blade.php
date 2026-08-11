@@ -1,9 +1,5 @@
-@extends('layouts.public')
-
-@section('title', __('Profile'))
-
-@section('content')
-    @if (isset($header))
+<x-layouts.public>
+    <x-slot name="header">
         <header class="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 shadow-sm">
             <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <h2 class="font-semibold text-xl text-slate-800 dark:text-slate-100 leading-tight">
@@ -11,7 +7,7 @@
                 </h2>
             </div>
         </header>
-    @endif
+    </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -54,4 +50,4 @@
 
         </div>
     </div>
-@endsection
+</x-layouts.public>

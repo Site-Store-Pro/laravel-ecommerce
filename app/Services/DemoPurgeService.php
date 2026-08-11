@@ -16,8 +16,8 @@ class DemoPurgeService
             return DB::table('products')->where('is_demo', 1)->exists()
                 || DB::table('cms_testimonials')->where('is_demo', 1)->exists()
                 || DB::table('cms_slideshows')->where('is_demo', 1)->exists()
-                || DB::table('cms_pages')->where('is_demo', 1)->orWhere('id', 13)->exists()
-                || DB::table('cms_downloads')->where('is_demo', 1)->orWhere('id', 1)->exists()
+                || DB::table('cms_pages')->where('is_demo', 1)->exists()
+                || DB::table('cms_downloads')->where('is_demo', 1)->exists()
                 || DB::table('kb_articles')->where('is_demo', 1)->exists();
         } catch (\Throwable $e) {
             return false;

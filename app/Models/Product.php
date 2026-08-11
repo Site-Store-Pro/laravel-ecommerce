@@ -222,6 +222,24 @@ class Product extends Model
     {
         return $this->hasMany(ProductReview::class, 'product_id');
     }
+
+    /**
+     * Recalculate and save reviews_rating in the products table if there are approved
+     * reviews and the current reviews_rating is 0.0 / uncalculated.
+     */
+    public function recalculateRatingIfZero(): float
+    {
+        $approvedQuery = $this->reviews()->where('approved', true);
+        $approvedCount = $approvedQuery->count();
+
+        if ($approvedCount >= 1 && ($this->reviews_rating <= 0.0 || $this->reviews_rating == 0)) {
+            $avgRating = round((float) $approvedQuery->avg('rating'), 1);
+            $this->reviews_rating = $avgRating;
+            $this->saveQuietly();
+        }
+
+        return (float) $this->reviews_rating;
+    }
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class, 'product_id');

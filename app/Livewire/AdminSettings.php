@@ -10,6 +10,7 @@ use App\Services\HeaderFooterCssManager;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Services\DemoPurgeService;
 
 class AdminSettings extends Component
 {
@@ -657,12 +658,12 @@ class AdminSettings extends Component
      */
     public function getHasDemoContentProperty(): bool
     {
-        return \App\Services\DemoPurgeService::hasDemoContent();
+        return DemoPurgeService::hasDemoContent();
     }
 
     public function purgeDemoContent(): void
     {
-        \App\Services\DemoPurgeService::purgeDemoContent();
+        DemoPurgeService::purgeDemoContent();
 
         $this->confirmingDemoPurge = false;
         $this->dispatch('toast', message: 'All demo store content has been permanently deleted.', type: 'success');

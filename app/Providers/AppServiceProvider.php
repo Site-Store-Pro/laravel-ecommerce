@@ -46,6 +46,9 @@ class AppServiceProvider extends ServiceProvider
             return "<?php echo e(siteLabel($expression)); ?>";
         });
 
+        // Register layouts.public as a component tag <x-layouts.public>
+        Blade::component('layouts.public', 'layouts.public');
+
         // Load AI credentials as global variables
         $GLOBALS['AI_PROVIDER'] = env('AI_PROVIDER');
         $GLOBALS['AI_PROVIDER_API_KEY'] = env('AI_PROVIDER_API_KEY');
