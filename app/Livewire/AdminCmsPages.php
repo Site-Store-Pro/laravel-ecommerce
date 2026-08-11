@@ -74,10 +74,17 @@ class AdminCmsPages extends Component
     {
         abort_unless(auth()->check() && auth()->user()->isEcommerceAdmin(), 403);
 
+        $hasDemoContent = \App\Services\DemoPurgeService::hasDemoContent();
+
         $pages = CmsPage::query()
+            ->when(!$hasDemoContent, function ($query) {
+                $query->where('id', '!=', 13);
+            })
             ->when($this->search, function ($query) {
-                $query->where('title', 'like', '%' . $this->search . '%')
+                $query->where(function ($q) {
+                    $q->where('title', 'like', '%' . $this->search . '%')
                       ->orWhere('slug', 'like', '%' . $this->search . '%');
+                });
             })
             ->with('author')
             ->orderBy('updated_at', 'desc')

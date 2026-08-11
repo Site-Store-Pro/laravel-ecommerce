@@ -29,7 +29,12 @@ class DemoPurgeService
      */
     public static function purgeDemoContent(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        $driver = DB::getDriverName();
+        if ($driver === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF;');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        }
 
         try {
             // 1. Demo product reviews
@@ -114,11 +119,18 @@ class DemoPurgeService
                 DB::table('cms_slideshows')->whereIn('slideshow_id', $demoSlideshowIds)->orWhere('is_demo', 1)->delete();
             }
 
-            // 11. Demo CMS Page (ID 13)
-            $demoPageIds = DB::table('cms_pages')->where('is_demo', 1)->orWhere('id', 13)->pluck('id')->toArray();
+            // 11. Demo CMS Pages (Excluding ID 13, which is seeded in default install seed)
+            $demoPageIds = DB::table('cms_pages')->where('is_demo', 1)->pluck('id')->toArray();
             if (!empty($demoPageIds)) {
                 DB::table('cms_page_translations')->whereIn('cms_page_id', $demoPageIds)->delete();
                 DB::table('cms_pages')->whereIn('id', $demoPageIds)->delete();
+            }
+
+            // Page ID 13 is seeded in default install seed: set active field to 0 when demo content is not installed/purged
+            try {
+                DB::table('cms_pages')->where('id', 13)->update(['is_active' => 0]);
+            } catch (\Throwable $e) {
+                // Fail silently if record no longer exists or table structure differs
             }
 
             // 12. Demo CMS Download (ID 1)
@@ -140,7 +152,11 @@ class DemoPurgeService
             Log::info('[DemoPurgeService] Successfully purged all demo content.');
 
         } finally {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            if ($driver === 'sqlite') {
+                DB::statement('PRAGMA foreign_keys = ON;');
+            } else {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            }
         }
     }
 }

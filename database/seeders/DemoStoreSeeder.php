@@ -9,7 +9,11 @@ class DemoStoreSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF;');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        }
 
         // Demo Slideshows
         DB::unprepared(<<<'SQL'
@@ -3952,6 +3956,17 @@ SQL
             DB::table('product_reviews')->insert($reviewsToInsert);
         }
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        // Set CMS Page ID 13 to active when demo content is installed
+        try {
+            DB::table('cms_pages')->where('id', 13)->update(['is_active' => 1]);
+        } catch (\Throwable $e) {
+            // Fail safely/silently if page 13 was manually deleted
+        }
+
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON;');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
     }
 }
