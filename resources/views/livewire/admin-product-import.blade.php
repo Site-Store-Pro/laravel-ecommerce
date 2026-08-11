@@ -288,12 +288,44 @@
                                 </span>
                             </button>
                         </div>
+
+                        <!-- Completion Alert Banner (shows immediately after import finishes) -->
+                        @if($importStats)
+                            <div
+                                x-data="{ show: false }"
+                                x-init="requestAnimationFrame(() => { show = true; $nextTick(() => { document.getElementById('import-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }) })"
+                                x-show="show"
+                                x-transition:enter="transition ease-out duration-500"
+                                x-transition:enter-start="opacity-0 translate-y-2"
+                                x-transition:enter-end="opacity-100 translate-y-0"
+                                class="mt-4 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-700 flex items-start gap-4"
+                            >
+                                <span class="shrink-0 mt-0.5 flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-extrabold text-emerald-800 dark:text-emerald-200">Import Complete!</p>
+                                    <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                        {{ $importStats['products_created'] + $importStats['products_updated'] }} product(s) &nbsp;&middot;&nbsp;
+                                        {{ $importStats['variants_created'] + $importStats['variants_updated'] }} variant(s)
+                                        @if(count($importStats['errors']) > 0)
+                                            &nbsp;&middot;&nbsp;
+                                            <span class="text-rose-600 dark:text-rose-400 font-bold">{{ count($importStats['errors']) }} error(s)</span>
+                                        @endif
+                                        &nbsp;&mdash;&nbsp; Review the full summary below.
+                                    </p>
+                                </div>
+                                <a href="#import-summary" class="shrink-0 self-center text-xs font-bold text-emerald-700 dark:text-emerald-300 underline underline-offset-2 hover:text-emerald-900 dark:hover:text-emerald-100 transition">
+                                    View Summary &darr;
+                                </a>
+                            </div>
+                        @endif
                     </div>
                 @endif
 
                 <!-- Import Execution Report Stats -->
                 @if($importStats)
-                    <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700/60 p-8 shadow-sm space-y-6 animate-fade-in">
+                    <div id="import-summary" class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700/60 p-8 shadow-sm space-y-6 animate-fade-in">
                         <div class="flex items-center gap-3">
                             <span class="p-2.5 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -355,3 +387,4 @@
         </div>
     </div>
 </div>
+

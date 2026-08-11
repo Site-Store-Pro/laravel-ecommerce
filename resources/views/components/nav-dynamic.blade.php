@@ -97,11 +97,11 @@ button.dyn-nav-link,
     min-width: 12rem;
     background: var(--nav-dropdown-bg, #ffffff);
     border: 1px solid var(--nav-dropdown-border, #e2e8f0);
-    border-radius: 0.75rem;
+    border-radius: 1rem;
     box-shadow: var(--nav-dropdown-shadow, none);
-    padding: 0.5rem;
+    padding: 0.75rem 0.5rem;
+    margin-top: 0.25rem;
     list-style: none;
-    margin: 0;
 }
 .nav-mega-menu,
 #top-nav-{{ $menu->slug }} .nav-mega-menu {
@@ -127,9 +127,9 @@ button.dyn-nav-link,
 #top-nav-{{ $menu->slug }} .nav-dropdown li button {
     display: block;
     width: 100%;
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 0.875rem;
     color: var(--nav-dropdown-text, #1e293b);
-    border-radius: 0.5rem;
+    border-radius: 0.625rem;
     text-decoration: none;
     font-size: 0.8125rem;
     font-weight: 500;

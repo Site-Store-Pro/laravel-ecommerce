@@ -54,6 +54,8 @@
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
         {{-- flag-icons: CSS-based flag rendering for language switcher --}}
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+        {{-- AOS (Animate On Scroll) 2.3.4 --}}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
         @stack('styles')
         @livewireStyles
         <x-site-theme-styles />
@@ -124,6 +126,25 @@
         <x-toast-alert />
         <!-- Custom JS / Third-party scripts (DB-driven) -->
         <x-site-custom-js-loader />
+        {{-- AOS: Animate On Scroll — mobile-aware init --}}
+        <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+        <script>
+            // Strip data-aos from elements that have NOT opted in to mobile animation
+            // (data-aos-mobile="true" marks an element as mobile-enabled)
+            if (window.innerWidth < 768) {
+                document.querySelectorAll('[data-aos]').forEach(function(el) {
+                    if (el.getAttribute('data-aos-mobile') !== 'true') {
+                        el.removeAttribute('data-aos');
+                    }
+                });
+            }
+            AOS.init({
+                once:     true,
+                offset:   80,
+                duration: 600,
+                easing:   'ease-out-cubic'
+            });
+        </script>
         @livewireScripts
     </body>
 </html>

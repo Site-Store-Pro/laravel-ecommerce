@@ -302,11 +302,29 @@ class TranslationService
             if (empty($fields)) {
                 continue;
             }
-            $total += count($fields);
+
+            // Mirror translatePlugin(): only count fields that have non-empty source content.
+            // Fields with an empty default are skipped by the job, so they must not
+            // appear in the total — otherwise they permanently inflate the "pending" count.
+            $baseSettings = $plugin->getSettings();
+            $translatableFieldNames = [];
+            foreach ($fields as $fieldName => $label) {
+                $original = $baseSettings[$fieldName] ?? $plugin->getSetting($fieldName, '');
+                if (!empty(trim(strip_tags((string)$original)))) {
+                    $translatableFieldNames[] = $fieldName;
+                }
+            }
+
+            if (empty($translatableFieldNames)) {
+                // All fields are empty at source — nothing to translate for this plugin.
+                continue;
+            }
+
+            $total += count($translatableFieldNames);
 
             $existing = \App\Models\PluginSettingTranslation::where('plugin_id', $plugin->id)
                 ->where('language_id', $languageId)
-                ->whereIn('field_name', array_keys($fields))
+                ->whereIn('field_name', $translatableFieldNames)
                 ->whereNotNull('field_value')
                 ->where('field_value', '!=', '')
                 ->count();
@@ -318,6 +336,7 @@ class TranslationService
 
         return ['total' => $total, 'translated' => $translated, 'pending' => $pending, 'reviewed' => 0];
     }
+
 
     // ── Translation class resolution ─────────────────────────────────────────
 

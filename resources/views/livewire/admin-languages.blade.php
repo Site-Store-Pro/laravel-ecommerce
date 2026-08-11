@@ -174,7 +174,7 @@
                         </div>
                         
                         <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-700">
-                            <button wire:click="bulkTranslate({{ $lang->id }})" wire:loading.attr="disabled" class="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:text-indigo-400 rounded-xl text-xs font-bold transition flex justify-center items-center gap-2">
+                            <button wire:click="translateMissing({{ $lang->id }})" wire:loading.attr="disabled" class="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50 dark:text-indigo-400 rounded-xl text-xs font-bold transition flex justify-center items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
                                 Translate Missing Items
                             </button>

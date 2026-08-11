@@ -117,8 +117,12 @@
                     @endphp
                     <div class="flex-1 flex flex-col p-0 m-0 w-full main-sticky-offset site-main-content" style="{{ $stickyStyle }}">
                         <main class="p-0 m-0 w-full">
-                            {{ $slot }}
-                        </main>
+                        @hasSection('content')
+                            @yield('content')
+                        @else
+                            {{ $slot ?? '' }}
+                        @endif
+                    </main>
                     </div>
                 </div>
 

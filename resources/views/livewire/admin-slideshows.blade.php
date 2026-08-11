@@ -109,7 +109,6 @@
                                         <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">Name</th>
                                         <th class="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">Slides</th>
                                         <th class="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">Sort</th>
-                                        <th class="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">Alignment</th>
                                         <th class="px-4 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">Status</th>
                                         <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">Actions</th>
                                     </tr>
@@ -128,11 +127,6 @@
                                             </td>
                                             <td class="px-4 py-4 text-center text-xs font-semibold text-slate-500 dark:text-slate-400">
                                                 {{ $show->sort_order }}
-                                            </td>
-                                            <td class="px-4 py-4 text-center">
-                                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                                                    {{ $alignmentOptions[$show->slide_show_alignment] ?? $show->slide_show_alignment }}
-                                                </span>
                                             </td>
                                             <td class="px-4 py-4 text-center">
                                                 <button wire:click="toggleActive({{ $show->slideshow_id }})"

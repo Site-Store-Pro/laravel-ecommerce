@@ -1,4 +1,4 @@
-@php
+﻿@php
     $primaryColor = \App\Models\CmsSetting::get('theme_primary_color', '#4f46e5');
     $hoverColor = \App\Models\CmsSetting::get('theme_hover_color', '#4338ca');
     $textColor = \App\Models\CmsSetting::get('theme_text_color', '#ffffff');
@@ -10,6 +10,7 @@
     showPluginsPanel: false,
     showLinkGenerator: false,
     showShortcodeGenerator: false,
+    showAnimatePanel: false,
     selectedRecord: null,
     sidebarOpen: true,
     autosaveStatus: '',
@@ -205,7 +206,7 @@
                                                      promotion: false,
                                                      height: 850,
                                                      menubar: 'insert format tools table',
-                                                     content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } .prose, .prose-slate { max-width: none !important; } :root { --theme-primary: {{ $primaryColor }}; --theme-primary-hover: {{ $hoverColor }}; --theme-text: {{ $textColor }}; --theme-border-radius: {{ $borderRadius }}; } .btn-theme-primary { background-color: var(--theme-primary) !important; color: var(--theme-text) !important; border-radius: var(--theme-border-radius) !important; border: none !important; padding: 10px 20px !important; font-weight: 700 !important; font-family: inherit !important; cursor: pointer !important; display: inline-block !important; text-align: center !important; text-decoration: none !important; transition: background-color 0.2s !important; } .btn-theme-primary:hover { background-color: var(--theme-primary-hover) !important; }',
+                                                     content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } .prose, .prose-slate { max-width: none !important; } :root { --theme-primary: {{ $primaryColor }}; --theme-primary-hover: {{ $hoverColor }}; --theme-text: {{ $textColor }}; --theme-border-radius: {{ $borderRadius }}; } .btn-theme-primary { background-color: var(--theme-primary) !important; color: var(--theme-text) !important; border-radius: var(--theme-border-radius) !important; border: none !important; padding: 10px 20px !important; font-weight: 700 !important; font-family: inherit !important; cursor: pointer !important; display: inline-block !important; text-align: center !important; text-decoration: none !important; transition: background-color 0.2s !important; } .btn-theme-primary:hover { background-color: var(--theme-primary-hover) !important; } [data-aos] { outline: 2px dashed #7c3aed !important; outline-offset: 3px; position: relative; } [data-aos]::before { content: \"◆ \" attr(data-aos); position: absolute; top: -1.4em; left: 0; background: #7c3aed; color: #fff; font-size: 9px; font-family: monospace; padding: 1px 6px; border-radius: 3px; pointer-events: none; white-space: nowrap; z-index: 9999; }',
                                                      content_css: [
                                                          'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
                                                          '/css/prose.css'
@@ -233,7 +234,7 @@
                                                          { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
                                                          { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
                                                      ],
-                                                     extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
+                                                     extended_valid_elements: '*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
                                                      convert_urls: false,
                                                      relative_urls: false,
                                                      remove_script_host: false,
@@ -360,7 +361,7 @@
                                                      { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
                                                      { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
                                                  ],
-                                                 extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
+                                                 extended_valid_elements: '*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
                                                      convert_urls: false,
                                                      relative_urls: false,
                                                      remove_script_host: false,
@@ -438,7 +439,7 @@ rightCol: @entangle('right_col'),
                                                          { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
                                                          { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
                                                      ],
-                                                     extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
+                                                     extended_valid_elements: '*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
                                                      convert_urls: false,
                                                      relative_urls: false,
                                                      remove_script_host: false,
@@ -1297,7 +1298,7 @@ rightCol: @entangle('right_col'),
         
         <!-- Widgets (Toggle Widget Library) -->
         <button type="button" 
-                x-on:click.stop="showWidgetLibrary = !showWidgetLibrary; showPluginsPanel = false; showShortcodeGenerator = false; showLinkGenerator = false" 
+                x-on:click.stop="showWidgetLibrary = !showWidgetLibrary; showPluginsPanel = false; showShortcodeGenerator = false; showLinkGenerator = false; showAnimatePanel = false" 
                 class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-3.5 rounded-l-2xl shadow-xl hover:shadow-2xl transition-all flex flex-col items-center gap-2 border-l border-y border-indigo-500/30 group w-[36px]"
                 title="Toggle Widgets Panel">
             <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
@@ -1306,7 +1307,7 @@ rightCol: @entangle('right_col'),
 
         <!-- Plugins (Toggle Plugins Panel) -->
         <button type="button" 
-                x-on:click.stop="showPluginsPanel = !showPluginsPanel; showWidgetLibrary = false; showShortcodeGenerator = false; showLinkGenerator = false" 
+                x-on:click.stop="showPluginsPanel = !showPluginsPanel; showWidgetLibrary = false; showShortcodeGenerator = false; showLinkGenerator = false; showAnimatePanel = false" 
                 class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-3.5 rounded-l-2xl shadow-xl hover:shadow-2xl transition-all flex flex-col items-center gap-2 border-l border-y border-emerald-500/30 group w-[36px]"
                 title="Toggle Plugins Panel">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1317,7 +1318,7 @@ rightCol: @entangle('right_col'),
 
         <!-- Shortcodes (Toggle Shortcode Generator) -->
         <button type="button" 
-                x-on:click.stop="showShortcodeGenerator = !showShortcodeGenerator; showWidgetLibrary = false; showPluginsPanel = false; showLinkGenerator = false" 
+                x-on:click.stop="showShortcodeGenerator = !showShortcodeGenerator; showWidgetLibrary = false; showPluginsPanel = false; showLinkGenerator = false; showAnimatePanel = false" 
                 class="bg-blue-900 hover:bg-blue-950 text-white px-2 py-3.5 rounded-l-2xl shadow-xl hover:shadow-2xl transition-all flex flex-col items-center gap-2 border-l border-y border-blue-800/30 group w-[36px]"
                 title="Toggle Shortcode Generator">
             <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1328,13 +1329,24 @@ rightCol: @entangle('right_col'),
 
         <!-- Link Generator (Toggle Link Generator) -->
         <button type="button" 
-                x-on:click.stop="showLinkGenerator = !showLinkGenerator; showWidgetLibrary = false; showPluginsPanel = false; showShortcodeGenerator = false" 
+                x-on:click.stop="showLinkGenerator = !showLinkGenerator; showWidgetLibrary = false; showPluginsPanel = false; showShortcodeGenerator = false; showAnimatePanel = false" 
                 class="bg-orange-500 hover:bg-orange-600 text-white px-2 py-3.5 rounded-l-2xl shadow-xl hover:shadow-2xl transition-all flex flex-col items-center gap-2 border-l border-y border-orange-400/30 group w-[36px]"
                 title="Toggle Link Generator">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
             </svg>
             <span class="text-[9px] font-extrabold uppercase tracking-widest [writing-mode:vertical-lr] group-hover:scale-105 transition-transform duration-200">Links</span>
+        </button>
+
+        <!-- Animations (Toggle Animate Panel) -->
+        <button type="button"
+                x-on:click.stop="showAnimatePanel = !showAnimatePanel; showWidgetLibrary = false; showPluginsPanel = false; showShortcodeGenerator = false; showLinkGenerator = false"
+                class="bg-violet-600 hover:bg-violet-700 text-white px-2 py-3.5 rounded-l-2xl shadow-xl hover:shadow-2xl transition-all flex flex-col items-center gap-2 border-l border-y border-violet-500/30 group w-[36px]"
+                title="Toggle Animation Panel">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/>
+            </svg>
+            <span class="text-[9px] font-extrabold uppercase tracking-widest [writing-mode:vertical-lr] group-hover:scale-105 transition-transform duration-200">Animate</span>
         </button>
         
     </div>
@@ -1343,6 +1355,7 @@ rightCol: @entangle('right_col'),
     @include('partials.display-plugins-drawer')
     @include('partials.link-generator-drawer')
     @include('partials.shortcodes-generator-drawer')
+    @include('partials.animate-drawer')
 
     <script src="{{ asset('build/node_modules/tinymce/tinymce.min.js') }}"></script>
     <script>
@@ -1620,7 +1633,7 @@ rightCol: @entangle('right_col'),
                                                  { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
                                                  { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
                                              ],
-                                             extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
+                                             extended_valid_elements: '*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
                                              convert_urls: false,
                                              relative_urls: false,
                                              remove_script_host: false,

@@ -151,6 +151,16 @@ class ProductImportService
      */
     public function executeImport(array $rows, array $columnMapping = []): array
     {
+        // Remove execution time limit for the duration of this import — large files
+        // can take a long time and the host php.ini default (often 30s) will kill it.
+        @set_time_limit(0);
+
+        // Ensure enough memory for large row sets. Only raises the limit, never lowers it.
+        $currentBytes = $this->parseMemoryLimit(ini_get('memory_limit'));
+        if ($currentBytes !== -1 && $currentBytes < 536870912) { // 512M
+            @ini_set('memory_limit', '512M');
+        }
+
         $stats = [
             'products_created'   => 0,
             'products_updated'   => 0,
@@ -610,5 +620,25 @@ class ProductImportService
         $slug = Str::slug($title);
         $count = Product::where('seo_slug', 'like', $slug . '%')->count();
         return $count > 0 ? $slug . '-' . ($count + 1) : $slug;
+    }
+
+    /**
+     * Convert a PHP memory_limit shorthand string (e.g. "128M", "2G", "-1") to bytes.
+     * Returns -1 if the limit is unlimited.
+     */
+    private function parseMemoryLimit(string $val): int
+    {
+        $val = trim($val);
+        if ($val === '-1') {
+            return -1;
+        }
+        $last = strtolower(substr($val, -1));
+        $num  = (int) $val;
+        return match ($last) {
+            'g' => $num * 1073741824,
+            'm' => $num * 1048576,
+            'k' => $num * 1024,
+            default => $num,
+        };
     }
 }

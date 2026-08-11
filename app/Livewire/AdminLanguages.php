@@ -204,12 +204,118 @@ class AdminLanguages extends Component
             duration: 10000
         );
     }
+    public function translateMissing(int $id): void
+    {
+        $models = [
+            \App\Models\CmsPage::class,
+            \App\Models\Product::class,
+            \App\Models\KbArticle::class,
+            \App\Models\CmsTestimonial::class,
+            \App\Models\NavItem::class,
+            \App\Models\CmsListMenuItem::class,
+            \App\Models\SiteLabel::class,
+            \App\Models\KbCategory::class,
+            \App\Models\EmailTemplate::class,
+            \App\Models\CmsModal::class,
+            \App\Models\CmsFaq::class,
+            \App\Models\CmsSlide::class,
+            \App\Models\CmsBuilderBlock::class,
+            \App\Models\ProductInventoryAlert::class,
+        ];
+
+        $count = 0;
+        $service = app(TranslationService::class);
+
+        foreach ($models as $modelClass) {
+            $translationClass = 'App\\Models\\' . class_basename($modelClass) . 'Translation';
+            // Special case for CmsTestimonial which uses TestimonialTranslation
+            if ($modelClass === \App\Models\CmsTestimonial::class) {
+                $translationClass = 'App\\Models\\TestimonialTranslation';
+            }
+
+            if (!class_exists($translationClass)) {
+                // No translation model — dispatch all (fallback)
+                $ids = $modelClass::pluck('id');
+            } else {
+                // Resolve the actual FK column from the translation model's $fillable
+                // (by convention the FK is always the first fillable field)
+                $instance = new $translationClass;
+                $fillable  = $instance->getFillable();
+                $fkColumn  = !empty($fillable) ? $fillable[0] : 'translatable_id';
+
+                // Only dispatch for IDs that have no translation row yet for this language
+                $translatedIds = $translationClass::where('language_id', $id)
+                    ->pluck($fkColumn)
+                    ->toArray();
+                $ids = $modelClass::whereNotIn('id', $translatedIds)->pluck('id');
+            }
+
+            foreach ($ids as $modelId) {
+                \App\Jobs\TranslateContentJob::dispatch($modelClass, $modelId, $id);
+                $count++;
+            }
+        }
+
+        // Variants — only those without a translation row for this language
+        $translatedVariantIds = \App\Models\ProductVariantTranslation::where('language_id', $id)
+            ->pluck('product_variant_id')
+            ->toArray();
+        $variantIds = \App\Models\ProductVariant::whereNotIn('id', $translatedVariantIds)->pluck('id');
+        foreach ($variantIds as $variantId) {
+            \App\Jobs\TranslateVariantJob::dispatch($variantId, $id);
+            $count++;
+        }
+
+        // Plugins — only those with at least one missing field translation
+        $plugins = \App\Models\Plugin::all();
+        foreach ($plugins as $plugin) {
+            $fields = $plugin->getTranslatableFields();
+            if (empty($fields)) {
+                continue;
+            }
+            // Count existing non-empty translations for this plugin + language
+            $existingCount = \App\Models\PluginSettingTranslation::where('plugin_id', $plugin->id)
+                ->where('language_id', $id)
+                ->whereIn('field_name', array_keys($fields))
+                ->whereNotNull('field_value')
+                ->where('field_value', '!=', '')
+                ->count();
+
+            // Count how many fields have non-empty source values (these are the ones that need translation)
+            $baseSettings = $plugin->getSettings();
+            $translatableCount = 0;
+            foreach ($fields as $fieldName => $label) {
+                $original = $baseSettings[$fieldName] ?? $plugin->getSetting($fieldName, '');
+                if (!empty(trim(strip_tags((string)$original)))) {
+                    $translatableCount++;
+                }
+            }
+
+            if ($translatableCount > 0 && $existingCount < $translatableCount) {
+                \App\Jobs\TranslatePluginJob::dispatch($plugin->id, $id);
+                $count++;
+            }
+        }
+
+        if ($count === 0) {
+            $this->dispatch('toast', message: 'All content is already translated for this language.', type: 'success');
+            return;
+        }
+
+        $queueMonitorUrl = route('admin.languages.queue-monitor');
+        $this->dispatch('toast',
+            message: "{$count} missing translation jobs queued. <a href=\"{$queueMonitorUrl}\" class=\"underline font-bold\">Open Queue Monitor and start the worker process</a>, or run <code class=\"bg-black/10 px-1 rounded\">php artisan queue:work</code> on the server.",
+            type: 'success',
+            duration: 10000
+        );
+    }
 
     public function translationStats(int $languageId): array
     {
         $service = app(TranslationService::class);
         $variantStats = $service->variantTranslationStats($languageId);
         return [
+
             'cms_pages'              => $service->translationStats(\App\Models\CmsPage::class, $languageId),
             'products'               => $service->translationStats(\App\Models\Product::class, $languageId),
             'variant_attributes'     => [

@@ -201,16 +201,8 @@ JS;
                 }
                 $html .= '</div>';
             } else {
-                // Grid layout
-                $gridColsClass = match ($cols) {
-                    2 => 'grid-cols-1 min-[500px]:grid-cols-2',
-                    3 => 'grid-cols-1 min-[500px]:grid-cols-2 md:grid-cols-3',
-                    5 => 'grid-cols-1 min-[500px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5',
-                    6 => 'grid-cols-1 min-[500px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-6',
-                    default => 'grid-cols-1 min-[500px]:grid-cols-2 sm:grid-cols-3 md:grid-cols-4',
-                };
-
-                $html .= '<div class="grid ' . $gridColsClass . ' gap-4 py-2 brands-plugin-grid" id="' . $instanceId . '_grid">';
+                // Grid layout — desktop columns set inline; mobile breakpoints override via default_css !important rules.
+                $html .= '<div class="brands-plugin-grid" id="' . $instanceId . '_grid" style="grid-template-columns:repeat(' . $cols . ',minmax(0,1fr))">';
                 foreach ($brands as $brand) {
                     $brandUrl = route('shop.brand', $brand->slug);
                     $imgUrl   = $brand->brand_icon_direct_url
@@ -231,16 +223,18 @@ JS;
 
             $defaultCss = $plugin->getSetting('default_css', '');
             $customCss  = $params['custom_css'] ?? $settings['custom_css'] ?? '';
-            $responsiveCss = "@media (max-width: 500px) { .brands-plugin-grid { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; } }";
 
-            $cssHtml = "<style>\n" . $responsiveCss . "\n";
-            if (!empty($defaultCss)) {
-                $cssHtml .= \App\Services\CssMinifierService::minify($defaultCss) . "\n";
+            $cssHtml = '';
+            if (!empty($defaultCss) || !empty($customCss)) {
+                $cssHtml = "<style>\n";
+                if (!empty($defaultCss)) {
+                    $cssHtml .= \App\Services\CssMinifierService::minify($defaultCss) . "\n";
+                }
+                if (!empty($customCss)) {
+                    $cssHtml .= \App\Services\CssMinifierService::minify($customCss) . "\n";
+                }
+                $cssHtml .= "</style>";
             }
-            if (!empty($customCss)) {
-                $cssHtml .= \App\Services\CssMinifierService::minify($customCss) . "\n";
-            }
-            $cssHtml .= "</style>";
 
             return $cssHtml . $html;
 

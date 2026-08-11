@@ -105,7 +105,15 @@ class AdminProductImport extends Component
 
         $service = app(ProductImportService::class);
         $this->importStats = $service->executeImport($this->allRows, $this->columnMapping);
-        session()->flash('status', 'Import completed successfully!');
+
+        // Clear the file/mapping state so the upload panel and execute button are hidden.
+        // importStats is intentionally kept so the summary card remains visible.
+        $this->importFile    = null;
+        $this->headers       = [];
+        $this->previewRows   = [];
+        $this->allRows       = [];
+        $this->columnMapping = [];
+        $this->fileParsed    = false;
     }
 
     public function downloadSampleCsv(): StreamedResponse

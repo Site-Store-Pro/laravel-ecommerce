@@ -80,7 +80,7 @@ class AdminCmsPages extends Component
                       ->orWhere('slug', 'like', '%' . $this->search . '%');
             })
             ->with('author')
-            ->orderBy('id', 'desc')
+            ->orderBy('updated_at', 'desc')
             ->paginate(20);
 
         return view('livewire.admin-cms-pages', compact('pages'));

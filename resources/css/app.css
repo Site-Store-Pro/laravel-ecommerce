@@ -7,14 +7,14 @@ html, body {
     overflow-x: hidden;
 }
 
-a,
-a:link,
-a:visited,
-a:hover,
-a:active,
-.prose a,
-.prose-slate a {
-    text-decoration: none !important;
+@layer base {
+    a,
+    a:link,
+    a:visited,
+    a:hover,
+    a:active {
+        text-decoration: none;
+    }
 }
 
         .auth-bg {

@@ -29,7 +29,7 @@ class TestimonialsPlugin implements DisplayPlugin
             $cols       = max(1, min(4, (int) ($params['cols'] ?? $settings['columns']  ?? 3)));
             $header     = array_key_exists('header', $params)
                             ? $params['header']
-                            : ($settings['header_title'] ?: 'What Our Customers Say');
+                            : ($settings['header_title'] ?? '');
             $quoteIcon  = $params['quote_icon']             ?? $settings['quote_icon']   ?? 'quote-left'; // 'quote-left', 'double-quote', 'none'
             $showRating = strtolower($params['rating']     ?? $settings['show_rating']  ?? 'on') === 'on';
 

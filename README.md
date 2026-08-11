@@ -1,4 +1,4 @@
-# Platform README
+﻿# Platform README
 
 > **Full documentation:** [`Di Sute`](https://docs.sitestorepro.com)
 
@@ -318,3 +318,235 @@ Use these class names as selectors when writing custom CSS in the admin or short
 - **File:** `database/seeders/PluginSeeder.php` — defines the `default_css` (`text-only`, read-only) and `custom_css` (`textarea`, `field_editor: css`) options for each plugin
 - **Service:** `app/Services/CssMinifierService::minify()` — strips comments and collapses whitespace before inline output
 - **Priority rule:** shortcode `custom_css=` param → admin `custom_css` setting → `default_css` is always output as the base layer
+
+
+---
+
+## AOS Animation Panel (CMS Page Editor)
+
+The CMS page editor includes a built-in **Animations panel** that lets content authors apply scroll-triggered animations to any block element on a page — no code required. Animations are powered by [AOS (Animate On Scroll) v2.3.4](https://michalsnik.github.io/aos/).
+
+> **Scope:** This feature is available exclusively in the CMS page editor at `/admin/cms-pages/{id}/edit`. It does not apply to products, Knowledge Base articles, plugin shortcodes, or any other editor.
+
+---
+
+### How It Works — End to End
+
+1. **Author clicks the purple ◆ Animate tab** in the right-side floating panel stack on the CMS page edit view.
+2. The **Animations drawer** slides in from the right — identical in behaviour to the Widgets, Plugins, Shortcodes, and Links panels.
+3. Author **clicks an animation card** (e.g. *Fade Up*) to stage it. A settings form appears.
+4. Author **configures** timing, easing, and behaviour options in the form.
+5. Author **clicks inside a block element** (paragraph, heading, div, etc.) in the TinyMCE editor to place their cursor there.
+6. Author clicks **◆ Apply to Block** — the panel finds the cursor's nearest block-level ancestor and writes `data-aos-*` attributes onto it. TinyMCE shows a dashed violet outline + `◆ fade-up` badge on the element.
+7. The page is **saved** — the `data-aos-*` attributes are stored as-is in the page's HTML content in the database.
+8. On the **public CMS page** (`/page/{slug}`) or **home page** (`/`), the AOS library is loaded via CDN and initialises on DOM-ready, triggering animations as the visitor scrolls.
+
+---
+
+### The Animations Panel UI
+
+#### Opening the Panel
+
+Click the **◆ Animate** button (violet) in the vertically-stacked floating sidebar on the right edge of the CMS page edit view. Only one panel can be open at a time — opening Animate closes Widgets, Plugins, Shortcodes, and Links, and vice versa.
+
+#### Settings Form
+
+When an animation card is selected, the following controls appear:
+
+| Control | Type | Range / Options | Default | Description |
+|---|---|---|---|---|
+| **Duration** | Slider | 200 – 2000 ms | 600 ms | How long the animation plays |
+| **Delay** | Slider | 0 – 1000 ms | 0 ms | Pause before the animation starts |
+| **Offset** | Slider | 0 – 300 px | 80 px | Distance from the viewport bottom edge that triggers the animation |
+| **Easing** | Dropdown | See list below | `ease-out-cubic` | Animation timing function |
+| **Once** | Toggle | On / Off | **On** | If on, the animation only fires once per page load; if off, it re-fires every time the element enters the viewport |
+| **Mirror** | Toggle | On / Off | **Off** | If on, the animation reverses as the element leaves the viewport (scroll back up) |
+| **Mobile** | Toggle | On / Off | **Off** | If off, the animation is disabled on screens narrower than 768 px. Turn on to animate on mobile too. |
+
+**Available easing options:**
+
+| Value | Feel |
+|---|---|
+| `ease` | Browser default |
+| `ease-in` | Starts slow, ends fast |
+| `ease-out` | Starts fast, ends slow |
+| `ease-in-out` | Slow at both ends |
+| `linear` | Constant speed |
+| `ease-out-cubic` | Smooth deceleration (recommended) |
+| `ease-in-back` | Slight overshoot at start |
+| `ease-out-back` | Slight overshoot at end |
+
+#### Action Buttons
+
+| Button | Action |
+|---|---|
+| **◆ Apply to Block** | Writes all staged `data-aos-*` attributes to the cursor's current block element and fires a TinyMCE change event to sync Livewire |
+| **✕ Remove** | Strips all `data-aos-*` attributes from the cursor's current block element |
+
+Both actions are **undoable** via TinyMCE's standard Ctrl+Z / Cmd+Z undo.
+
+---
+
+### Animation Reference
+
+All 27 available animations, grouped by category:
+
+#### Fade (9)
+
+| Animation Key | Description |
+|---|---|
+| `fade` | Simple opacity fade in |
+| `fade-up` | Fades in while moving upward |
+| `fade-down` | Fades in while moving downward |
+| `fade-left` | Fades in from the right, moves left |
+| `fade-right` | Fades in from the left, moves right |
+| `fade-up-right` | Fades in moving up and to the right |
+| `fade-up-left` | Fades in moving up and to the left |
+| `fade-down-right` | Fades in moving down and to the right |
+| `fade-down-left` | Fades in moving down and to the left |
+
+#### Flip (4)
+
+| Animation Key | Description |
+|---|---|
+| `flip-left` | 3D flip from right to left |
+| `flip-right` | 3D flip from left to right |
+| `flip-up` | 3D flip from bottom to top |
+| `flip-down` | 3D flip from top to bottom |
+
+#### Slide (4)
+
+| Animation Key | Description |
+|---|---|
+| `slide-up` | Slides in from below |
+| `slide-down` | Slides in from above |
+| `slide-left` | Slides in from the right |
+| `slide-right` | Slides in from the left |
+
+#### Zoom (10)
+
+| Animation Key | Description |
+|---|---|
+| `zoom-in` | Scales up from smaller to full size |
+| `zoom-in-up` | Zoom in while moving up |
+| `zoom-in-down` | Zoom in while moving down |
+| `zoom-in-left` | Zoom in while moving left |
+| `zoom-in-right` | Zoom in while moving right |
+| `zoom-out` | Scales down from larger to full size |
+| `zoom-out-up` | Zoom out while moving up |
+| `zoom-out-down` | Zoom out while moving down |
+| `zoom-out-left` | Zoom out while moving left |
+| `zoom-out-right` | Zoom out while moving right |
+
+---
+
+### Mobile Behaviour
+
+By default, animations are **disabled on screens narrower than 768 px** (phones and small tablets). This is controlled per element, not globally:
+
+- **Mobile toggle OFF** (default): The element's `data-aos` attribute is stripped before AOS initialises on any viewport under 768 px. The element renders normally without animation.
+- **Mobile toggle ON**: The element receives `data-aos-mobile="true"`. The pre-init script detects this and preserves the `data-aos` attribute even on small screens.
+
+This means you can have a page where most animations are desktop-only, but a specific hero heading animates on all devices.
+
+**The pre-init script** (injected before `@livewireScripts` in both `home.blade.php` and `cms.blade.php`):
+
+```js
+if (window.innerWidth < 768) {
+    document.querySelectorAll('[data-aos]').forEach(function(el) {
+        if (el.getAttribute('data-aos-mobile') !== 'true') {
+            el.removeAttribute('data-aos');
+        }
+    });
+}
+AOS.init({ once: true, offset: 80, duration: 600, easing: 'ease-out-cubic' });
+```
+
+---
+
+### HTML Output Reference
+
+After applying an animation via the panel, the element's saved HTML looks like:
+
+```html
+<!-- Minimal (once, no delay, mobile disabled) -->
+<p data-aos="fade-up"
+   data-aos-duration="600"
+   data-aos-offset="80"
+   data-aos-easing="ease-out-cubic"
+   data-aos-once="true">
+    Your paragraph content here.
+</p>
+
+<!-- Full options (with delay, mirror, mobile enabled) -->
+<div data-aos="zoom-in"
+     data-aos-duration="800"
+     data-aos-delay="200"
+     data-aos-offset="120"
+     data-aos-easing="ease-out-back"
+     data-aos-once="false"
+     data-aos-mirror="true"
+     data-aos-mobile="true">
+    Your div content here.
+</div>
+```
+
+The `data-aos-mobile` attribute is a **custom extension** — AOS itself ignores it. It is only read by the pre-init script to control mobile stripping. All other `data-aos-*` attributes are standard AOS data attributes.
+
+---
+
+### Editor Visual Indicator
+
+While working inside TinyMCE, any element carrying a `data-aos` attribute is highlighted with:
+
+- A **dashed violet outline** (`2px dashed #7c3aed`) with a 3 px offset
+- A small **purple badge** in the top-left corner showing `◆ <animation-name>` (e.g. `◆ fade-up`)
+
+This indicator is injected via TinyMCE's `content_style` and is **editor-only** — it does not appear on the public site.
+
+---
+
+### Data Persistence
+
+`data-aos-*` attributes are stored directly in the page's HTML content column in the `cms_pages` table. No separate database columns, settings, or migrations are required. Attributes survive auto-save drafts, manual saves, and translation copies.
+
+All four TinyMCE editor instances (left column, main content, right column, and translation content) have `data-aos`, `data-aos-duration`, `data-aos-delay`, `data-aos-offset`, `data-aos-easing`, `data-aos-once`, `data-aos-mirror`, and `data-aos-mobile` whitelisted in their `extended_valid_elements` configuration so TinyMCE never strips them during editing or on save.
+
+---
+
+### CDN Loading
+
+AOS is loaded via CDN on the two public-facing page layouts only:
+
+| File | What is loaded |
+|---|---|
+| `resources/views/pages/cms.blade.php` | AOS CSS in `<head>`, AOS JS + init before `</body>` |
+| `resources/views/pages/home.blade.php` | AOS CSS in `<head>`, AOS JS + init before `</body>` |
+
+**CDN URLs (AOS 2.3.4):**
+
+```
+https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css
+https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js
+```
+
+AOS is **not** loaded on admin pages, product pages, Knowledge Base pages, or any other layout.
+
+---
+
+### Developer Reference
+
+| Concern | File / Location |
+|---|---|
+| Drawer panel UI | `resources/views/partials/animate-drawer.blade.php` |
+| Tab button + Alpine state | `resources/views/livewire/admin-cms-page-edit.blade.php` — `x-data` block + floating sidebar div |
+| TinyMCE attribute whitelist | `admin-cms-page-edit.blade.php` — `extended_valid_elements` in all 4 `tinymce.init()` calls |
+| TinyMCE editor indicator | `admin-cms-page-edit.blade.php` — `content_style` in all 4 `tinymce.init()` calls |
+| AOS CDN + mobile init | `resources/views/pages/cms.blade.php` and `resources/views/pages/home.blade.php` |
+| `applyToBlock()` / `removeFromBlock()` JS | Inline Alpine `x-data` in `animate-drawer.blade.php` |
+
+**Adding a new animation:** Add a `[$key, $label]` entry to the appropriate `@foreach` in `animate-drawer.blade.php`. The key must be a valid AOS animation name. No other changes are needed.
+
+**Changing the mobile breakpoint:** Update `window.innerWidth < 768` in both `cms.blade.php` and `home.blade.php`.
+
+**Changing global AOS defaults:** Update the `AOS.init({...})` call in both files. Per-element settings from the drawer always override global defaults.

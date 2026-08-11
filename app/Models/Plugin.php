@@ -149,7 +149,10 @@ class Plugin extends Model
             'faqs-2026' => [
                 'header_title' => 'Header Title',
             ],
-            'featured-items-2026' => [
+            'featured-items' => [          // shortcode has no -2026 suffix
+                'header_title' => 'Header Title',
+            ],
+            'cross-sell-list' => [
                 'header_title' => 'Header Title',
             ],
             'categories-2026' => [
@@ -157,6 +160,9 @@ class Plugin extends Model
             ],
             'brands-2026' => [
                 'header_title' => 'Header Title',
+            ],
+            'newsflash-2026' => [
+                'news_message' => 'News Message Text',
             ],
         ];
 

@@ -657,94 +657,12 @@ class AdminSettings extends Component
      */
     public function getHasDemoContentProperty(): bool
     {
-        return DB::table('products')->where('is_demo', 1)->exists()
-            || DB::table('kb_articles')->where('is_demo', 1)->exists();
+        return \App\Services\DemoPurgeService::hasDemoContent();
     }
 
-    /**
-     * Permanently delete all demo-seeded records in correct FK dependency order.
-     * Child rows are removed before parent rows to avoid constraint violations.
-     */
     public function purgeDemoContent(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-
-        // 1. Cross-selling records flagged as demo
-        DB::table('product_cross_selling')->where('is_demo', 1)->delete();
-
-        // 2. Images for demo variants
-        DB::table('product_images')->where('is_demo', 1)->delete();
-
-        // 3. Get all demo variant IDs for cascaded child deletes
-        $demoVariantIds = DB::table('product_variants')
-            ->where('is_demo', 1)
-            ->pluck('id')
-            ->toArray();
-
-        if (!empty($demoVariantIds)) {
-            // 4. Event rows attached to demo variants
-            DB::table('product_variant_events')
-                ->whereIn('variant_id', $demoVariantIds)
-                ->delete();
-
-            // 5. Inventory rows attached to demo variants
-            DB::table('products_inventory')
-                ->whereIn('variant_id', $demoVariantIds)
-                ->delete();
-        }
-
-        // 6. Get all demo product IDs for field/category cascade
-        $demoProductIds = DB::table('products')
-            ->where('is_demo', 1)
-            ->pluck('id')
-            ->toArray();
-
-        if (!empty($demoProductIds)) {
-            // 7. Product field options (child of product_fields)
-            $demoFieldIds = DB::table('product_fields')
-                ->whereIn('product_id', $demoProductIds)
-                ->pluck('id')
-                ->toArray();
-
-            if (!empty($demoFieldIds)) {
-                DB::table('product_field_options')
-                    ->whereIn('product_field_id', $demoFieldIds)
-                    ->delete();
-            }
-
-            // 8. Product fields
-            DB::table('product_fields')
-                ->whereIn('product_id', $demoProductIds)
-                ->delete();
-
-            // 9. Category assignments
-            DB::table('product_categories_assignments')
-                ->whereIn('product_id', $demoProductIds)
-                ->delete();
-        }
-
-        // 10. Demo variants
-        DB::table('product_variants')->where('is_demo', 1)->delete();
-
-        // 11. Demo products
-        DB::table('products')->where('is_demo', 1)->delete();
-
-        // 12. Demo brands
-        DB::table('product_brands')->where('is_demo', 1)->delete();
-
-        // 13. Demo categories (children first via sort_order desc, then parents)
-        DB::table('product_categories')
-            ->where('is_demo', 1)
-            ->orderByDesc('parent_id') // children (non-null parent_id) first
-            ->delete();
-
-        // 14. Demo KB Articles
-        DB::table('kb_articles')->where('is_demo', 1)->delete();
-
-        // 15. Demo KB Categories
-        DB::table('kb_categories')->where('is_demo', 1)->delete();
-
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        \App\Services\DemoPurgeService::purgeDemoContent();
 
         $this->confirmingDemoPurge = false;
         $this->dispatch('toast', message: 'All demo store content has been permanently deleted.', type: 'success');

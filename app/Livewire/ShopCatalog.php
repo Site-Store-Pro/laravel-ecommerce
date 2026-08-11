@@ -80,13 +80,47 @@ class ShopCatalog extends Component
     {
         $this->sanitizePerPage();
         $this->sanitizeSort();
+        $this->normalizeArrayFilters();
         $this->syncActivePreselection();
+    }
+
+    /**
+     * Livewire 3 #[Url] hydration can resolve a missing/empty array query param
+     * to (bool) false, which PHP 8.1 typed properties reject with a fatal error.
+     * This normaliser coerces any non-array value back to [] before it touches
+     * the typed properties, and also strips stray boolean entries that checkboxes
+     * can inject when they are all unchecked simultaneously.
+     */
+    private function normalizeArrayFilters(): void
+    {
+        if (!is_array($this->selectedBrands)) {
+            $this->selectedBrands = [];
+        } else {
+            $this->selectedBrands = array_values(array_filter(
+                $this->selectedBrands,
+                fn($v) => !is_bool($v) && $v !== '' && $v !== null
+            ));
+        }
+
+        if (!is_array($this->selectedCategories)) {
+            $this->selectedCategories = [];
+        } else {
+            $this->selectedCategories = array_values(array_filter(
+                $this->selectedCategories,
+                fn($v) => !is_bool($v) && $v !== '' && $v !== null
+            ));
+        }
+
+        if (!is_array($this->selectedAttributes)) {
+            $this->selectedAttributes = [];
+        }
     }
 
     public function mount(?string $category_slug = null, ?string $brand_slug = null): void
     {
         $this->sanitizePerPage();
         $this->sanitizeSort();
+        $this->normalizeArrayFilters();
         if ($category_slug) {
             $this->category = $category_slug;
         }
@@ -122,8 +156,21 @@ class ShopCatalog extends Component
     }
 
     public function updatedSort(): void { $this->resetPage(); }
-    public function updatedSelectedBrands(): void { $this->resetPage(); }
-    public function updatedSelectedCategories(): void { $this->resetPage(); }
+
+    public function updatedSelectedBrands(): void
+    {
+        // Normalize first — unchecking all boxes can deliver false instead of []
+        $this->normalizeArrayFilters();
+        $this->resetPage();
+    }
+
+    public function updatedSelectedCategories(): void
+    {
+        // Normalize first — unchecking all boxes can deliver false instead of []
+        $this->normalizeArrayFilters();
+        $this->resetPage();
+    }
+
     public function updatedMinPriceFilter(): void { $this->resetPage(); }
     public function updatedMaxPriceFilter(): void { $this->resetPage(); }
     public function updatedSelectedAttributes(): void

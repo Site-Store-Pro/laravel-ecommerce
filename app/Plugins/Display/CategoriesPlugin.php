@@ -30,7 +30,8 @@ class CategoriesPlugin implements DisplayPlugin
             $header   = $params['header']               ?? $settings['header_title'] ?? 'Top Categories';
 
             // Query TOP LEVEL categories ONLY
-            $categories = Category::where(function ($q) {
+            $categories = Category::withCurrentTranslations()
+                ->where(function ($q) {
                     $q->whereNull('parent_id')->orWhere('parent_id', 0);
                 })
                 ->where('is_visible_in_menu', true)
@@ -99,16 +100,8 @@ class CategoriesPlugin implements DisplayPlugin
 
                 $html .= '</div></div>';
             } else {
-                // Grid layout
-                $gridColsClass = match ($cols) {
-                    2 => 'grid-cols-2',
-                    3 => 'grid-cols-3',
-                    5 => 'grid-cols-2 sm:grid-cols-5',
-                    6 => 'grid-cols-2 sm:grid-cols-6',
-                    default => 'grid-cols-2 sm:grid-cols-4',
-                };
-
-                $html .= '<div class="grid ' . $gridColsClass . ' gap-4 py-2">';
+                // Grid layout — desktop columns set inline; mobile breakpoints override via default_css !important rules.
+                $html .= '<div class="categories-plugin-grid" style="grid-template-columns:repeat(' . $cols . ',minmax(0,1fr))">';
                 foreach ($categories as $cat) {
                     $showLabel = filter_var($cat->display_label_in_plugins ?? true, FILTER_VALIDATE_BOOLEAN);
                     $showImg   = filter_var($cat->display_image_in_plugins ?? true, FILTER_VALIDATE_BOOLEAN) && !empty($cat->category_image);

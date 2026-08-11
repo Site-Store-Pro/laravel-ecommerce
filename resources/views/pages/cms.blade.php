@@ -72,6 +72,8 @@
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
         {{-- flag-icons: CSS-based flag rendering for language switcher --}}
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+        {{-- AOS (Animate On Scroll) 2.3.4 --}}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
         @stack('styles')
         @livewireStyles
         <x-site-theme-styles />
@@ -162,7 +164,8 @@
                     <div class="max-w-5xl mx-auto px-6 pt-8 pb-0 w-full flex flex-col {{ $classes['horizontal'] }}">
                         <div class="border-b border-slate-200/80 pb-0 mb-6 w-full flex flex-col {{ $classes['horizontal'] }} {{ $classes['text'] }}">
                             @if($page->show_title)
-                                <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 leading-snug pb-2 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent dark:bg-none dark:text-slate-200 mb-4">
+                                <style>html.dark .cms-page-title{background:none!important;-webkit-background-clip:unset!important;background-clip:unset!important;color:rgb(241 245 249)!important}</style>
+                                <h1 class="cms-page-title text-4xl font-extrabold tracking-tight text-slate-900 leading-snug pb-2 bg-gradient-to-r from-slate-900 to-indigo-950 bg-clip-text text-transparent mb-4">
                                     {{ $page->alternate_page_title ?: $page->title }}
                                 </h1>
                             @endif
@@ -300,6 +303,23 @@
 
         <!-- Custom JS / Third-party scripts (DB-driven) -->
         <x-site-custom-js-loader />
+        {{-- AOS: Animate On Scroll — mobile-aware init --}}
+        <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+        <script>
+            if (window.innerWidth < 768) {
+                document.querySelectorAll('[data-aos]').forEach(function(el) {
+                    if (el.getAttribute('data-aos-mobile') !== 'true') {
+                        el.removeAttribute('data-aos');
+                    }
+                });
+            }
+            AOS.init({
+                once:     true,
+                offset:   80,
+                duration: 600,
+                easing:   'ease-out-cubic'
+            });
+        </script>
         @livewireScripts
     </body>
 </html>
