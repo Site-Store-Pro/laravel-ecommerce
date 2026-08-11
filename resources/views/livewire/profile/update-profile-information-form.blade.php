@@ -35,7 +35,11 @@ new class extends Component
         $user->fill($validated);
 
         if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
+            if ($user->isAdmin() || $user->role_id == 3 || (is_object($user->role_id) && $user->role_id->value === 3)) {
+                $user->email_verified_at = now();
+            } else {
+                $user->email_verified_at = null;
+            }
         }
 
         $user->save();
