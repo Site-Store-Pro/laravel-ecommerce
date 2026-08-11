@@ -3,7 +3,10 @@
 [![Documentation](https://img.shields.io/badge/Documentation-docs.sitestorepro.com-blue?style=for-the-badge&logo=bookstack&logoColor=white)](https://docs.sitestorepro.com)
 
 ---
+
 [Site Store Pro Demo Site](https://demo.sitestorepro.com/)
+
+---
 ---
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](#license)
