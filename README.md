@@ -4,7 +4,7 @@
 [![Laravel](https://img.shields.io/badge/Laravel-13-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4.svg)](https://php.net)
 
-Site Store Pro is a production-ready **eCommerce, CMS, and Helpdesk platform** built on **Laravel 13** and **Livewire 3**. It features a full drag-and-drop site builder, dynamic page management, knowledge base, digital and physical products, variants, multi-processor payment checkout (Stripe, Paddle, PayPal), support ticket system, and a powerful role-gated admin panel.
+Site Store Pro is a production-ready **eCommerce, CMS, and Helpdesk platform** built on **Laravel 13** and **Livewire 3**. It features a full site builder with AI content generation built-in, full multi-language support with batch auto-translation via OpenAI's API and manual translation editing for all content, dynamic page management, knowledge base system, sell unlimited products (digital, physical, events), advanced variants | inventory management, discounts, comprehensive tax and shipping options, multi-processor payment checkout (Stripe, Paddle, PayPal), complete support ticket system, and a powerful role-gated admin panel.
 
 ---
 
