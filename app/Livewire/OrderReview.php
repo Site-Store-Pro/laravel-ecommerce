@@ -100,11 +100,12 @@ class OrderReview extends Component
         int $itemCount,
         string $toZip,
         string $countryCode,
-        string $stateCode
+        string $stateCode,
+        bool $freeShipping = false
     ): array {
         // 1. Flat-rate / admin-configured options
         $flatOptions = \App\Services\ShippingCalculationService::getAvailableOptions(
-            $subtotal, $totalWeight, $itemCount, $countryCode, $stateCode
+            $subtotal, $totalWeight, $itemCount, $countryCode, $stateCode, $freeShipping
         );
 
         // 2. Realtime plugin rates
@@ -125,7 +126,7 @@ class OrderReview extends Component
                 $pluginOptions[] = [
                     'id'     => 'plugin_' . $rate['code'],
                     'name'   => $rate['label'] . ($rate['days'] ? ' (' . $rate['days'] . ' day' . ($rate['days'] > 1 ? 's' : '') . ')' : ''),
-                    'amount' => $rate['rate'],
+                    'amount' => $freeShipping ? 0.00 : $rate['rate'],
                 ];
             }
         } catch (\Throwable $e) {
@@ -134,6 +135,14 @@ class OrderReview extends Component
 
         // 3. Merge and sort all options low-to-high by amount
         $allOptions = array_merge($flatOptions, $pluginOptions);
+
+        if ($freeShipping) {
+            foreach ($allOptions as &$opt) {
+                $opt['amount'] = 0.00;
+            }
+            unset($opt);
+        }
+
         usort($allOptions, fn($a, $b) => $a['amount'] <=> $b['amount']);
 
         return $allOptions;
@@ -171,11 +180,19 @@ class OrderReview extends Component
             }
             $itemCount = $items->sum('item_qty');
 
+            $freeShipping = false;
+            foreach ($discountResult['discounts'] as $d) {
+                if (!empty($d['free_shipping'])) {
+                    $freeShipping = true;
+                }
+            }
+
             $options = $this->buildShippingOptions(
                 $subtotal, $totalWeight, $itemCount,
                 $user->shopping_postalcode ?? '',
                 $user->shipping_countrycode ?? 'US',
-                $user->shipping_state ?? ''
+                $user->shipping_state ?? '',
+                $freeShipping
             );
 
             if (!empty($options)) {
@@ -248,7 +265,8 @@ class OrderReview extends Component
                 $itemCount,
                 $user->shopping_postalcode ?? '',
                 $customerCountry,
-                $user->shipping_state ?? ''
+                $user->shipping_state ?? '',
+                $freeShipping
             );
 
             // Find selected option

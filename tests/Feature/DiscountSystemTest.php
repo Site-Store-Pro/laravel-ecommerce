@@ -358,5 +358,11 @@ class DiscountSystemTest extends TestCase
         $this->assertEquals(50.00, $result['adjusted_subtotal']);
         $this->assertCount(1, $result['discounts']);
         $this->assertEquals(1, $result['discounts'][0]['free_shipping']);
+
+        // Verify that selector list shipping values automatically change to $0.00 when free shipping is active
+        $shippingOptions = \App\Services\ShippingCalculationService::getAvailableOptions(50.00, 1.0, 1, 'US', 'CA', true);
+        foreach ($shippingOptions as $opt) {
+            $this->assertEquals(0.00, $opt['amount']);
+        }
     }
 }

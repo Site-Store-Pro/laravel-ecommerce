@@ -138,6 +138,23 @@ class AdminShippingSettings extends Component
         $this->dispatch('toast', message: 'Global shipping configurations saved.', type: 'success');
     }
 
+    public function saveLocalPickup(): void
+    {
+        DB::table('shipping_configurations')
+            ->where('id', 1)
+            ->update([
+                'realtime_pickup' => $this->realtime_pickup,
+                'updated_at'      => now(),
+            ]);
+
+        $this->dispatch('toast', message: 'Local pickup setting updated successfully.', type: 'success');
+    }
+
+    public function updatedRealtimePickup($value): void
+    {
+        $this->saveLocalPickup();
+    }
+
     // State Inline Actions
     public function startEditState(int $id): void
     {

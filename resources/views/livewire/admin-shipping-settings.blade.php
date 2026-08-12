@@ -402,14 +402,19 @@
                     </button>
                 </div>
 
-                {{-- ── Local Pickup toggle (top of page) ────────────────── --}}
-                <div class="flex items-start gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                    <input type="checkbox" id="realtime_pickup_flatrates" wire:model="realtime_pickup"
-                           class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
-                    <label for="realtime_pickup_flatrates" class="cursor-pointer">
-                        <span class="text-sm font-bold text-slate-700 block">Include local pickup (free) option in custom list below</span>
-                        <span class="text-xs text-slate-400">When enabled, a &ldquo;Local Pickup&rdquo; option with $0.00 cost is included in the shipping choices shown at checkout alongside the rates below.</span>
-                    </label>
+                {{-- ── Local Pickup toggle ────────────────── --}}
+                <div class="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl gap-4">
+                    <div class="flex items-start gap-3">
+                        <input type="checkbox" id="realtime_pickup_flatrates" wire:model.live="realtime_pickup" wire:change="saveLocalPickup"
+                               class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                        <label for="realtime_pickup_flatrates" class="cursor-pointer">
+                            <span class="text-sm font-bold text-slate-700 block">Include local pickup (free) option in custom list below</span>
+                            <span class="text-xs text-slate-400">When enabled, a &ldquo;Local Pickup&rdquo; option with $0.00 cost is included in the shipping choices shown at checkout alongside the rates below.</span>
+                        </label>
+                    </div>
+                    <button type="button" wire:click="saveLocalPickup" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150 shrink-0">
+                        Save Setting
+                    </button>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4">

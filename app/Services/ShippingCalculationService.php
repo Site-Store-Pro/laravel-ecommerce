@@ -9,7 +9,7 @@ class ShippingCalculationService
     /**
      * Get all available shipping options (names and amounts) for the current cart/address.
      */
-    public static function getAvailableOptions(float $subtotal, float $totalWeight, int $itemCount, string $countryCode, ?string $stateCode): array
+    public static function getAvailableOptions(float $subtotal, float $totalWeight, int $itemCount, string $countryCode, ?string $stateCode, bool $freeShipping = false): array
     {
         $options = [];
 
@@ -21,7 +21,7 @@ class ShippingCalculationService
                 [
                     'id' => 'grid_flat',
                     'name' => 'Standard Flat Rate Shipping',
-                    'amount' => 10.00,
+                    'amount' => $freeShipping ? 0.00 : 10.00,
                 ]
             ];
         }
@@ -41,12 +41,12 @@ class ShippingCalculationService
                 $options[] = [
                     'id' => 'custom_' . $rate->id,
                     'name' => $rate->name,
-                    'amount' => (double)$rate->amount,
+                    'amount' => $freeShipping ? 0.00 : (double)$rate->amount,
                 ];
             }
         } else {
             // Load automatically calculated Grid Flat-Rate value
-            $gridAmount = self::calculateGridAmount($subtotal, $totalWeight, $itemCount, $countryCode, $stateCode);
+            $gridAmount = $freeShipping ? 0.00 : self::calculateGridAmount($subtotal, $totalWeight, $itemCount, $countryCode, $stateCode);
             $options[] = [
                 'id' => 'grid_flat',
                 'name' => 'Flat Rate Shipping',
@@ -59,36 +59,36 @@ class ShippingCalculationService
             $options[] = [
                 'id' => 'carrier_ups_ground',
                 'name' => 'UPS Ground Delivery',
-                'amount' => 15.00,
+                'amount' => $freeShipping ? 0.00 : 15.00,
             ];
             $options[] = [
                 'id' => 'carrier_ups_air',
                 'name' => 'UPS Next Day Air',
-                'amount' => 45.00,
+                'amount' => $freeShipping ? 0.00 : 45.00,
             ];
         }
         if ($config->realtime_fedex) {
             $options[] = [
                 'id' => 'carrier_fedex_ground',
                 'name' => 'FedEx Home Delivery',
-                'amount' => 14.50,
+                'amount' => $freeShipping ? 0.00 : 14.50,
             ];
             $options[] = [
                 'id' => 'carrier_fedex_express',
                 'name' => 'FedEx Priority Overnight',
-                'amount' => 32.00,
+                'amount' => $freeShipping ? 0.00 : 32.00,
             ];
         }
         if ($config->realtime_usps) {
             $options[] = [
                 'id' => 'carrier_usps_priority',
                 'name' => 'USPS Priority Mail',
-                'amount' => 8.95,
+                'amount' => $freeShipping ? 0.00 : 8.95,
             ];
             $options[] = [
                 'id' => 'carrier_usps_express',
                 'name' => 'USPS Priority Express',
-                'amount' => 26.50,
+                'amount' => $freeShipping ? 0.00 : 26.50,
             ];
         }
         if ($config->realtime_pickup) {
