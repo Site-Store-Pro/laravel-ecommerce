@@ -2,6 +2,13 @@
 
 [![Documentation](https://img.shields.io/badge/Documentation-docs.sitestorepro.com-blue?style=for-the-badge&logo=bookstack&logoColor=white)](https://docs.sitestorepro.com)
 
+---
+
+[Site Store Pro Demo Site](https://demo.sitestorepro.com/)
+
+---
+---
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](#license)
 [![Laravel](https://img.shields.io/badge/Laravel-13-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4.svg)](https://php.net)
@@ -157,7 +164,7 @@ After running migrations and seeding, your Site Store Pro installation includes 
 | Field | Value |
 | --- | --- |
 | **URL** | `/admin` |
-| **Email** | `admin@example.com` |
+| **Email** | `admin@support.local` |
 | **Password** | `SampleUser12345#` |
 
 > [!WARNING]
@@ -218,7 +225,7 @@ composer require phpoffice/phpspreadsheet
 
 The MIT License (MIT)
 
-Copyright (c) 2026 Site Store Pro
+Copyright (c) 2026 Visperity LLC.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
