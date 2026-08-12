@@ -323,4 +323,40 @@ class DiscountSystemTest extends TestCase
         $calculatedPrice = DiscountService::getDiscountedPriceForVariant($variant, null, 0);
         $this->assertEquals(170.00, $calculatedPrice);
     }
+
+    public function test_general_order_discount_with_free_shipping_and_zero_discount_value(): void
+    {
+        $product = Product::create(['title' => 'Bracelet', 'short_description' => 'b', 'long_description' => 'b']);
+        $variant = ProductVariant::create([
+            'product_id' => $product->id,
+            'sku' => 'BRAC-1',
+            'public_price' => 50.00,
+            'wholesale_price' => 40.00
+        ]);
+
+        // Create General Order Discount (Type 3) with Free Shipping checked, Value = $0, Min Subtotal = $20, Max Subtotal = $0 (unlimited)
+        Discount::create([
+            'discount_type_id' => 3, // General Order Discount
+            'value_type' => 1, // $
+            'value' => 0.00, // $0 off order subtotal
+            'free_shipping' => 1, // Free shipping checked
+            'order_minimum' => 20.00,
+            'order_maximum' => 0.00, // Unlimited
+            'name' => 'Free Shipping Over $20',
+            'is_active' => 1
+        ]);
+
+        $item = $this->createCartItem([
+            'item_name' => 'Bracelet (BRAC-1)',
+            'item_qty' => 1,
+            'item_price' => 50.00
+        ]);
+
+        $result = DiscountService::applyDiscountsToCart(collect([$item]), null);
+
+        $this->assertEquals(0.00, $result['total_discount']);
+        $this->assertEquals(50.00, $result['adjusted_subtotal']);
+        $this->assertCount(1, $result['discounts']);
+        $this->assertEquals(1, $result['discounts'][0]['free_shipping']);
+    }
 }

@@ -294,7 +294,7 @@ class DiscountService
             
             foreach ($eligible as $disc) {
                 // Validate general order filters
-                if ($adjustedSubtotal < $disc->order_minimum || $adjustedSubtotal > $disc->order_maximum) {
+                if (($disc->order_minimum > 0 && $adjustedSubtotal < $disc->order_minimum) || ($disc->order_maximum > 0 && $adjustedSubtotal > $disc->order_maximum)) {
                     if ($typeId == 1) {
                         session()->forget('coupon_code');
                     }
@@ -305,7 +305,7 @@ class DiscountService
                 foreach ($items as $i) {
                     $totalWeight += $i->item_qty * $i->item_weight;
                 }
-                if ($totalWeight < $disc->order_weight_min || $totalWeight > $disc->order_weight_max) {
+                if (($disc->order_weight_min > 0 && $totalWeight < $disc->order_weight_min) || ($disc->order_weight_max > 0 && $totalWeight > $disc->order_weight_max)) {
                     if ($typeId == 1) {
                         session()->forget('coupon_code');
                     }
@@ -313,7 +313,7 @@ class DiscountService
                 }
                 
                 $totalQty = $items->sum('item_qty');
-                if ($totalQty < $disc->order_qty_min || $totalQty > $disc->order_qty_max) {
+                if (($disc->order_qty_min > 0 && $totalQty < $disc->order_qty_min) || ($disc->order_qty_max > 0 && $totalQty > $disc->order_qty_max)) {
                     if ($typeId == 1) {
                         session()->forget('coupon_code');
                     }
@@ -336,14 +336,14 @@ class DiscountService
                     $amount = min($adjustedSubtotal, $val);
                 }
                 
-                if ($amount > 0) {
+                if ($amount > 0 || !empty($disc->free_shipping)) {
                     $orderDiscounts[] = [
                         'discount_id' => $disc->id,
                         'name' => $disc->name,
                         'code' => $disc->code,
                         'type_id' => $disc->discount_type_id,
                         'amount' => $amount,
-                        'free_shipping' => $disc->free_shipping
+                        'free_shipping' => (int) $disc->free_shipping
                     ];
                     $totalDiscountAmount += $amount;
                     $adjustedSubtotal -= $amount;

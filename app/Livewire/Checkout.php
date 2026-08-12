@@ -83,7 +83,7 @@ class Checkout extends Component
             $discountResult = \App\Services\DiscountService::applyDiscountsToCart($items, Auth::user());
             $subtotal = $discountResult['subtotal'];
 
-            if ($subtotal < $coupon->order_minimum || $subtotal > $coupon->order_maximum) {
+            if (($coupon->order_minimum > 0 && $subtotal < $coupon->order_minimum) || ($coupon->order_maximum > 0 && $subtotal > $coupon->order_maximum)) {
                 $this->addError('couponCode', "This coupon requires a subtotal between \$" . number_format($coupon->order_minimum, 2) . " and \$" . number_format($coupon->order_maximum, 2) . ".");
                 return;
             }
@@ -92,13 +92,13 @@ class Checkout extends Component
             foreach ($items as $item) {
                 $totalWeight += $item->item_qty * $item->item_weight;
             }
-            if ($totalWeight < $coupon->order_weight_min || $totalWeight > $coupon->order_weight_max) {
+            if (($coupon->order_weight_min > 0 && $totalWeight < $coupon->order_weight_min) || ($coupon->order_weight_max > 0 && $totalWeight > $coupon->order_weight_max)) {
                 $this->addError('couponCode', "This coupon requires order weight between {$coupon->order_weight_min} and {$coupon->order_weight_max}.");
                 return;
             }
 
             $totalQty = $items->sum('item_qty');
-            if ($totalQty < $coupon->order_qty_min || $totalQty > $coupon->order_qty_max) {
+            if (($coupon->order_qty_min > 0 && $totalQty < $coupon->order_qty_min) || ($coupon->order_qty_max > 0 && $totalQty > $coupon->order_qty_max)) {
                 $this->addError('couponCode', "This coupon requires order item quantity between {$coupon->order_qty_min} and {$coupon->order_qty_max}.");
                 return;
             }
