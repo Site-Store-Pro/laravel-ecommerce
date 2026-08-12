@@ -134,6 +134,10 @@ class OrderReview extends Component
         }
 
         // 3. Merge and sort all options low-to-high by amount
+        if (!empty($pluginOptions)) {
+            $flatOptions = array_filter($flatOptions, fn($opt) => $opt['id'] !== 'grid_flat');
+        }
+
         $allOptions = array_merge($flatOptions, $pluginOptions);
 
         if ($freeShipping) {

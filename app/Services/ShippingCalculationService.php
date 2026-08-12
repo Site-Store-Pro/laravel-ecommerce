@@ -27,7 +27,8 @@ class ShippingCalculationService
         }
 
         $isUsOrCa = ($countryCode === 'US' || $countryCode === 'CA');
-        $useCustomList = $isUsOrCa ? $config->custom_ship_options_us : $config->custom_ship_options_int;
+        $useCustomList = $isUsOrCa ? (bool)$config->custom_ship_options_us : (bool)$config->custom_ship_options_int;
+        $hasRealtimeCarriers = (bool)($config->realtime_ups || $config->realtime_fedex || $config->realtime_usps);
 
         if ($useCustomList) {
             // Load custom flat-rate list options
@@ -44,8 +45,8 @@ class ShippingCalculationService
                     'amount' => $freeShipping ? 0.00 : (double)$rate->amount,
                 ];
             }
-        } else {
-            // Load automatically calculated Grid Flat-Rate value
+        } elseif (!$hasRealtimeCarriers) {
+            // Load automatically calculated Grid Flat-Rate value ONLY if no custom list and no realtime carriers
             $gridAmount = $freeShipping ? 0.00 : self::calculateGridAmount($subtotal, $totalWeight, $itemCount, $countryCode, $stateCode);
             $options[] = [
                 'id' => 'grid_flat',
