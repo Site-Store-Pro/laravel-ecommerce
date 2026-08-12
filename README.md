@@ -85,12 +85,6 @@ DB_USERNAME=your_db_user
 DB_PASSWORD=your_db_password
 ```
 
-> [!NOTE]
-> If you are using SQLite for local development, set `DB_CONNECTION=sqlite` and ensure a `database/database.sqlite` file exists:
-> ```bash
-> touch database/database.sqlite
-> ```
-
 ### 4. Run Database Migrations and Seed
 Run a fresh migration and seed the database with baseline default data:
 
