@@ -19,11 +19,11 @@ class EmailTemplateTest extends TestCase
     {
         $this->seed(); // Runs standard migrations & seeds
 
-        // Verify we have all 10 types
-        $this->assertEquals(10, EmailTemplateType::count());
+        // Verify we have all 12 types
+        $this->assertEquals(12, EmailTemplateType::count());
 
         // Verify we have seeded default profiles
-        $this->assertEquals(10, EmailTemplate::count());
+        $this->assertEquals(12, EmailTemplate::count());
 
         // Verify active templates exist for each type
         foreach (EmailTemplateType::all() as $type) {
@@ -203,6 +203,47 @@ class EmailTemplateTest extends TestCase
                    str_contains($mail->renderedBody, 'Awesome Digital Software E-Book') &&
                    str_contains($mail->renderedBody, 'Download File') &&
                    str_contains($mail->renderedBody, 'Total Charged');
+        });
+    }
+
+    public function test_abandoned_cart_reminder_checkout_url_uses_app_url(): void
+    {
+        $this->seed();
+
+        \App\Models\CmsSetting::set('enable_abandoned_cart_reminder_1', true);
+
+        $cart = \App\Models\ShoppingCartLog::create([
+            'cart_log_session' => 'session_test_123',
+            'user_id' => 0,
+            'guest_email' => 'abandoned_test@example.com',
+            'item_id' => 1,
+            'item_name' => 'Sample Abandoned Item',
+            'item_qty' => 1,
+            'item_price' => 29.99,
+            'item_discount_price' => 0.00,
+            'item_shippable' => 0,
+            'item_taxable' => 0,
+            'item_weight' => 0.0,
+            'item_downloadable' => 0,
+            'order_id' => 0,
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('shopping_cart_log')
+            ->where('id', $cart->id)
+            ->update(['created_at' => now()->subHours(30)]);
+
+        Mail::fake();
+
+        // Simulate incoming HTTP request on an IP address
+        $this->withServerVariables(['HTTP_HOST' => '192.168.1.100']);
+
+        \App\Services\AbandonedCartService::processReminders();
+
+        Mail::assertSent(\App\Mail\DynamicTemplateMail::class, function ($mail) {
+            $appUrl = config('app.url');
+            return $mail->hasTo('abandoned_test@example.com') &&
+                   str_contains($mail->renderedBody, $appUrl . '/cart') &&
+                   !str_contains($mail->renderedBody, '192.168.1.100');
         });
     }
 }

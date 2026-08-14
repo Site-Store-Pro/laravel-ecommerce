@@ -47,6 +47,10 @@ class EmailTemplateService
 
     public static function renderBody(EmailTemplate $tpl, array $vars, ?int $languageId = null): string
     {
+        if ($appUrl = config('app.url')) {
+            \Illuminate\Support\Facades\URL::forceRootUrl($appUrl);
+        }
+
         $bodyText = $tpl->getTranslated('body', $languageId);
         $slug = $tpl->type ? $tpl->type->slug : '';
         if (in_array($slug, ['order_confirmation', 'order_shipment', 'download_reminder']) && !str_contains($bodyText, 'order_items_table')) {
@@ -81,6 +85,10 @@ class EmailTemplateService
 
     public static function sendEmail(string $slug, string $toEmail, string $toName, array $vars, ?int $languageId = null): bool
     {
+        if ($appUrl = config('app.url')) {
+            \Illuminate\Support\Facades\URL::forceRootUrl($appUrl);
+        }
+
         $tpl = self::getActiveTemplate($slug, $languageId);
         if (!$tpl) {
             Log::warning("Dynamic email template with slug '{$slug}' requested but no active template was found.");

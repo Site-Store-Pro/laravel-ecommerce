@@ -60,10 +60,13 @@ class AbandonedCartService
                     continue;
                 }
 
+                $appUrl = rtrim(config('app.url'), '/');
+                $checkoutUrl = $appUrl . route('shop.cart', [], false);
+
                 $vars = [
                     'customer_name'    => $recipient['name'],
                     'cart_items_table' => $cartHtml,
-                    'checkout_url'     => route('shop.cart'),
+                    'checkout_url'     => $checkoutUrl,
                     'app_name'         => config('app.name'),
                     'year'             => date('Y'),
                 ];
@@ -109,10 +112,13 @@ class AbandonedCartService
                     continue;
                 }
 
+                $appUrl = rtrim(config('app.url'), '/');
+                $checkoutUrl = $appUrl . route('shop.cart', [], false);
+
                 $vars = [
                     'customer_name'    => $recipient['name'],
                     'cart_items_table' => $cartHtml,
-                    'checkout_url'     => route('shop.cart'),
+                    'checkout_url'     => $checkoutUrl,
                     'app_name'         => config('app.name'),
                     'year'             => date('Y'),
                 ];

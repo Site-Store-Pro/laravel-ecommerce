@@ -24,7 +24,10 @@ class ShoppingCartLog extends Model
         'item_downloadable',
         'variant_id',
         'order_id',
-        'user_id'
+        'user_id',
+        'guest_email',
+        'abandoned_reminder_1_sent_at',
+        'abandoned_reminder_2_sent_at',
     ];
 
     protected $casts = [
