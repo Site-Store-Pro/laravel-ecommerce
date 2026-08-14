@@ -45,7 +45,7 @@ Before you begin, make sure your environment meets the following requirements:
 ## Installation Steps
 
 ### 1. Clone the Repository
-Clone the Site Store Pro repository to your local machine and navigate into the project directory:
+Clone the Site Store Pro repository to your local machine (or online dev server) and navigate into the project directory:
 
 ```bash
 git clone <repository-url> laravel-ecommerce
@@ -71,7 +71,7 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Open the newly created `.env` file and update the database configuration to match your local setup:
+Open the newly created `.env` file and update the database configuration to match your db setup:
 
 ```env
 APP_NAME="Site Store Pro"
@@ -84,12 +84,6 @@ DB_DATABASE=your_database_name
 DB_USERNAME=your_db_user
 DB_PASSWORD=your_db_password
 ```
-
-> [!NOTE]
-> If you are using SQLite for local development, set `DB_CONNECTION=sqlite` and ensure a `database/database.sqlite` file exists:
-> ```bash
-> touch database/database.sqlite
-> ```
 
 ### 4. Run Database Migrations and Seed
 Run a fresh migration and seed the database with baseline default data:
