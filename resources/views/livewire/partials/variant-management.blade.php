@@ -36,7 +36,27 @@
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Sale Price ($)</label>
                                         <input type="number" step="0.01" wire:model="sale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                     </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Sale Start Date</label>
+                                        <input type="datetime-local" wire:model="sale_price_start_at" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Sale Stop Date</label>
+                                        <input type="datetime-local" wire:model="sale_price_end_at" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    </div>
                                 @endif
+                                <div>
+                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">UPC Code</label>
+                                    <input type="text" wire:model="upc_code" placeholder="e.g. 012345678905" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Item Cost ($)</label>
+                                    <input type="number" step="0.01" min="0" wire:model="item_cost" placeholder="0.00" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">MAP Price ($)</label>
+                                    <input type="number" step="0.01" min="0" wire:model="item_map" placeholder="0.00" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Variant Fee ($)</label>
                                     <input type="number" step="0.01" wire:model="variant_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
@@ -336,31 +356,249 @@
                                 </div>
                             </div>
 
-                            @include('livewire.partials.variant-processor-ids')
+                            {{-- Shipping Dimensions --}}
+                            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Shipping Dimensions</h4>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Length</label>
+                                        <input type="number" step="0.01" min="0" wire:model="dimension_length" placeholder="0.00" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Width</label>
+                                        <input type="number" step="0.01" min="0" wire:model="dimension_width" placeholder="0.00" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Height</label>
+                                        <input type="number" step="0.01" min="0" wire:model="dimension_height" placeholder="0.00" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Unit</label>
+                                        <select wire:model="dimension_unit" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500">
+                                            <option value="in">Inches (in)</option>
+                                            <option value="cm">Centimeters (cm)</option>
+                                            <option value="mm">Millimeters (mm)</option>
+                                            <option value="ft">Feet (ft)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white/60 border border-slate-200/50 rounded-2xl">
-
-                                <div>
-                                    <label class="text-xs font-bold text-indigo-600 block mb-1 uppercase tracking-wider">Quantity Available (In Stock)</label>
-                                    <input type="number" wire:model="quantity_available" class="w-full px-4 py-2.5 bg-white border border-indigo-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-bold">
-                                    @error('quantity_available') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
-                                </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Reserved Stock</label>
-                                    <input type="number" wire:model="reserved_stock" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                    @error('reserved_stock') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
-                                </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Warehouse Stock Level</label>
-                                    <input type="number" wire:model="warehouse_stock_level" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                    @error('warehouse_stock_level') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
-                                </div>
-                                <div class="flex items-center pt-6">
-                                    <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" wire:model="use_warehouse_stock" class="rounded text-indigo-600 focus:ring-indigo-500">
-                                        <span class="text-xs font-bold text-slate-600">Use Warehouse Stock in Calculations</span>
+                            {{-- Amazon-Specific Fields Section --}}
+                            <div class="border border-amber-200 bg-amber-50/40 rounded-2xl p-5 space-y-4">
+                                <div class="flex items-center justify-between pb-2 border-b border-amber-200/60">
+                                    <h4 class="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 11h14l1 12H4L5 11z"/></svg>
+                                        Amazon-Specific Settings
+                                    </h4>
+                                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" wire:model.live="amazon_product" value="1" class="rounded border-amber-300 text-amber-600 focus:ring-amber-500">
+                                        <span class="text-xs font-bold text-amber-900">Enable Amazon Marketplace Listing</span>
                                     </label>
                                 </div>
+                                @if($amazon_product)
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-500 block mb-1">ASIN</label>
+                                            <input type="text" wire:model="amazon_asin" placeholder="e.g. B08N5WRWNW" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-amber-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-500 block mb-1">Amazon Price ($ Override)</label>
+                                            <input type="number" step="0.01" min="0" wire:model="amazon_price" placeholder="Leave empty for retail" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-amber-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-500 block mb-1">Condition</label>
+                                            <select wire:model="amazon_condition" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-amber-500 text-sm">
+                                                <option value="New">New</option>
+                                                <option value="Used - Like New">Used - Like New</option>
+                                                <option value="Used - Very Good">Used - Very Good</option>
+                                                <option value="Used - Good">Used - Good</option>
+                                                <option value="Used - Acceptable">Used - Acceptable</option>
+                                                <option value="Refurbished">Refurbished</option>
+                                            </select>
+                                        </div>
+                                        <div class="sm:col-span-3">
+                                            <label class="text-xs font-bold text-slate-500 block mb-1">Amazon Item Type / Category Path</label>
+                                            <input type="text" wire:model="amazon_item_type" placeholder="e.g. Clothing > Shirts > T-Shirts" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-amber-500 text-sm">
+                                        </div>
+                                        <div class="sm:col-span-3">
+                                            <label class="text-xs font-bold text-slate-500 block mb-1">Amazon Bullet Points (up to 5 lines)</label>
+                                            <textarea wire:model="amazon_bullet_points" rows="4" placeholder="Enter key feature highlights, one per line (up to 5 bullet points)" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-amber-500 text-sm"></textarea>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- eBay-Specific Fields Section --}}
+                            <div class="border border-blue-200 bg-blue-50/40 rounded-2xl p-5 space-y-4">
+                                <div class="flex items-center justify-between pb-2 border-b border-blue-200/60">
+                                    <h4 class="text-xs font-bold text-blue-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                        eBay-Specific Settings
+                                    </h4>
+                                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" wire:model.live="ebay_product" value="1" class="rounded border-blue-300 text-blue-600 focus:ring-blue-500">
+                                        <span class="text-xs font-bold text-blue-900">Enable eBay Marketplace Listing</span>
+                                    </label>
+                                </div>
+                                @if($ebay_product)
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-500 block mb-1">eBay Category ID</label>
+                                            <input type="text" wire:model="ebay_category_id" placeholder="e.g. 11450" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-500 block mb-1">eBay Price ($ Override)</label>
+                                            <input type="number" step="0.01" min="0" wire:model="ebay_price" placeholder="Leave empty for retail" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-500 block mb-1">Listing Type</label>
+                                            <select wire:model="ebay_listing_type" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 text-sm">
+                                                <option value="Fixed Price">Fixed Price</option>
+                                                <option value="Auction">Auction</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-500 block mb-1">Shipping Profile ID</label>
+                                            <input type="text" wire:model="ebay_shipping_profile_id" placeholder="e.g. SHIP-FREE-STD" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-slate-500 block mb-1">Return Policy ID</label>
+                                            <input type="text" wire:model="ebay_return_policy_id" placeholder="e.g. RET-30DAY-FREE" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 text-sm">
+                                        </div>
+                                        <div class="sm:col-span-3">
+                                            <label class="text-xs font-bold text-slate-500 block mb-1">eBay Options / Traits (Color, Size, Material)</label>
+                                            <input type="text" wire:model="ebay_options" placeholder="e.g. Color: Red | Size: L | Material: 100% Cotton" class="w-full px-4 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 text-sm">
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            @include('livewire.partials.variant-processor-ids')
+
+                            {{-- ═══════ INVENTORY & WAREHOUSE STOCK SECTION (Edit) ═══════ --}}
+                            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+                                <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-200">
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                            Inventory & Warehouse Stock Calculation
+                                        </h4>
+                                        <p class="text-[11px] text-slate-500 mt-0.5">Configure main in-stock levels and optional warehouse-specific inventory stock.</p>
+                                    </div>
+
+                                    <a href="{{ route('admin.ecommerce.shipping', ['tab' => 'warehouses']) }}" target="admin_warehouse_locations"
+                                       class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        Manage Warehouses & Fulfillment Locations &rarr;
+                                    </a>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <label class="text-xs font-bold text-indigo-600 block mb-1 uppercase tracking-wider">Quantity Available (In Stock)</label>
+                                        <input type="number" wire:model.live="quantity_available" class="w-full px-4 py-2.5 bg-white border border-indigo-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-bold">
+                                        @error('quantity_available') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Reserved Stock</label>
+                                        <input type="number" wire:model.live="reserved_stock" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        @error('reserved_stock') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Main Warehouse Stock Level</label>
+                                        <input type="number" wire:model.live="warehouse_stock_level" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        @error('warehouse_stock_level') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Primary Warehouse Facility</label>
+                                        <select wire:model.live="location_id" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-semibold">
+                                            @foreach($allWarehouseLocations as $loc)
+                                                @php
+                                                    $isUsedInChild = collect($variantWarehouseStock)->pluck('warehouse_location_id')->map(fn($id)=>(int)$id)->contains((int)$loc->id);
+                                                @endphp
+                                                @if(!$isUsedInChild || (int)$location_id === (int)$loc->id)
+                                                    <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->code }})</option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                        @error('location_id') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+
+                                <div class="pt-2">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" wire:model.live="use_warehouse_stock" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                        <span class="text-xs font-bold text-slate-700">Use Warehouse Stock in Calculations</span>
+                                    </label>
+                                </div>
+
+                                {{-- Warehouse Locations Dependent Inventory Levels Child List --}}
+                                @if($use_warehouse_stock)
+                                    <div class="mt-4 p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl space-y-3">
+                                        <div class="flex items-center justify-between flex-wrap gap-2">
+                                            <div>
+                                                <h5 class="text-xs font-bold text-indigo-900 uppercase tracking-wider">Warehouse Dependent Inventory Levels</h5>
+                                                <p class="text-[11px] text-indigo-700/80">Assign inventory levels per warehouse location to contribute to total available stock.</p>
+                                            </div>
+                                            <button type="button" wire:click="addWarehouseStockLine" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition inline-flex items-center gap-1 cursor-pointer">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                Add Warehouse Location Stock
+                                            </button>
+                                        </div>
+
+                                        @if(!empty($variantWarehouseStock))
+                                            <div class="space-y-2">
+                                                @foreach($variantWarehouseStock as $index => $wStock)
+                                                    <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-indigo-100 shadow-sm">
+                                                        <div class="flex-1">
+                                                            <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Warehouse Location</label>
+                                                            <select wire:model.live="variantWarehouseStock.{{ $index }}.warehouse_location_id" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 font-semibold">
+                                                                @foreach($allWarehouseLocations as $loc)
+                                                                    @php
+                                                                        $isPrimary = (int)$location_id === (int)$loc->id;
+                                                                        $isOtherChild = collect($variantWarehouseStock)
+                                                                            ->forget($index)
+                                                                            ->pluck('warehouse_location_id')
+                                                                            ->map(fn($id)=>(int)$id)
+                                                                            ->contains((int)$loc->id);
+                                                                    @endphp
+                                                                    @if(!$isPrimary && (!$isOtherChild || (int)($wStock['warehouse_location_id'] ?? 0) === (int)$loc->id))
+                                                                        <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->code }}) - {{ $loc->city }}, {{ $loc->state_code }}</option>
+                                                                    @endif
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="w-36">
+                                                            <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Assigned Stock Qty</label>
+                                                            <input type="number" min="0" wire:model.live="variantWarehouseStock.{{ $index }}.stock_level" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs font-bold text-indigo-700 rounded-xl focus:outline-none focus:border-indigo-500">
+                                                        </div>
+                                                        <div class="pt-5">
+                                                            <button type="button" wire:click="removeWarehouseStockLine({{ $index }})" class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition cursor-pointer" title="Remove Location">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <div class="p-3 text-center bg-white/70 rounded-xl border border-dashed border-indigo-200">
+                                                <p class="text-xs text-slate-500">No additional warehouse location stock entries added. Click <strong>"Add Warehouse Location Stock"</strong> to assign inventory levels per warehouse location.</p>
+                                            </div>
+                                        @endif
+
+                                        @php
+                                            $childSum = (int) collect($variantWarehouseStock)->sum('stock_level');
+                                            $totalAvailable = (int)$quantity_available + (int)$warehouse_stock_level + $childSum - (int)$reserved_stock;
+                                        @endphp
+                                        <div class="pt-2 flex items-center justify-between text-xs font-bold text-indigo-900 border-t border-indigo-200/80">
+                                            <span>Total Available Calculated Stock:</span>
+                                            <span class="px-3 py-1 bg-indigo-600 text-white rounded-xl shadow-sm text-xs">
+                                                {{ $quantity_available }} (In Stock) + {{ $warehouse_stock_level }} (Main Warehouse) + {{ $childSum }} (Child Warehouses) - {{ $reserved_stock }} (Reserved) = {{ $totalAvailable }} Total Units
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
 
                             {{-- ═══════ EVENT DETAILS SUB-SECTION (Edit) ═══════ --}}
@@ -1187,29 +1425,129 @@
 
                             @include('livewire.partials.variant-processor-ids')
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white/60 border border-slate-200/50 rounded-2xl">
-                                <div>
-                                    <label class="text-xs font-bold text-indigo-600 block mb-1 uppercase tracking-wider">Quantity Available (In Stock)</label>
-                                    <input type="number" wire:model="quantity_available" class="w-full px-4 py-2.5 bg-white border border-indigo-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-bold">
+                            {{-- ═══════ INVENTORY & WAREHOUSE STOCK SECTION (Create) ═══════ --}}
+                            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+                                <div class="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-200">
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                            Inventory & Warehouse Stock Calculation
+                                        </h4>
+                                        <p class="text-[11px] text-slate-500 mt-0.5">Configure main in-stock levels and optional warehouse-specific inventory stock.</p>
+                                    </div>
 
-                                    @error('quantity_available') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                    <a href="{{ route('admin.ecommerce.shipping', ['tab' => 'warehouses']) }}" target="admin_warehouse_locations"
+                                       class="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200 transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        Manage Warehouses & Fulfillment Locations &rarr;
+                                    </a>
                                 </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Reserved Stock</label>
-                                    <input type="number" wire:model="reserved_stock" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                    @error('reserved_stock') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <label class="text-xs font-bold text-indigo-600 block mb-1 uppercase tracking-wider">Quantity Available (In Stock)</label>
+                                        <input type="number" wire:model.live="quantity_available" class="w-full px-4 py-2.5 bg-white border border-indigo-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-bold">
+                                        @error('quantity_available') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Reserved Stock</label>
+                                        <input type="number" wire:model.live="reserved_stock" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        @error('reserved_stock') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Main Warehouse Stock Level</label>
+                                        <input type="number" wire:model.live="warehouse_stock_level" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        @error('warehouse_stock_level') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Primary Warehouse Facility</label>
+                                        <select wire:model.live="location_id" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-semibold">
+                                            @foreach($allWarehouseLocations as $loc)
+                                                @php
+                                                    $isUsedInChild = collect($variantWarehouseStock)->pluck('warehouse_location_id')->map(fn($id)=>(int)$id)->contains((int)$loc->id);
+                                                @endphp
+                                                @if(!$isUsedInChild || (int)$location_id === (int)$loc->id)
+                                                    <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->code }})</option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                        @error('location_id') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Warehouse Stock Level</label>
-                                    <input type="number" wire:model="warehouse_stock_level" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                    @error('warehouse_stock_level') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
-                                </div>
-                                <div class="flex items-center pt-6">
+
+                                <div class="pt-2">
                                     <label class="flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" wire:model="use_warehouse_stock" class="rounded text-indigo-600 focus:ring-indigo-500">
-                                        <span class="text-xs font-bold text-slate-600">Use Warehouse Stock in Calculations</span>
+                                        <input type="checkbox" wire:model.live="use_warehouse_stock" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                        <span class="text-xs font-bold text-slate-700">Use Warehouse Stock in Calculations</span>
                                     </label>
                                 </div>
+
+                                {{-- Warehouse Locations Dependent Inventory Levels Child List --}}
+                                @if($use_warehouse_stock)
+                                    <div class="mt-4 p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl space-y-3">
+                                        <div class="flex items-center justify-between flex-wrap gap-2">
+                                            <div>
+                                                <h5 class="text-xs font-bold text-indigo-900 uppercase tracking-wider">Warehouse Dependent Inventory Levels</h5>
+                                                <p class="text-[11px] text-indigo-700/80">Assign inventory levels per warehouse location to contribute to total available stock.</p>
+                                            </div>
+                                            <button type="button" wire:click="addWarehouseStockLine" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition inline-flex items-center gap-1 cursor-pointer">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                                Add Warehouse Location Stock
+                                            </button>
+                                        </div>
+
+                                        @if(!empty($variantWarehouseStock))
+                                            <div class="space-y-2">
+                                                @foreach($variantWarehouseStock as $index => $wStock)
+                                                    <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-indigo-100 shadow-sm">
+                                                        <div class="flex-1">
+                                                            <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Warehouse Location</label>
+                                                            <select wire:model.live="variantWarehouseStock.{{ $index }}.warehouse_location_id" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 font-semibold">
+                                                                @foreach($allWarehouseLocations as $loc)
+                                                                    @php
+                                                                        $isPrimary = (int)$location_id === (int)$loc->id;
+                                                                        $isOtherChild = collect($variantWarehouseStock)
+                                                                            ->forget($index)
+                                                                            ->pluck('warehouse_location_id')
+                                                                            ->map(fn($id)=>(int)$id)
+                                                                            ->contains((int)$loc->id);
+                                                                    @endphp
+                                                                    @if(!$isPrimary && (!$isOtherChild || (int)($wStock['warehouse_location_id'] ?? 0) === (int)$loc->id))
+                                                                        <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->code }}) - {{ $loc->city }}, {{ $loc->state_code }}</option>
+                                                                    @endif
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="w-36">
+                                                            <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Assigned Stock Qty</label>
+                                                            <input type="number" min="0" wire:model.live="variantWarehouseStock.{{ $index }}.stock_level" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs font-bold text-indigo-700 rounded-xl focus:outline-none focus:border-indigo-500">
+                                                        </div>
+                                                        <div class="pt-5">
+                                                            <button type="button" wire:click="removeWarehouseStockLine({{ $index }})" class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition cursor-pointer" title="Remove Location">
+                                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <div class="p-3 text-center bg-white/70 rounded-xl border border-dashed border-indigo-200">
+                                                <p class="text-xs text-slate-500">No additional warehouse location stock entries added. Click <strong>"Add Warehouse Location Stock"</strong> to assign inventory levels per warehouse location.</p>
+                                            </div>
+                                        @endif
+
+                                        @php
+                                            $childSum = (int) collect($variantWarehouseStock)->sum('stock_level');
+                                            $totalAvailable = (int)$quantity_available + (int)$warehouse_stock_level + $childSum - (int)$reserved_stock;
+                                        @endphp
+                                        <div class="pt-2 flex items-center justify-between text-xs font-bold text-indigo-900 border-t border-indigo-200/80">
+                                            <span>Total Available Calculated Stock:</span>
+                                            <span class="px-3 py-1 bg-indigo-600 text-white rounded-xl shadow-sm text-xs">
+                                                {{ $quantity_available }} (In Stock) + {{ $warehouse_stock_level }} (Main Warehouse) + {{ $childSum }} (Child Warehouses) - {{ $reserved_stock }} (Reserved) = {{ $totalAvailable }} Total Units
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
 
                             {{-- ═══════ EVENT DETAILS SUB-SECTION (Create) ═══════ --}}

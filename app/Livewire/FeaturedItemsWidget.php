@@ -102,7 +102,7 @@ class FeaturedItemsWidget extends Component
 
         $price         = $userType == 2 ? $variant->wholesale_price : $variant->public_price;
         $discountPrice = 0;
-        if ($userType != 2 && $variant->on_sale && $variant->sale_price > 0) {
+        if ($userType != 2 && $variant->isOnSaleActive()) {
             $discountPrice = $price - $variant->sale_price;
             $price         = $variant->sale_price;
         }

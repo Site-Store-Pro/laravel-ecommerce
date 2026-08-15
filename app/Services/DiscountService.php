@@ -154,7 +154,7 @@ class DiscountService
             }
             
             // c) Special Price (Sale Price)
-            if ($userType != 2 && $variant->on_sale && $variant->sale_price > 0) {
+            if ($userType != 2 && $variant->isOnSaleActive()) {
                 $finalPrice = (float) $variant->sale_price;
             }
             
@@ -466,7 +466,7 @@ class DiscountService
         }
 
         // c) Special Price (Sale Price)
-        if ($userType != 2 && $variant->on_sale && $variant->sale_price > 0) {
+        if ($userType != 2 && $variant->isOnSaleActive()) {
             $finalPrice = (float) $variant->sale_price;
         }
 

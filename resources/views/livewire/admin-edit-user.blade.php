@@ -47,6 +47,19 @@
                                 <x-input-error :messages="$errors->get('form.email')" class="mt-1.5 text-xs" />
                             </div>
 
+                            @php
+                                $roleVal = is_object($user->role_id) ? $user->role_id->value : (int) $user->role_id;
+                            @endphp
+                            @if(in_array($roleVal, [1, 2]))
+                                <div class="pt-2">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" wire:model="form.opt_in" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                        <span class="text-xs font-bold text-slate-700">Checkout / Newsletter Opt-in Status</span>
+                                    </label>
+                                    <p class="text-[11px] text-slate-400 mt-1">Directly toggles the customer's opt-in status and automatically syncs with third-party providers (Mailchimp, Constant Contact, Klaviyo).</p>
+                                </div>
+                            @endif
+
                             <div class="pt-4 border-t border-slate-100">
                                 <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Change Password <span class="normal-case font-normal text-slate-400">(leave blank to keep current)</span></p>
                                 <div class="space-y-4">

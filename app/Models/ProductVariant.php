@@ -76,12 +76,45 @@ class ProductVariant extends Model
         'paddle_frequency',
         'paddle_currency_code',
         'is_event',
+        'sale_price_start_at',
+        'sale_price_end_at',
+        'upc_code',
+        'item_cost',
+        'item_map',
+        'dimension_length',
+        'dimension_width',
+        'dimension_height',
+        'dimension_unit',
+        'amazon_product',
+        'amazon_price',
+        'amazon_asin',
+        'amazon_bullet_points',
+        'amazon_item_type',
+        'amazon_condition',
+        'ebay_product',
+        'ebay_price',
+        'ebay_category_id',
+        'ebay_listing_type',
+        'ebay_options',
+        'ebay_shipping_profile_id',
+        'ebay_return_policy_id',
     ];
 
     protected $casts = [
         'public_price'              => 'decimal:2',
         'wholesale_price'           => 'decimal:2',
         'sale_price'                => 'decimal:2',
+        'item_cost'                 => 'decimal:2',
+        'item_map'                  => 'decimal:2',
+        'sale_price_start_at'       => 'datetime',
+        'sale_price_end_at'         => 'datetime',
+        'dimension_length'          => 'decimal:2',
+        'dimension_width'           => 'decimal:2',
+        'dimension_height'          => 'decimal:2',
+        'amazon_product'            => 'boolean',
+        'amazon_price'              => 'decimal:2',
+        'ebay_product'              => 'boolean',
+        'ebay_price'                => 'decimal:2',
         'variant_fee'               => 'decimal:2',
         'wholesale_variant_fee'     => 'decimal:2',
         'personalization_active'    => 'boolean',
@@ -96,6 +129,29 @@ class ProductVariant extends Model
         'paddle_frequency'          => 'integer',
         'is_event'                  => 'boolean',
     ];
+
+    /**
+     * Determine whether the variant is currently actively on sale,
+     * enforcing sale_price_start_at and sale_price_end_at if set.
+     */
+    public function isOnSaleActive(): bool
+    {
+        if (!$this->on_sale || (float)$this->sale_price <= 0) {
+            return false;
+        }
+
+        $now = now();
+
+        if ($this->sale_price_start_at && $now->lt($this->sale_price_start_at)) {
+            return false;
+        }
+
+        if ($this->sale_price_end_at && $now->gt($this->sale_price_end_at)) {
+            return false;
+        }
+
+        return true;
+    }
 
     protected static function boot()
     {

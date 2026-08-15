@@ -34,14 +34,31 @@ class ProductInventory extends Model
         return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 
+    public function warehouseInventories(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductInventoryWarehouse::class, 'product_inventory_id');
+    }
+
+    public function primaryWarehouse(): BelongsTo
+    {
+        return $this->belongsTo(WarehouseLocation::class, 'location_id');
+    }
+
     /**
      * Get the dynamic stock level based on the configuration.
-     * Available Stock + Warehouse Stock - Reserved Stock (if enabled), otherwise Available Stock - Reserved Stock.
+     * When use_warehouse_stock is enabled:
+     * Available Stock = quantity_available + warehouse_stock_level + SUM(child warehouse stock_levels) - reserved_stock.
+     * Otherwise:
+     * Available Stock = quantity_available - reserved_stock.
      */
     public function getAvailableStockAttribute(): int
     {
         if ($this->use_warehouse_stock) {
-            return $this->quantity_available + $this->warehouse_stock_level - $this->reserved_stock;
+            $childStock = $this->relationLoaded('warehouseInventories')
+                ? (int) $this->warehouseInventories->sum('stock_level')
+                : (int) $this->warehouseInventories()->sum('stock_level');
+
+            return $this->quantity_available + $this->warehouse_stock_level + $childStock - $this->reserved_stock;
         }
         return $this->quantity_available - $this->reserved_stock;
     }

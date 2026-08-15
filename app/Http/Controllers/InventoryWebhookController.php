@@ -37,6 +37,9 @@ class InventoryWebhookController extends Controller
             'warehouse_level' => 'nullable|integer|min:0',
             'use_warehouse_stock' => 'nullable|in:0,1,true,false',
             'location_id' => 'nullable|integer|min:1',
+            'warehouse_stocks' => 'nullable|array',
+            'warehouse_stocks.*.warehouse_location_id' => 'required_with:warehouse_stocks|integer|exists:warehouse_locations,id',
+            'warehouse_stocks.*.stock_level' => 'required_with:warehouse_stocks|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -78,7 +81,7 @@ class InventoryWebhookController extends Controller
             $updateData['location_id'] = (int) $request->input('location_id');
         }
 
-        if (empty($updateData)) {
+        if (empty($updateData) && !$request->has('warehouse_stocks')) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'No inventory fields provided for update.'
@@ -90,17 +93,39 @@ class InventoryWebhookController extends Controller
             $updateData
         );
 
+        // Sync optional child warehouse stocks
+        if ($request->has('warehouse_stocks') && is_array($request->input('warehouse_stocks'))) {
+            \App\Models\ProductInventoryWarehouse::where('product_inventory_id', $inventory->id)->delete();
+            foreach ($request->input('warehouse_stocks') as $wStock) {
+                if (!empty($wStock['warehouse_location_id'])) {
+                    \App\Models\ProductInventoryWarehouse::create([
+                        'product_inventory_id'  => $inventory->id,
+                        'warehouse_location_id' => (int) $wStock['warehouse_location_id'],
+                        'stock_level'           => (int) ($wStock['stock_level'] ?? 0),
+                    ]);
+                }
+            }
+        }
+
+        $inventory->refresh();
+
         return response()->json([
             'status' => 'success',
             'message' => "Inventory for SKU '{$sku}' updated successfully.",
             'data' => [
+                'id' => $inventory->id,
+                'variant_id' => $variant->id,
                 'sku' => $sku,
                 'quantity_available' => $inventory->quantity_available,
                 'warehouse_stock_level' => $inventory->warehouse_stock_level,
-                'use_warehouse_stock' => $inventory->use_warehouse_stock,
                 'reserved_stock' => $inventory->reserved_stock,
-                'current_total' => $inventory->available_stock,
+                'use_warehouse_stock' => $inventory->use_warehouse_stock,
                 'location_id' => $inventory->location_id,
+                'calculated_total' => $inventory->available_stock,
+                'warehouse_stocks' => $inventory->warehouseInventories->map(fn($w) => [
+                    'warehouse_location_id' => $w->warehouse_location_id,
+                    'stock_level' => $w->stock_level,
+                ])->values()->all(),
                 'updated_at' => $inventory->updated_at,
             ]
         ]);

@@ -23,6 +23,8 @@ class UserForm extends Form
     #[Validate]
     public int $role_id = 1;
 
+    public bool $opt_in = false;
+
     #[Validate]
     public string $password = '';
 
@@ -41,6 +43,7 @@ class UserForm extends Form
                 Rule::unique('users', 'email')->ignore($this->userId),
             ],
             'role_id'  => ['required', Rule::in(array_column(UserRole::cases(), 'value'))],
+            'opt_in'   => ['boolean'],
             'password' => $this->userId
                 ? ['nullable', 'string', Password::defaults(), 'confirmed']
                 : ['required', 'string', Password::defaults(), 'confirmed'],
@@ -53,7 +56,8 @@ class UserForm extends Form
         $this->userId  = $user->id;
         $this->name    = $user->name;
         $this->email   = $user->email;
-        $this->role_id = $user->role_id->value;
+        $this->role_id = is_object($user->role_id) ? $user->role_id->value : (int)$user->role_id;
+        $this->opt_in  = (bool) $user->opt_in;
     }
 
     public function store(): User
@@ -64,6 +68,7 @@ class UserForm extends Form
             'name'              => $this->name,
             'email'             => $this->email,
             'role_id'           => $this->role_id,
+            'opt_in'            => $this->opt_in,
             'password'          => Hash::make($this->password),
             'email_verified_at' => now(),
         ]);
@@ -77,6 +82,15 @@ class UserForm extends Form
             'name'  => $this->name,
             'email' => $this->email,
         ];
+
+        $roleVal = is_object($user->role_id) ? $user->role_id->value : (int) $user->role_id;
+        if (in_array($roleVal, [1, 2])) {
+            $oldOptIn = (bool) $user->opt_in;
+            $data['opt_in'] = $this->opt_in;
+            if ($oldOptIn !== $this->opt_in) {
+                \App\Services\OptinService::syncUserOptIn($user, $this->opt_in);
+            }
+        }
 
         if (!empty($this->password)) {
             $data['password'] = Hash::make($this->password);

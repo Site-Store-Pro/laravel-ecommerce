@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Services\OptinService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
@@ -10,6 +11,7 @@ new class extends Component
 {
     public string $name = '';
     public string $email = '';
+    public bool $opt_in = false;
 
     /**
      * Mount the component.
@@ -18,6 +20,7 @@ new class extends Component
     {
         $this->name = Auth::user()->name;
         $this->email = Auth::user()->email;
+        $this->opt_in = (bool) Auth::user()->opt_in;
     }
 
     /**
@@ -33,6 +36,15 @@ new class extends Component
         ]);
 
         $user->fill($validated);
+
+        $roleVal = is_object($user->role_id) ? $user->role_id->value : (int) $user->role_id;
+        if (in_array($roleVal, [1, 2])) {
+            $oldOptIn = (bool) $user->opt_in;
+            $user->opt_in = $this->opt_in;
+            if ($oldOptIn !== $this->opt_in) {
+                OptinService::syncUserOptIn($user, $this->opt_in);
+            }
+        }
 
         if ($user->isDirty('email')) {
             if ($user->isAdmin() || $user->role_id == 3 || (is_object($user->role_id) && $user->role_id->value === 3)) {
@@ -107,6 +119,19 @@ new class extends Component
                 </div>
             @endif
         </div>
+
+        @php
+            $roleVal = is_object(auth()->user()->role_id) ? auth()->user()->role_id->value : (int) auth()->user()->role_id;
+        @endphp
+        @if(in_array($roleVal, [1, 2]))
+            <div class="pt-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" wire:model="opt_in" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Opt-in to Newsletter &amp; Promotional Updates</span>
+                </label>
+                <p class="text-xs text-slate-500 mt-1">Receive promotional discounts, product updates, and news.</p>
+            </div>
+        @endif
 
         <div class="flex items-center gap-4">
             <x-primary-button>@label('profile.save', 'Save')</x-primary-button>

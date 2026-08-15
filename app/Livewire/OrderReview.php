@@ -160,12 +160,23 @@ class OrderReview extends Component
             return;
         }
 
-        $this->requiresShipping = $this->getCartQuery()->where('item_shippable', 1)->exists();
-
-        if ($this->getCartQuery()->count() === 0) {
+        $items = $this->getCartQuery()->get();
+        if ($items->count() === 0) {
             redirect()->route('shop.cart');
             return;
         }
+
+        $removed = \App\Services\InventoryCheckService::validateAndCleanCart($items);
+        if (!empty($removed)) {
+            $msg = count($removed) === 1
+                ? "The item '{$removed[0]}' is out of stock and has been removed from your cart."
+                : "The following items were out of stock and have been removed from your cart: " . implode(', ', $removed) . ".";
+            session()->flash('error', $msg);
+            redirect()->route('shop.cart');
+            return;
+        }
+
+        $this->requiresShipping = $this->getCartQuery()->where('item_shippable', 1)->exists();
 
         // Load comments config
         $config = \Illuminate\Support\Facades\DB::table('shipping_configurations')->first();
@@ -371,6 +382,19 @@ class OrderReview extends Component
     {
         if (!Auth::check()) {
             return ['error' => 'Not authenticated'];
+        }
+
+        $items = $this->getCartQuery()->get();
+        $removed = \App\Services\InventoryCheckService::validateAndCleanCart($items);
+        if (!empty($removed)) {
+            $msg = count($removed) === 1
+                ? "The item '{$removed[0]}' is out of stock and has been removed from your cart."
+                : "The following items were out of stock and have been removed from your cart: " . implode(', ', $removed) . ".";
+            session()->flash('error', $msg);
+            return [
+                'error' => $msg,
+                'redirect' => route('shop.cart'),
+            ];
         }
 
         $totals      = $this->calculateTotals();
@@ -611,6 +635,16 @@ class OrderReview extends Component
             }
         }
 
+        $itemsCheck = $this->getCartQuery()->get();
+        $removed = \App\Services\InventoryCheckService::validateAndCleanCart($itemsCheck);
+        if (!empty($removed)) {
+            $msg = count($removed) === 1
+                ? "The item '{$removed[0]}' is out of stock and has been removed from your cart."
+                : "The following items were out of stock and have been removed from your cart: " . implode(', ', $removed) . ".";
+            session()->flash('error', $msg);
+            return redirect()->route('shop.cart');
+        }
+
         $totals = $this->calculateTotals();
         $items  = $totals['items'];
 
@@ -686,21 +720,19 @@ class OrderReview extends Component
 
         // ── Handle mailing list opt-in ────────────────────────────────────────────────
         try {
-            $optinMode = CmsSetting::get('checkout_optin_mode', 'off');
-            $shouldSubscribe = match ($optinMode) {
-                'auto'   => true,
-                'manual' => $this->billingOptIn || (bool) session('checkout_opt_in', false),
-                default  => false,
+            $optinMode  = CmsSetting::get('checkout_optin_mode', 'off');
+            $optInValue = match ($optinMode) {
+                'auto'   => 1,
+                'manual' => ($this->billingOptIn || (bool) session('checkout_opt_in', false)) ? 1 : 0,
+                default  => 0,
             };
-            if ($shouldSubscribe) {
-                $provider  = CmsSetting::get('checkout_optin_provider', '');
-                $listId    = CmsSetting::get('checkout_optin_list_id', '');
-                if ($provider && $listId) {
-                    OptinService::subscribe($user->email, $user->name, $provider, $listId);
-                }
+
+            if ($user) {
+                $user->update(['opt_in' => $optInValue]);
+                OptinService::syncUserOptIn($user, (bool) $optInValue);
             }
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('[Checkout Opt-in] Subscribe failed: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('[Checkout Opt-in] Sync failed: ' . $e->getMessage());
         }
 
         // Create Order Details and deduct inventory

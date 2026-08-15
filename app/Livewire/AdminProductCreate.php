@@ -15,6 +15,10 @@ class AdminProductCreate extends Component
     public string $title = '';
     public string $short_description = '';
     public string $long_description = '';
+    public string $bullet_point_1 = '';
+    public string $bullet_point_2 = '';
+    public string $bullet_point_3 = '';
+    public string $bullet_point_4 = '';
     public string $meta_title = '';
     public string $meta_description = '';
     public string $seo_slug = '';
@@ -77,6 +81,10 @@ class AdminProductCreate extends Component
             'title' => 'required|string|max:255',
             'short_description' => 'nullable|string',
             'long_description' => 'nullable|string',
+            'bullet_point_1' => 'nullable|string|max:255',
+            'bullet_point_2' => 'nullable|string|max:255',
+            'bullet_point_3' => 'nullable|string|max:255',
+            'bullet_point_4' => 'nullable|string|max:255',
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
             'seo_slug' => 'required|string|max:255|unique:products,seo_slug',
@@ -87,6 +95,10 @@ class AdminProductCreate extends Component
             'title' => $this->title,
             'short_description' => $this->short_description,
             'long_description' => $this->long_description,
+            'bullet_point_1' => $this->bullet_point_1,
+            'bullet_point_2' => $this->bullet_point_2,
+            'bullet_point_3' => $this->bullet_point_3,
+            'bullet_point_4' => $this->bullet_point_4,
             'meta_title' => $this->meta_title ?: $this->title,
             'meta_description' => $this->meta_description ?: $this->short_description,
             'seo_slug' => $this->seo_slug,

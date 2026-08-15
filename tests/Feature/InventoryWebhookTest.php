@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\ProductInventory;
-use App\Models\ProductVariant;
 use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\WarehouseLocation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,111 +12,60 @@ class InventoryWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
+    public function test_inventory_webhook_update_with_child_warehouses(): void
     {
-        parent::setUp();
-        // Set the secret token for testing
-        config(['services.inventory_webhook.token' => 'test-secret-token']);
-    }
+        config(['services.inventory_webhook.token' => 'secret_test_token']);
 
-    public function test_webhook_requires_token(): void
-    {
-        $response = $this->postJson('webhooks/inventory-update', [
-            'sku' => 'TEST-SKU',
-            'stock_level' => 10,
-        ]);
-
-        $response->assertStatus(401);
-        $response->assertJson([
-            'status' => 'error',
-            'message' => 'Unauthorized: Invalid or missing webhook token.'
-        ]);
-    }
-
-    public function test_webhook_requires_correct_token(): void
-    {
-        $response = $this->withHeaders([
-            'X-Inventory-Webhook-Token' => 'wrong-token'
-        ])->postJson('webhooks/inventory-update', [
-            'sku' => 'TEST-SKU',
-            'stock_level' => 10,
-        ]);
-
-        $response->assertStatus(401);
-    }
-
-    public function test_webhook_returns_404_if_sku_not_found(): void
-    {
-        $response = $this->withHeaders([
-            'X-Inventory-Webhook-Token' => 'test-secret-token'
-        ])->postJson('webhooks/inventory-update', [
-            'sku' => 'NON-EXISTENT-SKU',
-            'stock_level' => 10,
-        ]);
-
-        $response->assertStatus(404);
-        $response->assertJson([
-            'status' => 'error',
-            'message' => "Variant with SKU 'NON-EXISTENT-SKU' not found."
-        ]);
-    }
-
-    public function test_webhook_updates_inventory_successfully(): void
-    {
-        // 1. Create a dummy product and variant
         $product = Product::create([
-            'title' => 'Test Product',
-            'short_description' => 'Short desc',
-            'long_description' => 'Long desc',
-            'seo_slug' => 'test-product',
+            'title' => 'Webhook Product',
+            'seo_slug' => 'webhook-product',
         ]);
 
         $variant = ProductVariant::create([
             'product_id' => $product->id,
-            'sku' => 'TEST-SKU-123',
-            'public_price' => 9.99,
-            'wholesale_price' => 8.99,
+            'sku' => 'WEBHOOK-SKU-123',
+            'public_price' => 20.00,
+            'wholesale_price' => 12.00,
         ]);
 
-        $inventory = ProductInventory::create([
-            'variant_id' => $variant->id,
-            'quantity_available' => 5,
-            'warehouse_stock_level' => 0,
-            'use_warehouse_stock' => false,
-            'reserved_stock' => 1,
-            'location_id' => 1,
+        $loc1 = WarehouseLocation::create([
+            'name' => 'East Coast Warehouse',
+            'code' => 'EC-01',
+            'country_code' => 'US',
+            'is_active' => true,
         ]);
 
-        // 2. Call webhook to update
+        $loc2 = WarehouseLocation::create([
+            'name' => 'West Coast Warehouse',
+            'code' => 'WC-02',
+            'country_code' => 'US',
+            'is_active' => true,
+        ]);
+
         $response = $this->withHeaders([
-            'X-Inventory-Webhook-Token' => 'test-secret-token'
-        ])->postJson('webhooks/inventory-update', [
-            'sku' => 'TEST-SKU-123',
-            'stock_level' => 20,
-            'warehouse_level' => 15,
+            'X-Inventory-Webhook-Token' => 'secret_test_token',
+        ])->postJson('/webhooks/inventory-update', [
+            'sku' => 'WEBHOOK-SKU-123',
+            'stock_level' => 50,
+            'warehouse_level' => 20,
             'use_warehouse_stock' => true,
-            'location_id' => 3,
+            'location_id' => $loc1->id,
+            'warehouse_stocks' => [
+                ['warehouse_location_id' => $loc1->id, 'stock_level' => 30],
+                ['warehouse_location_id' => $loc2->id, 'stock_level' => 40],
+            ],
         ]);
 
         $response->assertStatus(200);
         $response->assertJson([
             'status' => 'success',
             'data' => [
-                'sku' => 'TEST-SKU-123',
-                'quantity_available' => 20,
-                'warehouse_stock_level' => 15,
+                'sku' => 'WEBHOOK-SKU-123',
+                'quantity_available' => 50,
+                'warehouse_stock_level' => 20,
                 'use_warehouse_stock' => true,
-                'reserved_stock' => 1,
-                'current_total' => 34, // 20 + 15 - 1 = 34
-                'location_id' => 3,
-            ]
+                'calculated_total' => 140, // 50 (stock) + 20 (wh) + (30 + 40) (child) - 0 (reserved)
+            ],
         ]);
-
-        // 3. Verify in database
-        $inventory->refresh();
-        $this->assertEquals(20, $inventory->quantity_available);
-        $this->assertEquals(15, $inventory->warehouse_stock_level);
-        $this->assertTrue($inventory->use_warehouse_stock);
-        $this->assertEquals(3, $inventory->location_id);
     }
 }

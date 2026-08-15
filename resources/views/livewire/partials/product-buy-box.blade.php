@@ -3,6 +3,15 @@
     <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">{{ $product->title }}</h1>
     <p class="mt-4 text-slate-500 leading-relaxed">{!! $product->parsed_short_description !!}</p>
 
+    @if(!empty($product->bullet_point_1) || !empty($product->bullet_point_2) || !empty($product->bullet_point_3) || !empty($product->bullet_point_4))
+        <ul class="mt-4 space-y-1.5 text-sm text-slate-700 dark:text-slate-300 list-disc list-inside font-medium bg-slate-50/70 border border-slate-200/60 rounded-2xl p-4">
+            @if(!empty($product->bullet_point_1)) <li>{{ $product->bullet_point_1 }}</li> @endif
+            @if(!empty($product->bullet_point_2)) <li>{{ $product->bullet_point_2 }}</li> @endif
+            @if(!empty($product->bullet_point_3)) <li>{{ $product->bullet_point_3 }}</li> @endif
+            @if(!empty($product->bullet_point_4)) <li>{{ $product->bullet_point_4 }}</li> @endif
+        </ul>
+    @endif
+
     <!-- Active Discounts Custom Promo Info -->
     @php
         $promoTexts = \App\Services\DiscountService::getPromotionalTextsForProduct($product);
@@ -267,7 +276,7 @@
         @if($selectedVariant && !$selectedVariant->download_item && !$product->hide_inventory_levels)
             <div class="mt-6 flex items-center gap-2">
                 @php
-                    $stock = $selectedVariant->inventory ? ($selectedVariant->inventory->quantity_available - $selectedVariant->inventory->reserved_stock) : 0;
+                    $stock = $selectedVariant->inventory ? $selectedVariant->inventory->available_stock : 0;
                 @endphp
                 @if($stock > 0)
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
@@ -421,7 +430,7 @@
 @endif
 
 <!-- Quantity & Add to Cart -->
-@if($product->is_donation_or_bill_pay || ($selectedVariant && ($selectedVariant->download_item || ($selectedVariant->inventory && ($selectedVariant->inventory->quantity_available - $selectedVariant->inventory->reserved_stock) > 0))))
+@if($product->is_donation_or_bill_pay || ($selectedVariant && ($selectedVariant->download_item || ($selectedVariant->inventory && $selectedVariant->inventory->available_stock > 0))))
     <div id="add-to-cart" class="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-3">
         <div class="flex items-center gap-4">
             @if($product->max_qty != 1 && !$product->is_donation_or_bill_pay)

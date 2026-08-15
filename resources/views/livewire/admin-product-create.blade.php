@@ -39,6 +39,29 @@
                                    class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl focus:outline-none focus:border-indigo-500 shadow-sm">
                         </div>
 
+                        <!-- Bullet Points -->
+                        <div class="border-t border-slate-100 dark:border-slate-800 pt-4">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">Key Feature Bullet Points (Optional)</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1">Bullet Point 1</label>
+                                    <input type="text" wire:model="bullet_point_1" placeholder="e.g. 100% Organic Cotton" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1">Bullet Point 2</label>
+                                    <input type="text" wire:model="bullet_point_2" placeholder="e.g. Water resistant up to 50m" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1">Bullet Point 3</label>
+                                    <input type="text" wire:model="bullet_point_3" placeholder="e.g. 2-Year Manufacturer Warranty" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-600 dark:text-slate-400 block mb-1">Bullet Point 4</label>
+                                    <input type="text" wire:model="bullet_point_4" placeholder="e.g. Free Eco-friendly Packaging" class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                                </div>
+                            </div>
+                        </div>
+
                         {{-- Brand & Categories Grid --}}
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>

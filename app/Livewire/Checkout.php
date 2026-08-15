@@ -188,9 +188,20 @@ class Checkout extends Component
 
     public function mount()
     {
-        if ($this->getCartQuery()->count() === 0) {
+        $items = $this->getCartQuery()->get();
+        if ($items->count() === 0) {
             return redirect()->to('/');
         }
+
+        $removed = \App\Services\InventoryCheckService::validateAndCleanCart($items);
+        if (!empty($removed)) {
+            $msg = count($removed) === 1
+                ? "The item '{$removed[0]}' is out of stock and has been removed from your cart."
+                : "The following items were out of stock and have been removed from your cart: " . implode(', ', $removed) . ".";
+            session()->flash('error', $msg);
+            return redirect()->route('shop.cart');
+        }
+
         $this->loadCartDetails();
 
         // Pre-populate any saved session values from a previous step-1 visit
@@ -248,6 +259,21 @@ class Checkout extends Component
      */
     public function booted(): void
     {
+        $items = $this->getCartQuery()->get();
+        if ($items->count() === 0) {
+            return;
+        }
+
+        $removed = \App\Services\InventoryCheckService::validateAndCleanCart($items);
+        if (!empty($removed)) {
+            $msg = count($removed) === 1
+                ? "The item '{$removed[0]}' is out of stock and has been removed from your cart."
+                : "The following items were out of stock and have been removed from your cart: " . implode(', ', $removed) . ".";
+            session()->flash('error', $msg);
+            $this->redirect(route('shop.cart'));
+            return;
+        }
+
         if ($this->canBypassCheckout()) {
             $user = Auth::user();
             // Associate current guest cart items with this user before leaving

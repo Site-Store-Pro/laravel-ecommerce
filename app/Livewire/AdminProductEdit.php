@@ -31,6 +31,11 @@ class AdminProductEdit extends Component
     public array $selectedCategories = [];
     public ?int $brand_id = null;
 
+    public string $bullet_point_1 = '';
+    public string $bullet_point_2 = '';
+    public string $bullet_point_3 = '';
+    public string $bullet_point_4 = '';
+
     // Search Index Keywords & Locking
     public string $product_search_index = '';
     public bool $product_search_index_locked = false;
@@ -123,6 +128,77 @@ class AdminProductEdit extends Component
     public int $reserved_stock = 0;
     public int $warehouse_stock_level = 0;
     public bool $use_warehouse_stock = false;
+    public ?int $location_id = 1;
+    public array $variantWarehouseStock = [];
+
+    public function addWarehouseStockLine(): void
+    {
+        $allLocations = \App\Models\WarehouseLocation::orderBy('name')->get();
+        if ($allLocations->isEmpty()) {
+            $defaultLoc = \App\Models\WarehouseLocation::create([
+                'name'         => 'Main Warehouse',
+                'code'         => 'MAIN-01',
+                'address'      => 'Main Distribution Center',
+                'city'         => 'Default City',
+                'state_code'   => 'NY',
+                'country_code' => 'US',
+                'zipcode'      => '10001',
+                'is_active'    => true,
+            ]);
+            $allLocations = collect([$defaultLoc]);
+        }
+
+        $usedIds = collect($this->variantWarehouseStock)->pluck('warehouse_location_id')->map(fn($id) => (int)$id)->filter()->toArray();
+        if ($this->location_id) {
+            $usedIds[] = (int) $this->location_id;
+        }
+
+        $firstAvailable = $allLocations->first(fn($loc) => !in_array((int)$loc->id, $usedIds));
+        $defaultLocationId = $firstAvailable ? $firstAvailable->id : $allLocations->first()->id;
+
+        $this->variantWarehouseStock[] = [
+            'warehouse_location_id' => (int) $defaultLocationId,
+            'stock_level'           => 0,
+        ];
+    }
+
+    public function removeWarehouseStockLine(int $index): void
+    {
+        unset($this->variantWarehouseStock[$index]);
+        $this->variantWarehouseStock = array_values($this->variantWarehouseStock);
+    }
+
+    // Sale Date Window & UPC
+    public ?string $sale_price_start_at = null;
+    public ?string $sale_price_end_at   = null;
+    public string  $upc_code            = '';
+
+    // Item Cost & MAP Price
+    public ?float $item_cost = null;
+    public ?float $item_map  = null;
+
+    // Dimensions
+    public ?float $dimension_length = null;
+    public ?float $dimension_width  = null;
+    public ?float $dimension_height = null;
+    public string $dimension_unit   = 'in';
+
+    // Amazon Specific Fields
+    public bool   $amazon_product       = false;
+    public ?float $amazon_price         = null;
+    public string $amazon_asin          = '';
+    public string $amazon_bullet_points = '';
+    public string $amazon_item_type     = '';
+    public string $amazon_condition     = 'New';
+
+    // eBay Specific Fields
+    public bool   $ebay_product             = false;
+    public ?float $ebay_price               = null;
+    public string $ebay_category_id         = '';
+    public string $ebay_listing_type        = 'Fixed Price';
+    public string $ebay_options             = '';
+    public string $ebay_shipping_profile_id = '';
+    public string $ebay_return_policy_id    = '';
 
     // Payment Processor Price IDs (per variant)
     public string $paddle_sandbox_price_id    = '';
@@ -252,6 +328,10 @@ class AdminProductEdit extends Component
         $this->title = $this->product->title;
         $this->short_description = $this->product->short_description ?? '';
         $this->long_description = $this->product->long_description ?? '';
+        $this->bullet_point_1 = (string) ($this->product->bullet_point_1 ?? '');
+        $this->bullet_point_2 = (string) ($this->product->bullet_point_2 ?? '');
+        $this->bullet_point_3 = (string) ($this->product->bullet_point_3 ?? '');
+        $this->bullet_point_4 = (string) ($this->product->bullet_point_4 ?? '');
         $this->meta_title = $this->product->meta_title ?? '';
         $this->meta_description = $this->product->meta_description ?? '';
         $this->seo_slug = $this->product->seo_slug ?? '';
@@ -307,6 +387,10 @@ class AdminProductEdit extends Component
             'meta_title' => 'required|string|max:255',
             'short_description' => 'nullable|string',
             'long_description' => 'nullable|string',
+            'bullet_point_1' => 'nullable|string|max:255',
+            'bullet_point_2' => 'nullable|string|max:255',
+            'bullet_point_3' => 'nullable|string|max:255',
+            'bullet_point_4' => 'nullable|string|max:255',
             'brand_id' => 'nullable|integer|exists:product_brands,id',
             'variant_label' => 'nullable|string|max:255',
             'layout_type' => 'required|integer|in:1,2,3,4,5,6',
@@ -350,6 +434,10 @@ class AdminProductEdit extends Component
             'title' => $this->title,
             'short_description' => $this->short_description,
             'long_description' => $this->long_description,
+            'bullet_point_1' => trim($this->bullet_point_1) ?: null,
+            'bullet_point_2' => trim($this->bullet_point_2) ?: null,
+            'bullet_point_3' => trim($this->bullet_point_3) ?: null,
+            'bullet_point_4' => trim($this->bullet_point_4) ?: null,
             'meta_title' => $this->meta_title,
             'meta_description' => $this->meta_description ?: $this->short_description,
             'seo_slug' => $formattedSlug,
@@ -531,6 +619,8 @@ class AdminProductEdit extends Component
         $this->reserved_stock = 0;
         $this->warehouse_stock_level = 0;
         $this->use_warehouse_stock = false;
+        $this->location_id = 1;
+        $this->variantWarehouseStock = [];
 
         $this->download_item = 0;
         $this->download_location = '';
@@ -860,6 +950,38 @@ class AdminProductEdit extends Component
             'stripe_billing_interval'   => $this->stripe_billing_interval   ?: 'month',
             'stripe_trial_enabled'      => $this->stripe_trial_enabled,
             'stripe_trial_days'         => $this->stripe_trial_enabled ? $this->stripe_trial_days : 0,
+
+            // Sale Date Window & UPC
+            'sale_price_start_at'       => $this->sale_price_start_at ? $this->sale_price_start_at : null,
+            'sale_price_end_at'         => $this->sale_price_end_at ? $this->sale_price_end_at : null,
+            'upc_code'                  => trim($this->upc_code) ?: null,
+
+            // Item Cost & MAP Price
+            'item_cost'                 => $this->item_cost !== null && $this->item_cost !== '' ? (float)$this->item_cost : null,
+            'item_map'                  => $this->item_map !== null && $this->item_map !== '' ? (float)$this->item_map : null,
+
+            // Dimensions
+            'dimension_length'          => $this->dimension_length !== null && $this->dimension_length !== '' ? (float)$this->dimension_length : null,
+            'dimension_width'           => $this->dimension_width !== null && $this->dimension_width !== '' ? (float)$this->dimension_width : null,
+            'dimension_height'          => $this->dimension_height !== null && $this->dimension_height !== '' ? (float)$this->dimension_height : null,
+            'dimension_unit'            => $this->dimension_unit ?: 'in',
+
+            // Amazon Specific
+            'amazon_product'            => (bool) $this->amazon_product,
+            'amazon_price'              => $this->amazon_price !== null && $this->amazon_price !== '' ? (float)$this->amazon_price : null,
+            'amazon_asin'                => trim($this->amazon_asin) ?: null,
+            'amazon_bullet_points'       => trim($this->amazon_bullet_points) ?: null,
+            'amazon_item_type'           => trim($this->amazon_item_type) ?: null,
+            'amazon_condition'           => $this->amazon_condition ?: 'New',
+
+            // eBay Specific
+            'ebay_product'              => (bool) $this->ebay_product,
+            'ebay_price'                => $this->ebay_price !== null && $this->ebay_price !== '' ? (float)$this->ebay_price : null,
+            'ebay_category_id'          => trim($this->ebay_category_id) ?: null,
+            'ebay_listing_type'         => $this->ebay_listing_type ?: 'Fixed Price',
+            'ebay_options'              => trim($this->ebay_options) ?: null,
+            'ebay_shipping_profile_id'  => trim($this->ebay_shipping_profile_id) ?: null,
+            'ebay_return_policy_id'     => trim($this->ebay_return_policy_id) ?: null,
         ]);
 
         $this->syncQtyDiscounts($variant);
@@ -885,14 +1007,26 @@ class AdminProductEdit extends Component
             \App\Models\ProductVariantEvent::where('variant_id', $variant->id)->delete();
         }
 
-        ProductInventory::create([
+        $inventoryRecord = ProductInventory::create([
             'variant_id' => $variant->id,
             'quantity_available' => $this->quantity_available,
             'warehouse_stock_level' => $this->warehouse_stock_level,
             'use_warehouse_stock' => $this->use_warehouse_stock,
             'reserved_stock' => $this->reserved_stock,
-            'location_id' => 1
+            'location_id' => $this->location_id ? (int) $this->location_id : 1
         ]);
+
+        if ($this->use_warehouse_stock && !empty($this->variantWarehouseStock)) {
+            foreach ($this->variantWarehouseStock as $wStock) {
+                if (!empty($wStock['warehouse_location_id'])) {
+                    \App\Models\ProductInventoryWarehouse::create([
+                        'product_inventory_id'  => $inventoryRecord->id,
+                        'warehouse_location_id' => (int) $wStock['warehouse_location_id'],
+                        'stock_level'           => (int) ($wStock['stock_level'] ?? 0),
+                    ]);
+                }
+            }
+        }
 
         if (!$this->storeUploadedFiles($variant)) {
             $variant->delete();
@@ -940,6 +1074,34 @@ class AdminProductEdit extends Component
         $this->stripe_trial_enabled       = (int) ($variant->stripe_trial_enabled ?? 0);
         $this->stripe_trial_days          = (int) ($variant->stripe_trial_days   ?? 0);
 
+        // Dates, Cost/MAP, UPC, Dimensions
+        $this->sale_price_start_at        = $variant->sale_price_start_at ? $variant->sale_price_start_at->format('Y-m-d\TH:i') : null;
+        $this->sale_price_end_at          = $variant->sale_price_end_at ? $variant->sale_price_end_at->format('Y-m-d\TH:i') : null;
+        $this->upc_code                   = $variant->upc_code ?? '';
+        $this->item_cost                  = $variant->item_cost !== null ? (float)$variant->item_cost : null;
+        $this->item_map                   = $variant->item_map !== null ? (float)$variant->item_map : null;
+        $this->dimension_length           = $variant->dimension_length !== null ? (float)$variant->dimension_length : null;
+        $this->dimension_width            = $variant->dimension_width !== null ? (float)$variant->dimension_width : null;
+        $this->dimension_height           = $variant->dimension_height !== null ? (float)$variant->dimension_height : null;
+        $this->dimension_unit             = $variant->dimension_unit ?? 'in';
+
+        // Amazon Specific
+        $this->amazon_product             = (bool) ($variant->amazon_product ?? false);
+        $this->amazon_price               = $variant->amazon_price !== null ? (float)$variant->amazon_price : null;
+        $this->amazon_asin                = $variant->amazon_asin ?? '';
+        $this->amazon_bullet_points       = $variant->amazon_bullet_points ?? '';
+        $this->amazon_item_type           = $variant->amazon_item_type ?? '';
+        $this->amazon_condition           = $variant->amazon_condition ?? 'New';
+
+        // eBay Specific
+        $this->ebay_product               = (bool) ($variant->ebay_product ?? false);
+        $this->ebay_price                 = $variant->ebay_price !== null ? (float)$variant->ebay_price : null;
+        $this->ebay_category_id           = $variant->ebay_category_id ?? '';
+        $this->ebay_listing_type          = $variant->ebay_listing_type ?? 'Fixed Price';
+        $this->ebay_options               = $variant->ebay_options ?? '';
+        $this->ebay_shipping_profile_id   = $variant->ebay_shipping_profile_id ?? '';
+        $this->ebay_return_policy_id      = $variant->ebay_return_policy_id ?? '';
+
         
         // Decode attributes to the inline array
         $decoded = json_decode($this->variantAttributes, true);
@@ -954,6 +1116,20 @@ class AdminProductEdit extends Component
         $this->reserved_stock = $variant->inventory ? (int) $variant->inventory->reserved_stock : 0;
         $this->warehouse_stock_level = $variant->inventory ? (int) $variant->inventory->warehouse_stock_level : 0;
         $this->use_warehouse_stock = $variant->inventory ? (bool) $variant->inventory->use_warehouse_stock : false;
+        $this->location_id = $variant->inventory && $variant->inventory->location_id ? (int) $variant->inventory->location_id : 1;
+
+        $inventory = $variant->inventory;
+        if ($inventory) {
+            $this->variantWarehouseStock = \App\Models\ProductInventoryWarehouse::where('product_inventory_id', $inventory->id)
+                ->get()
+                ->map(fn($w) => [
+                    'warehouse_location_id' => (int) $w->warehouse_location_id,
+                    'stock_level'           => (int) $w->stock_level,
+                ])
+                ->toArray();
+        } else {
+            $this->variantWarehouseStock = [];
+        }
         
         $this->download_item = $variant->download_item;
         $this->download_location = $variant->download_location ?? '';
@@ -1193,25 +1369,73 @@ class AdminProductEdit extends Component
             'stripe_billing_interval'  => $this->stripe_billing_interval  ?: 'month',
             'stripe_trial_enabled'     => $this->stripe_trial_enabled,
             'stripe_trial_days'        => $this->stripe_trial_enabled ? $this->stripe_trial_days : 0,
+
+            // Sale Date Window & UPC
+            'sale_price_start_at'       => $this->sale_price_start_at ? $this->sale_price_start_at : null,
+            'sale_price_end_at'         => $this->sale_price_end_at ? $this->sale_price_end_at : null,
+            'upc_code'                  => trim($this->upc_code) ?: null,
+
+            // Item Cost & MAP Price
+            'item_cost'                 => $this->item_cost !== null && $this->item_cost !== '' ? (float)$this->item_cost : null,
+            'item_map'                  => $this->item_map !== null && $this->item_map !== '' ? (float)$this->item_map : null,
+
+            // Dimensions
+            'dimension_length'          => $this->dimension_length !== null && $this->dimension_length !== '' ? (float)$this->dimension_length : null,
+            'dimension_width'           => $this->dimension_width !== null && $this->dimension_width !== '' ? (float)$this->dimension_width : null,
+            'dimension_height'          => $this->dimension_height !== null && $this->dimension_height !== '' ? (float)$this->dimension_height : null,
+            'dimension_unit'            => $this->dimension_unit ?: 'in',
+
+            // Amazon Specific
+            'amazon_product'            => (bool) $this->amazon_product,
+            'amazon_price'              => $this->amazon_price !== null && $this->amazon_price !== '' ? (float)$this->amazon_price : null,
+            'amazon_asin'                => trim($this->amazon_asin) ?: null,
+            'amazon_bullet_points'       => trim($this->amazon_bullet_points) ?: null,
+            'amazon_item_type'           => trim($this->amazon_item_type) ?: null,
+            'amazon_condition'           => $this->amazon_condition ?: 'New',
+
+            // eBay Specific
+            'ebay_product'              => (bool) $this->ebay_product,
+            'ebay_price'                => $this->ebay_price !== null && $this->ebay_price !== '' ? (float)$this->ebay_price : null,
+            'ebay_category_id'          => trim($this->ebay_category_id) ?: null,
+            'ebay_listing_type'         => $this->ebay_listing_type ?: 'Fixed Price',
+            'ebay_options'              => trim($this->ebay_options) ?: null,
+            'ebay_shipping_profile_id'  => trim($this->ebay_shipping_profile_id) ?: null,
+            'ebay_return_policy_id'     => trim($this->ebay_return_policy_id) ?: null,
         ]);
 
         if ($variant->inventory) {
             $variant->inventory->update([
                 'quantity_available' => $this->quantity_available,
-
                 'warehouse_stock_level' => $this->warehouse_stock_level,
                 'use_warehouse_stock' => $this->use_warehouse_stock,
                 'reserved_stock' => $this->reserved_stock,
+                'location_id' => $this->location_id ? (int) $this->location_id : 1,
             ]);
+            $inventoryRecord = $variant->inventory;
         } else {
-            ProductInventory::create([
+            $inventoryRecord = ProductInventory::create([
                 'variant_id' => $variant->id,
                 'quantity_available' => $this->quantity_available,
                 'warehouse_stock_level' => $this->warehouse_stock_level,
                 'use_warehouse_stock' => $this->use_warehouse_stock,
                 'reserved_stock' => $this->reserved_stock,
-                'location_id' => 1
+                'location_id' => $this->location_id ? (int) $this->location_id : 1,
             ]);
+        }
+
+        if ($inventoryRecord) {
+            \App\Models\ProductInventoryWarehouse::where('product_inventory_id', $inventoryRecord->id)->delete();
+            if ($this->use_warehouse_stock && !empty($this->variantWarehouseStock)) {
+                foreach ($this->variantWarehouseStock as $wStock) {
+                    if (!empty($wStock['warehouse_location_id'])) {
+                        \App\Models\ProductInventoryWarehouse::create([
+                            'product_inventory_id'  => $inventoryRecord->id,
+                            'warehouse_location_id' => (int) $wStock['warehouse_location_id'],
+                            'stock_level'           => (int) ($wStock['stock_level'] ?? 0),
+                        ]);
+                    }
+                }
+            }
         }
 
         if (!$this->storeUploadedFiles($variant)) {
@@ -2112,6 +2336,21 @@ class AdminProductEdit extends Component
             }
         }
 
+        $warehouseLocs = \App\Models\WarehouseLocation::orderBy('name')->get();
+        if ($warehouseLocs->isEmpty()) {
+            \App\Models\WarehouseLocation::create([
+                'name'         => 'Main Warehouse',
+                'code'         => 'MAIN-01',
+                'address'      => 'Main Distribution Center',
+                'city'         => 'Default City',
+                'state_code'   => 'NY',
+                'country_code' => 'US',
+                'zipcode'      => '10001',
+                'is_active'    => true,
+            ]);
+            $warehouseLocs = \App\Models\WarehouseLocation::orderBy('name')->get();
+        }
+
         return view('livewire.admin-product-edit', [
             'categoryTree'          => $categoryTree,
             'brands'                => $brands,
@@ -2124,6 +2363,7 @@ class AdminProductEdit extends Component
             'showAiButton'          => $showAiButton,
             'activeLanguages'       => \App\Models\Language::getAllActive()->where('is_default', false)->values(),
             'inventoryAlerts'       => $inventoryAlerts,
+            'allWarehouseLocations' => $warehouseLocs,
         ]);
     }
 

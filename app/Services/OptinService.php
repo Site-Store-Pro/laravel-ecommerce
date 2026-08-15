@@ -70,6 +70,110 @@ class OptinService
         }
     }
 
+    /**
+     * Sync user opt-in status with third party provider (Mailchimp, Constant Contact, Klaviyo, etc.)
+     */
+    public static function syncUserOptIn(\App\Models\User $user, bool $optInState): void
+    {
+        $provider = \App\Models\CmsSetting::get('checkout_optin_provider', '');
+        $listId   = \App\Models\CmsSetting::get('checkout_optin_list_id', '');
+
+        $service = new self();
+        if ($optInState) {
+            $service->subscribeContact($user->email, $user->name, $provider, $listId);
+        } else {
+            $service->unsubscribeContact($user->email, $provider, $listId);
+        }
+    }
+
+    public function subscribeContact(string $email, ?string $name = null, ?string $provider = null, ?string $listId = null): void
+    {
+        $provider = $provider ?: \App\Models\CmsSetting::get('checkout_optin_provider', '');
+        $listId   = $listId ?: \App\Models\CmsSetting::get('checkout_optin_list_id', '');
+
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        try {
+            match ($provider) {
+                'mailchimp'        => $this->subscribeMailchimp($listId ?: 'default', $email, $name),
+                'constant_contact' => $this->subscribeConstantContact($listId ?: 'default', $email, $name),
+                'klaviyo'          => $this->subscribeKlaviyo($listId ?: 'default', $email, $name),
+                default            => Log::info("[OptinService] Subscribed locally: {$email}"),
+            };
+        } catch (\Throwable $e) {
+            Log::error('[OptinService] Subscribe exception', ['error' => $e->getMessage()]);
+        }
+    }
+
+    public function unsubscribeContact(string $email, ?string $provider = null, ?string $listId = null): void
+    {
+        $provider = $provider ?: \App\Models\CmsSetting::get('checkout_optin_provider', '');
+        $listId   = $listId ?: \App\Models\CmsSetting::get('checkout_optin_list_id', '');
+
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        try {
+            match ($provider) {
+                'mailchimp'        => $this->unsubscribeMailchimp($listId ?: 'default', $email),
+                'constant_contact' => $this->unsubscribeConstantContact($listId ?: 'default', $email),
+                'klaviyo'          => $this->unsubscribeKlaviyo($listId ?: 'default', $email),
+                default            => Log::info("[OptinService] Unsubscribed locally: {$email}"),
+            };
+        } catch (\Throwable $e) {
+            Log::error('[OptinService] Unsubscribe exception', ['error' => $e->getMessage()]);
+        }
+    }
+
+    protected function unsubscribeMailchimp(string $listId, string $email): void
+    {
+        $apiKey = config('services.mailchimp.api_key', env('MAILCHIMP_API_KEY', ''));
+        $server = config('services.mailchimp.server_prefix', env('MAILCHIMP_SERVER_PREFIX', 'us1'));
+
+        if (empty($apiKey)) return;
+
+        Http::withBasicAuth('anystring', $apiKey)
+            ->put("https://{$server}.api.mailchimp.com/3.0/lists/{$listId}/members/" . md5(strtolower($email)), [
+                'email_address' => $email,
+                'status'        => 'unsubscribed',
+            ]);
+    }
+
+    protected function unsubscribeConstantContact(string $listId, string $email): void
+    {
+        $apiKey = config('services.constant_contact.api_key', env('CONSTANT_CONTACT_API_KEY', ''));
+
+        if (empty($apiKey)) return;
+
+        Http::withToken($apiKey)
+            ->post('https://api.cc.email/v3/contacts/sign_up_form', [
+                'email_address' => ['address' => $email, 'permission_to_send' => 'explicit_out'],
+            ]);
+    }
+
+    protected function unsubscribeKlaviyo(string $listId, string $email): void
+    {
+        $apiKey = config('services.klaviyo.api_key', env('KLAVIYO_API_KEY', ''));
+
+        if (empty($apiKey)) return;
+
+        Http::withHeaders([
+            'Authorization' => 'Klaviyo-API-Key ' . $apiKey,
+            'revision'      => '2023-02-22',
+        ])->post('https://a.klaviyo.com/api/profile-unsubscriptions/', [
+            'data' => [
+                'type'       => 'profile-unsubscription',
+                'attributes' => [
+                    'emails'  => [$email],
+                    'list_id' => $listId,
+                ],
+            ],
+        ]);
+    }
+
     // ── Mailchimp ──────────────────────────────────────────────────────────
 
     /**

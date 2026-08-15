@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductInventory;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,8 @@ class AdminReports extends Component
 
     // Product Export Filters
     public string $productExportFormat = 'csv';
+    public string $amazonExportFormat  = 'csv';
+    public string $ebayExportFormat    = 'csv';
 
     public function mount(): void
     {
@@ -295,6 +298,258 @@ class AdminReports extends Component
         $filename = 'products_export_' . now()->format('Y-m-d');
 
         if ($this->productExportFormat === 'xlsx') {
+            return $this->streamExcel($rows, $filename . '.xlsx');
+        }
+
+        return $this->streamCsv($rows, $filename . '.csv');
+    }
+
+    // ── 4. AMAZON PRODUCT EXPORT ──────────────────────────────────────────────
+
+    public function exportAmazonProducts(): StreamedResponse
+    {
+        $variants = \App\Models\ProductVariant::with('product')
+            ->where('amazon_product', true)
+            ->get();
+
+        $rows = [];
+        $rows[] = [
+            'SKU',
+            'Title',
+            'long_description',
+            'Price',
+            'ASIN',
+            'amazon_bullet_points',
+            'amazon_item_type',
+            'amazon_condition',
+        ];
+
+        foreach ($variants as $variant) {
+            $product = $variant->product;
+            if (!$product) continue;
+
+            $price = ($variant->amazon_price !== null && (float)$variant->amazon_price > 0)
+                ? (float)$variant->amazon_price
+                : (float)$variant->public_price;
+
+            $rows[] = [
+                $variant->sku ?: '',
+                $product->title ?: '',
+                $product->long_description ?: '',
+                number_format($price, 2, '.', ''),
+                $variant->amazon_asin ?: '',
+                $variant->amazon_bullet_points ?: '',
+                $variant->amazon_item_type ?: '',
+                $variant->amazon_condition ?: 'New',
+            ];
+        }
+
+        $filename = 'amazon_products_export_' . now()->format('Y-m-d');
+
+        if ($this->amazonExportFormat === 'xlsx') {
+            return $this->streamExcel($rows, $filename . '.xlsx');
+        }
+
+        return $this->streamCsv($rows, $filename . '.csv');
+    }
+
+    // ── 5. EBAY PRODUCT EXPORT ────────────────────────────────────────────────
+
+    public function exportEbayProducts(): StreamedResponse
+    {
+        $variants = \App\Models\ProductVariant::with('product')
+            ->where('ebay_product', true)
+            ->get();
+
+        $rows = [];
+        $rows[] = [
+            'SKU',
+            'Title',
+            'long_description',
+            'Price',
+            'eBay_category_id',
+            'eBay_listing_type',
+            'ebay_options',
+            'ebay_shipping_profile_id',
+            'ebay_return_policy_id',
+        ];
+
+        foreach ($variants as $variant) {
+            $product = $variant->product;
+            if (!$product) continue;
+
+            $price = ($variant->ebay_price !== null && (float)$variant->ebay_price > 0)
+                ? (float)$variant->ebay_price
+                : (float)$variant->public_price;
+
+            $rows[] = [
+                $variant->sku ?: '',
+                $product->title ?: '',
+                $product->long_description ?: '',
+                number_format($price, 2, '.', ''),
+                $variant->ebay_category_id ?: '',
+                $variant->ebay_listing_type ?: 'Fixed Price',
+                $variant->ebay_options ?: '',
+                $variant->ebay_shipping_profile_id ?: '',
+                $variant->ebay_return_policy_id ?: '',
+            ];
+        }
+
+        $filename = 'ebay_products_export_' . now()->format('Y-m-d');
+
+        if ($this->ebayExportFormat === 'xlsx') {
+            return $this->streamExcel($rows, $filename . '.xlsx');
+        }
+
+        return $this->streamCsv($rows, $filename . '.csv');
+    }
+
+    // ── 6. MULTI-WAREHOUSE INVENTORY EXPORT ───────────────────────────────────
+
+    public string $inventoryExportFormat = 'csv';
+
+    public function exportMultiWarehouseInventory(): StreamedResponse
+    {
+        $inventories = ProductInventory::with([
+            'variant.product',
+            'primaryWarehouse',
+            'warehouseInventories.warehouseLocation'
+        ])
+        ->orderBy('id')
+        ->get();
+
+        $rows = [];
+        $rows[] = [
+            'Product Title',
+            'SKU',
+            'Shelf Stock (Available)',
+            'Primary Warehouse Facility',
+            'Primary Warehouse Code',
+            'Main Warehouse Stock',
+            'Use Warehouse Stock',
+            'Reserved Stock',
+            'Child Warehouse Locations & Quantities',
+            'Calculated Total Available Stock',
+        ];
+
+        foreach ($inventories as $inv) {
+            $productTitle = $inv->variant?->product?->title ?? 'N/A';
+            $sku          = $inv->variant?->sku ?? 'N/A';
+            $primaryName  = $inv->primaryWarehouse?->name ?? 'Main Warehouse';
+            $primaryCode  = $inv->primaryWarehouse?->code ?? 'MAIN-01';
+
+            $childList = [];
+            if ($inv->warehouseInventories->isNotEmpty()) {
+                foreach ($inv->warehouseInventories as $wChild) {
+                    $facilityName = $wChild->warehouseLocation?->name ?? "Warehouse #{$wChild->warehouse_location_id}";
+                    $facilityCode = $wChild->warehouseLocation?->code ?? '';
+                    $childList[]  = "{$facilityName}" . ($facilityCode ? " ({$facilityCode})" : "") . ": {$wChild->stock_level}";
+                }
+            }
+            $childStr = implode(' | ', $childList);
+
+            $rows[] = [
+                $productTitle,
+                $sku,
+                (int) $inv->quantity_available,
+                $primaryName,
+                $primaryCode,
+                (int) $inv->warehouse_stock_level,
+                $inv->use_warehouse_stock ? 'Yes' : 'No',
+                (int) $inv->reserved_stock,
+                $childStr ?: 'None',
+                (int) $inv->available_stock,
+            ];
+        }
+
+        $filename = 'multi_warehouse_inventory_export_' . now()->format('Y-m-d');
+
+        if ($this->inventoryExportFormat === 'xlsx') {
+            return $this->streamExcel($rows, $filename . '.xlsx');
+        }
+
+        return $this->streamCsv($rows, $filename . '.csv');
+    }
+
+    // ── 7. RETAIL & WHOLESALE CUSTOMERS EXPORT ─────────────────────────────
+
+    public string $customerExportFormat = 'csv';
+
+    public function exportCustomers(): StreamedResponse
+    {
+        $users = User::whereIn('role_id', [1, 2])
+            ->orderBy('id')
+            ->get();
+
+        $rows = [];
+        $rows[] = [
+            'User ID',
+            'Full Name',
+            'Email',
+            'Account Role',
+            'Opt-in Status',
+            'Registered Date'
+        ];
+
+        foreach ($users as $user) {
+            $roleLabel = is_object($user->role_id) ? $user->role_id->label() : ($user->role_id == 2 ? 'Wholesale' : 'Customer');
+            $rows[] = [
+                $user->id,
+                $user->name,
+                $user->email,
+                $roleLabel,
+                (int) $user->opt_in,
+                $user->created_at ? $user->created_at->format('Y-m-d H:i:s') : '',
+            ];
+        }
+
+        $filename = 'customers_export_' . now()->format('Y-m-d');
+
+        if ($this->customerExportFormat === 'xlsx') {
+            return $this->streamExcel($rows, $filename . '.xlsx');
+        }
+
+        return $this->streamCsv($rows, $filename . '.csv');
+    }
+
+    // ── 8. OPT-IN SUBSCRIBERS EXPORT ───────────────────────────────────────
+
+    public string $optInExportFormat = 'csv';
+
+    public function exportOptInSubscribers(): StreamedResponse
+    {
+        $users = User::whereIn('role_id', [1, 2])
+            ->where('opt_in', 1)
+            ->orderBy('id')
+            ->get();
+
+        $rows = [];
+        $rows[] = [
+            'Full Name',
+            'First Name',
+            'Last Name',
+            'Email',
+            'Opt-in Status'
+        ];
+
+        foreach ($users as $user) {
+            $fullName = trim($user->name);
+            $parts = explode(' ', $fullName, 2);
+            $firstName = $parts[0] ?? '';
+            $lastName = $parts[1] ?? '';
+
+            $rows[] = [
+                $fullName,
+                $firstName,
+                $lastName,
+                $user->email,
+                1 // 1 for everybody in this report
+            ];
+        }
+
+        $filename = 'optin_subscribers_export_' . now()->format('Y-m-d');
+
+        if ($this->optInExportFormat === 'xlsx') {
             return $this->streamExcel($rows, $filename . '.xlsx');
         }
 

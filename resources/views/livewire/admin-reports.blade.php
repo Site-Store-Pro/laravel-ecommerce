@@ -46,6 +46,18 @@
                     class="px-3.5 py-2 text-xs font-bold rounded-xl transition duration-150 whitespace-nowrap {{ $activeTab === 'product_export' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200' }}">
                 Products Export
             </button>
+            <button type="button" wire:click="$set('activeTab', 'inventory_export')"
+                    class="px-3.5 py-2 text-xs font-bold rounded-xl transition duration-150 whitespace-nowrap {{ $activeTab === 'inventory_export' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200' }}">
+                Multi-Warehouse Inventory Export
+            </button>
+            <button type="button" wire:click="$set('activeTab', 'customer_export')"
+                    class="px-3.5 py-2 text-xs font-bold rounded-xl transition duration-150 whitespace-nowrap {{ $activeTab === 'customer_export' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200' }}">
+                Customers Export (Retail &amp; Wholesale)
+            </button>
+            <button type="button" wire:click="$set('activeTab', 'optin_export')"
+                    class="px-3.5 py-2 text-xs font-bold rounded-xl transition duration-150 whitespace-nowrap {{ $activeTab === 'optin_export' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200' }}">
+                Opt-In Subscribers Export
+            </button>
         </div>
     </div>
 
@@ -331,6 +343,194 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 Export Full Products Catalog ({{ strtoupper($productExportFormat) }})
             </button>
+        </div>
+
+        <!-- Amazon Product Export Card -->
+        <div class="mt-8 p-6 bg-amber-50/50 dark:bg-amber-950/20 rounded-2xl border border-amber-200/80 dark:border-amber-900/50 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h4 class="text-base font-bold text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 11h14l1 12H4L5 11z"/></svg>
+                        Amazon Marketplace Feed Export
+                    </h4>
+                    <p class="text-xs text-amber-700 dark:text-amber-300/80 mt-1">
+                        Export all product variants enabled for Amazon (<code class="font-mono">amazon_product = true</code>) with Amazon ASIN, price override, item type, condition, and bullet points.
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-amber-200 text-xs font-semibold">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" wire:model="amazonExportFormat" value="csv" class="text-amber-600 focus:ring-amber-500">
+                            CSV
+                        </label>
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" wire:model="amazonExportFormat" value="xlsx" class="text-amber-600 focus:ring-amber-500">
+                            Excel
+                        </label>
+                    </div>
+
+                    <button type="button" wire:click="exportAmazonProducts" wire:loading.attr="disabled"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Export Amazon Feed ({{ strtoupper($amazonExportFormat) }})
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- eBay Product Export Card -->
+        <div class="mt-4 p-6 bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-200/80 dark:border-blue-900/50 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h4 class="text-base font-bold text-blue-900 dark:text-blue-200 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        eBay Marketplace Feed Export
+                    </h4>
+                    <p class="text-xs text-blue-700 dark:text-blue-300/80 mt-1">
+                        Export all product variants enabled for eBay (<code class="font-mono">ebay_product = true</code>) with eBay category ID, listing type, options/traits, shipping profile, and return policy.
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-blue-200 text-xs font-semibold">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" wire:model="ebayExportFormat" value="csv" class="text-blue-600 focus:ring-blue-500">
+                            CSV
+                        </label>
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" wire:model="ebayExportFormat" value="xlsx" class="text-blue-600 focus:ring-blue-500">
+                            Excel
+                        </label>
+                    </div>
+
+                    <button type="button" wire:click="exportEbayProducts" wire:loading.attr="disabled"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Export eBay Feed ({{ strtoupper($ebayExportFormat) }})
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- STANDALONE REPORT 9: MULTI-WAREHOUSE INVENTORY EXPORT -->
+    @if($activeTab === 'inventory_export')
+    <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 rounded-3xl p-8 shadow-sm space-y-6">
+        <div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">Multi-Warehouse Inventory Export Report</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Export comprehensive inventory records combining shelf stock, primary warehouse facilities, and child warehouse stock levels per location.
+            </p>
+        </div>
+
+        <div class="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">Export Multi-Warehouse Inventory File</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Includes SKU, Product Title, Shelf Stock, Primary Facility, Main Warehouse Stock, Reserved Stock, Child Locations Breakdown, and Dynamic Total Available Stock.</p>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-emerald-200 text-xs font-semibold">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" wire:model="inventoryExportFormat" value="csv" class="text-emerald-600 focus:ring-emerald-500">
+                            CSV
+                        </label>
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" wire:model="inventoryExportFormat" value="xlsx" class="text-emerald-600 focus:ring-emerald-500">
+                            Excel
+                        </label>
+                    </div>
+
+                    <button type="button" wire:click="exportMultiWarehouseInventory" wire:loading.attr="disabled"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Export Multi-Warehouse Inventory ({{ strtoupper($inventoryExportFormat) }})
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- STANDALONE REPORT 10: RETAIL & WHOLESALE CUSTOMERS EXPORT -->
+    @if($activeTab === 'customer_export')
+    <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 rounded-3xl p-8 shadow-sm space-y-6">
+        <div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">Retail &amp; Wholesale Customers Export Report</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Export registered Customer (role_id = 1) and Wholesale (role_id = 2) user accounts including their mailing list opt-in status. Administrators and Order Processors are excluded.
+            </p>
+        </div>
+
+        <div class="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">Export Registered Customers File</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Includes User ID, Full Name, Email, Account Role, Opt-in Status (1 or 0), and Registration Date.</p>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-indigo-200 text-xs font-semibold">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" wire:model="customerExportFormat" value="csv" class="text-indigo-600 focus:ring-indigo-500">
+                            CSV
+                        </label>
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" wire:model="customerExportFormat" value="xlsx" class="text-indigo-600 focus:ring-indigo-500">
+                            Excel
+                        </label>
+                    </div>
+
+                    <button type="button" wire:click="exportCustomers" wire:loading.attr="disabled"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Export Customers ({{ strtoupper($customerExportFormat) }})
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- STANDALONE REPORT 11: OPT-IN SUBSCRIBERS EXPORT -->
+    @if($activeTab === 'optin_export')
+    <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 rounded-3xl p-8 shadow-sm space-y-6">
+        <div>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">Opt-In Subscribers Export Report</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Export all users who have explicitly opted in (opt_in = 1). Automatically splits full names into first and last name fields for easy import into email platforms.
+            </p>
+        </div>
+
+        <div class="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">Export Opt-In Subscribers List</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Includes Full Name, First Name, Last Name, Email Address, and Opt-in Status (1 for all subscribers in this list).</p>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-purple-200 text-xs font-semibold">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" wire:model="optInExportFormat" value="csv" class="text-purple-600 focus:ring-purple-500">
+                            CSV
+                        </label>
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input type="radio" wire:model="optInExportFormat" value="xlsx" class="text-purple-600 focus:ring-purple-500">
+                            Excel
+                        </label>
+                    </div>
+
+                    <button type="button" wire:click="exportOptInSubscribers" wire:loading.attr="disabled"
+                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Export Opt-In List ({{ strtoupper($optInExportFormat) }})
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     @endif

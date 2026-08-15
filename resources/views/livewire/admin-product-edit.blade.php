@@ -164,6 +164,29 @@
                             <input type="text" wire:model="short_description" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                         </div>
 
+                        <!-- Bullet Points -->
+                        <div class="border-t border-slate-100 pt-4">
+                            <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">Key Feature Bullet Points (Optional)</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-500 block mb-1">Bullet Point 1</label>
+                                    <input type="text" wire:model="bullet_point_1" placeholder="e.g. 100% Organic Cotton" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-500 block mb-1">Bullet Point 2</label>
+                                    <input type="text" wire:model="bullet_point_2" placeholder="e.g. Water resistant up to 50m" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-500 block mb-1">Bullet Point 3</label>
+                                    <input type="text" wire:model="bullet_point_3" placeholder="e.g. 2-Year Manufacturer Warranty" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-500 block mb-1">Bullet Point 4</label>
+                                    <input type="text" wire:model="bullet_point_4" placeholder="e.g. Free Eco-friendly Packaging" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
                             <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Long Description</label>
 

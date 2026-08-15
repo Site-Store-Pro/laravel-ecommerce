@@ -81,6 +81,15 @@ class AdminShippingSettings extends Component
 
     public function mount(): void
     {
+        if (request()->has('tab')) {
+            $requestedTab = request()->query('tab');
+            if (in_array($requestedTab, ['locations', 'warehouses'])) {
+                $this->activeTab = 'warehouses';
+            } elseif (in_array($requestedTab, ['config', 'states', 'countries', 'flatrates', 'handling'])) {
+                $this->activeTab = $requestedTab;
+            }
+        }
+
         $config = DB::table('shipping_configurations')->where('id', 1)->first();
         if ($config) {
             $this->custom_ship_options_us = (bool)$config->custom_ship_options_us;

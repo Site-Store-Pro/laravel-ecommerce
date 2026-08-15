@@ -112,9 +112,85 @@ class AdminInventory extends Component
         session()->flash('status', "CSV processed: {$updatedCount} records updated, {$skippedCount} records skipped.");
     }
 
+    public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $inventories = ProductInventory::with([
+            'variant.product',
+            'primaryWarehouse',
+            'warehouseInventories.warehouseLocation'
+        ])
+        ->orderBy('id')
+        ->get();
+
+        $rows = [];
+        $rows[] = [
+            'Product Title',
+            'SKU',
+            'Shelf Stock (Available)',
+            'Primary Warehouse Facility',
+            'Primary Warehouse Code',
+            'Main Warehouse Stock',
+            'Use Warehouse Stock',
+            'Reserved Stock',
+            'Child Warehouse Locations & Quantities',
+            'Calculated Total Available Stock',
+        ];
+
+        foreach ($inventories as $inv) {
+            $productTitle = $inv->variant?->product?->title ?? 'N/A';
+            $sku          = $inv->variant?->sku ?? 'N/A';
+            $primaryName  = $inv->primaryWarehouse?->name ?? 'Main Warehouse';
+            $primaryCode  = $inv->primaryWarehouse?->code ?? 'MAIN-01';
+
+            $childList = [];
+            if ($inv->warehouseInventories->isNotEmpty()) {
+                foreach ($inv->warehouseInventories as $wChild) {
+                    $facilityName = $wChild->warehouseLocation?->name ?? "Warehouse #{$wChild->warehouse_location_id}";
+                    $facilityCode = $wChild->warehouseLocation?->code ?? '';
+                    $childList[]  = "{$facilityName}" . ($facilityCode ? " ({$facilityCode})" : "") . ": {$wChild->stock_level}";
+                }
+            }
+            $childStr = implode(' | ', $childList);
+
+            $rows[] = [
+                $productTitle,
+                $sku,
+                (int) $inv->quantity_available,
+                $primaryName,
+                $primaryCode,
+                (int) $inv->warehouse_stock_level,
+                $inv->use_warehouse_stock ? 'Yes' : 'No',
+                (int) $inv->reserved_stock,
+                $childStr ?: 'None',
+                (int) $inv->available_stock,
+            ];
+        }
+
+        $filename = 'multi_warehouse_inventory_export_' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($rows) {
+            $file = fopen('php://output', 'w');
+            foreach ($rows as $row) {
+                fputcsv($file, $row);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function render(): View
     {
-        $query = ProductInventory::with('variant.product');
+        $query = ProductInventory::with([
+            'variant.product',
+            'primaryWarehouse',
+            'warehouseInventories.warehouseLocation'
+        ]);
 
         if ($this->search) {
             $query->whereHas('variant.product', function($q) {

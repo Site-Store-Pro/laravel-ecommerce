@@ -78,6 +78,10 @@
                             <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150 shadow-md">
                                 Process CSV
                             </button>
+                            <button type="button" wire:click="exportCsv" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150 shadow-md inline-flex items-center gap-1.5 cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                Export Inventory CSV
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -105,8 +109,9 @@
                                     <tr>
                                         <th class="px-4 py-3">Product Name</th>
                                         <th class="px-4 py-3">SKU</th>
-                                        <th class="px-4 py-3 text-center">Available Stock</th>
-                                        <th class="px-4 py-3 text-center">Warehouse Stock</th>
+                                        <th class="px-4 py-3 text-center">Shelf Stock</th>
+                                        <th class="px-4 py-3 text-center">Primary Facility & Main Stock</th>
+                                        <th class="px-4 py-3 text-center">Child Warehouse Locations</th>
                                         <th class="px-4 py-3 text-center">Use Warehouse</th>
                                         <th class="px-4 py-3 text-center">Reserved Stock</th>
                                         <th class="px-4 py-3 text-center bg-indigo-50/50">Current Total</th>
@@ -127,7 +132,7 @@
                                             </td>
                                             <td class="px-4 py-3 font-mono text-xs">{{ $item->variant ? $item->variant->sku : 'N/A' }}</td>
                                             
-                                            <!-- Available Stock -->
+                                            <!-- Available Stock (Shelf) -->
                                             <td class="px-4 py-3 text-center">
                                                 @if($item->variant && $item->variant->download_item)
                                                     <span class="text-slate-400">-</span>
@@ -136,12 +141,34 @@
                                                 @endif
                                             </td>
 
-                                            <!-- Warehouse Stock -->
+                                            <!-- Primary Facility & Main Warehouse Stock -->
                                             <td class="px-4 py-3 text-center">
                                                 @if($item->variant && $item->variant->download_item)
                                                     <span class="text-slate-400">-</span>
                                                 @else
-                                                    <input type="number" wire:model="warehouseInputs.{{ $item->id }}" class="w-20 px-2 py-1 bg-slate-50 border border-slate-200 text-slate-800 rounded-lg text-center font-bold text-xs">
+                                                    <div class="flex flex-col items-center gap-1">
+                                                        <input type="number" wire:model="warehouseInputs.{{ $item->id }}" class="w-20 px-2 py-1 bg-slate-50 border border-slate-200 text-slate-800 rounded-lg text-center font-bold text-xs">
+                                                        <span class="text-[10px] font-semibold text-slate-500">
+                                                            {{ $item->primaryWarehouse ? $item->primaryWarehouse->name : 'Main Warehouse' }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            </td>
+
+                                            <!-- Child Warehouse Locations & Stock Levels -->
+                                            <td class="px-4 py-3 text-center">
+                                                @if($item->variant && $item->variant->download_item)
+                                                    <span class="text-slate-400">-</span>
+                                                @elseif($item->warehouseInventories->isNotEmpty())
+                                                    <div class="flex flex-col items-center gap-1">
+                                                        @foreach($item->warehouseInventories as $wChild)
+                                                            <span class="inline-flex items-center gap-1 text-[10px] font-semibold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-100 whitespace-nowrap">
+                                                                {{ $wChild->warehouseLocation ? $wChild->warehouseLocation->name : "Facility #{$wChild->warehouse_location_id}" }}: <strong>{{ $wChild->stock_level }}</strong>
+                                                            </span>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <span class="text-xs text-slate-400 font-normal">None</span>
                                                 @endif
                                             </td>
 
@@ -173,9 +200,13 @@
                                                         $wh = (int)($warehouseInputs[$item->id] ?? 0);
                                                         $res = (int)($reservedInputs[$item->id] ?? 0);
                                                         $useWh = (bool)($useWarehouseInputs[$item->id] ?? false);
-                                                        $total = $useWh ? ($avail + $wh - $res) : ($avail - $res);
+                                                        $childSum = (int) ($item->relationLoaded('warehouseInventories') ? $item->warehouseInventories->sum('stock_level') : $item->warehouseInventories()->sum('stock_level'));
+                                                        $total = $useWh ? ($avail + $wh + $childSum - $res) : ($avail - $res);
                                                     @endphp
                                                     <span class="{{ $total < 0 ? 'text-red-600' : 'text-slate-800' }}">{{ $total }}</span>
+                                                    @if($useWh && $childSum > 0)
+                                                        <span class="block text-[10px] font-normal text-indigo-600" title="Includes stock assigned across warehouse locations">+{{ $childSum }} child stock</span>
+                                                    @endif
                                                 @endif
                                             </td>
 

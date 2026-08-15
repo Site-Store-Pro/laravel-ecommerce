@@ -50,7 +50,7 @@ class ProductDetails extends Component
         $this->product = Product::where('seo_slug', $seo_link)
             ->withCurrentTranslations()
             ->with([
-                'variants.inventory',
+                'variants.inventory.warehouseInventories',
                 'variants.images',
                 'variants.translations'              => fn ($q) => $q->whereIn('language_id', $langIds),
                 'categories.parent.parent.parent',
@@ -112,7 +112,7 @@ class ProductDetails extends Component
 
         // If inventory tracking is set up for this variant, check actual stock.
         if ($variant->inventory) {
-            $stock = $variant->inventory->quantity_available - $variant->inventory->reserved_stock;
+            $stock = $variant->inventory->available_stock;
             if ($stock > 0) {
                 return null; // In stock — no message.
             }
@@ -537,7 +537,7 @@ class ProductDetails extends Component
             // Fetch user type & base prices
             $price = $userType == 2 ? $variant->wholesale_price : $variant->public_price;
             $discountPrice = 0;
-            if ($userType != 2 && $variant->on_sale && $variant->sale_price > 0) {
+            if ($userType != 2 && $variant->isOnSaleActive()) {
                 $discountPrice = $price - $variant->sale_price;
                 $price = $variant->sale_price;
             }
