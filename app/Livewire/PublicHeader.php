@@ -73,19 +73,7 @@ class PublicHeader extends Component
     {
         $this->cartCount = 0;
         if (Schema::hasTable('shopping_cart_log')) {
-            $cookieSessionId = request()->cookie('cart_session_id', '');
-            $userId = auth()->id() ?? 0;
-            $this->cartCount = ShoppingCartLog::where('order_id', 0)
-                ->where(function ($query) use ($cookieSessionId, $userId) {
-                    if ($userId > 0) {
-                        $query->where('user_id', $userId)
-                              ->orWhere(function ($sub) use ($cookieSessionId) {
-                                  $sub->where('cart_log_session', $cookieSessionId)->where('user_id', 0);
-                              });
-                    } else {
-                        $query->where('cart_log_session', $cookieSessionId)->where('user_id', 0);
-                    }
-                })->sum('item_qty');
+            $this->cartCount = (int) \App\Services\CartSessionService::getCartCount();
         }
     }
 

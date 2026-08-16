@@ -61,7 +61,7 @@ class AbandonedCartService
                 }
 
                 $appUrl = rtrim(config('app.url'), '/');
-                $checkoutUrl = $appUrl . route('shop.cart', [], false);
+                $checkoutUrl = $appUrl . route('shop.cart', ['cart_token' => $session->cart_log_session], false);
 
                 $vars = [
                     'customer_name'    => $recipient['name'],
@@ -113,7 +113,7 @@ class AbandonedCartService
                 }
 
                 $appUrl = rtrim(config('app.url'), '/');
-                $checkoutUrl = $appUrl . route('shop.cart', [], false);
+                $checkoutUrl = $appUrl . route('shop.cart', ['cart_token' => $session->cart_log_session], false);
 
                 $vars = [
                     'customer_name'    => $recipient['name'],

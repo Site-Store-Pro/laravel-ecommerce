@@ -13,34 +13,12 @@ class ShoppingCart extends Component
 {
     private function getCartSessionId(): string
     {
-        $cookieName = 'cart_session_id';
-        $sessionId = request()->cookie($cookieName);
-
-        if (!$sessionId) {
-            $sessionId = (string) Str::uuid();
-            cookie()->queue($cookieName, $sessionId, 60 * 24 * 30); // 30 days
-        }
-
-        return $sessionId;
+        return \App\Services\CartSessionService::getCartSessionId();
     }
 
     private function getCartQuery()
     {
-        $sessionId = $this->getCartSessionId();
-        $userId = auth()->id() ?? 0;
-
-        return ShoppingCartLog::query()
-            ->where('order_id', 0)
-            ->where(function($query) use ($sessionId, $userId) {
-                if ($userId > 0) {
-                    $query->where('user_id', $userId)
-                          ->orWhere(function($sub) use ($sessionId) {
-                              $sub->where('cart_log_session', $sessionId)->where('user_id', 0);
-                          });
-                } else {
-                    $query->where('cart_log_session', $sessionId)->where('user_id', 0);
-                }
-            });
+        return \App\Services\CartSessionService::getCartQuery();
     }
 
     public function updateQty(int $itemId, float $qty): void

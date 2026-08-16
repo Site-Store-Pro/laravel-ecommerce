@@ -370,15 +370,7 @@ class ShopCatalog extends Component
 
     private function getCartSessionId(): string
     {
-        $cookieName = 'cart_session_id';
-        $sessionId = request()->cookie($cookieName);
-
-        if (!$sessionId) {
-            $sessionId = (string) Str::uuid();
-            cookie()->queue($cookieName, $sessionId, 60 * 24 * 30); // 30 days
-        }
-
-        return $sessionId;
+        return \App\Services\CartSessionService::getCartSessionId();
     }
 
     public function buyNow(int $variantId)
@@ -420,15 +412,7 @@ class ShopCatalog extends Component
             $price += $variantFee;
         }
 
-        $cartItems = ShoppingCartLog::where('order_id', 0)
-            ->where(function($query) use ($sessionId, $userId) {
-                if ($userId > 0) {
-                    $query->where('user_id', $userId);
-                } else {
-                    $query->where('cart_log_session', $sessionId)
-                          ->where('user_id', 0);
-                }
-            })->get();
+        $cartItems = \App\Services\CartSessionService::getCartQuery($sessionId)->get();
 
         $skusInCart = [];
         foreach ($cartItems as $ci) {
@@ -471,18 +455,10 @@ class ShopCatalog extends Component
         // IMPORTANT: must also filter by item_name (which encodes the SKU) so we only
         // match THIS product's cart row — not any other simple product whose item_attributes
         // is also an empty string ''.
-        $cartItem = ShoppingCartLog::where(function($query) use ($sessionId, $userId) {
-            if ($userId > 0) {
-                $query->where('user_id', $userId);
-            } else {
-                $query->where('cart_log_session', $sessionId)
-                      ->where('user_id', 0);
-            }
-        })
-        ->where('item_name', 'like', '%(' . $variant->sku . ')')
-        ->where('item_attributes', $variant->attributes)
-        ->where('order_id', 0)
-        ->first();
+        $cartItem = \App\Services\CartSessionService::getCartQuery($sessionId)
+            ->where('item_name', 'like', '%(' . $variant->sku . ')')
+            ->where('item_attributes', $variant->attributes)
+            ->first();
 
         if ($cartItem && $product && $product->max_qty == 1) {
             $this->catalogError = "You can only purchase a maximum of 1 unit of this item per order.";

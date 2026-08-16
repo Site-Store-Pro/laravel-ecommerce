@@ -54,13 +54,7 @@ class FeaturedItemsWidget extends Component
 
     private function getCartSessionId(): string
     {
-        $cookieName = 'cart_session_id';
-        $sessionId  = request()->cookie($cookieName);
-        if (!$sessionId) {
-            $sessionId = (string) Str::uuid();
-            cookie()->queue($cookieName, $sessionId, 60 * 24 * 30);
-        }
-        return $sessionId;
+        return \App\Services\CartSessionService::getCartSessionId();
     }
 
     private function resolveItemTaxable(ProductVariant $variant, ?Product $product): int
@@ -113,14 +107,7 @@ class FeaturedItemsWidget extends Component
         }
 
         // Standalone / duplicate guards (same logic as ShopCatalog)
-        $cartItems = ShoppingCartLog::where('order_id', 0)
-            ->where(function ($q) use ($sessionId, $userId) {
-                if ($userId > 0) {
-                    $q->where('user_id', $userId);
-                } else {
-                    $q->where('cart_log_session', $sessionId)->where('user_id', 0);
-                }
-            })->get();
+        $cartItems = \App\Services\CartSessionService::getCartQuery($sessionId)->get();
 
         $skusInCart = [];
         foreach ($cartItems as $ci) {
