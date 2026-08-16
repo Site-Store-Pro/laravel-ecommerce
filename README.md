@@ -18,7 +18,7 @@
 
 The platform is the modern evolution of the original **Site Store Pro PHP shopping cart**, which has been available since **2005** and is used by thousands of online stores worldwide.
 
-Building on nearly two decades of real-world eCommerce experience, the new Laravel platform expands and modernizes the proven Site Store Pro engine developed by **Kevin Rounsavelle**. The result is a modern, scalable, and fully open-source platform designed for today's online businesses.
+Building on nearly two decades of real-world eCommerce experience, the new Laravel platform expands and modernizes the proven Site Store Pro engine developed by **[Kevin Rounsavelle](https://github.com/kevin-rounsavelle)**. The result is a modern, scalable, and fully open-source platform designed for today's online businesses.
 
 ## Built on a Proven Foundation
 
