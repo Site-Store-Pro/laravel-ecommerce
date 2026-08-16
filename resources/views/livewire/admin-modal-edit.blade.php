@@ -1,9 +1,3 @@
-@php
-    $primaryColor = \App\Models\CmsSetting::get('theme_primary_color', '#4f46e5');
-    $hoverColor   = \App\Models\CmsSetting::get('theme_hover_color', '#4338ca');
-    $textColor    = \App\Models\CmsSetting::get('theme_text_color', '#ffffff');
-    $borderRadius = \App\Models\CmsSetting::get('theme_border_radius', '0.75rem');
-@endphp
 <div class="py-12" x-data="{
     activeTab: 'details',
     showWidgetLibrary: false,
@@ -11,6 +5,12 @@
     showLinkGenerator: false,
     sidebarOpen: true
 }">
+    @php
+        $primaryColor = \App\Models\CmsSetting::get('theme_primary_color', '#4f46e5');
+        $hoverColor   = \App\Models\CmsSetting::get('theme_hover_color', '#4338ca');
+        $textColor    = \App\Models\CmsSetting::get('theme_text_color', '#ffffff');
+        $borderRadius = \App\Models\CmsSetting::get('theme_border_radius', '0.75rem');
+    @endphp
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {{-- Header --}}
@@ -281,6 +281,33 @@
                     </div>
                     @endif
 
+                    {{-- Modal Background Color --}}
+                    <div class="p-5 bg-slate-50 border border-slate-100 rounded-2xl space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Modal Background Color</label>
+                            <p class="text-xs text-slate-500">Supports Hex (#ffffff) or RGBA color codes with transparency (e.g., rgba(255,255,255,0.95))</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="color"
+                                   value="{{ str_starts_with($bg_color ?? '#ffffff', '#') && strlen($bg_color ?? '#ffffff') === 7 ? $bg_color : '#ffffff' }}"
+                                   x-on:input="$wire.set('bg_color', $event.target.value)"
+                                   class="w-10 h-10 rounded-xl border border-slate-200 cursor-pointer p-1 bg-white shadow-sm shrink-0">
+                            <input type="text" wire:model.live="bg_color"
+                                   class="w-64 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-mono text-slate-800 focus:outline-none focus:border-indigo-400 shadow-sm"
+                                   placeholder="#ffffff or rgba(255,255,255,0.9)">
+                            <div class="w-8 h-8 rounded-xl border border-slate-300 shadow-inner" style="background-color: {{ $bg_color ?: '#ffffff' }};"></div>
+                        </div>
+                        {{-- Presets --}}
+                        <div class="flex flex-wrap items-center gap-2 pt-1">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Presets:</span>
+                            <button type="button" wire:click="$set('bg_color', '#ffffff')" class="px-2.5 py-1 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:border-indigo-400 text-slate-700 transition">White (#fff)</button>
+                            <button type="button" wire:click="$set('bg_color', 'rgba(255,255,255,0.9)')" class="px-2.5 py-1 text-xs font-semibold bg-white/90 border border-slate-200 rounded-lg hover:border-indigo-400 text-slate-700 transition">Glass White (90%)</button>
+                            <button type="button" wire:click="$set('bg_color', 'rgba(255,255,255,0.75)')" class="px-2.5 py-1 text-xs font-semibold bg-white/75 border border-slate-200 rounded-lg hover:border-indigo-400 text-slate-700 transition">Glass White (75%)</button>
+                            <button type="button" wire:click="$set('bg_color', '#0f172a')" class="px-2.5 py-1 text-xs font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition">Dark Slate (#0f172a)</button>
+                            <button type="button" wire:click="$set('bg_color', 'rgba(15,23,42,0.9)')" class="px-2.5 py-1 text-xs font-semibold bg-slate-900/90 text-white rounded-lg hover:bg-slate-800 transition">Glass Dark (90%)</button>
+                        </div>
+                    </div>
+
                     {{-- Show Dismiss Button --}}
                     <div class="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
                         <div>
@@ -301,6 +328,18 @@
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" wire:model="overlay_dismissible" class="sr-only peer">
+                            <div class="w-10 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        </label>
+                    </div>
+
+                    {{-- Enable Background Overlay --}}
+                    <div class="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                        <div>
+                            <span class="text-sm font-semibold text-slate-800">Enable Background Overlay</span>
+                            <p class="text-xs text-slate-400 mt-0.5">Show a darkened background overlay behind the modal. Turn off for no background overlay or dimming.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" wire:model="backdrop_blur" class="sr-only peer">
                             <div class="w-10 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                         </label>
                     </div>
@@ -615,14 +654,14 @@
 
         window.ensureProseWrapper = window.ensureProseWrapper || function(html) {
             if (!html || !html.trim()) {
-                return '<div class="prose prose-slate max-w-none"><p>&nbsp;</p></div>';
+                return '<' + 'div class="prose prose-slate max-w-none"><p>&nbsp;</p></' + 'div>';
             }
             var trimmed = html.trim();
             var parser = new DOMParser();
             var doc = parser.parseFromString(trimmed, 'text/html');
             var hasProse = doc.querySelector('[class*="prose"]');
             if (hasProse) return html;
-            return '<div class="prose prose-slate max-w-none">' + html + '</div>';
+            return '<' + 'div class="prose prose-slate max-w-none">' + html + '</' + 'div>';
         };
 
         window.cmsTinyMCEImageUploadHandler = window.cmsTinyMCEImageUploadHandler || function(blobInfo, progress) {

@@ -1,4 +1,4 @@
-﻿@php
+@php
     $primaryColor = \App\Models\CmsSetting::get('theme_primary_color', '#4f46e5');
     $hoverColor = \App\Models\CmsSetting::get('theme_hover_color', '#4338ca');
     $textColor = \App\Models\CmsSetting::get('theme_text_color', '#ffffff');
@@ -1365,7 +1365,7 @@ rightCol: @entangle('right_col'),
 
         window.ensureProseWrapper = function (html) {
             if (!html || !html.trim()) {
-                return '<div class="prose prose-slate max-w-none"><p>&nbsp;</p></div>';
+                return '<' + 'div class="prose prose-slate max-w-none"><p>&nbsp;</p></' + 'div>';
             }
             const trimmed = html.trim();
             const parser = new DOMParser();
@@ -1380,7 +1380,7 @@ rightCol: @entangle('right_col'),
             }
             
             // Otherwise, wrap the entire content in prose
-            return `<div class="prose prose-slate max-w-none">${html}</div>`;
+            return '<' + 'div class="prose prose-slate max-w-none">' + html + '</' + 'div>';
         };
 
         window.cmsTinyMCEImageUploadHandler = function (blobInfo, progress) {

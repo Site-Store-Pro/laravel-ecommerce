@@ -99,4 +99,13 @@ class UserOptInTest extends TestCase
             ->call('exportOptInSubscribers')
             ->assertStatus(200);
     }
+
+    public function test_out_of_stock_alert_message_uses_dynamic_translatable_site_labels(): void
+    {
+        $singleMsg = \App\Services\InventoryCheckService::formatOutOfStockMessage(['Widget A']);
+        $this->assertStringContainsString("The item 'Widget A' is out of stock", $singleMsg);
+
+        $multipleMsg = \App\Services\InventoryCheckService::formatOutOfStockMessage(['Widget A', 'Widget B']);
+        $this->assertStringContainsString("The following items were out of stock and have been removed from your cart: Widget A, Widget B", $multipleMsg);
+    }
 }

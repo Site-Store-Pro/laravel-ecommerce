@@ -127,9 +127,9 @@ new class extends Component
             <div class="pt-2">
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" wire:model="opt_in" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Opt-in to Newsletter &amp; Promotional Updates</span>
+                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">@label('profile.opt_in_label', 'Opt-in to Newsletter & Promotional Updates')</span>
                 </label>
-                <p class="text-xs text-slate-500 mt-1">Receive promotional discounts, product updates, and news.</p>
+                <p class="text-xs text-slate-500 mt-1">@label('profile.opt_in_help', 'Receive promotional discounts, product updates, and news.')</p>
             </div>
         @endif
 

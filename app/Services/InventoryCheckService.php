@@ -54,4 +54,25 @@ class InventoryCheckService
 
         return array_unique($removedItems);
     }
+
+    /**
+     * Formats out of stock notification message using dynamic translatable site labels.
+     * Managed under /admin/site-labels via keys:
+     * - checkout.inventory_out_of_stock_single
+     * - checkout.inventory_out_of_stock_multiple
+     */
+    public static function formatOutOfStockMessage(array $removedItems): string
+    {
+        if (empty($removedItems)) {
+            return '';
+        }
+
+        if (count($removedItems) === 1) {
+            $template = siteLabel('checkout.inventory_out_of_stock_single', "The item ':item' is out of stock and has been removed from your cart.");
+            return str_replace(':item', $removedItems[0], $template);
+        }
+
+        $template = siteLabel('checkout.inventory_out_of_stock_multiple', "The following items were out of stock and have been removed from your cart: :items.");
+        return str_replace(':items', implode(', ', $removedItems), $template);
+    }
 }

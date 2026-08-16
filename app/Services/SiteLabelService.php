@@ -54,7 +54,39 @@ class SiteLabelService
             }
         }
 
+        if (!empty($fallback)) {
+            $this->ensureLabelExists($key, $fallback);
+        }
+
         return $fallback;
+    }
+
+    protected function ensureLabelExists(string $key, string $fallback): void
+    {
+        try {
+            $sectionSlug = explode('.', $key)[0] ?? 'general';
+            $section = \App\Models\SiteLabelSection::where('slug', $sectionSlug)->first();
+            if (!$section) {
+                $section = \App\Models\SiteLabelSection::first();
+            }
+            $sectionId = $section ? $section->id : 1;
+
+            $created = SiteLabel::firstOrCreate(
+                ['label_key' => $key],
+                [
+                    'section_id'        => $sectionId,
+                    'file_name'         => 'System Auto-Registered',
+                    'label_description' => 'Auto-created label for key ' . $key,
+                    'label_default'     => $fallback,
+                ]
+            );
+
+            if ($created->wasRecentlyCreated) {
+                $this->clearCache(0);
+            }
+        } catch (\Throwable $e) {
+            // Ignore DB errors
+        }
     }
 
     /**

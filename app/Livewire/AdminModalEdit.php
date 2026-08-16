@@ -19,12 +19,14 @@ class AdminModalEdit extends Component
     public string  $body                 = '';
     public string  $position             = 'center';
     public string  $max_width            = '640px';
+    public string  $bg_color             = '#ffffff';
     public string  $custom_css           = '';
     public string  $cookie_name          = '';
     public int     $cookie_lifetime      = 30;
     public bool    $auto_open            = false;
     public int     $open_delay           = 0;
     public bool    $overlay_dismissible  = true;
+    public bool    $backdrop_blur        = true;
     public bool    $show_close_button    = true;
     public string  $trigger_selector     = '';
     public bool    $is_active            = true;
@@ -51,12 +53,14 @@ class AdminModalEdit extends Component
             'body'                => 'nullable|string',
             'position'            => 'required|in:center,left,right,bottom',
             'max_width'           => 'nullable|string|max:50',
+            'bg_color'            => 'nullable|string|max:50',
             'custom_css'          => 'nullable|string',
             'cookie_name'         => 'nullable|string|max:100',
             'cookie_lifetime'     => 'required|integer|min:0',
             'auto_open'           => 'boolean',
             'open_delay'          => 'required|integer|min:0',
             'overlay_dismissible' => 'boolean',
+            'backdrop_blur'       => 'boolean',
             'show_close_button'   => 'boolean',
             'trigger_selector'    => 'nullable|string|max:255',
             'is_active'           => 'boolean',
@@ -72,15 +76,17 @@ class AdminModalEdit extends Component
             $this->body                = $modal->body ?? '';
             $this->position            = $modal->position;
             $this->max_width           = $modal->max_width;
+            $this->bg_color            = $modal->bg_color ?: '#ffffff';
             $this->custom_css          = $modal->custom_css ?? '';
             $this->cookie_name         = $modal->cookie_name ?? '';
             $this->cookie_lifetime     = $modal->cookie_lifetime;
-            $this->auto_open           = $modal->auto_open;
-            $this->open_delay          = $modal->open_delay;
-            $this->overlay_dismissible = $modal->overlay_dismissible;
-            $this->show_close_button   = $modal->show_close_button;
+            $this->auto_open           = (bool) $modal->auto_open;
+            $this->open_delay          = (int) $modal->open_delay;
+            $this->overlay_dismissible = (bool) $modal->overlay_dismissible;
+            $this->backdrop_blur       = (bool) $modal->backdrop_blur;
+            $this->show_close_button   = (bool) $modal->show_close_button;
             $this->trigger_selector    = $modal->trigger_selector ?? '';
-            $this->is_active           = $modal->is_active;
+            $this->is_active           = (bool) $modal->is_active;
         }
     }
 
@@ -93,12 +99,14 @@ class AdminModalEdit extends Component
             'body'                => $this->body,
             'position'            => $this->position,
             'max_width'           => $this->max_width ?: '640px',
+            'bg_color'            => $this->bg_color ?: '#ffffff',
             'custom_css'          => $this->custom_css ?: null,
             'cookie_name'         => $this->cookie_name ?: null,
             'cookie_lifetime'     => $this->cookie_lifetime,
             'auto_open'           => $this->auto_open,
             'open_delay'          => $this->open_delay,
             'overlay_dismissible' => $this->overlay_dismissible,
+            'backdrop_blur'       => $this->backdrop_blur,
             'show_close_button'   => $this->show_close_button,
             'trigger_selector'    => $this->trigger_selector ?: null,
             'is_active'           => $this->is_active,

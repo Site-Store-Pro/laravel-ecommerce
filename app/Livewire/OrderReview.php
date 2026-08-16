@@ -168,9 +168,7 @@ class OrderReview extends Component
 
         $removed = \App\Services\InventoryCheckService::validateAndCleanCart($items);
         if (!empty($removed)) {
-            $msg = count($removed) === 1
-                ? "The item '{$removed[0]}' is out of stock and has been removed from your cart."
-                : "The following items were out of stock and have been removed from your cart: " . implode(', ', $removed) . ".";
+            $msg = \App\Services\InventoryCheckService::formatOutOfStockMessage($removed);
             session()->flash('error', $msg);
             redirect()->route('shop.cart');
             return;
@@ -387,9 +385,7 @@ class OrderReview extends Component
         $items = $this->getCartQuery()->get();
         $removed = \App\Services\InventoryCheckService::validateAndCleanCart($items);
         if (!empty($removed)) {
-            $msg = count($removed) === 1
-                ? "The item '{$removed[0]}' is out of stock and has been removed from your cart."
-                : "The following items were out of stock and have been removed from your cart: " . implode(', ', $removed) . ".";
+            $msg = \App\Services\InventoryCheckService::formatOutOfStockMessage($removed);
             session()->flash('error', $msg);
             return [
                 'error' => $msg,
@@ -638,9 +634,7 @@ class OrderReview extends Component
         $itemsCheck = $this->getCartQuery()->get();
         $removed = \App\Services\InventoryCheckService::validateAndCleanCart($itemsCheck);
         if (!empty($removed)) {
-            $msg = count($removed) === 1
-                ? "The item '{$removed[0]}' is out of stock and has been removed from your cart."
-                : "The following items were out of stock and have been removed from your cart: " . implode(', ', $removed) . ".";
+            $msg = \App\Services\InventoryCheckService::formatOutOfStockMessage($removed);
             session()->flash('error', $msg);
             return redirect()->route('shop.cart');
         }
