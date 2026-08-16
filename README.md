@@ -28,22 +28,22 @@ The new platform brings the original Site Store Pro foundation into a completely
 
 ### Site Store Pro includes
 
-* 🛒 **Full-featured eCommerce**
+* **Full-featured eCommerce**:
   Sell physical and digital products through a flexible and scalable storefront.
 
-* 📝 **Content Management System**
+* **Content Management System**:
   Create and manage the content that powers your website.
 
-* 🎫 **Integrated Helpdesk**
+* **Integrated Helpdesk**:
   Provide customer support with a built-in ticketing and support system.
 
-* ⚡ **Laravel 13**
+* **Laravel 13**:
   Built on the latest generation of the Laravel framework.
 
-* ⚡ **Livewire 3**
+* **Livewire 3**:
   Create modern, interactive interfaces without the complexity of a traditional JavaScript-heavy application.
 
-* 🔓 **Open Source**
+* **Open Source**:
   Maintain complete control over your application, data, and platform.
 
 ## Over 20 Years of eCommerce Experience
