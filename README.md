@@ -13,7 +13,45 @@
 [![Laravel](https://img.shields.io/badge/Laravel-13-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4.svg)](https://php.net)
 
-Site Store Pro is a production-ready **eCommerce, CMS, and Helpdesk platform** built on **Laravel 13** and **Livewire 3**.
+
+**Site Store Pro** is a production-ready **eCommerce, CMS, and Helpdesk platform** built with **Laravel 13** and **Livewire 3**.
+
+The platform is the modern evolution of the original **Site Store Pro PHP shopping cart**, which has been available since **2005** and is used by thousands of online stores worldwide.
+
+Building on nearly two decades of real-world eCommerce experience, the new Laravel platform expands and modernizes the proven Site Store Pro engine developed by **Kevin Rounsavelle**. The result is a modern, scalable, and fully open-source platform designed for today's online businesses.
+
+## Built on a Proven Foundation
+
+With a history dating back to 2005, Site Store Pro combines the reliability and practical experience of a long-established eCommerce platform with the capabilities of today's Laravel ecosystem.
+
+The new platform brings the original Site Store Pro foundation into a completely modern architecture while maintaining the flexibility and functionality that have made it a trusted solution for online stores.
+
+### Site Store Pro includes
+
+* 🛒 **Full-featured eCommerce**
+  Sell physical and digital products through a flexible and scalable storefront.
+
+* 📝 **Content Management System**
+  Create and manage the content that powers your website.
+
+* 🎫 **Integrated Helpdesk**
+  Provide customer support with a built-in ticketing and support system.
+
+* ⚡ **Laravel 13**
+  Built on the latest generation of the Laravel framework.
+
+* ⚡ **Livewire 3**
+  Create modern, interactive interfaces without the complexity of a traditional JavaScript-heavy application.
+
+* 🔓 **Open Source**
+  Maintain complete control over your application, data, and platform.
+
+## Over 20 Years of eCommerce Experience
+
+Site Store Pro combines **more than 20 years of eCommerce experience** with a modern Laravel architecture to create a platform that is both proven and forward-looking.
+
+What began as a PHP shopping cart in 2005 has evolved into a comprehensive Laravel-based platform for building, managing, and growing modern online businesses.
+
 
 | Capability | Highlights |
 | --- | --- |
