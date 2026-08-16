@@ -363,10 +363,16 @@ class Checkout extends Component
         session(['checkout_opt_in'       => $this->checkoutOptIn]);
 
         $items = $this->getCartQuery()->get();
+        $removed = \App\Services\InventoryCheckService::validateAndCleanCart($items);
+        if (!empty($removed)) {
+            $msg = \App\Services\InventoryCheckService::formatOutOfStockMessage($removed);
+            session()->flash('error', $msg);
+            return redirect()->route('shop.cart');
+        }
 
         if ($items->isEmpty()) {
             session()->flash('error', 'Your shopping cart is empty.');
-            return;
+            return redirect()->route('shop.cart');
         }
 
         // Resolve user account to link order details to

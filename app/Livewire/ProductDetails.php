@@ -48,6 +48,7 @@ class ProductDetails extends Component
         $langIds = array_unique([$langService->currentId(), $langService->defaultId()]);
 
         $this->product = Product::where('seo_slug', $seo_link)
+            ->where('active', 1)
             ->withCurrentTranslations()
             ->with([
                 'variants.inventory.warehouseInventories',
@@ -57,6 +58,7 @@ class ProductDetails extends Component
                 'fields.options',
                 'fields.translations'                => fn ($q) => $q->whereIn('language_id', $langIds),
                 'fields.options.translations'        => fn ($q) => $q->whereIn('language_id', $langIds),
+                'crossSells.crossSellProduct'        => fn ($q) => $q->where('active', 1),
                 'crossSells.crossSellProduct.variants.images',
                 'inventoryAlert',
             ])
@@ -548,6 +550,12 @@ class ProductDetails extends Component
             // Add variant fees
             $variantFee = $userType == 2 ? $variant->wholesale_variant_fee : $variant->variant_fee;
             $price += $variantFee + $customizationSurcharges;
+
+            // Stripe trial: trial price due today
+            if ($variant->hasStripeTrial()) {
+                $price = $variant->getTrialPrice() + $variantFee + $customizationSurcharges;
+                $discountPrice = max(0, ($variant->public_price + $variantFee + $customizationSurcharges) - $price);
+            }
         }
 
         // Build unique attributes JSON for cart matching

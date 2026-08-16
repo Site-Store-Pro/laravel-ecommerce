@@ -342,9 +342,17 @@
                                 @endif
                             </div>
                             <div class="text-right">
-                                <span class="font-bold text-slate-950 block">${{ number_format($item->item_price * $item->item_qty, 2) }}</span>
-                                @if($item->item_discount_price > 0)
-                                    <span class="line-through text-slate-400 text-[10px] block">${{ number_format(($item->item_price + $item->item_discount_price) * $item->item_qty, 2) }}</span>
+                                @php
+                                    $itemVariant = !empty($item->variant_id) ? \App\Models\ProductVariant::find($item->variant_id) : null;
+                                    $hasTrial = $itemVariant && $itemVariant->hasStripeTrial();
+                                @endphp
+                                @if($hasTrial && $itemVariant->hasTrialLabel())
+                                    <span class="font-bold text-indigo-600 block">{{ $itemVariant->getTrialLabel() }}</span>
+                                @else
+                                    <span class="font-bold text-slate-950 block">${{ number_format($item->item_price * $item->item_qty, 2) }}</span>
+                                    @if($item->item_discount_price > 0)
+                                        <span class="line-through text-slate-400 text-[10px] block">${{ number_format(($item->item_price + $item->item_discount_price) * $item->item_qty, 2) }}</span>
+                                    @endif
                                 @endif
                             </div>
                         </div>

@@ -20,23 +20,31 @@ class InventoryCheckService
         $removedItems = [];
 
         foreach ($cartItems as $item) {
-            // Download items do not track physical inventory stock
-            if (!empty($item->item_downloadable)) {
-                continue;
-            }
-
             // Resolve variant
             $variant = null;
             if (!empty($item->variant_id)) {
-                $variant = ProductVariant::with(['inventory.warehouseInventories'])->find($item->variant_id);
+                $variant = ProductVariant::with(['product', 'inventory.warehouseInventories'])->find($item->variant_id);
             }
 
             if (!$variant) {
                 preg_match('/\(([^)]+)\)$/', $item->item_name, $matches);
                 $sku = $matches[1] ?? '';
                 if ($sku) {
-                    $variant = ProductVariant::with(['inventory.warehouseInventories'])->where('sku', $sku)->first();
+                    $variant = ProductVariant::with(['product', 'inventory.warehouseInventories'])->where('sku', $sku)->first();
                 }
+            }
+
+            // Check if product is inactive (turned off) or missing/deleted
+            if ($variant && $variant->product && !$variant->product->active) {
+                $itemLabel = !empty($variant->sku) ? "{$item->item_name} (SKU: {$variant->sku})" : $item->item_name;
+                $removedItems[] = $itemLabel;
+                $item->delete();
+                continue;
+            }
+
+            // Download items do not track physical inventory stock
+            if (!empty($item->item_downloadable)) {
+                continue;
             }
 
             // If variant has an inventory record (stock tracking enabled)

@@ -16,6 +16,22 @@
 
                 <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 rounded-3xl p-8 shadow-sm">
                     <form wire:submit.prevent="saveProduct" class="space-y-6">
+                        {{-- Active Status Card --}}
+                        <div class="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model.live="active" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 bg-white dark:bg-slate-800 mt-0.5">
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Product Active</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold {{ $active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200' }}">
+                                            {{ $active ? 'Active (Live)' : 'Inactive (Hidden)' }}
+                                        </span>
+                                    </div>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">When active, this product will be visible in the catalog, search, and plugins. If inactive, it is hidden and direct URL access returns a 404 error.</span>
+                                </div>
+                            </label>
+                        </div>
+
                         <div>
                             <label class="text-xs font-bold text-slate-400 dark:text-slate-500 block mb-1 uppercase tracking-wider">Product Title <span class="text-rose-500">*</span></label>
                             <input type="text" wire:model.live.debounce.300ms="title" autofocus

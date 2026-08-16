@@ -76,7 +76,22 @@
                                             @endforeach
                                         </div>
                                     @endif
-                                    @if($item->item_discount_price > 0)
+                                    @php
+                                        $itemVariant = !empty($item->variant_id) ? \App\Models\ProductVariant::find($item->variant_id) : null;
+                                        $hasTrial = $itemVariant && $itemVariant->hasStripeTrial();
+                                    @endphp
+                                    @if($hasTrial)
+                                        <div class="flex items-center gap-2 mt-2 flex-wrap">
+                                            @if($itemVariant->hasTrialLabel())
+                                                <span class="text-sm font-extrabold text-indigo-600">{{ $itemVariant->getTrialLabel() }}</span>
+                                            @else
+                                                <span class="text-sm font-extrabold text-indigo-600">{{ $currencySymbol }}{{ number_format($item->item_price, 2) }}</span>
+                                            @endif
+                                            <span class="text-[11px] text-slate-400">
+                                                ({{ $itemVariant->stripe_trial_days }} @label('cart.days', 'Days') &bull; @label('cart.then', 'then') {{ $currencySymbol }}{{ number_format($itemVariant->getSubscriptionRecurringPrice(auth()->user()), 2) }}/{{ $itemVariant->stripe_billing_interval ?: 'month' }})
+                                            </span>
+                                        </div>
+                                    @elseif($item->item_discount_price > 0)
                                         <div class="flex items-center gap-2 mt-2">
                                             <span class="text-sm font-extrabold text-indigo-600">{{ $currencySymbol }}{{ number_format($item->item_price, 2) }}</span>
                                             <span class="text-xs text-slate-400 line-through">{{ $currencySymbol }}{{ number_format($item->item_price + $item->item_discount_price, 2) }}</span>

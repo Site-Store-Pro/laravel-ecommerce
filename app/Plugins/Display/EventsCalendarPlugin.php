@@ -38,7 +38,7 @@ class EventsCalendarPlugin implements DisplayPlugin
                 'variant.product.variants.images',
             ])
             ->whereHas('variant', function ($q) {
-                $q->whereHas('product');
+                $q->whereHas('product', fn($pq) => $pq->where('active', 1));
             })
             ->whereNotNull('event_start_date')
             ->orderBy('event_start_date', 'asc');

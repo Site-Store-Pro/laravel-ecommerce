@@ -166,12 +166,13 @@ class LiveSearchService
     private function searchProducts(string $q, int $langId, bool $isDefault): array
     {
         if ($isDefault) {
-            $products = Product::where(function ($b) use ($q) {
-                $b->where('title', 'like', "%{$q}%")
-                  ->orWhere('product_search_index', 'like', "%{$q}%")
-                  ->orWhere('short_description', 'like', "%{$q}%")
-                  ->orWhere('long_description', 'like', "%{$q}%");
-            })->limit(15)->get();
+            $products = Product::where('active', 1)
+                ->where(function ($b) use ($q) {
+                    $b->where('title', 'like', "%{$q}%")
+                      ->orWhere('product_search_index', 'like', "%{$q}%")
+                      ->orWhere('short_description', 'like', "%{$q}%")
+                      ->orWhere('long_description', 'like', "%{$q}%");
+                })->limit(15)->get();
 
             $translations = collect();
         } else {
@@ -185,11 +186,12 @@ class LiveSearchService
                 ->pluck('product_id')
                 ->toArray();
 
-            $products = Product::where(function ($b) use ($q, $translatedIds) {
-                $b->whereIn('id', $translatedIds)
-                  ->orWhere('title', 'like', "%{$q}%")
-                  ->orWhere('product_search_index', 'like', "%{$q}%");
-            })->limit(15)->get();
+            $products = Product::where('active', 1)
+                ->where(function ($b) use ($q, $translatedIds) {
+                    $b->whereIn('id', $translatedIds)
+                      ->orWhere('title', 'like', "%{$q}%")
+                      ->orWhere('product_search_index', 'like', "%{$q}%");
+                })->limit(15)->get();
 
             $translations = ProductTranslation::whereIn('product_id', $products->pluck('id'))
                 ->where('language_id', $langId)

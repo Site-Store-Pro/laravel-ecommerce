@@ -272,8 +272,24 @@ class StripeProcessor implements PaymentProcessorInterface
         }
 
         $trialDays = (int) ($meta['trial_days'] ?? 0);
+        $trialPrice = (float) ($meta['trial_price'] ?? 0);
+
         if ($trialDays > 0) {
             $params['trial_period_days'] = $trialDays;
+
+            // If a paid trial fee is configured, add it as an upfront invoice item
+            if ($trialPrice > 0) {
+                try {
+                    $client->invoiceItems->create([
+                        'customer'    => $customerId,
+                        'amount'      => (int) round($trialPrice * 100),
+                        'currency'    => $currency,
+                        'description' => ($meta['trial_label'] ?? 'Trial Period Fee') . ' (' . $trialDays . ' days)',
+                    ]);
+                } catch (\Throwable $e) {
+                    \Log::error('[StripeProcessor] Failed to create trial invoice item: ' . $e->getMessage());
+                }
+            }
         }
 
         // ── 4. Create subscription ───────────────────────────────────────────

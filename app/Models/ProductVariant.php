@@ -71,6 +71,8 @@ class ProductVariant extends Model
         'stripe_billing_interval',
         'stripe_trial_enabled',
         'stripe_trial_days',
+        'stripe_trial_price',
+        'stripe_trial_label',
         'paddle_price',
         'paddle_interval',
         'paddle_frequency',
@@ -125,6 +127,8 @@ class ProductVariant extends Model
         'create_new_stripe_product' => 'integer',
         'stripe_trial_enabled'      => 'integer',
         'stripe_trial_days'         => 'integer',
+        'stripe_trial_price'        => 'decimal:2',
+        'stripe_trial_label'        => 'string',
         'paddle_price'              => 'decimal:2',
         'paddle_frequency'          => 'integer',
         'is_event'                  => 'boolean',
@@ -175,6 +179,55 @@ class ProductVariant extends Model
             || !empty($this->paddle_sandbox_price_id)
             || !empty($this->paddle_live_price_id)
             || !empty($this->paddle_interval);
+    }
+
+    /**
+     * Determine whether this variant has a Stripe free/discounted trial period active.
+     */
+    public function hasStripeTrial(): bool
+    {
+        return $this->isSubscriptionVariant()
+            && (int) $this->stripe_trial_enabled === 1
+            && (int) $this->stripe_trial_days > 0;
+    }
+
+    /**
+     * Get the trial price for this subscription variant.
+     */
+    public function getTrialPrice(): float
+    {
+        return (float) ($this->stripe_trial_price ?? 0.00);
+    }
+
+    /**
+     * Determine if this variant has a custom trial display label.
+     */
+    public function hasTrialLabel(): bool
+    {
+        return !empty(trim((string) $this->stripe_trial_label));
+    }
+
+    /**
+     * Get the display label for the trial (e.g. 'Free Trial', '$1 Trial', or null if unset).
+     */
+    public function getTrialLabel(): ?string
+    {
+        return !empty(trim((string) $this->stripe_trial_label)) ? trim((string) $this->stripe_trial_label) : null;
+    }
+
+    /**
+     * Get the recurring subscription price (before any initial trial discount).
+     */
+    public function getSubscriptionRecurringPrice(?\App\Models\User $user = null): float
+    {
+        $userType = ($user && $user->isWholesale()) ? 2 : 1;
+        if ($userType === 2 && (float) $this->wholesale_price > 0) {
+            return (float) $this->wholesale_price;
+        }
+        if ($userType !== 2 && $this->isOnSaleActive() && (float) $this->sale_price > 0) {
+            return (float) $this->sale_price;
+        }
+        return (float) $this->public_price;
     }
 
     public function product(): BelongsTo

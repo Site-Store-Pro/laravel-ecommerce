@@ -1,16 +1,25 @@
 <div class="py-12" x-data="{ sidebarOpen: false, showWidgetLibrary: false, showPluginsPanel: false, showLinkGenerator: false, showShortcodeGenerator: false }">
     <div class="max-w-[1800px] w-full mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="flex items-center gap-3 mb-8">
-            <a href="{{ route('admin.ecommerce.products') }}" wire:navigate
-               class="p-2.5 rounded-2xl border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all shadow-sm">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-            </a>
-            <div>
-                <h2 class="font-extrabold text-2xl text-slate-900 leading-tight">Edit Product: {{ $product->title }}</h2>
-                <p class="text-sm text-slate-500 mt-0.5">Manage details, active variants, pricing, and variant stock counts</p>
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div class="flex items-center gap-3">
+                <a href="{{ route('admin.ecommerce.products') }}" wire:navigate
+                   class="p-2.5 rounded-2xl border border-slate-200 bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+                <div>
+                    <h2 class="font-extrabold text-2xl text-slate-900 leading-tight">Edit Product: {{ $product->title }}</h2>
+                    <p class="text-sm text-slate-500 mt-0.5">Manage details, active variants, pricing, and variant stock counts</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button type="button" wire:click="toggleActive"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all shadow-sm {{ $active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100' }}">
+                    <span class="w-2.5 h-2.5 rounded-full {{ $active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500' }}"></span>
+                    {{ $active ? 'Product Active (Live)' : 'Product Inactive (Hidden)' }}
+                </button>
             </div>
         </div>
 
@@ -147,6 +156,22 @@
                 <div id="section-product-details" class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-6">
                     <h3 class="text-lg font-bold text-slate-900 pb-3 border-b border-slate-100">Product Details</h3>
                     <form wire:submit.prevent="updateProduct" class="space-y-4">
+                        {{-- Active Status Card --}}
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model.live="active" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 bg-white mt-0.5">
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-slate-800">Product Active</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold {{ $active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">
+                                            {{ $active ? 'Active (Live)' : 'Inactive (Hidden)' }}
+                                        </span>
+                                    </div>
+                                    <span class="text-xs text-slate-500 mt-0.5">When toggled off/inactive, this product is excluded from catalog queries, search results, and plugin displays, and direct URL visits return a 404 error page.</span>
+                                </div>
+                            </label>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Product Title</label>

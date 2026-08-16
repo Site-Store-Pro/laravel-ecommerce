@@ -416,7 +416,15 @@ class OrderReview extends Component
                         ? ($subVariant->stripe_sandbox_price_id ?? null)
                         : ($subVariant->stripe_live_price_id    ?? null);
 
-                    $result = $driver->createSubscription($total, $currency, [
+                    $subRecurringPrice = $subVariant->hasStripeTrial()
+                        ? $subVariant->getSubscriptionRecurringPrice($user)
+                        : $total;
+
+                    $trialPrice = $subVariant->hasStripeTrial()
+                        ? $subVariant->getTrialPrice()
+                        : 0.00;
+
+                    $result = $driver->createSubscription($subRecurringPrice, $currency, [
                         'stripe_price_id'    => $stripePrice ?: null, // null = create on-the-fly
                         'stripe_customer_id' => $user->stripe_customer_id ?? null,
                         'customer_email'     => $user->email,
@@ -426,6 +434,8 @@ class OrderReview extends Component
                         'trial_days'         => $subVariant->stripe_trial_enabled
                                                     ? (int) $subVariant->stripe_trial_days
                                                     : 0,
+                        'trial_price'        => $trialPrice,
+                        'trial_label'        => $subVariant->getTrialLabel(),
                         'payment_method_id'  => $paymentMethodId ?: null,
                     ]);
 

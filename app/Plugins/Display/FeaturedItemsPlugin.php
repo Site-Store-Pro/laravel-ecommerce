@@ -42,6 +42,7 @@ class FeaturedItemsPlugin implements DisplayPlugin
             // --- Query featured products ---
             $query = Product::with(['variants.inventory', 'variants.images'])
                 ->withCurrentTranslations()
+                ->where('active', 1)
                 ->where('featured_item', 1);
 
             // Only include products with at least one variant

@@ -455,8 +455,17 @@
                                         @php
                                             $price = $userType == 2 ? $firstVariant->wholesale_price : $firstVariant->public_price;
                                             $onSale = $userType == 1 && $firstVariant->on_sale && $firstVariant->sale_price > 0;
+                                            $hasTrial = $firstVariant->hasStripeTrial();
                                         @endphp
-                                        @if($onSale)
+                                        @if($hasTrial)
+                                            <div class="flex items-baseline gap-1.5 flex-wrap">
+                                                @if($firstVariant->hasTrialLabel())
+                                                    <span class="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">{{ $firstVariant->getTrialLabel() }}</span>
+                                                @else
+                                                    <span class="text-lg font-extrabold text-slate-900 dark:text-slate-200">{{ $currencySymbol }}{{ number_format($firstVariant->getTrialPrice(), 2) }}</span>
+                                                @endif
+                                            </div>
+                                        @elseif($onSale)
                                             <div class="flex items-baseline gap-1.5">
                                                 <span class="text-lg font-extrabold text-rose-600 dark:text-rose-400">{{ $currencySymbol }}{{ number_format($firstVariant->sale_price, 2) }}</span>
                                                 <span class="text-xs text-slate-400 line-through font-semibold">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
@@ -514,8 +523,17 @@
                                             @php
                                                 $price = $userType == 2 ? $firstVariant->wholesale_price : $firstVariant->public_price;
                                                 $onSale = $userType == 1 && $firstVariant->on_sale && $firstVariant->sale_price > 0;
+                                                $hasTrial = $firstVariant->hasStripeTrial();
                                             @endphp
-                                            @if($onSale)
+                                            @if($hasTrial)
+                                                <div class="flex items-baseline justify-end gap-1.5 flex-wrap">
+                                                    @if($firstVariant->hasTrialLabel())
+                                                        <span class="block text-lg font-extrabold text-indigo-600 dark:text-indigo-400">{{ $firstVariant->getTrialLabel() }}</span>
+                                                    @else
+                                                        <span class="block text-lg font-extrabold text-slate-900 dark:text-slate-200">{{ $currencySymbol }}{{ number_format($firstVariant->getTrialPrice(), 2) }}</span>
+                                                    @endif
+                                                </div>
+                                            @elseif($onSale)
                                                 <span class="block text-lg font-extrabold text-rose-600 dark:text-rose-400">{{ $currencySymbol }}{{ number_format($firstVariant->sale_price, 2) }}</span>
                                                 <span class="block text-xs text-slate-400 line-through font-semibold">{{ $currencySymbol }}{{ number_format($price, 2) }}</span>
                                             @else

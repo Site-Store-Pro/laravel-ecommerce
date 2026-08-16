@@ -45,6 +45,7 @@ class AdminProductEdit extends Component
     public string $aiResponse = '';
 
     // Advanced Product Options
+    public bool   $active               = true; // Product active toggle (if inactive: hidden from catalog, search, plugins, 404 on direct URL)
     public int    $max_qty              = 0;
     public int    $checkout_redirect    = 0;
     public string $completion_redirect  = '';  // Post-order redirect: raw URL or [page:ID] shortcode
@@ -213,6 +214,8 @@ class AdminProductEdit extends Component
     public string $stripe_billing_interval     = 'month'; // month | year | week
     public int    $stripe_trial_enabled        = 0;
     public int    $stripe_trial_days           = 0;
+    public ?float $stripe_trial_price          = 0.00;
+    public string $stripe_trial_label          = '';
 
     // Dynamic Customization Form Builder Properties
     public bool $isEditingField = false;
@@ -325,6 +328,7 @@ class AdminProductEdit extends Component
             'fields.options',
             'crossSells.crossSellProduct',
         ])->findOrFail($this->productId);
+        $this->active = (bool) ($this->product->active ?? true);
         $this->title = $this->product->title;
         $this->short_description = $this->product->short_description ?? '';
         $this->long_description = $this->product->long_description ?? '';
@@ -430,6 +434,7 @@ class AdminProductEdit extends Component
         $this->seo_slug = $formattedSlug;
 
         $this->product->update([
+            'active' => (bool) $this->active,
             // Details
             'title' => $this->title,
             'short_description' => $this->short_description,
@@ -531,6 +536,16 @@ class AdminProductEdit extends Component
 
         $this->dispatch('toast', type: 'success', message: 'Advanced settings and all product sections saved.');
         $this->loadProduct();
+    }
+
+    public function toggleActive(): void
+    {
+        $this->active = !$this->active;
+        $this->product->update(['active' => $this->active]);
+        $msg = $this->active
+            ? 'Product is now active and visible on the storefront.'
+            : 'Product is now inactive and hidden from storefront, search, and plugins (404 on direct URL).';
+        $this->dispatch('toast', type: 'success', message: $msg);
     }
 
     public function startCreateVariant(): void
@@ -671,6 +686,8 @@ class AdminProductEdit extends Component
         $this->stripe_billing_interval  = 'month';
         $this->stripe_trial_enabled     = 0;
         $this->stripe_trial_days        = 0;
+        $this->stripe_trial_price       = 0.00;
+        $this->stripe_trial_label       = '';
     }
 
 
@@ -761,6 +778,8 @@ class AdminProductEdit extends Component
             'stripe_billing_interval'   => $original->stripe_billing_interval   ?? 'month',
             'stripe_trial_enabled'      => $original->stripe_trial_enabled      ?? 0,
             'stripe_trial_days'         => $original->stripe_trial_days         ?? 0,
+            'stripe_trial_price'        => $original->stripe_trial_price        ?? 0.00,
+            'stripe_trial_label'        => $original->stripe_trial_label        ?? null,
             'is_event'                  => $original->is_event ?? false,
         ]);
 
@@ -950,6 +969,8 @@ class AdminProductEdit extends Component
             'stripe_billing_interval'   => $this->stripe_billing_interval   ?: 'month',
             'stripe_trial_enabled'      => $this->stripe_trial_enabled,
             'stripe_trial_days'         => $this->stripe_trial_enabled ? $this->stripe_trial_days : 0,
+            'stripe_trial_price'        => $this->stripe_trial_enabled ? (float)$this->stripe_trial_price : 0.00,
+            'stripe_trial_label'        => $this->stripe_trial_enabled && !empty($this->stripe_trial_label) ? $this->stripe_trial_label : null,
 
             // Sale Date Window & UPC
             'sale_price_start_at'       => $this->sale_price_start_at ? $this->sale_price_start_at : null,
@@ -1073,6 +1094,8 @@ class AdminProductEdit extends Component
         $this->stripe_billing_interval    = $variant->stripe_billing_interval    ?? 'month';
         $this->stripe_trial_enabled       = (int) ($variant->stripe_trial_enabled ?? 0);
         $this->stripe_trial_days          = (int) ($variant->stripe_trial_days   ?? 0);
+        $this->stripe_trial_price         = (float) ($variant->stripe_trial_price ?? 0.00);
+        $this->stripe_trial_label         = (string) ($variant->stripe_trial_label ?? '');
 
         // Dates, Cost/MAP, UPC, Dimensions
         $this->sale_price_start_at        = $variant->sale_price_start_at ? $variant->sale_price_start_at->format('Y-m-d\TH:i') : null;
@@ -1369,6 +1392,8 @@ class AdminProductEdit extends Component
             'stripe_billing_interval'  => $this->stripe_billing_interval  ?: 'month',
             'stripe_trial_enabled'     => $this->stripe_trial_enabled,
             'stripe_trial_days'        => $this->stripe_trial_enabled ? $this->stripe_trial_days : 0,
+            'stripe_trial_price'       => $this->stripe_trial_enabled ? (float)$this->stripe_trial_price : 0.00,
+            'stripe_trial_label'       => $this->stripe_trial_enabled && !empty($this->stripe_trial_label) ? $this->stripe_trial_label : null,
 
             // Sale Date Window & UPC
             'sale_price_start_at'       => $this->sale_price_start_at ? $this->sale_price_start_at : null,

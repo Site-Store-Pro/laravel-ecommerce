@@ -89,7 +89,19 @@
                             : $this->regularPrice;
                     @endphp
                     <div class="flex items-center gap-2 mt-1 flex-wrap">
-                        @if($displayCalcPrice < $displayRegPrice)
+                        @if($selectedVariant->hasStripeTrial())
+                            @if($selectedVariant->hasTrialLabel())
+                                <span class="text-3xl font-extrabold text-slate-900">{{ $selectedVariant->getTrialLabel() }}</span>
+                                <span class="text-xs text-slate-500 font-semibold">
+                                    ({{ $selectedVariant->stripe_trial_days }} @label('product.days', 'Days') &bull; @label('product.then_recurring', 'then') {{ $currencySymbol }}{{ number_format($displayRegPrice, 2) }}/{{ $selectedVariant->stripe_billing_interval ?: 'month' }})
+                                </span>
+                            @else
+                                <span class="text-3xl font-extrabold text-slate-900">{{ $currencySymbol }}{{ number_format($displayCalcPrice, 2) }}</span>
+                                <span class="text-xs text-slate-500 font-semibold">
+                                    ({{ $selectedVariant->stripe_trial_days }} @label('product.trial_days', 'Day Trial') &bull; @label('product.then_recurring', 'then') {{ $currencySymbol }}{{ number_format($displayRegPrice, 2) }}/{{ $selectedVariant->stripe_billing_interval ?: 'month' }})
+                                </span>
+                            @endif
+                        @elseif($displayCalcPrice < $displayRegPrice)
                             <span class="text-3xl font-extrabold text-slate-900">{{ $currencySymbol }}{{ number_format($displayCalcPrice, 2) }}</span>
                             @if($this->hasQtyDiscount)
                                 <span class="text-sm font-semibold text-slate-500">@label('product.each', '/each')</span>

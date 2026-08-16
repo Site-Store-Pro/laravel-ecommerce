@@ -87,14 +87,24 @@
                 <div class="p-5 pt-4 border-t border-slate-100 dark:border-slate-700/80 mt-auto flex items-center justify-between gap-3 dark:pt-4">
                     <div>
                         @if(!$product->is_donation_or_bill_pay && $defaultVariant)
-                            <div class="flex items-baseline gap-1.5">
-                                <span class="text-lg font-extrabold text-slate-900 dark:text-slate-200">
-                                    @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
+                            @if($defaultVariant->hasStripeTrial() && $defaultVariant->hasTrialLabel())
+                                <span class="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">
+                                    {{ $defaultVariant->getTrialLabel() }}
                                 </span>
-                                @if($priceToShow < $originalPrice)
-                                    <span class="text-xs text-slate-400 line-through font-semibold">${{ number_format($originalPrice, 2) }}</span>
-                                @endif
-                            </div>
+                            @elseif($defaultVariant->hasStripeTrial())
+                                <span class="text-lg font-extrabold text-slate-900 dark:text-slate-200">
+                                    ${{ number_format($priceToShow, 2) }}
+                                </span>
+                            @else
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-lg font-extrabold text-slate-900 dark:text-slate-200">
+                                        @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
+                                    </span>
+                                    @if($priceToShow < $originalPrice)
+                                        <span class="text-xs text-slate-400 line-through font-semibold">${{ number_format($originalPrice, 2) }}</span>
+                                    @endif
+                                </div>
+                            @endif
                         @elseif(!$product->is_donation_or_bill_pay)
                             <span class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">@label('plugin.out_of_stock', 'Out of Stock')</span>
                         @endif

@@ -17,6 +17,7 @@ class Product extends Model
 
     protected $table = 'products';
     protected $fillable = [
+        'active',
         'title',
         'short_description',
         'long_description',
@@ -65,6 +66,7 @@ class Product extends Model
     ];
 
     protected $casts = [
+        'active' => 'boolean',
         'max_qty' => 'integer',
         'checkout_redirect' => 'integer',
         'standalone_purchase' => 'integer',
@@ -86,6 +88,14 @@ class Product extends Model
         'show_variant_selector_thumbnail' => 'integer',
         'inventory_alert_id' => 'integer',
     ];
+
+    /**
+     * Scope a query to only include active products.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('products.active', 1);
+    }
 
     protected static function booted(): void
     {

@@ -74,11 +74,21 @@
                 <div class="flex items-center gap-4 shrink-0">
                     <div class="text-right">
                         @if(!$product->is_donation_or_bill_pay && $defaultVariant)
-                            <span class="block text-lg font-extrabold text-slate-900 dark:text-slate-200">
-                                @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
-                            </span>
-                            @if($priceToShow < $originalPrice)
-                                <span class="block text-xs text-slate-400 line-through font-semibold">${{ number_format($originalPrice, 2) }}</span>
+                            @if($defaultVariant->hasStripeTrial() && $defaultVariant->hasTrialLabel())
+                                <span class="block text-lg font-extrabold text-indigo-600 dark:text-indigo-400">
+                                    {{ $defaultVariant->getTrialLabel() }}
+                                </span>
+                            @elseif($defaultVariant->hasStripeTrial())
+                                <span class="block text-lg font-extrabold text-slate-900 dark:text-slate-200">
+                                    ${{ number_format($priceToShow, 2) }}
+                                </span>
+                            @else
+                                <span class="block text-lg font-extrabold text-slate-900 dark:text-slate-200">
+                                    @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
+                                </span>
+                                @if($priceToShow < $originalPrice)
+                                    <span class="block text-xs text-slate-400 line-through font-semibold">${{ number_format($originalPrice, 2) }}</span>
+                                @endif
                             @endif
                         @elseif(!$product->is_donation_or_bill_pay)
                             <span class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">@label('plugin.out_of_stock', 'Out of Stock')</span>

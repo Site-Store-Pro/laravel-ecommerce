@@ -527,6 +527,7 @@ class ShopCatalog extends Component
 
         // ── Base query (shared scope) ────────────────────────────────────────
         $baseQuery = Product::query()
+            ->active()
             ->when($this->category, function ($query) {
                 $categoryModel = Category::where('slug', $this->category)->first();
                 if ($categoryModel) {

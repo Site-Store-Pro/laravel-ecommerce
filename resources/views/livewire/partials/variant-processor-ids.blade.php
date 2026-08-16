@@ -158,10 +158,10 @@
                     </select>
                 </div>
 
-                {{-- Free trial --}}
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-indigo-500 block mb-1 uppercase tracking-wider">Free Trial Period</label>
-                    <div class="flex items-center gap-2 mt-auto pb-0.5">
+                {{-- Free/Paid trial --}}
+                <div class="flex flex-col sm:col-span-2">
+                    <label class="text-[10px] font-bold text-indigo-500 block mb-1 uppercase tracking-wider">Trial Period & Pricing</label>
+                    <div class="flex flex-wrap items-center gap-3 mt-auto pb-0.5">
                         <label class="flex items-center gap-1.5 cursor-pointer shrink-0" title="{{ $stripe_trial_enabled ? 'Disable trial' : 'Enable trial' }}">
                             <div class="relative">
                                 <input type="checkbox" wire:model.live.number="stripe_trial_enabled" class="sr-only peer" true-value="1" false-value="0">
@@ -172,10 +172,30 @@
                             </span>
                         </label>
                         @if($stripe_trial_enabled)
-                            <input type="number" wire:model="stripe_trial_days"
-                                min="1" max="365" placeholder="14"
-                                class="w-20 px-2 py-1.5 bg-white border border-indigo-200 text-slate-800 rounded-lg text-xs focus:outline-none focus:border-indigo-400 font-mono">
-                            <span class="text-[11px] text-indigo-600 font-medium whitespace-nowrap">days free</span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" wire:model="stripe_trial_days"
+                                    min="1" max="365" placeholder="14"
+                                    class="w-16 px-2 py-1.5 bg-white border border-indigo-200 text-slate-800 rounded-lg text-xs focus:outline-none focus:border-indigo-400 font-mono">
+                                <span class="text-[11px] text-indigo-600 font-medium whitespace-nowrap">days</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[11px] text-slate-500 font-medium">Trial Price:</span>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-xs text-slate-400">$</span>
+                                    <input type="number" step="0.01" min="0" wire:model="stripe_trial_price"
+                                        placeholder="0.00"
+                                        class="w-20 pl-5 pr-2 py-1.5 bg-white border border-indigo-200 text-slate-800 rounded-lg text-xs focus:outline-none focus:border-indigo-400 font-mono">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[11px] text-slate-500 font-medium">Display Label:</span>
+                                <input type="text" wire:model="stripe_trial_label"
+                                    placeholder="e.g. Free Trial"
+                                    class="w-32 px-2 py-1.5 bg-white border border-indigo-200 text-slate-800 rounded-lg text-xs focus:outline-none focus:border-indigo-400">
+                            </div>
+                            <p class="w-full text-[10px] text-slate-500 mt-1">
+                                <span class="font-bold text-indigo-600">Note:</span> If an optional Display Label is entered (e.g. &ldquo;Free Trial&rdquo;), it will be shown to customers in place of the trial price across the catalog, product page, cart, and widgets. If left blank, the numeric Trial Price is displayed. The Public Price is billed by Stripe after the trial period ends.
+                            </p>
                         @else
                             <span class="text-[11px] text-slate-400">No trial period</span>
                         @endif

@@ -192,8 +192,13 @@ class DiscountService
                 }
             }
             
-            $item->item_price = $finalPrice + $variantFee + $optionsFee;
-            $item->item_discount_price = max(0, ($basePrice + $variantFee + $optionsFee) - $item->item_price);
+            if ($variant->hasStripeTrial()) {
+                $item->item_price = $variant->getTrialPrice() + $variantFee + $optionsFee;
+                $item->item_discount_price = max(0, ($basePrice + $variantFee + $optionsFee) - $item->item_price);
+            } else {
+                $item->item_price = $finalPrice + $variantFee + $optionsFee;
+                $item->item_discount_price = max(0, ($basePrice + $variantFee + $optionsFee) - $item->item_price);
+            }
             $item->save();
         }
         
@@ -489,6 +494,10 @@ class DiscountService
         // e) Wholesale Price
         if ($userType == 2 && $variant->wholesale_price > 0) {
             $finalPrice = (float) $variant->wholesale_price;
+        }
+
+        if ($variant->hasStripeTrial()) {
+            return $variant->getTrialPrice();
         }
 
         return $finalPrice;

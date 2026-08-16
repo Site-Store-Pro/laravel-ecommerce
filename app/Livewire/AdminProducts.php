@@ -37,6 +37,7 @@ class AdminProducts extends Component
     public string $filterSortBy = 'last_modified';  // last_modified, oldest_modified, newest, oldest, alpha_asc, alpha_desc, price_asc, price_desc
     public string $filterAttribute = '';     // free-text attribute key search
     public string $filterAttributeValue = ''; // optional value
+    public string $filterActiveStatus = '';   // '', 'active', 'inactive'
 
     // Product Form
     public string $title = '';
@@ -133,6 +134,7 @@ class AdminProducts extends Component
         ]);
 
         $product = Product::create([
+            'active' => 1,
             'title' => $this->title,
             'short_description' => $this->short_description,
             'long_description' => $this->long_description,
@@ -219,6 +221,7 @@ class AdminProducts extends Component
         DB::transaction(function () use ($original, &$newProduct) {
             // 1. Duplicate Base Product
             $newProduct = Product::create([
+                'active'                      => $original->active ?? true,
                 'title'                       => $this->copyProductTitle,
                 'short_description'           => $original->short_description,
                 'long_description'            => $original->long_description,
@@ -331,6 +334,8 @@ class AdminProducts extends Component
                         'stripe_billing_interval'       => $var->stripe_billing_interval,
                         'stripe_trial_enabled'          => $var->stripe_trial_enabled,
                         'stripe_trial_days'             => $var->stripe_trial_days,
+                        'stripe_trial_price'            => $var->stripe_trial_price,
+                        'stripe_trial_label'            => $var->stripe_trial_label,
                         'is_event'                      => $var->is_event,
                     ]);
 
@@ -458,9 +463,20 @@ class AdminProducts extends Component
     public function updatingFilterPriceMax(): void     { $this->resetPage(); }
     public function updatingFilterProductType(): void  { $this->resetPage(); }
     public function updatingFilterStockStatus(): void  { $this->resetPage(); }
+    public function updatingFilterActiveStatus(): void { $this->resetPage(); }
     public function updatingFilterSortBy(): void       { $this->resetPage(); }
     public function updatingFilterAttribute(): void    { $this->resetPage(); }
     public function updatingFilterAttributeValue(): void { $this->resetPage(); }
+
+    public function toggleProductActive(int $productId): void
+    {
+        $product = Product::findOrFail($productId);
+        $product->active = !$product->active;
+        $product->save();
+
+        $status = $product->active ? 'active' : 'inactive';
+        $this->dispatch('toast', type: 'success', message: "Product \"{$product->title}\" is now {$status}.");
+    }
 
     public function toggleAdvancedFilters(): void
     {
@@ -476,6 +492,7 @@ class AdminProducts extends Component
         $this->filterPriceMax      = '';
         $this->filterProductType   = '';
         $this->filterStockStatus   = '';
+        $this->filterActiveStatus  = '';
         $this->filterSortBy        = 'last_modified';
         $this->filterAttribute     = '';
         $this->filterAttributeValue = '';
@@ -491,6 +508,7 @@ class AdminProducts extends Component
         if ($this->filterPriceMax !== '') $count++;
         if ($this->filterProductType)    $count++;
         if ($this->filterStockStatus)    $count++;
+        if ($this->filterActiveStatus)   $count++;
         if ($this->filterAttribute)      $count++;
         return $count;
     }
@@ -546,6 +564,13 @@ class AdminProducts extends Component
             $query->whereHas('variants.inventory', fn($q) => $q->where('quantity_available', '>', 0));
         } elseif ($this->filterStockStatus === 'out_of_stock') {
             $query->whereDoesntHave('variants.inventory', fn($q) => $q->where('quantity_available', '>', 0));
+        }
+
+        // Active / Inactive status filter
+        if ($this->filterActiveStatus === 'active') {
+            $query->where('active', 1);
+        } elseif ($this->filterActiveStatus === 'inactive') {
+            $query->where('active', 0);
         }
 
         // Attribute key/value filter (searches JSON attributes column on variants)

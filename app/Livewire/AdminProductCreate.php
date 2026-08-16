@@ -24,6 +24,7 @@ class AdminProductCreate extends Component
     public string $seo_slug = '';
     public int $product_download_item = 0;
     public int $product_shipping = 1;
+    public bool $active = true;
     public array $selectedCategories = [];
     public ?int $brand_id = null;
 
@@ -92,6 +93,7 @@ class AdminProductCreate extends Component
         ]);
 
         $product = Product::create([
+            'active' => $this->active ? 1 : 0,
             'title' => $this->title,
             'short_description' => $this->short_description,
             'long_description' => $this->long_description,

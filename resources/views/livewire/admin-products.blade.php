@@ -194,6 +194,17 @@
                                 </select>
                             </div>
 
+                            {{-- Active Status --}}
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Active Status</label>
+                                <select wire:model.live="filterActiveStatus"
+                                        class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                                    <option value="">All Products</option>
+                                    <option value="active">Active Only (Live)</option>
+                                    <option value="inactive">Inactive Only (Hidden)</option>
+                                </select>
+                            </div>
+
                             {{-- Price Range --}}
                             <div>
                                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Price Range</label>
@@ -292,6 +303,11 @@
                                     Stock: {{ $filterStockStatus === 'in_stock' ? 'In Stock' : 'Out of Stock' }}
                                 </span>
                             @endif
+                            @if($filterActiveStatus)
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold {{ $filterActiveStatus === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700' }} rounded-full">
+                                    Status: {{ ucfirst($filterActiveStatus) }}
+                                </span>
+                            @endif
                             @if($filterAttribute)
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold bg-pink-100 text-pink-700 rounded-full">
                                     Attr: {{ $filterAttribute }}{{ $filterAttributeValue ? ' = '.$filterAttributeValue : '' }}
@@ -335,12 +351,20 @@
                                         <div class="flex-1 min-w-0">
                                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                                 <div>
-                                                    <button type="button" wire:click="toggleProductExpand({{ $product->id }})" class="flex items-center gap-2 group text-left focus:outline-none">
-                                                        <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 {{ in_array($product->id, $expandedProducts) ? 'rotate-90' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                                                        </svg>
-                                                        <span class="font-extrabold text-slate-900 group-hover:text-indigo-600 transition">{{ $product->title }}</span>
-                                                    </button>
+                                                    <div class="flex items-center gap-2 flex-wrap">
+                                                        <button type="button" wire:click="toggleProductExpand({{ $product->id }})" class="flex items-center gap-2 group text-left focus:outline-none">
+                                                            <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-transform duration-200 {{ in_array($product->id, $expandedProducts) ? 'rotate-90' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                                                            </svg>
+                                                            <span class="font-extrabold text-slate-900 group-hover:text-indigo-600 transition">{{ $product->title }}</span>
+                                                        </button>
+                                                        <button type="button" wire:click="toggleProductActive({{ $product->id }})"
+                                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold transition-all {{ $product->active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100' }}"
+                                                            title="Click to toggle product active / inactive">
+                                                            <span class="w-1.5 h-1.5 rounded-full {{ $product->active ? 'bg-emerald-500' : 'bg-rose-500' }}"></span>
+                                                            {{ $product->active ? 'Active' : 'Inactive' }}
+                                                        </button>
+                                                    </div>
                                                     <span class="text-xs text-slate-400 block mt-1">Slug: <a href="{{ route('shop.product', $product->seo_slug) }}" target="_blank" class="text-indigo-600 hover:underline">/items/{{ $product->seo_slug }}</a></span>
                                                 </div>
                                                 <div class="flex gap-2">

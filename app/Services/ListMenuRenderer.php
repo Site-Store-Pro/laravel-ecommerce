@@ -70,7 +70,7 @@ class ListMenuRenderer
                     return '<span class="text-slate-400 font-semibold">' . e($label ?: "Page #{$id}") . '</span>';
 
                 case 'product':
-                    $product = Product::withCurrentTranslations()->find($id);
+                    $product = Product::where('active', 1)->withCurrentTranslations()->find($id);
                     if ($product) {
                         return '<a href="' . e(route('shop.product', $product->seo_slug)) . '">' . e($label ?: $product->title) . '</a>';
                     }

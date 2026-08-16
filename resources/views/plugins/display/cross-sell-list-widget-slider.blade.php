@@ -197,9 +197,15 @@
                                 <div class="fi-footer">
                                     <div>
                                         @if(!$product->is_donation_or_bill_pay && $defaultVariant)
-                                            <div class="fi-price">@if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}</div>
-                                            @if($priceToShow < $originalPrice)
-                                                <div class="fi-price-orig">${{ number_format($originalPrice, 2) }}</div>
+                                            @if($defaultVariant->hasStripeTrial() && $defaultVariant->hasTrialLabel())
+                                                <div class="fi-price" style="color: #6366f1;">{{ $defaultVariant->getTrialLabel() }}</div>
+                                            @elseif($defaultVariant->hasStripeTrial())
+                                                <div class="fi-price">${{ number_format($priceToShow, 2) }}</div>
+                                            @else
+                                                <div class="fi-price">@if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}</div>
+                                                @if($priceToShow < $originalPrice)
+                                                    <div class="fi-price-orig">${{ number_format($originalPrice, 2) }}</div>
+                                                @endif
                                             @endif
                                         @elseif(!$product->is_donation_or_bill_pay)
                                             <span style="font-size:12px;color:#94a3b8">@label('plugin.out_of_stock', 'Out of Stock')</span>

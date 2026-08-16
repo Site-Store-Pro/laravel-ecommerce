@@ -147,7 +147,19 @@
                                             </div>
                                         @endif
 
-                                        @if(isset($item['item_discount_price']) && $item['item_discount_price'] > 0)
+                                        @php
+                                            $itemVariant = !empty($item['variant_id']) ? \App\Models\ProductVariant::find($item['variant_id']) : null;
+                                            $hasTrial = $itemVariant && $itemVariant->hasStripeTrial();
+                                        @endphp
+                                        @if($hasTrial)
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                @if($itemVariant->hasTrialLabel())
+                                                    <span class="text-xs font-extrabold text-indigo-600">{{ $itemVariant->getTrialLabel() }}</span>
+                                                @else
+                                                    <span class="text-xs font-extrabold text-indigo-600">{{ $currencySymbol }}{{ number_format($item['item_price'], 2) }}</span>
+                                                @endif
+                                            </div>
+                                        @elseif(isset($item['item_discount_price']) && $item['item_discount_price'] > 0)
                                             <span class="text-xs font-semibold text-slate-500">
                                                 {{ $currencySymbol }}{{ number_format($item['item_price'], 2) }} <span class="line-through text-slate-400 text-[10px]">{{ $currencySymbol }}{{ number_format($item['item_price'] + $item['item_discount_price'], 2) }}</span> @label('cart.slide_each', 'each')
                                             </span>
