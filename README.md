@@ -52,7 +52,7 @@ Site Store Pro combines **more than 20 years of eCommerce experience** with a mo
 
 What began as a PHP shopping cart in 2005 has evolved into a comprehensive Laravel-based platform for building, managing, and growing modern online businesses.
 
-<br><br>
+<br>
 
 | Capability | Highlights |
 | --- | --- |
