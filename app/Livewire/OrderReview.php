@@ -376,7 +376,7 @@ class OrderReview extends Component
     // STEP 1: Prepare payment (called by the "Place Order" button via JS)
     // Returns gateway-specific data so the frontend JS can charge the card.
     // ─────────────────────────────────────────────────────────────────────
-    public function preparePayment(): array
+    public function preparePayment(string $paymentMethodId = ''): array
     {
         if (!Auth::check()) {
             return ['error' => 'Not authenticated'];
@@ -426,6 +426,7 @@ class OrderReview extends Component
                         'trial_days'         => $subVariant->stripe_trial_enabled
                                                     ? (int) $subVariant->stripe_trial_days
                                                     : 0,
+                        'payment_method_id'  => $paymentMethodId ?: null,
                     ]);
 
                     // Persist newly-created Stripe customer ID on user record
@@ -440,12 +441,14 @@ class OrderReview extends Component
                     $this->paymentReady          = true;
 
                     return [
-                        'processor'       => 'stripe',
-                        'publishableKey'  => $this->stripePublishableKey,
-                        'clientSecret'    => $this->stripeClientSecret,
-                        'isSubscription'  => true,
-                        'trialDays'       => $result['trial_days'] ?? 0,
-                        'stripeAddressRequired' => (bool) (\App\Models\OrderCheckoutOption::first()->stripe_address_required ?? false),
+                        'processor'          => 'stripe',
+                        'publishableKey'     => $this->stripePublishableKey,
+                        'clientSecret'       => $this->stripeClientSecret,
+                        'isSubscription'     => true,
+                        'trialDays'          => $result['trial_days'] ?? 0,
+                        'requiresAction'     => $result['requires_action'] ?? false,
+                        'paymentMethodTypes' => $result['payment_method_types'] ?? null,
+                        'stripeAddressRequired' => (bool) (\App\Models\OrderCheckoutOption::first()?->stripe_address_required ?? false),
                     ];
 
                 } else {
@@ -462,7 +465,7 @@ class OrderReview extends Component
                         'publishableKey' => $this->stripePublishableKey,
                         'clientSecret'   => $this->stripeClientSecret,
                         'isSubscription' => false,
-                        'stripeAddressRequired' => (bool) (\App\Models\OrderCheckoutOption::first()->stripe_address_required ?? false),
+                        'stripeAddressRequired' => (bool) (\App\Models\OrderCheckoutOption::first()?->stripe_address_required ?? false),
                     ];
                 }
 
@@ -1078,7 +1081,8 @@ class OrderReview extends Component
             // Payment processor context for the blade
             'activeProcessorType'      => $activeType,
             'activeProcessorIsSandbox' => $manager->activeProcessorIsSandbox($processorId),
-            'stripeAddressRequired'    => (bool) (\App\Models\OrderCheckoutOption::first()->stripe_address_required ?? false),
+            'stripeAddressRequired'    => (bool) (\App\Models\OrderCheckoutOption::first()?->stripe_address_required ?? false),
+            'isSubscription'           => (bool) $this->resolveSubscriptionVariant(),
             'paypalClientId'           => $this->paypalClientId,
             'currencyCode'             => strtoupper(CurrencyService::code()),
             // Checkout custom fields

@@ -91,7 +91,7 @@ class AdminCheckoutProcessors extends Component
             'wholesale_minimum' => 'required|numeric|min:0',
         ]);
 
-        $opts = OrderCheckoutOption::firstOrNew(['id' => 1]);
+        $opts = OrderCheckoutOption::first() ?? new OrderCheckoutOption();
         $opts->primary_processor = $this->primary_processor;
         // -1 means "None" in the form — store as 0 in the DB
         $opts->secondary_processor = $this->secondary_processor > 0 ? $this->secondary_processor : 0;
@@ -104,6 +104,11 @@ class AdminCheckoutProcessors extends Component
         $opts->save();
 
         session()->flash('status', 'Checkout configuration saved successfully.');
+    }
+
+    public function updatedStripeAddressRequired(): void
+    {
+        $this->saveConfig();
     }
 
     public function addProcessor(): void

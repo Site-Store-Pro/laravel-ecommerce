@@ -62,6 +62,47 @@ class StripeProcessor implements PaymentProcessorInterface
             );
         }
 
+        // Support PaymentMethods / Subscriptions (used for direct subscription checkouts)
+        if (str_starts_with($paymentIntentId, 'pm_') || str_starts_with($paymentIntentId, 'sub_')) {
+            return new PaymentResult(
+                success:           true,
+                authorizationCode: $paymentIntentId,
+                transactionId:     $paymentIntentId,
+                processorName:     $this->getName(),
+            );
+        }
+
+        // Support SetupIntents (used for trial subscriptions and setup-mode subscriptions)
+        if (str_starts_with($paymentIntentId, 'seti_')) {
+            try {
+                $setupIntent = $this->client()->setupIntents->retrieve($paymentIntentId);
+
+                if ($setupIntent->status !== 'succeeded') {
+                    return new PaymentResult(
+                        success:           false,
+                        authorizationCode: '',
+                        transactionId:     $setupIntent->id,
+                        errorMessage:      'Setup not confirmed: ' . $setupIntent->status,
+                        processorName:     $this->getName(),
+                    );
+                }
+
+                return new PaymentResult(
+                    success:           true,
+                    authorizationCode: $setupIntent->id,
+                    transactionId:     $setupIntent->id,
+                    processorName:     $this->getName(),
+                );
+            } catch (\Stripe\Exception\ApiErrorException $e) {
+                return new PaymentResult(
+                    success:           false,
+                    authorizationCode: '',
+                    errorMessage:      $e->getMessage(),
+                    processorName:     $this->getName(),
+                );
+            }
+        }
+
         try {
             $intent = $this->client()->paymentIntents->retrieve($paymentIntentId);
 
@@ -200,12 +241,35 @@ class StripeProcessor implements PaymentProcessorInterface
         }
 
         // ── 3. Build subscription params ─────────────────────────────────────
+        $paymentMethodId = $meta['payment_method_id'] ?? null;
+        if (!empty($paymentMethodId)) {
+            try {
+                $client->paymentMethods->attach($paymentMethodId, ['customer' => $customerId]);
+            } catch (\Throwable) {}
+            try {
+                $client->customers->update($customerId, [
+                    'invoice_settings' => ['default_payment_method' => $paymentMethodId],
+                ]);
+            } catch (\Throwable) {}
+        }
+
         $params = [
-            'customer'         => $customerId,
-            'items'            => [['price' => $priceId]],
-            'payment_behavior' => 'default_incomplete',
-            'expand'           => ['latest_invoice.payment_intent'],
+            'customer' => $customerId,
+            'items'    => [['price' => $priceId]],
+            'expand'   => [
+                'latest_invoice.payment_intent',
+                'pending_setup_intent',
+            ],
         ];
+
+        if (!empty($paymentMethodId)) {
+            $params['default_payment_method'] = $paymentMethodId;
+        } else {
+            $params['payment_behavior'] = 'default_incomplete';
+            $params['payment_settings'] = [
+                'save_default_payment_method' => 'on_subscription',
+            ];
+        }
 
         $trialDays = (int) ($meta['trial_days'] ?? 0);
         if ($trialDays > 0) {
@@ -215,20 +279,94 @@ class StripeProcessor implements PaymentProcessorInterface
         // ── 4. Create subscription ───────────────────────────────────────────
         $subscription = $client->subscriptions->create($params);
 
-        $clientSecret = $subscription->latest_invoice?->payment_intent?->client_secret ?? null;
+        // Extract client_secret with multi-level fallback
+        $clientSecret = null;
 
-        if (empty($clientSecret) && $trialDays === 0) {
+        // 4a. Check expanded latest_invoice -> payment_intent
+        $latestInvoice = $subscription->latest_invoice ?? null;
+        if (is_object($latestInvoice)) {
+            $pi = $latestInvoice->payment_intent ?? null;
+            if (is_object($pi) && !empty($pi->client_secret)) {
+                $clientSecret = $pi->client_secret;
+            } elseif (is_string($pi) && !empty($pi)) {
+                try {
+                    $retrievedPi = $client->paymentIntents->retrieve($pi);
+                    $clientSecret = $retrievedPi->client_secret ?? null;
+                } catch (\Throwable) {}
+            } elseif (empty($pi) && !empty($latestInvoice->id)) {
+                try {
+                    $retrievedInv = $client->invoices->retrieve($latestInvoice->id, ['expand' => ['payment_intent']]);
+                    if (is_object($retrievedInv->payment_intent)) {
+                        $clientSecret = $retrievedInv->payment_intent->client_secret ?? null;
+                    } elseif (is_string($retrievedInv->payment_intent)) {
+                        $retrievedPi = $client->paymentIntents->retrieve($retrievedInv->payment_intent);
+                        $clientSecret = $retrievedPi->client_secret ?? null;
+                    }
+                } catch (\Throwable) {}
+            }
+        } elseif (is_string($latestInvoice) && !empty($latestInvoice)) {
+            try {
+                $retrievedInv = $client->invoices->retrieve($latestInvoice, ['expand' => ['payment_intent']]);
+                if (is_object($retrievedInv->payment_intent)) {
+                    $clientSecret = $retrievedInv->payment_intent->client_secret ?? null;
+                } elseif (is_string($retrievedInv->payment_intent)) {
+                    $retrievedPi = $client->paymentIntents->retrieve($retrievedInv->payment_intent);
+                    $clientSecret = $retrievedPi->client_secret ?? null;
+                }
+            } catch (\Throwable) {}
+        }
+
+        // 4b. Check pending_setup_intent (used for trial subscriptions or setup mode)
+        if (empty($clientSecret)) {
+            $pendingSetup = $subscription->pending_setup_intent ?? null;
+            if (is_object($pendingSetup) && !empty($pendingSetup->client_secret)) {
+                $clientSecret = $pendingSetup->client_secret;
+            } elseif (is_string($pendingSetup) && !empty($pendingSetup)) {
+                try {
+                    $retrievedSi = $client->setupIntents->retrieve($pendingSetup);
+                    $clientSecret = $retrievedSi->client_secret ?? null;
+                } catch (\Throwable) {}
+            }
+        }
+
+        // 4c. Check confirmation_secret if present on invoice
+        if (empty($clientSecret) && isset($retrievedInv->confirmation_secret) && !empty($retrievedInv->confirmation_secret)) {
+            $clientSecret = $retrievedInv->confirmation_secret;
+        }
+
+        // If subscription is active (e.g. paid on creation) and has no client_secret, fallback to subscription ID
+        if (empty($clientSecret) && in_array($subscription->status, ['active', 'trialing'])) {
+            $clientSecret = $subscription->id;
+        }
+
+        if (empty($clientSecret)) {
             throw new \RuntimeException(
-                'Stripe subscription created but no client_secret returned.'
+                'Stripe subscription created but no client_secret returned. Subscription ID: ' . ($subscription->id ?? 'unknown')
             );
         }
 
+        $paymentMethodTypes = null;
+        if (is_object($latestInvoice) && is_object($latestInvoice->payment_intent ?? null)) {
+            $paymentMethodTypes = $latestInvoice->payment_intent->payment_method_types ?? null;
+        } elseif (isset($retrievedPi) && is_object($retrievedPi)) {
+            $paymentMethodTypes = $retrievedPi->payment_method_types ?? null;
+        }
+
+        $piStatus = is_object($latestInvoice ?? null) && is_object($latestInvoice->payment_intent ?? null)
+            ? ($latestInvoice->payment_intent->status ?? '')
+            : '';
+
+        $requiresAction = ($piStatus === 'requires_action' || $subscription->status === 'incomplete');
+
         return [
-            'client_secret'   => $clientSecret ?? '',
-            'subscription_id' => $subscription->id,
-            'customer_id'     => $customerId,
-            'is_subscription' => true,
-            'trial_days'      => $trialDays,
+            'client_secret'        => $clientSecret,
+            'subscription_id'      => $subscription->id,
+            'customer_id'          => $customerId,
+            'is_subscription'      => true,
+            'trial_days'           => $trialDays,
+            'status'               => $subscription->status,
+            'requires_action'      => $requiresAction,
+            'payment_method_types' => $paymentMethodTypes,
         ];
     }
 
@@ -264,6 +402,9 @@ class StripeProcessor implements PaymentProcessorInterface
             );
         }
 
-        return new \Stripe\StripeClient($secretKey);
+        return new \Stripe\StripeClient([
+            'api_key'        => $secretKey,
+            'stripe_version' => '2024-11-20.acacia',
+        ]);
     }
 }

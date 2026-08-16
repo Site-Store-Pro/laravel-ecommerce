@@ -22,7 +22,7 @@
         @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
-             x-data="paymentHandler('{{ $activeProcessorType }}', '{{ $stripePublishableKey }}', {{ $stripeAddressRequired ? 'true' : 'false' }})">
+             x-data="paymentHandler('{{ $activeProcessorType }}', '{{ $stripePublishableKey }}', {{ $stripeAddressRequired ? 'true' : 'false' }}, {{ $isSubscription ? 'true' : 'false' }})">
             <!-- Left Side: Shipping Info & Payment -->
             <div class="lg:col-span-8 space-y-6">
                 <!-- Shipping Summary Card -->
@@ -467,11 +467,12 @@
  * The component is instantiated twice (payment card + button) — Alpine
  * handles both through window-level event coordination.
  */
-function paymentHandler(processorType, stripePublishableKey = '', stripeAddressRequired = false) {
+function paymentHandler(processorType, stripePublishableKey = '', stripeAddressRequired = false, isSubscription = false) {
     return {
         processorType: processorType,
         stripePublishableKey: stripePublishableKey,
         stripeAddressRequired: stripeAddressRequired,
+        isSubscription: isSubscription,
         processing: false,
         errorMessage: '',
 
@@ -515,11 +516,24 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
             try {
                 this.stripe = Stripe(this.stripePublishableKey);
 
-                const elements = this.stripe.elements({
-                    mode: 'payment',
-                    amount: Math.round({{ $total }} * 100),
+                const amountInCents = Math.round({{ $total }} * 100);
+                const isSub = this.isSubscription;
+
+                const elementsOptions = {
+                    mode: (isSub && amountInCents === 0) ? 'setup' : 'payment',
                     currency: '{{ strtolower($currencyCode) }}',
-                });
+                };
+
+                if (elementsOptions.mode === 'payment') {
+                    elementsOptions.amount = Math.max(1, amountInCents);
+                }
+
+                if (isSub) {
+                    elementsOptions.setup_future_usage = 'off_session';
+                    elementsOptions.paymentMethodCreation = 'manual';
+                }
+
+                const elements = this.stripe.elements(elementsOptions);
                 this.elementsInstance = elements;
 
                 // address:'never'  → toggle ON:  no address in Payment Element; Address Element collects it separately.
@@ -680,6 +694,43 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                         this.processing = false;
                         return;
                     }
+
+                    if (this.isSubscription) {
+                        // Create PaymentMethod directly from Elements to attach to customer & subscription
+                        const { paymentMethod, error: pmError } = await this.stripe.createPaymentMethod({
+                            elements: this.elementsInstance,
+                        });
+
+                        if (pmError) {
+                            this.errorMessage = pmError.message;
+                            this.processing = false;
+                            return;
+                        }
+
+                        // Prepare & create subscription on Stripe with this PaymentMethod
+                        const data = await this.$wire.preparePayment(paymentMethod.id);
+                        if (data.error) {
+                            this.errorMessage = data.error;
+                            this.processing = false;
+                            return;
+                        }
+
+                        // If 3D Secure or authentication action is required by the bank
+                        if (data.requiresAction && data.clientSecret && !data.clientSecret.startsWith('sub_')) {
+                            const { error: actionError } = await this.stripe.handleNextAction({
+                                clientSecret: data.clientSecret,
+                            });
+                            if (actionError) {
+                                this.errorMessage = actionError.message;
+                                this.processing = false;
+                                return;
+                            }
+                        }
+
+                        // Complete order in Laravel
+                        await this.$wire.placeOrder(paymentMethod.id);
+                        return;
+                    }
                 }
 
                 // ─── STEP 1: Server prepares the gateway ─────────────────
@@ -713,11 +764,25 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
         async handleStripe(data) {
             if (!this.stripe) {
                 this.stripe = Stripe(data.publishableKey || this.stripePublishableKey);
-                const elements = this.stripe.elements({
-                    mode: 'payment',
-                    amount: Math.round({{ $total }} * 100),
+
+                const amountInCents = Math.round({{ $total }} * 100);
+                const isSub = data.isSubscription || this.isSubscription;
+
+                const elementsOptions = {
+                    mode: (isSub && amountInCents === 0) ? 'setup' : 'payment',
                     currency: '{{ strtolower($currencyCode) }}',
-                });
+                };
+
+                if (elementsOptions.mode === 'payment') {
+                    elementsOptions.amount = Math.max(1, amountInCents);
+                }
+
+                if (isSub) {
+                    elementsOptions.setup_future_usage = 'off_session';
+                    elementsOptions.paymentMethodCreation = 'manual';
+                }
+
+                const elements = this.stripe.elements(elementsOptions);
                 this.elementsInstance = elements;
 
                 // Determine whether the admin has enabled the "Require full billing address" toggle.
@@ -764,28 +829,44 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                 await new Promise(r => setTimeout(r, 300));
             }
 
-            const { paymentIntent, error } = await this.stripe.confirmPayment({
-                elements: this.elementsInstance,
-                clientSecret: data.clientSecret,
-                confirmParams: {
-                    return_url: window.location.href,
-                    payment_method_data: {
-                        billing_details: {
-                            name:  '{{ e($user->name) }}',
-                            email: '{{ e($user->email) }}',
-                        },
+            let intentId = '';
+            if (data.clientSecret && data.clientSecret.startsWith('seti_')) {
+                const { setupIntent, error } = await this.stripe.confirmSetup({
+                    elements: this.elementsInstance,
+                    clientSecret: data.clientSecret,
+                    confirmParams: {
+                        return_url: window.location.href,
                     },
-                },
-                redirect: 'if_required'
-            });
+                    redirect: 'if_required'
+                });
 
-            if (error) {
-                this.errorMessage = error.message;
-                this.processing = false;
-                return;
+                if (error) {
+                    this.errorMessage = error.message;
+                    this.processing = false;
+                    return;
+                }
+
+                intentId = setupIntent.id;
+            } else {
+                const { paymentIntent, error } = await this.stripe.confirmPayment({
+                    elements: this.elementsInstance,
+                    clientSecret: data.clientSecret,
+                    confirmParams: {
+                        return_url: window.location.href,
+                    },
+                    redirect: 'if_required'
+                });
+
+                if (error) {
+                    this.errorMessage = error.message;
+                    this.processing = false;
+                    return;
+                }
+
+                intentId = paymentIntent.id;
             }
 
-            await this.$wire.placeOrder(paymentIntent.id);
+            await this.$wire.placeOrder(intentId);
         },
 
 

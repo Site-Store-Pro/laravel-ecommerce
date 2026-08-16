@@ -22,6 +22,12 @@ class RandomizedProcessorCheckoutTest extends TestCase
     {
         parent::setUp();
 
+        DB::table('user_roles')->insertOrIgnore([
+            ['id' => 1, 'name' => 'Customer'],
+            ['id' => 2, 'name' => 'Wholesale'],
+            ['id' => 3, 'name' => 'Admin'],
+        ]);
+
         OrderCheckoutOption::query()->delete();
         OrderProcessor::query()->delete();
 
@@ -123,4 +129,29 @@ class RandomizedProcessorCheckoutTest extends TestCase
         $testComp->call('$refresh');
         $this->assertEquals($processorId, $testComp->get('activeProcessorId'));
     }
+
+    public function test_admin_can_toggle_stripe_address_requirement(): void
+    {
+        $admin = User::create([
+            'name'     => 'Admin User',
+            'email'    => 'admin@example.com',
+            'password' => bcrypt('password'),
+            'role_id'  => 3, // Admin role
+        ]);
+
+        $this->actingAs($admin);
+
+        Livewire::test('admin-checkout-processors')
+            ->set('stripe_address_required', true)
+            ->assertSet('stripe_address_required', true);
+
+        $this->assertEquals(1, OrderCheckoutOption::first()->stripe_address_required);
+
+        Livewire::test('admin-checkout-processors')
+            ->set('stripe_address_required', false)
+            ->assertSet('stripe_address_required', false);
+
+        $this->assertEquals(0, OrderCheckoutOption::first()->stripe_address_required);
+    }
 }
+
