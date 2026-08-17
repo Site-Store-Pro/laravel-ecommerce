@@ -478,7 +478,7 @@ class AdminProductEdit extends Component
         $this->product->categories()->sync($this->selectedCategories);
 
         if ($saveVariantIfOpen) {
-            if ($this->selectedVariantId && $this->selectedVariantId > 0) {
+            if ($this->isEditingVariant && $this->selectedVariantId && $this->selectedVariantId > 0) {
                 $this->updateVariant(false);
             } elseif ($this->isCreatingVariant) {
                 $this->saveVariant(false);
@@ -490,9 +490,17 @@ class AdminProductEdit extends Component
 
     public function saveAllSections(): void
     {
-        if ($this->saveCoreProductSections(true)) {
-            session()->flash('status', 'All product sections and active variant edits saved successfully.');
-            $this->dispatch('toast', type: 'success', message: 'All product sections and active variant edits saved successfully.');
+        if ($this->isEditingVariant && $this->selectedVariantId > 0) {
+            $this->updateVariant(true);
+            return;
+        } elseif ($this->isCreatingVariant) {
+            $this->saveVariant(true);
+            return;
+        }
+
+        if ($this->saveCoreProductSections(false)) {
+            session()->flash('status', 'All product sections saved successfully.');
+            $this->dispatch('toast', type: 'success', message: 'All product sections saved successfully.');
             $this->loadProduct();
         }
     }
@@ -572,6 +580,7 @@ class AdminProductEdit extends Component
 
         // Pre-populate SKU from product title
         $this->sku = $this->generateSku();
+        $this->dispatch('scroll-to-variant-form');
     }
 
     /**
@@ -852,27 +861,38 @@ class AdminProductEdit extends Component
             }
         }
 
+        $this->public_price = $this->public_price !== null && $this->public_price !== '' ? (float) $this->public_price : 0.00;
+        $this->wholesale_price = $this->wholesale_price !== null && $this->wholesale_price !== '' ? (float) $this->wholesale_price : 0.00;
+        $this->variant_fee = $this->variant_fee !== null && $this->variant_fee !== '' ? (float) $this->variant_fee : 0.00;
+        $this->wholesale_variant_fee = $this->wholesale_variant_fee !== null && $this->wholesale_variant_fee !== '' ? (float) $this->wholesale_variant_fee : 0.00;
+        $this->personalization_fee = $this->personalization_fee !== null && $this->personalization_fee !== '' ? (float) $this->personalization_fee : 0.00;
+        $this->personalization_active = (int) ($this->personalization_active ?? 0);
+        $this->quantity_available = (int) ($this->quantity_available ?? 0);
+        $this->warehouse_stock_level = (int) ($this->warehouse_stock_level ?? 0);
+        $this->reserved_stock = (int) ($this->reserved_stock ?? 0);
+        $this->paddle_currency_code = $this->paddle_currency_code ?: 'USD';
+
         $this->validate([
             'sku' => 'required|string|max:255|unique:product_variants,sku',
             'public_price' => 'required|numeric|min:0',
-            'wholesale_price' => 'required|numeric|min:0',
-            'variant_fee' => 'required|numeric|min:0',
-            'wholesale_variant_fee' => 'required|numeric|min:0',
-            'personalization_active' => 'required|integer|in:0,1',
-            'personalization_fee' => 'required|numeric|min:0',
+            'wholesale_price' => 'nullable|numeric|min:0',
+            'variant_fee' => 'nullable|numeric|min:0',
+            'wholesale_variant_fee' => 'nullable|numeric|min:0',
+            'personalization_active' => 'nullable|integer|in:0,1',
+            'personalization_fee' => 'nullable|numeric|min:0',
             'personalization_label' => 'nullable|string|max:255',
             'personalization_details_label' => 'nullable|string|max:255',
             'personalization_placeholder' => 'nullable|string|max:500',
-            'quantity_available' => 'required|integer|min:0',
-            'warehouse_stock_level' => 'required|integer|min:0',
-            'reserved_stock' => 'required|integer|min:0',
+            'quantity_available' => 'nullable|integer|min:0',
+            'warehouse_stock_level' => 'nullable|integer|min:0',
+            'reserved_stock' => 'nullable|integer|min:0',
             'downloadFile' => 'nullable|file|max:51200',
             'download_expiration' => 'nullable',
             'downloads_max_allowed' => 'nullable|integer|min:1',
             'paddle_price' => 'nullable|numeric|min:0',
             'paddle_interval' => 'nullable|string|in:day,week,month,year,',
             'paddle_frequency' => 'nullable|integer|min:1',
-            'paddle_currency_code' => 'required|string|max:10',
+            'paddle_currency_code' => 'nullable|string|max:10',
             'event_start_date' => $this->is_event ? 'required' : 'nullable',
             'event_label'      => $this->is_event ? 'required|string|max:255' : 'nullable',
         ]);
@@ -1258,6 +1278,7 @@ class AdminProductEdit extends Component
 
 
         $this->isEditingVariant = true;
+        $this->dispatch('scroll-to-variant-form');
     }
 
     public function cancelEditVariant(): void
@@ -1280,27 +1301,38 @@ class AdminProductEdit extends Component
         // Sync inline attributes back to JSON string before validation
         $this->updatedInlineAttributes();
 
+        $this->public_price = $this->public_price !== null && $this->public_price !== '' ? (float) $this->public_price : 0.00;
+        $this->wholesale_price = $this->wholesale_price !== null && $this->wholesale_price !== '' ? (float) $this->wholesale_price : 0.00;
+        $this->variant_fee = $this->variant_fee !== null && $this->variant_fee !== '' ? (float) $this->variant_fee : 0.00;
+        $this->wholesale_variant_fee = $this->wholesale_variant_fee !== null && $this->wholesale_variant_fee !== '' ? (float) $this->wholesale_variant_fee : 0.00;
+        $this->personalization_fee = $this->personalization_fee !== null && $this->personalization_fee !== '' ? (float) $this->personalization_fee : 0.00;
+        $this->personalization_active = (int) ($this->personalization_active ?? 0);
+        $this->quantity_available = (int) ($this->quantity_available ?? 0);
+        $this->warehouse_stock_level = (int) ($this->warehouse_stock_level ?? 0);
+        $this->reserved_stock = (int) ($this->reserved_stock ?? 0);
+        $this->paddle_currency_code = $this->paddle_currency_code ?: 'USD';
+
         $this->validate([
             'sku' => 'required|string|max:255|unique:product_variants,sku,' . $this->selectedVariantId,
             'public_price' => 'required|numeric|min:0',
-            'wholesale_price' => 'required|numeric|min:0',
-            'variant_fee' => 'required|numeric|min:0',
-            'wholesale_variant_fee' => 'required|numeric|min:0',
-            'personalization_active' => 'required|integer|in:0,1',
-            'personalization_fee' => 'required|numeric|min:0',
+            'wholesale_price' => 'nullable|numeric|min:0',
+            'variant_fee' => 'nullable|numeric|min:0',
+            'wholesale_variant_fee' => 'nullable|numeric|min:0',
+            'personalization_active' => 'nullable|integer|in:0,1',
+            'personalization_fee' => 'nullable|numeric|min:0',
             'personalization_label' => 'nullable|string|max:255',
             'personalization_details_label' => 'nullable|string|max:255',
             'personalization_placeholder' => 'nullable|string|max:500',
-            'quantity_available' => 'required|integer|min:0',
-            'warehouse_stock_level' => 'required|integer|min:0',
-            'reserved_stock' => 'required|integer|min:0',
+            'quantity_available' => 'nullable|integer|min:0',
+            'warehouse_stock_level' => 'nullable|integer|min:0',
+            'reserved_stock' => 'nullable|integer|min:0',
             'downloadFile' => 'nullable|file|max:51200',
             'download_expiration' => 'nullable',
             'downloads_max_allowed' => 'nullable|integer|min:1',
             'paddle_price' => 'nullable|numeric|min:0',
             'paddle_interval' => 'nullable|string|in:day,week,month,year,',
             'paddle_frequency' => 'nullable|integer|min:1',
-            'paddle_currency_code' => 'required|string|max:10',
+            'paddle_currency_code' => 'nullable|string|max:10',
             'event_start_date' => $this->is_event ? 'required' : 'nullable',
             'event_label'      => $this->is_event ? 'required|string|max:255' : 'nullable',
         ]);

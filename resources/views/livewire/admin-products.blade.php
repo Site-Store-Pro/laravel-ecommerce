@@ -79,7 +79,7 @@
                                             </td>
                                             <!-- Actions -->
                                             <td class="px-4 py-3 text-right space-x-2">
-                                                <a href="{{ route('admin.ecommerce.product-edit', ['id' => $p->id]) }}" wire:navigate
+                                                <a href="{{ route('admin.ecommerce.product-edit', ['id' => $p->id]) }}"
                                                    class="inline-flex items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[11px] font-extrabold rounded-lg transition duration-150 border border-indigo-100 shadow-sm">
                                                     Edit
                                                 </a>
@@ -142,7 +142,7 @@
                             @endif
 
                             {{-- New Product button --}}
-                            <a href="{{ route('admin.ecommerce.product-create') }}" wire:navigate
+                            <a href="{{ route('admin.ecommerce.product-create') }}"
                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-sm hover:opacity-90 transition duration-150">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>

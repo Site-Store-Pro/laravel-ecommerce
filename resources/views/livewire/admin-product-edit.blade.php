@@ -1,4 +1,4 @@
-<div class="py-12" x-data="{ sidebarOpen: false, showWidgetLibrary: false, showPluginsPanel: false, showLinkGenerator: false, showShortcodeGenerator: false }">
+<div class="py-12" x-data="{ sidebarOpen: false, showWidgetLibrary: false, showPluginsPanel: false, showLinkGenerator: false, showShortcodeGenerator: false }" x-on:scroll-to-variant-form.window="document.getElementById('section-variants')?.scrollIntoView({ behavior: 'smooth', block: 'start' })">
     <div class="max-w-[1800px] w-full mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="flex flex-wrap items-center justify-between gap-4 mb-8">

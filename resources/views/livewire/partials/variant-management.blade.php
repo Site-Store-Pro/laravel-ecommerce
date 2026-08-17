@@ -7,19 +7,28 @@
                             <button wire:click="cancelEditVariant" class="text-slate-400 hover:text-slate-600 font-bold text-sm">Cancel</button>
                         </div>
                         <form wire:submit.prevent="updateVariant" class="space-y-4">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                 <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">SKU</label>
-                                    <input type="text" wire:model="sku" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    <label class="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">SKU <span class="text-red-500">*</span></label>
+                                    <input type="text" wire:model="sku" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-semibold text-sm">
                                     @error('sku') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                                 </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Public Price ($)</label>
-                                    <input type="number" step="0.01" wire:model="public_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                <div class="bg-indigo-50/80 border-2 border-indigo-300/80 rounded-2xl p-3 shadow-sm relative">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="text-xs font-black text-indigo-900 block uppercase tracking-wider">
+                                            Public Price ($) <span class="text-rose-600 font-bold">*</span>
+                                        </label>
+                                        <span class="px-2 py-0.5 text-[9px] font-extrabold bg-indigo-600 text-white rounded-full uppercase tracking-wider shadow-xs">Main Price</span>
+                                    </div>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-indigo-500 font-bold text-sm">$</span>
+                                        <input type="number" step="0.01" wire:model="public_price" class="w-full pl-7 pr-3 py-2 bg-white border border-indigo-300 text-indigo-950 font-black text-base rounded-xl focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 shadow-inner" placeholder="0.00" required>
+                                    </div>
+                                    @error('public_price') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Wholesale Price ($)</label>
-                                    <input type="number" step="0.01" wire:model="wholesale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    <label class="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">Wholesale Price ($)</label>
+                                    <input type="number" step="0.01" wire:model="wholesale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
                                 </div>
                             </div>
 
@@ -1233,13 +1242,22 @@
                                         <span class="text-[10px] text-slate-400 mt-0.5 block">Auto-generated from product title — edit freely.</span>
                                     @enderror
                                 </div>
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Public Price ($)</label>
-                                    <input type="number" step="0.01" wire:model="public_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                <div class="bg-indigo-50/80 border-2 border-indigo-300/80 rounded-2xl p-3 shadow-sm relative">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <label class="text-xs font-black text-indigo-900 block uppercase tracking-wider">
+                                            Public Price ($) <span class="text-rose-600 font-bold">*</span>
+                                        </label>
+                                        <span class="px-2 py-0.5 text-[9px] font-extrabold bg-indigo-600 text-white rounded-full uppercase tracking-wider shadow-xs">Main Price</span>
+                                    </div>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-indigo-500 font-bold text-sm">$</span>
+                                        <input type="number" step="0.01" wire:model="public_price" class="w-full pl-7 pr-3 py-2 bg-white border border-indigo-300 text-indigo-950 font-black text-base rounded-xl focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 shadow-inner" placeholder="0.00" required>
+                                    </div>
+                                    @error('public_price') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
-                                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Wholesale Price ($)</label>
-                                    <input type="number" step="0.01" wire:model="wholesale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    <label class="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">Wholesale Price ($)</label>
+                                    <input type="number" step="0.01" wire:model="wholesale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
                                 </div>
                             </div>
 
@@ -2502,7 +2520,7 @@
                                             {{-- Actions (end) --}}
                                             <td class="px-4 py-3.5 text-right">
                                                 <div class="flex flex-col items-end gap-1.5">
-                                                    <button wire:click="startEditVariant({{ $variant->id }})" class="w-full px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-bold rounded-lg transition duration-150 whitespace-nowrap">Edit &amp; Inventory</button>
+                                                    <button wire:click="startEditVariant({{ $variant->id }})" @click="document.getElementById('section-variants')?.scrollIntoView({ behavior: 'smooth', block: 'start' })" class="w-full px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-bold rounded-lg transition duration-150 whitespace-nowrap">Edit &amp; Inventory</button>
                                                     <button wire:click="duplicateVariant({{ $variant->id }})" class="w-full px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-bold rounded-lg transition duration-150">Duplicate</button>
                                                     <button onclick="confirm('Are you sure you want to delete this variant?') || event.stopImmediatePropagation()" wire:click="deleteVariant({{ $variant->id }})" class="w-full px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-bold rounded-lg transition duration-150">Delete</button>
                                                 </div>
