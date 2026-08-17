@@ -68,6 +68,7 @@ class StripeWebhookController extends Controller
             'customer.subscription.updated',
             'customer.subscription.deleted'     => $this->handleSubscriptionEvent($event->type, $event->data->object),
             'invoice.payment_succeeded',
+            'invoice.paid',
             'invoice.payment_failed'            => $this->handleInvoiceEvent($event->type, $event->data->object),
             default                             => Log::info('[Stripe Webhook] Unhandled event type: ' . $event->type),
         };
@@ -93,11 +94,17 @@ class StripeWebhookController extends Controller
 
         $payment = DB::table('order_payments')
             ->where('authorization_code', $intentId)
-            ->orWhere('transaction_id', $intentId)
+            ->orWhere('processor_response', 'like', "%{$intentId}%")
             ->first();
 
         if (!$payment) {
-            Log::info('[Stripe Webhook] payment_intent.succeeded — no matching order_payments record for: ' . $intentId);
+            // If this payment intent is linked to a subscription invoice, handle it via invoice flow
+            $invoiceId = $intent->invoice ?? null;
+            if ($invoiceId) {
+                Log::info('[Stripe Webhook] payment_intent.succeeded belongs to invoice ' . $invoiceId);
+            } else {
+                Log::info('[Stripe Webhook] payment_intent.succeeded — no matching order_payments record for: ' . $intentId);
+            }
             return;
         }
 
@@ -147,7 +154,7 @@ class StripeWebhookController extends Controller
 
         $payment = DB::table('order_payments')
             ->where('authorization_code', $intentId)
-            ->orWhere('transaction_id', $intentId)
+            ->orWhere('processor_response', 'like', "%{$intentId}%")
             ->first();
 
         if ($payment) {
@@ -187,8 +194,7 @@ class StripeWebhookController extends Controller
     /**
      * customer.subscription.* events
      *
-     * Logged for future subscription support. Extend this method to
-     * activate/deactivate user subscription entitlements.
+     * Logged for future subscription support.
      */
     private function handleSubscriptionEvent(string $type, object $subscription): void
     {
@@ -200,18 +206,279 @@ class StripeWebhookController extends Controller
     }
 
     /**
-     * invoice.payment_succeeded / invoice.payment_failed
+     * invoice.payment_succeeded / invoice.paid / invoice.payment_failed
      *
-     * Logged for future subscription billing support.
+     * Captures recurring subscription renewal payments while preventing duplicates.
      */
-    private function handleInvoiceEvent(string $type, object $invoice): void
+    private function handleInvoiceEvent(string $type, object|array $invoice): void
     {
+        $invoiceObj      = is_array($invoice) ? (object) $invoice : $invoice;
+        $invoiceId       = $invoiceObj->id ?? 'N/A';
+        $subscriptionId  = $this->extractSubscriptionId($invoice);
+        $billingReason   = $invoiceObj->billing_reason ?? null;
+        $customerId      = $invoiceObj->customer ?? null;
+        $customerEmail   = $invoiceObj->customer_email ?? null;
+        $paymentIntentId = $invoiceObj->payment_intent ?? null;
+        $amountPaid      = ($invoiceObj->amount_paid ?? 0) / 100;
+
         Log::info('[Stripe Webhook] Invoice event: ' . $type, [
-            'invoice_id'  => $invoice->id       ?? 'N/A',
-            'customer_id' => $invoice->customer  ?? 'N/A',
-            'amount_due'  => $invoice->amount_due ?? 0,
-            'status'      => $invoice->status    ?? 'N/A',
+            'invoice_id'      => $invoiceId,
+            'subscription_id' => $subscriptionId,
+            'customer_id'     => $customerId,
+            'customer_email'  => $customerEmail,
+            'billing_reason'  => $billingReason,
+            'amount_paid'     => $amountPaid,
+            'status'          => $invoiceObj->status ?? 'N/A',
         ]);
+
+        if ($type === 'invoice.payment_failed') {
+            Log::warning("[Stripe Webhook] Invoice payment failed for subscription {$subscriptionId} (Invoice: {$invoiceId}).");
+            return;
+        }
+
+        if ($type === 'invoice.payment_succeeded' || $type === 'invoice.paid') {
+            // 1. Idempotency check: ensure this specific invoice / payment intent has not already been recorded
+            $alreadyRecorded = DB::table('order_payments')
+                ->where('authorization_code', $invoiceId)
+                ->orWhere('processor_response', 'like', "%{$invoiceId}%")
+                ->when($paymentIntentId, function ($q) use ($paymentIntentId) {
+                    $q->orWhere('authorization_code', $paymentIntentId)
+                      ->orWhere('processor_response', 'like', "%{$paymentIntentId}%");
+                })
+                ->exists();
+
+            if ($alreadyRecorded) {
+                Log::info("[Stripe Webhook] Invoice {$invoiceId} / PaymentIntent {$paymentIntentId} already recorded in order_payments. Skipping.");
+                return;
+            }
+
+            // 2. If it's an initial subscription creation invoice that was ALREADY recorded during checkout (by sub_ ID)
+            if ($billingReason === 'subscription_create' && $subscriptionId) {
+                $hasInitialCheckoutPayment = DB::table('order_payments')
+                    ->where('authorization_code', $subscriptionId)
+                    ->orWhere('processor_response', 'like', "%{$subscriptionId}%")
+                    ->exists();
+
+                if ($hasInitialCheckoutPayment) {
+                    Log::info("[Stripe Webhook] Skipped initial subscription invoice {$invoiceId} (already handled at checkout for sub {$subscriptionId}).");
+                    return;
+                }
+            }
+
+            // 3. Record the subscription payment
+            $this->recordSubscriptionRenewalPayment($invoice, $amountPaid);
+        }
+    }
+
+    /**
+     * Record a recurring subscription renewal payment from Stripe webhook.
+     */
+    private function recordSubscriptionRenewalPayment(object|array $invoice, float $amountPaid): void
+    {
+        $invoiceObj      = is_array($invoice) ? (object) $invoice : $invoice;
+        $subscriptionId  = $this->extractSubscriptionId($invoice);
+        $invoiceId       = $invoiceObj->id ?? null;
+        $paymentIntentId = $invoiceObj->payment_intent ?? $invoiceId;
+        $customerId      = $invoiceObj->customer ?? null;
+        $customerEmail   = $invoiceObj->customer_email ?? null;
+
+        $orderId = null;
+
+        // 1. Match exact initial order by Subscription ID in order_payments
+        if ($subscriptionId) {
+            $initialPayment = DB::table('order_payments')
+                ->where('authorization_code', $subscriptionId)
+                ->orWhere('processor_response', 'like', "%{$subscriptionId}%")
+                ->orderByDesc('id')
+                ->first();
+
+            if ($initialPayment) {
+                $orderId = $initialPayment->order_id;
+            }
+        }
+
+        // 2. Look up customer user by stripe_customer_id or email
+        $user = null;
+        if ($customerId) {
+            $user = DB::table('users')->where('stripe_customer_id', $customerId)->first();
+        }
+        if (!$user && $customerEmail) {
+            $user = DB::table('users')->where('email', $customerEmail)->first();
+            if ($user && $customerId && empty($user->stripe_customer_id)) {
+                DB::table('users')->where('id', $user->id)->update(['stripe_customer_id' => $customerId, 'updated_at' => now()]);
+            }
+        }
+
+        // 3. Fallback: match by Price ID or Product ID and User
+        if (!$orderId && $user) {
+            $lines = [];
+            if (isset($invoiceObj->lines->data)) {
+                $lines = $invoiceObj->lines->data;
+            } elseif (isset($invoiceObj->lines['data'])) {
+                $lines = $invoiceObj->lines['data'];
+            }
+
+            $priceId = null;
+            $productId = null;
+            if (is_iterable($lines)) {
+                foreach ($lines as $line) {
+                    $priceId = $this->extractPriceId($line);
+                    $productId = $this->extractProductId($line);
+                    if ($priceId || $productId) break;
+                }
+            }
+
+            if ($priceId || $productId) {
+                $variant = \App\Models\ProductVariant::when($priceId, function ($q) use ($priceId) {
+                        $q->where('stripe_live_price_id', $priceId)
+                          ->orWhere('stripe_sandbox_price_id', $priceId);
+                    })
+                    ->first();
+
+                if ($variant) {
+                    $matchedOrder = DB::table('orders')
+                        ->join('order_details', 'orders.id', '=', 'order_details.order_id')
+                        ->where('orders.order_user_id', $user->id)
+                        ->where('order_details.inventory_id', $variant->id)
+                        ->orderByDesc('orders.id')
+                        ->select('orders.id')
+                        ->first();
+
+                    if ($matchedOrder) {
+                        $orderId = $matchedOrder->id;
+                    }
+                }
+            }
+
+            // User's latest order fallback
+            if (!$orderId) {
+                $latestOrder = DB::table('orders')->where('order_user_id', $user->id)->orderByDesc('id')->first();
+                $orderId = $latestOrder ? $latestOrder->id : null;
+            }
+        }
+
+        // 4. Ultimate fallback: if no order exists, create a designated subscription renewal order
+        if (!$orderId) {
+            $userId = $user ? $user->id : 0;
+            $invoiceNo = 'SUB-' . strtoupper(\Illuminate\Support\Str::random(8));
+
+            $orderId = DB::table('orders')->insertGetId([
+                'order_invoice_no' => $invoiceNo,
+                'order_external_id'=> (string) \Illuminate\Support\Str::uuid(),
+                'order_user_id'    => $userId,
+                'order_status'     => 7, // Completed
+                'order_date'       => now(),
+                'order_total'      => $amountPaid,
+                'order_subtotal'   => $amountPaid,
+                'order_taxes'      => 0.00,
+                'order_discounts'  => 0.00,
+                'order_shipping'   => 0,
+                'order_download'   => 0,
+                'order_handling'   => 0.00,
+                'order_comments'   => "Auto-generated subscription renewal from Stripe invoice {$invoiceId}" . ($subscriptionId ? " (Sub: {$subscriptionId})" : ''),
+                'created_at'       => now(),
+                'updated_at'       => now(),
+            ]);
+
+            Log::info("[Stripe Webhook] Created new renewal Order #{$orderId} for invoice {$invoiceId}.");
+        }
+
+        // Insert new OrderPayment record for this renewal cycle
+        DB::table('order_payments')->insert([
+            'order_id'           => $orderId,
+            'payment_date'       => now(),
+            'payment_amount'     => $amountPaid,
+            'payment_method'     => 'Stripe (Subscription Renewal)',
+            'payment_status'     => 1, // Paid
+            'authorization_code' => $paymentIntentId ?: $invoiceId,
+            'processor_response' => "Invoice: {$invoiceId}" . ($subscriptionId ? " | Sub: {$subscriptionId}" : ''),
+            'created_at'         => now(),
+            'updated_at'         => now(),
+        ]);
+
+        Log::info("[Stripe Webhook] Successfully recorded renewal payment of \${$amountPaid} for Order #{$orderId} (Invoice: {$invoiceId}, Sub: {$subscriptionId}).");
+    }
+
+    /**
+     * Extract the subscription ID from an invoice object or array across all Stripe API versions.
+     */
+    private function extractSubscriptionId(mixed $invoice): ?string
+    {
+        if (is_object($invoice)) {
+            if (!empty($invoice->subscription) && is_string($invoice->subscription)) {
+                return $invoice->subscription;
+            }
+            if (isset($invoice->parent->subscription_details->subscription) && is_string($invoice->parent->subscription_details->subscription)) {
+                return $invoice->parent->subscription_details->subscription;
+            }
+            if (isset($invoice->lines->data) && is_iterable($invoice->lines->data)) {
+                foreach ($invoice->lines->data as $line) {
+                    if (isset($line->parent->subscription_item_details->subscription) && is_string($line->parent->subscription_item_details->subscription)) {
+                        return $line->parent->subscription_item_details->subscription;
+                    }
+                    if (!empty($line->subscription) && is_string($line->subscription)) {
+                        return $line->subscription;
+                    }
+                }
+            }
+        } elseif (is_array($invoice)) {
+            if (!empty($invoice['subscription']) && is_string($invoice['subscription'])) {
+                return $invoice['subscription'];
+            }
+            if (!empty($invoice['parent']['subscription_details']['subscription']) && is_string($invoice['parent']['subscription_details']['subscription'])) {
+                return $invoice['parent']['subscription_details']['subscription'];
+            }
+            if (!empty($invoice['lines']['data']) && is_iterable($invoice['lines']['data'])) {
+                foreach ($invoice['lines']['data'] as $line) {
+                    if (!empty($line['parent']['subscription_item_details']['subscription'])) {
+                        return $line['parent']['subscription_item_details']['subscription'];
+                    }
+                    if (!empty($line['subscription'])) {
+                        return $line['subscription'];
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract the price/plan ID from an invoice line item across all Stripe API versions.
+     */
+    private function extractPriceId(mixed $line): ?string
+    {
+        if (is_object($line)) {
+            return $line->pricing->price_details->price 
+                ?? $line->price->id 
+                ?? $line->plan->id 
+                ?? null;
+        } elseif (is_array($line)) {
+            return $line['pricing']['price_details']['price'] 
+                ?? $line['price']['id'] 
+                ?? $line['plan']['id'] 
+                ?? null;
+        }
+        return null;
+    }
+
+    /**
+     * Extract the product ID from an invoice line item across all Stripe API versions.
+     */
+    private function extractProductId(mixed $line): ?string
+    {
+        if (is_object($line)) {
+            return $line->pricing->price_details->product 
+                ?? $line->price->product 
+                ?? $line->plan->product 
+                ?? null;
+        } elseif (is_array($line)) {
+            return $line['pricing']['price_details']['product'] 
+                ?? $line['price']['product'] 
+                ?? $line['plan']['product'] 
+                ?? null;
+        }
+        return null;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

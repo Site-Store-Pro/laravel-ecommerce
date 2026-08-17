@@ -39,6 +39,7 @@ class OrderReview extends Component
     public string $stripePublishableKey = '';
     public bool   $paymentReady       = false; // true once preparePayment() has run
     public bool   $stripeIsSubscription = false; // true when Stripe subscription flow is active
+    public string $stripeSubscriptionId = '';   // holds Stripe sub_xxx ID when subscription is created
 
     // PayPal state
     public string $paypalOrderId      = '';
@@ -448,6 +449,7 @@ class OrderReview extends Component
                     $this->stripePublishableKey  = $driver->getPublishableKey();
                     $this->stripeClientSecret    = $result['client_secret'];
                     $this->stripeIsSubscription  = true;
+                    $this->stripeSubscriptionId  = $result['subscription_id'] ?? '';
                     $this->paymentReady          = true;
 
                     return [
@@ -455,6 +457,7 @@ class OrderReview extends Component
                         'publishableKey'     => $this->stripePublishableKey,
                         'clientSecret'       => $this->stripeClientSecret,
                         'isSubscription'     => true,
+                        'subscriptionId'     => $this->stripeSubscriptionId,
                         'trialDays'          => $result['trial_days'] ?? 0,
                         'requiresAction'     => $result['requires_action'] ?? false,
                         'paymentMethodTypes' => $result['payment_method_types'] ?? null,
@@ -806,14 +809,19 @@ class OrderReview extends Component
         }
 
         // Register payment
+        $processorResponse = $payResult->transactionId ?: 'No transaction ID';
+        if (!empty($this->stripeSubscriptionId)) {
+            $processorResponse = "Subscription: {$this->stripeSubscriptionId}" . ($processorResponse !== 'No transaction ID' ? " | {$processorResponse}" : '');
+        }
+
         OrderPayment::create([
             'order_id'           => $order->id,
             'payment_date'       => now(),
             'payment_amount'     => $totals['total'],
             'payment_method'     => $payResult->processorName,
             'payment_status'     => 1, // Paid
-            'authorization_code' => $payResult->authorizationCode,
-            'processor_response' => $payResult->transactionId ?: 'No transaction ID',
+            'authorization_code' => $this->stripeSubscriptionId ?: $payResult->authorizationCode,
+            'processor_response' => $processorResponse,
         ]);
 
         // Associate completed order ID and user ID with the current shopping cart records
