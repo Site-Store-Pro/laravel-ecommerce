@@ -18,6 +18,7 @@ class Product extends Model
     protected $table = 'products';
     protected $fillable = [
         'active',
+        'show_in_results',
         'title',
         'short_description',
         'long_description',
@@ -67,6 +68,7 @@ class Product extends Model
 
     protected $casts = [
         'active' => 'boolean',
+        'show_in_results' => 'boolean',
         'max_qty' => 'integer',
         'checkout_redirect' => 'integer',
         'standalone_purchase' => 'integer',
@@ -95,6 +97,14 @@ class Product extends Model
     public function scopeActive($query)
     {
         return $query->where('products.active', 1);
+    }
+
+    /**
+     * Scope a query to only include products marked to show in search & catalog results.
+     */
+    public function scopeShowInResults($query)
+    {
+        return $query->where('products.show_in_results', 1);
     }
 
     protected static function booted(): void

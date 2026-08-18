@@ -199,6 +199,7 @@ class FeaturedItemsWidget extends Component
         $query = Product::with(['variants.inventory', 'variants.images'])
             ->withCurrentTranslations()
             ->where('active', 1)
+            ->where('show_in_results', 1)
             ->where('featured_item', 1)
             ->whereHas('variants');
 

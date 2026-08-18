@@ -455,6 +455,20 @@
                     
                     <form wire:submit.prevent="updateAdvancedSettings" class="space-y-4">
                         <div class="space-y-4">
+                            {{-- Show in Search & Catalog Results Toggle --}}
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model.live="show_in_results" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold {{ $show_in_results ? 'text-slate-700' : 'text-amber-700' }} transition-colors">
+                                        Show in Search &amp; Catalog Results
+                                        @if(!$show_in_results)
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 ml-1">Hidden from Listings</span>
+                                        @endif
+                                    </span>
+                                    <span class="text-xs text-slate-400">When enabled (default), this product appears in /shop/ catalog results, Live Search dropdown/results, Featured Items, and Cross-Selling lists. When unchecked, this item is hidden from all public discovery listings while remaining fully accessible via its direct URL. Useful for service/invoice items.</span>
+                                </div>
+                            </label>
+
                             <label class="flex items-start gap-3 cursor-pointer">
                                 <input type="checkbox" wire:model="max_qty" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
                                 <div class="flex flex-col">

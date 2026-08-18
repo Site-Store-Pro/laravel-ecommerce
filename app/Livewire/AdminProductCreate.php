@@ -36,6 +36,9 @@ class AdminProductCreate extends Component
     public function mount(): void
     {
         abort_unless(auth()->check() && auth()->user()->isStaff(), 403, 'Unauthorized staff access.');
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('products', 'show_in_results')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        }
         $this->showAiButton = !empty(config('ai.openai_api_key'));
     }
 
@@ -94,6 +97,7 @@ class AdminProductCreate extends Component
 
         $product = Product::create([
             'active' => $this->active ? 1 : 0,
+            'show_in_results' => 1,
             'title' => $this->title,
             'short_description' => $this->short_description,
             'long_description' => $this->long_description,

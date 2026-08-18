@@ -167,6 +167,7 @@ class LiveSearchService
     {
         if ($isDefault) {
             $products = Product::where('active', 1)
+                ->where('show_in_results', 1)
                 ->where(function ($b) use ($q) {
                     $b->where('title', 'like', "%{$q}%")
                       ->orWhere('product_search_index', 'like', "%{$q}%")
@@ -187,6 +188,7 @@ class LiveSearchService
                 ->toArray();
 
             $products = Product::where('active', 1)
+                ->where('show_in_results', 1)
                 ->where(function ($b) use ($q, $translatedIds) {
                     $b->whereIn('id', $translatedIds)
                       ->orWhere('title', 'like', "%{$q}%")

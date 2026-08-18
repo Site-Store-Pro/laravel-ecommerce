@@ -189,13 +189,13 @@ class CrossSellListWidget extends Component
     {
         if ($this->productId > 0) {
             $query = ProductCrossSell::with([
-                'crossSellProduct' => fn ($q) => $q->where('active', 1)->withCurrentTranslations(),
+                'crossSellProduct' => fn ($q) => $q->where('active', 1)->where('show_in_results', 1)->withCurrentTranslations(),
                 'crossSellProduct.variants.inventory',
                 'crossSellProduct.variants.images',
             ])
                 ->where('product_id', $this->productId)
                 ->where('display_on_item_view', true)
-                ->whereHas('crossSellProduct', fn ($q) => $q->where('active', 1));
+                ->whereHas('crossSellProduct', fn ($q) => $q->where('active', 1)->where('show_in_results', 1));
 
             if ($this->sort === 'name') {
                 $query->join('products', 'products.id', '=', 'product_cross_selling.cross_sell_product_id')

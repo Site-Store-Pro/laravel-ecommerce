@@ -95,6 +95,9 @@ class AdminProducts extends Component
     public function mount(): void
     {
         abort_unless(auth()->check() && auth()->user()->isStaff(), 403, 'Unauthorized staff access.');
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('products', 'show_in_results')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        }
     }
 
     public function toggleCreateProduct(): void

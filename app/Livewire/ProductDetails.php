@@ -58,7 +58,7 @@ class ProductDetails extends Component
                 'fields.options',
                 'fields.translations'                => fn ($q) => $q->whereIn('language_id', $langIds),
                 'fields.options.translations'        => fn ($q) => $q->whereIn('language_id', $langIds),
-                'crossSells.crossSellProduct'        => fn ($q) => $q->where('active', 1),
+                'crossSells.crossSellProduct'        => fn ($q) => $q->where('active', 1)->where('show_in_results', 1),
                 'crossSells.crossSellProduct.variants.images',
                 'inventoryAlert',
             ])

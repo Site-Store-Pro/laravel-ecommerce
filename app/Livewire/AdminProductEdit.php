@@ -46,6 +46,7 @@ class AdminProductEdit extends Component
 
     // Advanced Product Options
     public bool   $active               = true; // Product active toggle (if inactive: hidden from catalog, search, plugins, 404 on direct URL)
+    public bool   $show_in_results      = true; // Show in search results, /shop/ catalog, featured items, and cross-selling lists
     public int    $max_qty              = 0;
     public int    $checkout_redirect    = 0;
     public string $completion_redirect  = '';  // Post-order redirect: raw URL or [page:ID] shortcode
@@ -308,7 +309,7 @@ class AdminProductEdit extends Component
     public function mount(int $id): void
     {
         abort_unless(auth()->check() && auth()->user()->isStaff(), 403, 'Unauthorized staff access.');
-        if (!\Illuminate\Support\Facades\Schema::hasColumn('products', 'is_donation_or_bill_pay')) {
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('products', 'show_in_results') || !\Illuminate\Support\Facades\Schema::hasColumn('products', 'is_donation_or_bill_pay')) {
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         }
         $this->productId = $id;
@@ -329,6 +330,7 @@ class AdminProductEdit extends Component
             'crossSells.crossSellProduct',
         ])->findOrFail($this->productId);
         $this->active = (bool) ($this->product->active ?? true);
+        $this->show_in_results = $this->product->show_in_results !== null ? (bool) $this->product->show_in_results : true;
         $this->title = $this->product->title;
         $this->short_description = $this->product->short_description ?? '';
         $this->long_description = $this->product->long_description ?? '';
@@ -399,6 +401,7 @@ class AdminProductEdit extends Component
             'variant_label' => 'nullable|string|max:255',
             'layout_type' => 'required|integer|in:1,2,3,4,5,6',
             'product_video_embed' => 'nullable|string|max:10000',
+            'show_in_results' => 'boolean',
             'max_qty' => 'nullable|boolean',
             'checkout_redirect' => 'nullable|boolean',
             'completion_redirect' => 'nullable|string|max:1000',
@@ -435,6 +438,7 @@ class AdminProductEdit extends Component
 
         $this->product->update([
             'active' => (bool) $this->active,
+            'show_in_results' => (bool) $this->show_in_results,
             // Details
             'title' => $this->title,
             'short_description' => $this->short_description,

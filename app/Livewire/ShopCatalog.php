@@ -520,7 +520,7 @@ class ShopCatalog extends Component
         $priceCol = ($userType === 2) ? 'wholesale_price' : 'public_price';
 
         // Calculate maximum catalog item price for range slider
-        $catalogMaxPrice = (float) (ProductVariant::max(DB::raw("CASE WHEN on_sale = 1 AND sale_price > 0 THEN sale_price ELSE {$priceCol} END")) ?? 500);
+        $catalogMaxPrice = (float) (ProductVariant::whereHas('product', fn($q) => $q->active()->showInResults())->max(DB::raw("CASE WHEN on_sale = 1 AND sale_price > 0 THEN sale_price ELSE {$priceCol} END")) ?? 500);
         if ($catalogMaxPrice <= 0) {
             $catalogMaxPrice = 500;
         }
@@ -528,6 +528,7 @@ class ShopCatalog extends Component
         // ── Base query (shared scope) ────────────────────────────────────────
         $baseQuery = Product::query()
             ->active()
+            ->showInResults()
             ->when($this->category, function ($query) {
                 $categoryModel = Category::where('slug', $this->category)->first();
                 if ($categoryModel) {
