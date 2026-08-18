@@ -457,8 +457,12 @@
     <script src="https://js.stripe.com/v3/" defer></script>
 @elseif($activeProcessorType === 'paddle')
     <script src="https://cdn.paddle.com/paddle/v2/paddle.js" defer></script>
-@elseif($activeProcessorType === 'paypal')
-    <script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&currency={{ $currencyCode }}&components=buttons" defer></script>
+@elseif($activeProcessorType === 'paypal' && !empty($paypalClientId))
+    @if($isSubscription)
+        <script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&vault=true&intent=subscription" defer></script>
+    @else
+        <script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&currency={{ $currencyCode }}&components=buttons" defer></script>
+    @endif
 @endif
 
 <script>
@@ -636,19 +640,71 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
 
         async initPaypal() {
             if (typeof paypal === 'undefined') {
-                await new Promise(resolve => {
+                const loaded = await new Promise(resolve => {
+                    let elapsed = 0;
                     const check = setInterval(() => {
-                        if (typeof paypal !== 'undefined') { clearInterval(check); resolve(); }
+                        elapsed += 100;
+                        if (typeof paypal !== 'undefined') {
+                            clearInterval(check);
+                            resolve(true);
+                        } else if (elapsed >= 6000) {
+                            clearInterval(check);
+                            resolve(false);
+                        }
                     }, 100);
                 });
+
+                if (!loaded) {
+                    this.errorMessage = '{{ siteLabel('review.paypal_load_error', 'Failed to load PayPal checkout. Please refresh the page.') }}';
+                    this.processing = false;
+                    return;
+                }
             }
 
             this.processing = true;
             this.errorMessage = '';
 
             try {
-                paypal.Buttons({
-                    createOrder: async (data, actions) => {
+                const btnConfig = {
+                    onCancel: (data) => {
+                        this.processing = false;
+                        this.errorMessage = '{{ siteLabel('review.paypal_cancelled', 'Payment cancelled.') }}';
+                    },
+                    onError: (err) => {
+                        this.processing = false;
+                        this.errorMessage = err.message || '{{ siteLabel('review.paypal_error', 'An error occurred with PayPal.') }}';
+                    }
+                };
+
+                if (this.isSubscription) {
+                    btnConfig.createSubscription = async (data, actions) => {
+                        this.processing = true;
+                        this.errorMessage = '';
+                        try {
+                            const res = await this.$wire.preparePayment();
+                            if (res.error) {
+                                this.errorMessage = res.error;
+                                this.processing = false;
+                                return;
+                            }
+                            return actions.subscription.create({
+                                'plan_id': res.planId
+                            });
+                        } catch (err) {
+                            this.errorMessage = err.message || '{{ siteLabel('review.paypal_subscription_error', 'Failed to create PayPal subscription.') }}';
+                            this.processing = false;
+                        }
+                    };
+                    btnConfig.onApprove = async (data, actions) => {
+                        try {
+                            await this.$wire.placeOrder(data.subscriptionID || data.orderID);
+                        } catch (err) {
+                            this.errorMessage = err.message || '{{ siteLabel('review.paypal_capture_error', 'Payment capture failed.') }}';
+                            this.processing = false;
+                        }
+                    };
+                } else {
+                    btnConfig.createOrder = async (data, actions) => {
                         this.processing = true;
                         this.errorMessage = '';
                         try {
@@ -663,24 +719,18 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                             this.errorMessage = err.message || '{{ siteLabel('review.paypal_order_error', 'Failed to create PayPal order.') }}';
                             this.processing = false;
                         }
-                    },
-                    onApprove: async (data, actions) => {
+                    };
+                    btnConfig.onApprove = async (data, actions) => {
                         try {
                             await this.$wire.placeOrder(data.orderID);
                         } catch (err) {
                             this.errorMessage = err.message || '{{ siteLabel('review.paypal_capture_error', 'Payment capture failed.') }}';
                             this.processing = false;
                         }
-                    },
-                    onCancel: (data) => {
-                        this.processing = false;
-                        this.errorMessage = '{{ siteLabel('review.paypal_cancelled', 'Payment cancelled.') }}';
-                    },
-                    onError: (err) => {
-                        this.processing = false;
-                        this.errorMessage = err.message || '{{ siteLabel('review.paypal_error', 'An error occurred with PayPal.') }}';
-                    }
-                }).render('#paypal-button-container');
+                    };
+                }
+
+                paypal.Buttons(btnConfig).render('#paypal-button-container');
             } catch (err) {
                 console.error('Failed to initialize PayPal buttons:', err);
                 this.errorMessage = '{{ siteLabel('review.paypal_load_error', 'Failed to load PayPal checkout. Please refresh the page.') }}';

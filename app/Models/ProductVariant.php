@@ -67,6 +67,14 @@ class ProductVariant extends Model
         'paddle_live_price_id',
         'stripe_sandbox_price_id',
         'stripe_live_price_id',
+        'paypal_sandbox_plan_id',
+        'paypal_live_plan_id',
+        'paypal_billing_interval',
+        'paypal_billing_frequency',
+        'paypal_trial_enabled',
+        'paypal_trial_days',
+        'paypal_trial_price',
+        'paypal_total_cycles',
         'create_new_stripe_product',
         'stripe_billing_interval',
         'stripe_trial_enabled',
@@ -100,6 +108,21 @@ class ProductVariant extends Model
         'ebay_options',
         'ebay_shipping_profile_id',
         'ebay_return_policy_id',
+        'etsy_product',
+        'etsy_price',
+        'etsy_options',
+        'google_product',
+        'google_price',
+        'google_options',
+        'facebook_product',
+        'facebook_price',
+        'facebook_options',
+        'pinterest_product',
+        'pinterest_price',
+        'pinterest_options',
+        'tiktok_product',
+        'tiktok_price',
+        'tiktok_options',
     ];
 
     protected $casts = [
@@ -131,6 +154,11 @@ class ProductVariant extends Model
         'stripe_trial_label'        => 'string',
         'paddle_price'              => 'decimal:2',
         'paddle_frequency'          => 'integer',
+        'paypal_billing_frequency'  => 'integer',
+        'paypal_trial_enabled'      => 'integer',
+        'paypal_trial_days'         => 'integer',
+        'paypal_trial_price'        => 'decimal:2',
+        'paypal_total_cycles'       => 'integer',
         'is_event'                  => 'boolean',
     ];
 
@@ -163,13 +191,18 @@ class ProductVariant extends Model
 
         static::saving(function ($variant) {
             $variant->subscription = $variant->isSubscriptionVariant() ? 1 : 0;
+            \Illuminate\Support\Facades\Cache::forget('shop_catalog_available_variant_attrs');
+        });
+
+        static::deleted(function ($variant) {
+            \Illuminate\Support\Facades\Cache::forget('shop_catalog_available_variant_attrs');
         });
     }
 
     /**
      * Determine whether this variant is a subscription item.
      * A variant is a subscription if it has any Stripe price ID, create_new_stripe_product
-     * is enabled, or it has a Paddle price ID configured.
+     * is enabled, Paddle price ID/interval configured, or PayPal plan ID configured.
      */
     public function isSubscriptionVariant(): bool
     {
@@ -178,7 +211,9 @@ class ProductVariant extends Model
             || (int) $this->create_new_stripe_product === 1
             || !empty($this->paddle_sandbox_price_id)
             || !empty($this->paddle_live_price_id)
-            || !empty($this->paddle_interval);
+            || !empty($this->paddle_interval)
+            || !empty($this->paypal_sandbox_plan_id)
+            || !empty($this->paypal_live_plan_id);
     }
 
     /**

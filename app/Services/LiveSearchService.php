@@ -166,7 +166,8 @@ class LiveSearchService
     private function searchProducts(string $q, int $langId, bool $isDefault): array
     {
         if ($isDefault) {
-            $products = Product::where('active', 1)
+            $products = Product::with(['variants.images'])
+                ->where('active', 1)
                 ->where('show_in_results', 1)
                 ->where(function ($b) use ($q) {
                     $b->where('title', 'like', "%{$q}%")
@@ -187,7 +188,8 @@ class LiveSearchService
                 ->pluck('product_id')
                 ->toArray();
 
-            $products = Product::where('active', 1)
+            $products = Product::with(['variants.images'])
+                ->where('active', 1)
                 ->where('show_in_results', 1)
                 ->where(function ($b) use ($q, $translatedIds) {
                     $b->whereIn('id', $translatedIds)

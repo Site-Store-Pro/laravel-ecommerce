@@ -22,8 +22,6 @@ class AdminProductCreate extends Component
     public string $meta_title = '';
     public string $meta_description = '';
     public string $seo_slug = '';
-    public int $product_download_item = 0;
-    public int $product_shipping = 1;
     public bool $active = true;
     public array $selectedCategories = [];
     public ?int $brand_id = null;
@@ -36,8 +34,12 @@ class AdminProductCreate extends Component
     public function mount(): void
     {
         abort_unless(auth()->check() && auth()->user()->isStaff(), 403, 'Unauthorized staff access.');
-        if (!\Illuminate\Support\Facades\Schema::hasColumn('products', 'show_in_results')) {
+        $hasColumn = \Illuminate\Support\Facades\Cache::rememberForever('db_has_col_show_in_results', function () {
+            return \Illuminate\Support\Facades\Schema::hasColumn('products', 'show_in_results');
+        });
+        if (!$hasColumn) {
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            \Illuminate\Support\Facades\Cache::forget('db_has_col_show_in_results');
         }
         $this->showAiButton = !empty(config('ai.openai_api_key'));
     }
@@ -108,8 +110,8 @@ class AdminProductCreate extends Component
             'meta_title' => $this->meta_title ?: $this->title,
             'meta_description' => $this->meta_description ?: $this->short_description,
             'seo_slug' => $this->seo_slug,
-            'download_item' => $this->product_download_item,
-            'shipping' => $this->product_shipping,
+            'download_item' => 0,
+            'shipping' => 1,
             'brand_id' => $this->brand_id,
         ]);
 

@@ -50,6 +50,44 @@ class PayPalProcessor implements PaymentProcessorInterface
      */
     public function charge(float $amount, string $currency, array $payload): PaymentResult
     {
+        // ── Subscription verification flow ──────────────────────────────────
+        $subscriptionId = $payload['subscription_id'] ?? null;
+        if (empty($subscriptionId) && !empty($payload['order_id']) && str_starts_with($payload['order_id'], 'I-')) {
+            $subscriptionId = $payload['order_id'];
+        }
+
+        if (!empty($subscriptionId)) {
+            try {
+                $subData = $this->getSubscription($subscriptionId);
+                $status = strtoupper($subData['status'] ?? '');
+
+                if (!in_array($status, ['ACTIVE', 'APPROVED'])) {
+                    return new PaymentResult(
+                        success:           false,
+                        authorizationCode: '',
+                        errorMessage:      "PayPal Subscription status: $status",
+                        processorName:     $this->getName(),
+                    );
+                }
+
+                return new PaymentResult(
+                    success:           true,
+                    authorizationCode: $subscriptionId,
+                    transactionId:     $subscriptionId,
+                    processorName:     $this->getName(),
+                );
+            } catch (\Throwable $e) {
+                Log::error('PayPal subscription verification error: ' . $e->getMessage());
+                return new PaymentResult(
+                    success:           false,
+                    authorizationCode: '',
+                    errorMessage:      'PayPal subscription verification failed: ' . $e->getMessage(),
+                    processorName:     $this->getName(),
+                );
+            }
+        }
+
+        // ── Standard one-time order capture flow ────────────────────────────
         $orderId = $payload['order_id'] ?? null;
 
         if (empty($orderId)) {
@@ -130,6 +168,27 @@ class PayPalProcessor implements PaymentProcessorInterface
     }
 
     /**
+     * Retrieve subscription details from PayPal.
+     */
+    public function getSubscription(string $subscriptionId): array
+    {
+        $accessToken = $this->getAccessToken();
+        $baseUrl = $this->getBaseUrl();
+
+        $response = Http::withToken($accessToken)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->get("$baseUrl/v1/billing/subscriptions/$subscriptionId");
+
+        if ($response->failed()) {
+            $err = $response->json();
+            $msg = $err['message'] ?? 'Could not retrieve PayPal subscription.';
+            throw new \RuntimeException($msg);
+        }
+
+        return $response->json();
+    }
+
+    /**
      * Create a PayPal order on the server side and return its ID.
      */
     public function createOrder(float $amount, string $currency): string
@@ -160,33 +219,183 @@ class PayPalProcessor implements PaymentProcessorInterface
         return $response->json()['id'];
     }
 
-    public function getClientId(): string
+    /**
+     * Create a Catalog Product in PayPal (POST /v1/catalogs/products).
+     */
+    public function createCatalogProduct(string $name, string $description = '', string $type = 'SERVICE', string $category = 'SOFTWARE', ?bool $forceSandbox = null): string
     {
-        return $this->sandbox
+        $accessToken = $this->getAccessToken($forceSandbox);
+        $baseUrl = $this->getBaseUrl($forceSandbox);
+
+        $payload = [
+            'name'        => mb_substr($name, 0, 127),
+            'description' => mb_substr($description ?: $name, 0, 256),
+            'type'        => in_array(strtoupper($type), ['PHYSICAL', 'DIGITAL', 'SERVICE']) ? strtoupper($type) : 'SERVICE',
+            'category'    => $category ?: 'SOFTWARE',
+        ];
+
+        $response = Http::withToken($accessToken)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->post("$baseUrl/v1/catalogs/products", $payload);
+
+        if ($response->failed()) {
+            $err = $response->json();
+            $msg = $err['message'] ?? 'Could not create PayPal Catalog Product.';
+            if (!empty($err['details']) && is_array($err['details'])) {
+                $msg .= ' Details: ' . json_encode($err['details']);
+            }
+            throw new \RuntimeException($msg);
+        }
+
+        return $response->json()['id'];
+    }
+
+    /**
+     * Create a Billing Plan in PayPal (POST /v1/billing/plans).
+     */
+    public function createBillingPlan(array $params, ?bool $forceSandbox = null): string
+    {
+        $accessToken = $this->getAccessToken($forceSandbox);
+        $baseUrl = $this->getBaseUrl($forceSandbox);
+
+        $productId    = $params['product_id'];
+        $name         = $params['name'] ?? 'Subscription Plan';
+        $description  = $params['description'] ?? 'Recurring subscription plan';
+        $price        = (float) ($params['price'] ?? 0.00);
+        $currency     = strtoupper($params['currency'] ?? 'USD');
+        $intervalUnit = strtoupper($params['interval'] ?? 'MONTH');
+        $frequency    = (int) ($params['frequency'] ?? 1);
+        $totalCycles  = (int) ($params['total_cycles'] ?? 0);
+        $trialEnabled = !empty($params['trial_enabled']);
+        $trialDays    = (int) ($params['trial_days'] ?? 0);
+        $trialPrice   = (float) ($params['trial_price'] ?? 0.00);
+
+        if (!in_array($intervalUnit, ['DAY', 'WEEK', 'MONTH', 'YEAR'])) {
+            $intervalUnit = 'MONTH';
+        }
+        if ($frequency < 1) {
+            $frequency = 1;
+        }
+
+        $billingCycles = [];
+        $sequence = 1;
+
+        if ($trialEnabled && $trialDays > 0) {
+            $billingCycles[] = [
+                'frequency' => [
+                    'interval_unit'  => 'DAY',
+                    'interval_count' => $trialDays,
+                ],
+                'tenure_type'    => 'TRIAL',
+                'sequence'       => $sequence++,
+                'total_cycles'   => 1,
+                'pricing_scheme' => [
+                    'fixed_price' => [
+                        'value'         => number_format($trialPrice, 2, '.', ''),
+                        'currency_code' => $currency,
+                    ],
+                ],
+            ];
+        }
+
+        $billingCycles[] = [
+            'frequency' => [
+                'interval_unit'  => $intervalUnit,
+                'interval_count' => $frequency,
+            ],
+            'tenure_type'    => 'REGULAR',
+            'sequence'       => $sequence,
+            'total_cycles'   => $totalCycles,
+            'pricing_scheme' => [
+                'fixed_price' => [
+                    'value'         => number_format($price, 2, '.', ''),
+                    'currency_code' => $currency,
+                ],
+            ],
+        ];
+
+        $payload = [
+            'product_id'          => $productId,
+            'name'                => mb_substr($name, 0, 127),
+            'description'         => mb_substr($description, 0, 127),
+            'billing_cycles'      => $billingCycles,
+            'payment_preferences' => [
+                'auto_bill_outstanding'     => true,
+                'setup_fee_failure_action' => 'CONTINUE',
+                'payment_failure_threshold' => 3,
+            ],
+        ];
+
+        $response = Http::withToken($accessToken)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->post("$baseUrl/v1/billing/plans", $payload);
+
+        if ($response->failed()) {
+            $err = $response->json();
+            $msg = $err['message'] ?? 'Could not create PayPal Billing Plan.';
+            if (!empty($err['details']) && is_array($err['details'])) {
+                $msg .= ' Details: ' . json_encode($err['details']);
+            }
+            throw new \RuntimeException($msg);
+        }
+
+        return $response->json()['id'];
+    }
+
+    /**
+     * Create both Product and Plan on-the-fly via PayPal API.
+     */
+    public function createPlanOnTheFly(array $params, ?bool $forceSandbox = null): array
+    {
+        $productName = $params['product_name'] ?? $params['name'] ?? 'Subscription Product';
+        $productDesc = $params['product_description'] ?? 'Subscription service';
+        $type        = $params['product_type'] ?? 'SERVICE';
+
+        $productId = $this->createCatalogProduct($productName, $productDesc, $type, 'SOFTWARE', $forceSandbox);
+
+        $planParams = array_merge($params, [
+            'product_id' => $productId,
+        ]);
+
+        $planId = $this->createBillingPlan($planParams, $forceSandbox);
+
+        return [
+            'product_id' => $productId,
+            'plan_id'    => $planId,
+        ];
+    }
+
+    public function getClientId(?bool $forceSandbox = null): string
+    {
+        $isSandbox = $forceSandbox !== null ? $forceSandbox : $this->sandbox;
+        return $isSandbox
             ? config('services.paypal.sandbox_client_id') ?? env('PAYPAL_SANDBOX_CLIENT_ID', '')
             : config('services.paypal.client_id') ?? env('PAYPAL_CLIENT_ID', '');
     }
 
-    private function getClientSecret(): string
+    private function getClientSecret(?bool $forceSandbox = null): string
     {
-        return $this->sandbox
+        $isSandbox = $forceSandbox !== null ? $forceSandbox : $this->sandbox;
+        return $isSandbox
             ? config('services.paypal.sandbox_client_secret') ?? env('PAYPAL_SANDBOX_CLIENT_SECRET', '')
             : config('services.paypal.client_secret') ?? env('PAYPAL_CLIENT_SECRET', '');
     }
 
-    private function getBaseUrl(): string
+    private function getBaseUrl(?bool $forceSandbox = null): string
     {
-        return $this->sandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
+        $isSandbox = $forceSandbox !== null ? $forceSandbox : $this->sandbox;
+        return $isSandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
     }
 
-    private function getAccessToken(): string
+    private function getAccessToken(?bool $forceSandbox = null): string
     {
-        $clientId = $this->getClientId();
-        $clientSecret = $this->getClientSecret();
-        $baseUrl = $this->getBaseUrl();
+        $clientId = $this->getClientId($forceSandbox);
+        $clientSecret = $this->getClientSecret($forceSandbox);
+        $baseUrl = $this->getBaseUrl($forceSandbox);
 
         if (empty($clientId) || empty($clientSecret)) {
-            throw new \RuntimeException('PayPal credentials are not configured in the environment.');
+            $envName = ($forceSandbox !== null ? $forceSandbox : $this->sandbox) ? 'Sandbox' : 'Live';
+            throw new \RuntimeException("PayPal {$envName} credentials are not configured in the environment.");
         }
 
         $response = Http::withBasicAuth($clientId, $clientSecret)

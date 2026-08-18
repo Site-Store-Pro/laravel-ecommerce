@@ -3,10 +3,11 @@
     Included in both edit and create variant forms in admin-product-edit.blade.php
     Requires: $paddle_sandbox_price_id, $paddle_live_price_id,
               $stripe_sandbox_price_id, $stripe_live_price_id,
+              $paypal_sandbox_plan_id, $paypal_live_plan_id,
               $create_new_stripe_product, $stripe_billing_interval,
               $stripe_trial_enabled, $stripe_trial_days
 --}}
-<div class="mt-4" x-data="{ openProcessorIds: @json((bool)($paddle_sandbox_price_id || $paddle_live_price_id || $paddle_price || $paddle_interval || $stripe_sandbox_price_id || $stripe_live_price_id || $create_new_stripe_product)) }">
+<div class="mt-4" x-data="{ openProcessorIds: @json((bool)($paddle_sandbox_price_id || $paddle_live_price_id || $paddle_price || $paddle_interval || $stripe_sandbox_price_id || $stripe_live_price_id || $create_new_stripe_product || $paypal_sandbox_plan_id || $paypal_live_plan_id)) }">
     <button type="button" @click="openProcessorIds = !openProcessorIds"
         class="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider hover:text-indigo-600 transition-colors w-full text-left group">
         <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="openProcessorIds ? 'rotate-90 text-indigo-500' : 'text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -16,8 +17,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
         </svg>
         Payment Processor IDs
-        <span class="text-[10px] font-normal text-slate-400 normal-case tracking-normal ml-1">Paddle &amp; Stripe subscription settings</span>
-        @if($paddle_sandbox_price_id || $paddle_live_price_id || $paddle_price || $paddle_interval || $stripe_sandbox_price_id || $stripe_live_price_id || $create_new_stripe_product)
+        <span class="text-[10px] font-normal text-slate-400 normal-case tracking-normal ml-1">PayPal, Stripe &amp; Paddle subscription settings</span>
+        @if($paddle_sandbox_price_id || $paddle_live_price_id || $paddle_price || $paddle_interval || $stripe_sandbox_price_id || $stripe_live_price_id || $create_new_stripe_product || $paypal_sandbox_plan_id || $paypal_live_plan_id)
             <span class="ml-auto inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">
                 <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Configured
             </span>
@@ -203,6 +204,132 @@
                 </div>
             </div>
 
+        </div>
+
+        {{-- ── PayPal ──────────────────────────────────────────────────────────── --}}
+        <div class="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+                <p class="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="inline-block w-2 h-2 rounded-full bg-amber-500"></span>
+                    PayPal Subscriptions
+                </p>
+                <span class="text-[10px] text-amber-700 font-medium">Automatic Plan Generator &amp; Manual Entry</span>
+            </div>
+            
+            <p class="text-[11px] text-amber-800 leading-relaxed">
+                Configure recurring subscription parameters below and click <strong>Generate Plan</strong> to automatically create the Product &amp; Billing Plan directly in PayPal, or manually enter existing <code class="font-mono bg-amber-100/80 px-1 py-0.5 rounded text-amber-900">P-xxxx</code> Plan IDs.
+            </p>
+
+            @error('paypal_plan_error')
+                <div class="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-xl text-xs flex items-center gap-2">
+                    <svg class="w-4 h-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>{{ $message }}</span>
+                </div>
+            @enderror
+
+            {{-- Subscription Interval, Frequency & Total Cycles --}}
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white/80 border border-amber-200/80 rounded-xl p-3">
+                <div>
+                    <label class="text-[10px] font-bold text-amber-700 block mb-1 uppercase tracking-wider">Billing Interval</label>
+                    <select wire:model="paypal_billing_interval"
+                        class="w-full px-3 py-2 bg-white border border-amber-200 text-slate-800 rounded-xl text-xs focus:outline-none focus:border-amber-400">
+                        <option value="month">Monthly</option>
+                        <option value="year">Yearly</option>
+                        <option value="week">Weekly</option>
+                        <option value="day">Daily</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-amber-700 block mb-1 uppercase tracking-wider">Billing Frequency</label>
+                    <div class="flex items-center gap-1.5">
+                        <input type="number" min="1" max="99" wire:model="paypal_billing_frequency"
+                            placeholder="1"
+                            class="w-full px-3 py-2 bg-white border border-amber-200 text-slate-800 rounded-xl text-xs focus:outline-none focus:border-amber-400 font-mono">
+                    </div>
+                    <span class="text-[10px] text-slate-400">e.g. 1 = every month, 3 = every 3 months</span>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-amber-700 block mb-1 uppercase tracking-wider">Total Cycles (Duration)</label>
+                    <input type="number" min="0" max="999" wire:model="paypal_total_cycles"
+                        placeholder="0"
+                        class="w-full px-3 py-2 bg-white border border-amber-200 text-slate-800 rounded-xl text-xs focus:outline-none focus:border-amber-400 font-mono">
+                    <span class="text-[10px] text-slate-400">0 = Infinite (ongoing until cancelled)</span>
+                </div>
+            </div>
+
+            {{-- Trial Period Configuration --}}
+            <div class="bg-white/80 border border-amber-200/80 rounded-xl p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-amber-800">Trial Period &amp; Pricing</span>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <div class="relative">
+                            <input type="checkbox" wire:model.live.number="paypal_trial_enabled" class="sr-only peer" true-value="1" false-value="0">
+                            <div class="w-9 h-5 bg-slate-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-amber-400 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                        </div>
+                        <span class="text-xs font-semibold {{ $paypal_trial_enabled ? 'text-amber-700' : 'text-slate-400' }}">
+                            {{ $paypal_trial_enabled ? 'Enabled' : 'Disabled' }}
+                        </span>
+                    </label>
+                </div>
+
+                @if($paypal_trial_enabled)
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-amber-100">
+                        <div>
+                            <label class="text-[10px] font-bold text-amber-700 block mb-1 uppercase tracking-wider">Trial Duration (Days)</label>
+                            <input type="number" min="1" max="365" wire:model="paypal_trial_days"
+                                placeholder="14"
+                                class="w-full px-3 py-2 bg-white border border-amber-200 text-slate-800 rounded-xl text-xs focus:outline-none focus:border-amber-400 font-mono">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-amber-700 block mb-1 uppercase tracking-wider">Trial Price ($ USD)</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-xs text-slate-400">$</span>
+                                <input type="number" step="0.01" min="0" wire:model="paypal_trial_price"
+                                    placeholder="0.00"
+                                    class="w-full pl-6 pr-3 py-2 bg-white border border-amber-200 text-slate-800 rounded-xl text-xs focus:outline-none focus:border-amber-400 font-mono">
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            {{-- One-Click Action Buttons to Generate Plans On-The-Fly --}}
+            <div class="bg-amber-100/60 border border-amber-300/60 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <p class="text-xs font-bold text-amber-900">One-Click Plan Generator</p>
+                    <p class="text-[11px] text-amber-700">Creates the product &amp; plan via PayPal REST API and fills the Plan ID fields below.</p>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button type="button" wire:click="generatePayPalPlan('sandbox')" wire:loading.attr="disabled"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all disabled:opacity-50 cursor-pointer">
+                        <svg wire:loading.remove wire:target="generatePayPalPlan('sandbox')" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <svg wire:loading wire:target="generatePayPalPlan('sandbox')" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span>Generate Sandbox Plan</span>
+                    </button>
+                    <button type="button" wire:click="generatePayPalPlan('live')" wire:loading.attr="disabled"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow-sm transition-all disabled:opacity-50 cursor-pointer">
+                        <svg wire:loading.remove wire:target="generatePayPalPlan('live')" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <svg wire:loading wire:target="generatePayPalPlan('live')" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span>Generate Live Plan</span>
+                    </button>
+                </div>
+            </div>
+
+            {{-- Plan ID Fields (populated or manually editable) --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                <div>
+                    <label class="text-[10px] font-bold text-amber-700 block mb-1 uppercase tracking-wider">Test / Sandbox Plan ID</label>
+                    <input type="text" wire:model="paypal_sandbox_plan_id"
+                        placeholder="P-xxxxxxxxxxxxxxxxxxxxxxxx"
+                        class="w-full px-3 py-2 bg-white border border-amber-200 text-slate-800 rounded-xl text-xs focus:outline-none focus:border-amber-400 font-mono placeholder-slate-300">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-amber-700 block mb-1 uppercase tracking-wider">Live Plan ID</label>
+                    <input type="text" wire:model="paypal_live_plan_id"
+                        placeholder="P-xxxxxxxxxxxxxxxxxxxxxxxx"
+                        class="w-full px-3 py-2 bg-white border border-amber-200 text-slate-800 rounded-xl text-xs focus:outline-none focus:border-amber-400 font-mono placeholder-slate-300">
+                </div>
+            </div>
         </div>
 
     </div>

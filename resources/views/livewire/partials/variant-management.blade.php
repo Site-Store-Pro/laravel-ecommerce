@@ -2354,7 +2354,7 @@
                                             {{-- Actions (front) --}}
                                             <td class="px-3 py-3.5">
                                                 <div class="flex flex-col items-start gap-1.5">
-                                                    <a href="#section-variants" wire:click="startEditVariant({{ $variant->id }})" class="w-full text-center px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-bold rounded-lg transition duration-150 whitespace-nowrap block">Edit &amp; Inventory</a>
+                                                    <button type="button" wire:click="startEditVariant({{ $variant->id }})" @click="document.getElementById('section-variants')?.scrollIntoView({ behavior: 'smooth', block: 'start' })" class="w-full text-center px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-bold rounded-lg transition duration-150 whitespace-nowrap block cursor-pointer">Edit &amp; Inventory</button>
                                                     <button wire:click="duplicateVariant({{ $variant->id }})" class="w-full px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-bold rounded-lg transition duration-150">Duplicate</button>
                                                     <button onclick="confirm('Are you sure you want to delete this variant?') || event.stopImmediatePropagation()" wire:click="deleteVariant({{ $variant->id }})" class="w-full px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-bold rounded-lg transition duration-150">Delete</button>
                                                 </div>

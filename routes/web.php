@@ -208,5 +208,6 @@ Route::post('page-unlock/{id}', [\App\Http\Controllers\PageController::class, 'u
 Route::post('webhooks/inventory-update', [\App\Http\Controllers\InventoryWebhookController::class, 'update']);
 Route::post('webhooks/stripe',  [\App\Http\Controllers\StripeWebhookController::class,  'handle'])->name('webhooks.stripe');
 Route::post('webhooks/paddle',  [\App\Http\Controllers\PaddleWebhookController::class,  'handle'])->name('webhooks.paddle');
+Route::post('webhooks/paypal',  [\App\Http\Controllers\PayPalWebhookController::class,  'handle'])->name('webhooks.paypal');
 
 Route::get('{slug}', [\App\Http\Controllers\PageController::class, 'show'])->where('slug', '.*')->name('page.show');

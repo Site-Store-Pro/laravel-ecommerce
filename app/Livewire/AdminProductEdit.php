@@ -211,6 +211,14 @@ class AdminProductEdit extends Component
     public string $paddle_currency_code       = 'USD';
     public string $stripe_sandbox_price_id     = '';
     public string $stripe_live_price_id        = '';
+    public string $paypal_sandbox_plan_id      = '';
+    public string $paypal_live_plan_id         = '';
+    public string $paypal_billing_interval     = 'month'; // day | week | month | year
+    public int    $paypal_billing_frequency    = 1;
+    public int    $paypal_trial_enabled        = 0;
+    public int    $paypal_trial_days           = 0;
+    public ?float $paypal_trial_price          = 0.00;
+    public int    $paypal_total_cycles         = 0; // 0 = Infinite / Ongoing
     public int    $create_new_stripe_product   = 0;
     public string $stripe_billing_interval     = 'month'; // month | year | week
     public int    $stripe_trial_enabled        = 0;
@@ -309,8 +317,14 @@ class AdminProductEdit extends Component
     public function mount(int $id): void
     {
         abort_unless(auth()->check() && auth()->user()->isStaff(), 403, 'Unauthorized staff access.');
-        if (!\Illuminate\Support\Facades\Schema::hasColumn('products', 'show_in_results') || !\Illuminate\Support\Facades\Schema::hasColumn('products', 'is_donation_or_bill_pay')) {
+        $hasColumns = \Illuminate\Support\Facades\Cache::rememberForever('db_has_cols_product_edit_v1', function () {
+            return \Illuminate\Support\Facades\Schema::hasColumn('products', 'show_in_results')
+                && \Illuminate\Support\Facades\Schema::hasColumn('products', 'is_donation_or_bill_pay')
+                && \Illuminate\Support\Facades\Schema::hasColumn('product_variants', 'paypal_sandbox_plan_id');
+        });
+        if (!$hasColumns) {
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            \Illuminate\Support\Facades\Cache::forget('db_has_cols_product_edit_v1');
         }
         $this->productId = $id;
         $this->loadProduct();
@@ -324,6 +338,7 @@ class AdminProductEdit extends Component
     {
         $this->product = Product::with([
             'variants.inventory',
+            'variants.images',
             'variants.eventDetails',
             'categories',
             'fields.options',
@@ -695,6 +710,14 @@ class AdminProductEdit extends Component
         $this->paddle_currency_code     = 'USD';
         $this->stripe_sandbox_price_id  = '';
         $this->stripe_live_price_id     = '';
+        $this->paypal_sandbox_plan_id   = '';
+        $this->paypal_live_plan_id      = '';
+        $this->paypal_billing_interval  = 'month';
+        $this->paypal_billing_frequency = 1;
+        $this->paypal_trial_enabled     = 0;
+        $this->paypal_trial_days        = 0;
+        $this->paypal_trial_price       = 0.00;
+        $this->paypal_total_cycles      = 0;
         $this->create_new_stripe_product = 0;
         $this->stripe_billing_interval  = 'month';
         $this->stripe_trial_enabled     = 0;
@@ -787,6 +810,14 @@ class AdminProductEdit extends Component
             'paddle_currency_code'      => $original->paddle_currency_code ?? 'USD',
             'stripe_sandbox_price_id'   => $original->stripe_sandbox_price_id,
             'stripe_live_price_id'      => $original->stripe_live_price_id,
+            'paypal_sandbox_plan_id'    => $original->paypal_sandbox_plan_id,
+            'paypal_live_plan_id'       => $original->paypal_live_plan_id,
+            'paypal_billing_interval'   => $original->paypal_billing_interval   ?? 'month',
+            'paypal_billing_frequency'  => (int) ($original->paypal_billing_frequency ?? 1),
+            'paypal_trial_enabled'      => (int) ($original->paypal_trial_enabled ?? 0),
+            'paypal_trial_days'         => (int) ($original->paypal_trial_days   ?? 0),
+            'paypal_trial_price'        => $original->paypal_trial_price ? (float)$original->paypal_trial_price : 0.00,
+            'paypal_total_cycles'       => (int) ($original->paypal_total_cycles ?? 0),
             'create_new_stripe_product' => $original->create_new_stripe_product ?? 0,
             'stripe_billing_interval'   => $original->stripe_billing_interval   ?? 'month',
             'stripe_trial_enabled'      => $original->stripe_trial_enabled      ?? 0,
@@ -989,6 +1020,14 @@ class AdminProductEdit extends Component
             'paddle_currency_code'      => $this->paddle_currency_code      ?: 'USD',
             'stripe_sandbox_price_id'   => $this->stripe_sandbox_price_id   ?: null,
             'stripe_live_price_id'      => $this->stripe_live_price_id      ?: null,
+            'paypal_sandbox_plan_id'    => $this->paypal_sandbox_plan_id    ?: null,
+            'paypal_live_plan_id'       => $this->paypal_live_plan_id       ?: null,
+            'paypal_billing_interval'   => $this->paypal_billing_interval   ?: 'month',
+            'paypal_billing_frequency'  => max(1, (int)$this->paypal_billing_frequency),
+            'paypal_trial_enabled'      => $this->paypal_trial_enabled,
+            'paypal_trial_days'         => $this->paypal_trial_enabled ? (int)$this->paypal_trial_days : 0,
+            'paypal_trial_price'        => $this->paypal_trial_enabled ? (float)$this->paypal_trial_price : 0.00,
+            'paypal_total_cycles'       => max(0, (int)$this->paypal_total_cycles),
             'create_new_stripe_product' => $this->create_new_stripe_product,
             'stripe_billing_interval'   => $this->stripe_billing_interval   ?: 'month',
             'stripe_trial_enabled'      => $this->stripe_trial_enabled,
@@ -1085,7 +1124,7 @@ class AdminProductEdit extends Component
 
     public function startEditVariant(int $variantId): void
     {
-        $variant = ProductVariant::with(['inventory', 'images'])->findOrFail($variantId);
+        $variant = ProductVariant::with(['inventory', 'images', 'eventDetails'])->findOrFail($variantId);
         $this->selectedVariantId = $variant->id;
         $this->sku = $variant->sku ?? '';
         $this->public_price = (float) ($variant->public_price ?? 0.00);
@@ -1114,6 +1153,14 @@ class AdminProductEdit extends Component
         $this->paddle_currency_code       = $variant->paddle_currency_code       ?? 'USD';
         $this->stripe_sandbox_price_id    = $variant->stripe_sandbox_price_id    ?? '';
         $this->stripe_live_price_id       = $variant->stripe_live_price_id       ?? '';
+        $this->paypal_sandbox_plan_id     = $variant->paypal_sandbox_plan_id     ?? '';
+        $this->paypal_live_plan_id        = $variant->paypal_live_plan_id        ?? '';
+        $this->paypal_billing_interval    = $variant->paypal_billing_interval    ?? 'month';
+        $this->paypal_billing_frequency   = (int) ($variant->paypal_billing_frequency ?? 1);
+        $this->paypal_trial_enabled       = (int) ($variant->paypal_trial_enabled ?? 0);
+        $this->paypal_trial_days          = (int) ($variant->paypal_trial_days   ?? 0);
+        $this->paypal_trial_price         = $variant->paypal_trial_price ? (float)$variant->paypal_trial_price : 0.00;
+        $this->paypal_total_cycles        = (int) ($variant->paypal_total_cycles ?? 0);
         $this->create_new_stripe_product  = (int) ($variant->create_new_stripe_product ?? 0);
         $this->stripe_billing_interval    = $variant->stripe_billing_interval    ?? 'month';
         $this->stripe_trial_enabled       = (int) ($variant->stripe_trial_enabled ?? 0);
@@ -1424,6 +1471,14 @@ class AdminProductEdit extends Component
             'paddle_currency_code'     => $this->paddle_currency_code     ?: 'USD',
             'stripe_sandbox_price_id'  => $this->stripe_sandbox_price_id  ?: null,
             'stripe_live_price_id'     => $this->stripe_live_price_id     ?: null,
+            'paypal_sandbox_plan_id'   => $this->paypal_sandbox_plan_id   ?: null,
+            'paypal_live_plan_id'      => $this->paypal_live_plan_id      ?: null,
+            'paypal_billing_interval'  => $this->paypal_billing_interval  ?: 'month',
+            'paypal_billing_frequency' => max(1, (int)$this->paypal_billing_frequency),
+            'paypal_trial_enabled'     => $this->paypal_trial_enabled,
+            'paypal_trial_days'        => $this->paypal_trial_enabled ? (int)$this->paypal_trial_days : 0,
+            'paypal_trial_price'       => $this->paypal_trial_enabled ? (float)$this->paypal_trial_price : 0.00,
+            'paypal_total_cycles'      => max(0, (int)$this->paypal_total_cycles),
             'create_new_stripe_product'=> $this->create_new_stripe_product,
             'stripe_billing_interval'  => $this->stripe_billing_interval  ?: 'month',
             'stripe_trial_enabled'     => $this->stripe_trial_enabled,
@@ -1530,6 +1585,60 @@ class AdminProductEdit extends Component
         $this->qtyDiscounts = [];
         session()->flash('status', 'Variant details and stock levels updated successfully.');
         $this->loadProduct();
+    }
+
+    /**
+     * Generate PayPal Product and Billing Plan on-the-fly via PayPal Subscriptions REST API.
+     */
+    public function generatePayPalPlan(string $environment = 'sandbox'): void
+    {
+        $isSandbox = strtolower($environment) === 'sandbox';
+        $price = (float) ($this->public_price ?? 0.00);
+
+        if ($price <= 0) {
+            $this->addError('paypal_plan_error', 'Please enter a valid Public Price greater than 0 before generating a PayPal plan.');
+            return;
+        }
+
+        try {
+            $processor = new \App\Services\Payments\Processors\PayPalProcessor(sandbox: $isSandbox);
+
+            $productName = trim($this->title ?: 'Product') . ' - ' . trim($this->sku ?: 'Variant');
+            $interval = $this->paypal_billing_interval ?: 'month';
+            $frequency = max(1, (int) $this->paypal_billing_frequency);
+            $totalCycles = max(0, (int) $this->paypal_total_cycles);
+
+            $planName = $productName . ' (' . ($frequency > 1 ? "Every {$frequency} " : '') . ucfirst($interval) . 'ly)';
+
+            $result = $processor->createPlanOnTheFly([
+                'name'                => $planName,
+                'product_name'        => $productName,
+                'product_description' => trim($this->short_description ?: $productName),
+                'product_type'        => $this->download_item ? 'DIGITAL' : ($this->shipping ? 'PHYSICAL' : 'SERVICE'),
+                'price'               => $price,
+                'currency'            => 'USD',
+                'interval'            => $interval,
+                'frequency'           => $frequency,
+                'total_cycles'        => $totalCycles,
+                'trial_enabled'       => (bool) $this->paypal_trial_enabled,
+                'trial_days'          => (int) $this->paypal_trial_days,
+                'trial_price'         => (float) $this->paypal_trial_price,
+            ], forceSandbox: $isSandbox);
+
+            $planId = $result['plan_id'];
+
+            if ($isSandbox) {
+                $this->paypal_sandbox_plan_id = $planId;
+            } else {
+                $this->paypal_live_plan_id = $planId;
+            }
+
+            session()->flash('status', ($isSandbox ? 'Sandbox' : 'Live') . " PayPal Plan created successfully: {$planId}");
+            $this->dispatch('show-variant-saved');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('PayPal generate plan error: ' . $e->getMessage());
+            $this->addError('paypal_plan_error', 'Failed to generate PayPal plan: ' . $e->getMessage());
+        }
     }
 
     private function storeUploadedFiles(ProductVariant $variant): bool

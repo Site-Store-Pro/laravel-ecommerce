@@ -131,8 +131,12 @@ class AdminCmsPageEdit extends Component
     public function mount(?int $id = null): void
     {
         abort_unless(auth()->check() && auth()->user()->isEcommerceAdmin(), 403);
-        if (!\Illuminate\Support\Facades\Schema::hasColumn('cms_pages', 'background_video')) {
+        $hasColumn = \Illuminate\Support\Facades\Cache::rememberForever('db_has_col_cms_pages_background_video', function () {
+            return \Illuminate\Support\Facades\Schema::hasColumn('cms_pages', 'background_video');
+        });
+        if (!$hasColumn) {
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            \Illuminate\Support\Facades\Cache::forget('db_has_col_cms_pages_background_video');
         }
 
         if ($id) {

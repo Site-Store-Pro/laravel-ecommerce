@@ -42,9 +42,11 @@ class OrderReview extends Component
     public string $stripeSubscriptionId = '';   // holds Stripe sub_xxx ID when subscription is created
 
     // PayPal state
-    public string $paypalOrderId      = '';
-    public string $paypalClientId     = '';
-    public string $currencyCode       = '';
+    public string $paypalOrderId        = '';
+    public string $paypalClientId       = '';
+    public bool   $paypalIsSubscription = false;
+    public string $paypalPlanId         = '';
+    public string $currencyCode         = '';
 
     public bool $requiresShipping = false;
     public string $selectedShippingOption = '';
@@ -557,17 +559,39 @@ class OrderReview extends Component
             } elseif ($type === 'paypal') {
                 /** @var \App\Services\Payments\Processors\PayPalProcessor $driver */
                 $driver = $manager->resolveActive($processorId);
+                $this->paypalClientId = $driver->getClientId();
+                $this->currencyCode = $currency;
+
+                if ($subVariant) {
+                    $planId = $driver->isSandbox()
+                        ? ($subVariant->paypal_sandbox_plan_id ?? null)
+                        : ($subVariant->paypal_live_plan_id ?? null);
+
+                    if (!empty($planId)) {
+                        $this->paypalIsSubscription = true;
+                        $this->paypalPlanId = $planId;
+                        $this->paymentReady = true;
+
+                        return [
+                            'processor'      => 'paypal',
+                            'isSubscription' => true,
+                            'planId'         => $planId,
+                            'clientId'       => $this->paypalClientId,
+                        ];
+                    }
+                }
+
                 $orderId = $driver->createOrder($total, $currency);
 
                 $this->paypalOrderId = $orderId;
-                $this->paypalClientId = $driver->getClientId();
-                $this->currencyCode = $currency;
+                $this->paypalIsSubscription = false;
                 $this->paymentReady = true;
 
                 return [
-                    'processor' => 'paypal',
-                    'orderId'   => $orderId,
-                    'clientId'  => $this->paypalClientId,
+                    'processor'      => 'paypal',
+                    'isSubscription' => false,
+                    'orderId'        => $orderId,
+                    'clientId'       => $this->paypalClientId,
                 ];
 
             } else {
@@ -672,7 +696,9 @@ class OrderReview extends Component
         $payload = match ($manager->activeProcessorType($processorId)) {
             'stripe' => ['payment_intent_id' => $gatewayToken],
             'paddle' => ['transaction_id'    => $gatewayToken],
-            'paypal' => ['order_id'          => $gatewayToken],
+            'paypal' => (str_starts_with($gatewayToken, 'I-') || $this->paypalIsSubscription)
+                ? ['subscription_id' => $gatewayToken]
+                : ['order_id'        => $gatewayToken],
             // For test processor, read gatewayToken from Livewire property (synced by wire:model radio).
             // '' = simulate success, 'fail' = simulate decline.
             default  => ['simulate' => $this->gatewayToken],
@@ -812,7 +838,12 @@ class OrderReview extends Component
         $processorResponse = $payResult->transactionId ?: 'No transaction ID';
         if (!empty($this->stripeSubscriptionId)) {
             $processorResponse = "Subscription: {$this->stripeSubscriptionId}" . ($processorResponse !== 'No transaction ID' ? " | {$processorResponse}" : '');
+        } elseif ($this->paypalIsSubscription || str_starts_with($gatewayToken, 'I-')) {
+            $processorResponse = "Subscription: {$gatewayToken}" . ($processorResponse !== 'No transaction ID' && $processorResponse !== $gatewayToken ? " | {$processorResponse}" : '');
         }
+
+        $authCode = $this->stripeSubscriptionId 
+            ?: ((str_starts_with($gatewayToken, 'I-') || $this->paypalIsSubscription) ? $gatewayToken : $payResult->authorizationCode);
 
         OrderPayment::create([
             'order_id'           => $order->id,
@@ -820,7 +851,7 @@ class OrderReview extends Component
             'payment_amount'     => $totals['total'],
             'payment_method'     => $payResult->processorName,
             'payment_status'     => 1, // Paid
-            'authorization_code' => $this->stripeSubscriptionId ?: $payResult->authorizationCode,
+            'authorization_code' => $authCode,
             'processor_response' => $processorResponse,
         ]);
 

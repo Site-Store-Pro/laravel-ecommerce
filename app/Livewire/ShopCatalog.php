@@ -774,51 +774,58 @@ class ShopCatalog extends Component
         $advancedSearchEnabled = \App\Models\CmsSetting::isAdvancedSearchEnabled();
         $availableVariantAttributes = [];
         if ($advancedSearchEnabled) {
-            $variantAttributesRaw = ProductVariant::whereNotNull('attributes')
-                ->where('attributes', '!=', '')
-                ->pluck('attributes');
+            $availableVariantAttributes = \Illuminate\Support\Facades\Cache::remember('shop_catalog_available_variant_attrs', 1800, function () {
+                $variantAttributesRaw = ProductVariant::whereNotNull('attributes')
+                    ->where('attributes', '!=', '')
+                    ->pluck('attributes');
 
-            foreach ($variantAttributesRaw as $attrRaw) {
-                $attrArray = is_string($attrRaw) ? json_decode($attrRaw, true) : $attrRaw;
-                if (!is_array($attrArray)) {
-                    $pairs = explode(',', (string)$attrRaw);
-                    $attrArray = [];
-                    foreach ($pairs as $pair) {
-                        if (str_contains($pair, ':')) {
-                            [$k, $v] = explode(':', $pair, 2);
-                            $attrArray[trim($k)] = trim($v);
+                $attrs = [];
+                foreach ($variantAttributesRaw as $attrRaw) {
+                    $attrArray = is_string($attrRaw) ? json_decode($attrRaw, true) : $attrRaw;
+                    if (!is_array($attrArray)) {
+                        $pairs = explode(',', (string)$attrRaw);
+                        $attrArray = [];
+                        foreach ($pairs as $pair) {
+                            if (str_contains($pair, ':')) {
+                                [$k, $v] = explode(':', $pair, 2);
+                                $attrArray[trim($k)] = trim($v);
+                            }
                         }
                     }
-                }
-                if (is_array($attrArray)) {
-                    foreach ($attrArray as $aKey => $aVal) {
-                        $aKey = trim((string)$aKey);
-                        if (empty($aKey) || in_array(strtolower($aKey), ['sku', 'price', 'weight', 'inventory'])) continue;
-                        if (is_array($aVal)) {
-                            foreach ($aVal as $vItem) {
-                                $vItem = trim((string)$vItem);
-                                if ($vItem !== '') {
-                                    $availableVariantAttributes[$aKey][$vItem] = true;
+                    if (is_array($attrArray)) {
+                        foreach ($attrArray as $aKey => $aVal) {
+                            $aKey = trim((string)$aKey);
+                            if (empty($aKey) || in_array(strtolower($aKey), ['sku', 'price', 'weight', 'inventory'])) continue;
+                            if (is_array($aVal)) {
+                                foreach ($aVal as $vItem) {
+                                    $vItem = trim((string)$vItem);
+                                    if ($vItem !== '') {
+                                        $attrs[$aKey][$vItem] = true;
+                                    }
+                                }
+                            } else {
+                                $aVal = trim((string)$aVal);
+                                if ($aVal !== '') {
+                                    $attrs[$aKey][$aVal] = true;
                                 }
                             }
-                        } else {
-                            $aVal = trim((string)$aVal);
-                            if ($aVal !== '') {
-                                $availableVariantAttributes[$aKey][$aVal] = true;
-                            }
                         }
                     }
                 }
-            }
 
-            foreach ($availableVariantAttributes as $k => $vMap) {
-                ksort($vMap);
-                $availableVariantAttributes[$k] = array_keys($vMap);
+                foreach ($attrs as $k => $vMap) {
+                    ksort($vMap);
+                    $attrs[$k] = array_keys($vMap);
+                }
+                ksort($attrs);
+                return $attrs;
+            });
+
+            foreach ($availableVariantAttributes as $k => $vList) {
                 if (!isset($this->selectedAttributes[$k]) || !is_array($this->selectedAttributes[$k])) {
                     $this->selectedAttributes[$k] = [];
                 }
             }
-            ksort($availableVariantAttributes);
         }
 
         // Count active advanced filter badges

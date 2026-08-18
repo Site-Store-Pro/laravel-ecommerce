@@ -8,7 +8,7 @@ use App\Models\OrderCheckoutOption;
 use App\Models\OrderProcessor;
 use App\Services\Payments\PaymentProcessorManager;
 use App\Services\Payments\Processors\PayPalProcessor;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
@@ -16,26 +16,33 @@ use Tests\TestCase;
 
 class PayPalIntegrationTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        DB::statement("INSERT IGNORE INTO `user_roles` (`id`, `name`, `description`) VALUES 
+            (1, 'User', 'Customer'),
+            (2, 'Wholesale', 'Wholesale'),
+            (3, 'Admin', 'Admin')");
+
         // Seed default order processors & checkout options
-        DB::table('order_processors')->insert([
+        DB::table('order_processors')->upsert([
             ['processor_id' => 0, 'processor_name' => 'Test Gateway', 'production' => 0, 'created_at' => now(), 'updated_at' => now()],
             ['processor_id' => 3, 'processor_name' => 'PayPal Payments', 'production' => 0, 'created_at' => now(), 'updated_at' => now()],
-        ]);
+        ], ['processor_id']);
 
-        DB::table('order_checkout_options')->insert([
-            'primary_processor'   => 3, // PayPal active
-            'secondary_processor' => 0,
-            'tertiary_processor'  => 0,
-            'randomize_processor' => 0,
-            'created_at'          => now(),
-            'updated_at'          => now(),
-        ]);
+        DB::table('order_checkout_options')->updateOrInsert(
+            ['id' => 1],
+            [
+                'primary_processor'   => 3, // PayPal active
+                'secondary_processor' => 0,
+                'tertiary_processor'  => 0,
+                'randomize_processor' => 0,
+                'updated_at'          => now(),
+            ]
+        );
     }
 
     public function test_paypal_processor_resolves_correctly(): void
@@ -112,9 +119,10 @@ class PayPalIntegrationTest extends TestCase
         Livewire::test('order-review')
             ->call('preparePayment')
             ->assertReturned([
-                'processor' => 'paypal',
-                'orderId' => 'mock-paypal-order-id',
-                'clientId' => 'test-id',
+                'processor'      => 'paypal',
+                'isSubscription' => false,
+                'orderId'        => 'mock-paypal-order-id',
+                'clientId'       => 'test-id',
             ])
             ->call('placeOrder', 'mock-paypal-order-id')
             ->assertHasNoErrors();

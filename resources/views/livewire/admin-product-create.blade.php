@@ -78,31 +78,15 @@
                             </div>
                         </div>
 
-                        {{-- Brand & Categories Grid --}}
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <div>
-                                <label class="text-xs font-bold text-slate-400 dark:text-slate-500 block mb-1 uppercase tracking-wider">Brand</label>
-                                <select wire:model="brand_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl focus:outline-none focus:border-indigo-500 shadow-sm">
-                                    <option value="">-- No Brand Selected --</option>
-                                    @foreach($brands as $b)
-                                        <option value="{{ $b->id }}">{{ $b->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="text-xs font-bold text-slate-400 dark:text-slate-500 block mb-1 uppercase tracking-wider">Type / Delivery</label>
-                                <div class="flex items-center gap-6 pt-2">
-                                    <label class="inline-flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" wire:model="product_shipping" value="1" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Requires Shipping</span>
-                                    </label>
-                                    <label class="inline-flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" wire:model="product_download_item" value="1" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Digital Download Item</span>
-                                    </label>
-                                </div>
-                            </div>
+                        {{-- Brand --}}
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 dark:text-slate-500 block mb-1 uppercase tracking-wider">Brand</label>
+                            <select wire:model="brand_id" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl focus:outline-none focus:border-indigo-500 shadow-sm">
+                                <option value="">-- No Brand Selected --</option>
+                                @foreach($brands as $b)
+                                    <option value="{{ $b->id }}">{{ $b->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         {{-- Categories checklist --}}
