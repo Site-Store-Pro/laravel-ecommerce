@@ -764,6 +764,26 @@ class AdminOrderDetails extends Component
         session()->flash('status', 'Payment deleted successfully.');
     }
 
+    public function cancelSubscription(int $orderDetailId, \App\Services\Payments\SubscriptionService $subscriptionService): void
+    {
+        abort_unless(auth()->check() && auth()->user()->isStaff(), 403);
+
+        $detail = $this->order->details->firstWhere('id', $orderDetailId);
+        if (!$detail) {
+            session()->flash('error', 'Line item not found.');
+            return;
+        }
+
+        try {
+            $subscriptionService->cancelSubscription($detail, 'Cancelled by admin staff');
+            $this->loadOrder();
+            session()->flash('status', 'Subscription agreement has been successfully cancelled with the payment provider.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("AdminOrderDetails cancelSubscription error for detail #{$orderDetailId}: " . $e->getMessage());
+            session()->flash('error', 'Failed to cancel subscription with provider: ' . $e->getMessage());
+        }
+    }
+
     public function getBalanceDueProperty(): float
     {
         $totalPaid = (float) $this->order->payments->sum('payment_amount');

@@ -386,6 +386,86 @@ class StripeProcessor implements PaymentProcessorInterface
         ];
     }
 
+    /**
+     * Cancel a recurring Stripe subscription.
+     *
+     * Resolves sub_ IDs directly, or looks up active subscriptions by
+     * PaymentMethod (pm_), PaymentIntent (pi_), or Customer (cus_) ID.
+     *
+     * @throws \Throwable
+     */
+    public function cancelSubscription(string $subscriptionId): bool
+    {
+        if (empty($subscriptionId)) {
+            throw new \InvalidArgumentException('Stripe subscription ID cannot be empty.');
+        }
+
+        $client = $this->client();
+        $targetSubId = $subscriptionId;
+
+        // If a PaymentMethod ID (pm_...) was passed instead of sub_...
+        if (str_starts_with($targetSubId, 'pm_')) {
+            try {
+                $pm = $client->paymentMethods->retrieve($targetSubId);
+                if ($pm && !empty($pm->customer)) {
+                    $subs = $client->subscriptions->all([
+                        'customer' => $pm->customer,
+                        'status'   => 'active',
+                        'limit'    => 5,
+                    ]);
+                    if (!empty($subs->data)) {
+                        $targetSubId = $subs->data[0]->id;
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("[StripeProcessor] Could not resolve subscription from payment method {$targetSubId}: " . $e->getMessage());
+            }
+        }
+
+        // If a PaymentIntent ID (pi_...) was passed instead of sub_...
+        if (str_starts_with($targetSubId, 'pi_')) {
+            try {
+                $pi = $client->paymentIntents->retrieve($targetSubId);
+                if ($pi && !empty($pi->customer)) {
+                    $subs = $client->subscriptions->all([
+                        'customer' => $pi->customer,
+                        'status'   => 'active',
+                        'limit'    => 5,
+                    ]);
+                    if (!empty($subs->data)) {
+                        $targetSubId = $subs->data[0]->id;
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("[StripeProcessor] Could not resolve subscription from payment intent {$targetSubId}: " . $e->getMessage());
+            }
+        }
+
+        // If a Customer ID (cus_...) was passed
+        if (str_starts_with($targetSubId, 'cus_')) {
+            try {
+                $subs = $client->subscriptions->all([
+                    'customer' => $targetSubId,
+                    'status'   => 'active',
+                    'limit'    => 5,
+                ]);
+                if (!empty($subs->data)) {
+                    $targetSubId = $subs->data[0]->id;
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("[StripeProcessor] Could not resolve subscription from customer {$targetSubId}: " . $e->getMessage());
+            }
+        }
+
+        try {
+            $client->subscriptions->cancel($targetSubId);
+            return true;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Stripe cancelSubscription failed for {$targetSubId} (input was {$subscriptionId}): " . $e->getMessage());
+            throw $e;
+        }
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Protected helpers (overridable in extension class)
     // ─────────────────────────────────────────────────────────────────────────

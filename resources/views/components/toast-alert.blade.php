@@ -13,8 +13,8 @@
         }
      }" 
      x-init="
-        @if(session()->has('status') || session()->has('success') || session()->has('error'))
-            trigger('{{ session()->has('error') ? 'error' : (session()->has('warning') ? 'warning' : 'success') }}', '{{ session('status') ?: session('success') ?: session('error') }}');
+        @if(session()->has('status') || session()->has('success') || session()->has('error') || session()->has('warning'))
+            trigger('{{ session()->has('error') ? 'error' : (session()->has('warning') ? 'warning' : 'success') }}', {!! json_encode(session('error') ?: session('status') ?: session('success') ?: session('warning')) !!});
         @endif
       "
       @toast.window="trigger($event.detail.type || 'success', $event.detail.message || '', $event.detail.duration || 4000)"

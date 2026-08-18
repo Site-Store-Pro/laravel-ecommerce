@@ -68,6 +68,32 @@ class UserDashboard extends Component
         $this->selectedOrderId = null;
     }
 
+    /**
+     * Cancel an active subscription for the customer.
+     */
+    public function cancelSubscription(int $orderDetailId, \App\Services\Payments\SubscriptionService $subscriptionService): void
+    {
+        $detail = \App\Models\OrderDetail::with(['order', 'variant'])->find($orderDetailId);
+
+        if (!$detail || !$detail->order || $detail->order->order_user_id !== auth()->id()) {
+            session()->flash('error', siteLabel('account.cancel_unauthorized', 'Unable to cancel: subscription not found or unauthorized.'));
+            return;
+        }
+
+        if (!$detail->active_subscription) {
+            session()->flash('info', siteLabel('account.already_cancelled', 'This subscription is already cancelled.'));
+            return;
+        }
+
+        try {
+            $subscriptionService->cancelSubscription($detail, 'Cancelled by customer via account portal');
+            session()->flash('status', siteLabel('account.cancel_success', 'Subscription has been cancelled successfully.'));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("UserDashboard cancelSubscription failed for detail #{$orderDetailId}: " . $e->getMessage());
+            session()->flash('error', siteLabel('account.cancel_failed', 'Failed to cancel subscription: ') . $e->getMessage());
+        }
+    }
+
     public function render(): View
     {
         $ticketsQuery = Ticket::query()->where('user_id', auth()->id());

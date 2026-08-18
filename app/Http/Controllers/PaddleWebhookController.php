@@ -170,11 +170,49 @@ class PaddleWebhookController extends Controller
      */
     private function handleSubscriptionEvent(string $type, array $data): void
     {
+        $subId  = $data['id'] ?? null;
+        $status = strtolower($data['status'] ?? '');
+
         Log::info('[Paddle Webhook] Subscription event: ' . $type, [
-            'subscription_id' => $data['id']          ?? 'N/A',
+            'subscription_id' => $subId,
             'customer_id'     => $data['customer_id']  ?? 'N/A',
-            'status'          => $data['status']        ?? 'N/A',
+            'status'          => $status,
         ]);
+
+        if (!$subId) {
+            return;
+        }
+
+        if ($type === 'subscription.canceled' || in_array($status, ['canceled', 'cancelled', 'past_due'])) {
+            DB::table('order_details')
+                ->where('subscription_plan_id', $subId)
+                ->orWhere(function ($q) use ($subId) {
+                    $q->where('subscription', 1)
+                      ->whereExists(function ($subQ) use ($subId) {
+                          $subQ->select(DB::raw(1))
+                               ->from('order_payments')
+                               ->whereColumn('order_payments.order_id', 'order_details.order_id')
+                               ->where(function ($p) use ($subId) {
+                                   $p->where('authorization_code', $subId)
+                                     ->orWhere('processor_response', 'like', "%{$subId}%");
+                               });
+                      });
+                })
+                ->update([
+                    'active_subscription' => 0,
+                    'subscription_status' => 'cancelled',
+                    'updated_at'          => now(),
+                ]);
+            Log::info("[Paddle Webhook] Marked subscription {$subId} as cancelled in order_details.");
+        } elseif ($status === 'active') {
+            DB::table('order_details')
+                ->where('subscription_plan_id', $subId)
+                ->update([
+                    'active_subscription' => 1,
+                    'subscription_status' => 'active',
+                    'updated_at'          => now(),
+                ]);
+        }
     }
 
     // ── Signature Verification ────────────────────────────────────────────────

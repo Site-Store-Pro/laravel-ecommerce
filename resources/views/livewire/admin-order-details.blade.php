@@ -188,9 +188,34 @@
                                         </td>
                                         <td class="px-4 py-3.5 text-center font-bold text-slate-700">{{ number_format($detail->item_qty, 0) }}</td>
                                         <td class="px-4 py-3.5">
-                                            @if($detail->download_item)
-                                                <span class="inline-block bg-teal-50 text-teal-700 text-[10px] px-2 py-0.5 rounded font-bold border border-teal-150">Instant Download</span>
-                                            @endif
+                                            <div class="space-y-1">
+                                                @if($detail->download_item)
+                                                    <div><span class="inline-block bg-teal-50 text-teal-700 text-[10px] px-2 py-0.5 rounded font-bold border border-teal-150">Instant Download</span></div>
+                                                @endif
+                                                @if($detail->active_subscription)
+                                                    <div>
+                                                        <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold border border-emerald-200">
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active Subscription
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <button type="button"
+                                                                onclick="confirm('Are you sure you want to cancel this recurring subscription agreement with the payment processor?') || event.stopImmediatePropagation()"
+                                                                wire:click="cancelSubscription({{ $detail->id }})"
+                                                                wire:loading.attr="disabled"
+                                                                class="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded text-[10px] font-bold transition shadow-xs cursor-pointer">
+                                                            <svg class="w-3 h-3 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                            Cancel Sub
+                                                        </button>
+                                                    </div>
+                                                @elseif($detail->subscription && !$detail->active_subscription)
+                                                    <div>
+                                                        <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded font-bold border border-slate-200">
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Cancelled Sub
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td class="px-4 py-3.5 text-right">
                                             <span class="font-semibold text-slate-700 block">${{ number_format($detail->final_price, 2) }}</span>

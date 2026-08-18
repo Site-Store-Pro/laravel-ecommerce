@@ -98,6 +98,15 @@ class PayPalWebhookController extends Controller
                     ->update(['order_status' => 1, 'updated_at' => now()]);
                 Log::info("[PayPal Webhook] Order #{$payment->order_id} confirmed active via subscription activation.");
             }
+
+            DB::table('order_details')
+                ->where('order_id', $payment->order_id)
+                ->where('subscription', 1)
+                ->update([
+                    'active_subscription' => 1,
+                    'subscription_status' => 'active',
+                    'updated_at'          => now(),
+                ]);
         }
     }
 
@@ -110,6 +119,32 @@ class PayPalWebhookController extends Controller
         $status = $resource['status'] ?? $eventType;
 
         Log::warning("[PayPal Webhook] Subscription {$subscriptionId} status changed to {$status} (Event: {$eventType}).");
+
+        if (!$subscriptionId) {
+            return;
+        }
+
+        DB::table('order_details')
+            ->where('subscription_plan_id', $subscriptionId)
+            ->orWhere(function ($q) use ($subscriptionId) {
+                $q->where('subscription', 1)
+                  ->whereExists(function ($subQ) use ($subscriptionId) {
+                      $subQ->select(DB::raw(1))
+                           ->from('order_payments')
+                           ->whereColumn('order_payments.order_id', 'order_details.order_id')
+                           ->where(function ($p) use ($subscriptionId) {
+                               $p->where('authorization_code', $subscriptionId)
+                                 ->orWhere('processor_response', 'like', "%{$subscriptionId}%");
+                           });
+                  });
+            })
+            ->update([
+                'active_subscription' => 0,
+                'subscription_status' => 'cancelled',
+                'updated_at'          => now(),
+            ]);
+
+        Log::info("[PayPal Webhook] Marked subscription {$subscriptionId} as cancelled in order_details.");
     }
 
     /**
@@ -124,7 +159,7 @@ class PayPalWebhookController extends Controller
         $state          = strtolower($resource['state'] ?? '');
 
         if (!$saleId || $state !== 'completed') {
-            Log::info("[PayPal Webhook] SALE.COMPLETED ignored — state is '{$state}' or missing sale ID.");
+            Log::info("[PayPal Webhook] SALE.COMPLETED ignored â€” state is '{$state}' or missing sale ID.");
             return;
         }
 

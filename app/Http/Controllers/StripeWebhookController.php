@@ -198,11 +198,49 @@ class StripeWebhookController extends Controller
      */
     private function handleSubscriptionEvent(string $type, object $subscription): void
     {
+        $subId  = $subscription->id ?? null;
+        $status = $subscription->status ?? 'N/A';
+
         Log::info('[Stripe Webhook] Subscription event: ' . $type, [
-            'subscription_id' => $subscription->id      ?? 'N/A',
+            'subscription_id' => $subId,
             'customer_id'     => $subscription->customer ?? 'N/A',
-            'status'          => $subscription->status   ?? 'N/A',
+            'status'          => $status,
         ]);
+
+        if (!$subId) {
+            return;
+        }
+
+        if ($type === 'customer.subscription.deleted' || $status === 'canceled') {
+            DB::table('order_details')
+                ->where('subscription_plan_id', $subId)
+                ->orWhere(function ($q) use ($subId) {
+                    $q->where('subscription', 1)
+                      ->whereExists(function ($subQ) use ($subId) {
+                          $subQ->select(DB::raw(1))
+                               ->from('order_payments')
+                               ->whereColumn('order_payments.order_id', 'order_details.order_id')
+                               ->where(function ($p) use ($subId) {
+                                   $p->where('authorization_code', $subId)
+                                     ->orWhere('processor_response', 'like', "%{$subId}%");
+                               });
+                      });
+                })
+                ->update([
+                    'active_subscription' => 0,
+                    'subscription_status' => 'cancelled',
+                    'updated_at'          => now(),
+                ]);
+            Log::info("[Stripe Webhook] Marked subscription {$subId} as cancelled in order_details.");
+        } elseif ($status === 'active') {
+            DB::table('order_details')
+                ->where('subscription_plan_id', $subId)
+                ->update([
+                    'active_subscription' => 1,
+                    'subscription_status' => 'active',
+                    'updated_at'          => now(),
+                ]);
+        }
     }
 
     /**

@@ -153,6 +153,29 @@
                                                         @if($detail->download_item)
                                                             <span class="inline-flex items-center w-max bg-indigo-50 text-indigo-700 text-[10px] px-1.5 py-0.5 rounded font-bold mt-1">@label('account.digital_delivery', 'Digital Delivery')</span>
                                                         @endif
+                                                        @if($detail->active_subscription)
+                                                            <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                                                                <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                                    @label('account.subscription_active', 'Active Subscription')
+                                                                </span>
+                                                                <button type="button"
+                                                                    onclick="confirm('{{ siteLabel('account.cancel_confirm', 'Are you sure you want to cancel this recurring subscription?') }}') || event.stopImmediatePropagation()"
+                                                                    wire:click="cancelSubscription({{ $detail->id }})"
+                                                                    wire:loading.attr="disabled"
+                                                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition duration-150 shadow-xs cursor-pointer">
+                                                                    <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                                    @label('account.cancel_subscription', 'Cancel Subscription')
+                                                                </button>
+                                                            </div>
+                                                        @elseif($detail->subscription && !$detail->active_subscription)
+                                                            <div class="mt-1.5">
+                                                                <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full font-bold border border-slate-200">
+                                                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                                                    @label('account.subscription_cancelled', 'Cancelled Subscription')
+                                                                </span>
+                                                            </div>
+                                                        @endif
                                                         @php
                                                             $customs = json_decode($detail->options_list, true) ?: [];
                                                             $customizations = isset($customs['customizations']) ? $customs['customizations'] : (is_array($customs) ? $customs : []);

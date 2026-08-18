@@ -411,6 +411,30 @@ class PayPalProcessor implements PaymentProcessorInterface
         return $response->json()['access_token'];
     }
 
+    public function cancelSubscription(string $subscriptionId, string $reason = 'Cancelled by customer', ?bool $forceSandbox = null): bool
+    {
+        if (empty($subscriptionId)) {
+            throw new \InvalidArgumentException('PayPal subscription ID cannot be empty.');
+        }
+
+        $accessToken = $this->getAccessToken($forceSandbox);
+        $baseUrl = $this->getBaseUrl($forceSandbox);
+
+        $response = Http::withToken($accessToken)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->post("{$baseUrl}/v1/billing/subscriptions/{$subscriptionId}/cancel", [
+                'reason' => $reason,
+            ]);
+
+        // PayPal returns HTTP 204 No Content on successful cancellation
+        if ($response->failed() && $response->status() !== 204) {
+            \Illuminate\Support\Facades\Log::error("PayPal cancelSubscription failed for {$subscriptionId}: " . $response->body());
+            throw new \RuntimeException('PayPal subscription cancellation failed: ' . $response->body());
+        }
+
+        return true;
+    }
+
     public function isSandbox(): bool
     {
         return $this->sandbox;

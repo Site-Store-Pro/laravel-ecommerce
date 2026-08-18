@@ -18,6 +18,10 @@
                     class="px-3.5 py-2 text-xs font-bold rounded-xl transition duration-150 whitespace-nowrap {{ $activeTab === 'report_order_activity' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200' }}">
                 Order Activity &amp; Revenue
             </button>
+            <button type="button" wire:click="$set('activeTab', 'report_subscriptions')"
+                    class="px-3.5 py-2 text-xs font-bold rounded-xl transition duration-150 whitespace-nowrap {{ $activeTab === 'report_subscriptions' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200' }}">
+                Subscriptions &amp; Recurring Billing
+            </button>
             <button type="button" wire:click="$set('activeTab', 'report_completed_vs_abandoned')"
                     class="px-3.5 py-2 text-xs font-bold rounded-xl transition duration-150 whitespace-nowrap {{ $activeTab === 'report_completed_vs_abandoned' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200' }}">
                 Completed vs. Abandoned
@@ -65,6 +69,13 @@
     @if($activeTab === 'report_order_activity')
     <div class="w-full">
         @livewire('report-order-activity')
+    </div>
+    @endif
+
+    <!-- STANDALONE REPORT: SUBSCRIPTIONS & RECURRING BILLING -->
+    @if($activeTab === 'report_subscriptions')
+    <div class="w-full">
+        @livewire('report-subscriptions')
     </div>
     @endif
 

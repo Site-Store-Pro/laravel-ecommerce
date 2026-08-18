@@ -786,6 +786,21 @@ class OrderReview extends Component
                 }
             }
 
+            $isSubscription = $variant && $variant->isSubscriptionVariant();
+            $subscriptionProvider = $isSubscription ? $manager->activeProcessorType($processorId) : null;
+            $subscriptionPlanId = null;
+            if ($isSubscription) {
+                if (!empty($this->stripeSubscriptionId)) {
+                    $subscriptionPlanId = $this->stripeSubscriptionId;
+                } elseif (str_starts_with($gatewayToken, 'I-') || str_starts_with($gatewayToken, 'sub_')) {
+                    $subscriptionPlanId = $gatewayToken;
+                } elseif ($this->paypalIsSubscription && !empty($gatewayToken)) {
+                    $subscriptionPlanId = $gatewayToken;
+                } else {
+                    $subscriptionPlanId = $payResult->transactionId ?? $gatewayToken;
+                }
+            }
+
             OrderDetail::create([
                 'order_id' => $order->id,
                 'item_name' => $item->item_name,
@@ -805,6 +820,12 @@ class OrderReview extends Component
                 'downloads_max_allowed' => $item->item_downloadable
                     ? ($variant && $variant->downloads_max_allowed !== null ? $variant->downloads_max_allowed : 100)
                     : null,
+                'subscription' => $isSubscription ? 1 : 0,
+                'active_subscription' => $isSubscription ? 1 : 0,
+                'subscription_user_id' => $isSubscription ? $user->id : null,
+                'subscription_plan_id' => $subscriptionPlanId,
+                'subscription_provider' => $subscriptionProvider,
+                'subscription_status' => $isSubscription ? 'active' : null,
             ]);
 
             // Deduct stock from inventory

@@ -42,7 +42,8 @@ class OrderDetail extends Model
         'subscription_plan_total',
         'subscription_plan_remaining',
         'subscription_type',
-        'subscription_status'
+        'subscription_status',
+        'active_subscription',
     ];
 
     protected $casts = [
@@ -55,7 +56,13 @@ class OrderDetail extends Model
         'subscription_plan_total' => 'decimal:2',
         'subscription_plan_remaining' => 'decimal:2',
         'item_taxable' => 'integer',
+        'active_subscription' => 'boolean',
     ];
+
+    public function isActiveSubscription(): bool
+    {
+        return (bool) $this->active_subscription;
+    }
 
     public function order(): BelongsTo
     {

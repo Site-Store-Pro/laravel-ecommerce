@@ -347,6 +347,99 @@ class PaddleProcessor implements PaymentProcessorInterface
         }
     }
 
+    /**
+     * Cancel a recurring Paddle subscription.
+     *
+     * Automatically resolves sub_ IDs directly, or queries transactions (txn_)
+     * and customers (ctm_) to retrieve the linked subscription ID.
+     *
+     * @throws \Throwable
+     */
+    public function cancelSubscription(string $subscriptionId, string $effectiveFrom = 'immediately'): bool
+    {
+        if (empty($subscriptionId)) {
+            throw new \InvalidArgumentException('Paddle subscription ID cannot be empty.');
+        }
+
+        $apiKey = $this->sandbox
+            ? (config('services.paddle.sandbox_api_key') ?? '')
+            : (config('services.paddle.api_key') ?? '');
+
+        // Fallback to whichever key is present if primary is empty
+        if (empty($apiKey)) {
+            $apiKey = config('services.paddle.sandbox_api_key') ?: config('services.paddle.api_key') ?: env('PADDLE_API_KEY') ?: env('PADDLE_SANDBOX_API_KEY');
+        }
+
+        $baseUrl = $this->sandbox ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
+        $targetSubId = trim($subscriptionId);
+
+        // If a Transaction ID (txn_...) was passed instead of sub_...
+        if (str_starts_with($targetSubId, 'txn_')) {
+            try {
+                $txnRes = \Illuminate\Support\Facades\Http::withToken($apiKey)->get("{$baseUrl}/transactions/{$targetSubId}");
+                if ($txnRes->successful()) {
+                    $foundSubId = $txnRes->json('data.subscription_id');
+                    if (!empty($foundSubId)) {
+                        $targetSubId = $foundSubId;
+                    } else {
+                        $customerId = $txnRes->json('data.customer_id');
+                        if (!empty($customerId)) {
+                            $subsRes = \Illuminate\Support\Facades\Http::withToken($apiKey)->get("{$baseUrl}/subscriptions", [
+                                'customer_id' => $customerId,
+                                'status'      => 'active',
+                            ]);
+                            if ($subsRes->successful() && !empty($subsRes->json('data.0.id'))) {
+                                $targetSubId = $subsRes->json('data.0.id');
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("[PaddleProcessor] Could not resolve subscription from transaction {$targetSubId}: " . $e->getMessage());
+            }
+        }
+
+        // If a Customer ID (ctm_...) was passed
+        if (str_starts_with($targetSubId, 'ctm_')) {
+            try {
+                $subsRes = \Illuminate\Support\Facades\Http::withToken($apiKey)->get("{$baseUrl}/subscriptions", [
+                    'customer_id' => $targetSubId,
+                    'status'      => 'active',
+                ]);
+                if ($subsRes->successful() && !empty($subsRes->json('data.0.id'))) {
+                    $targetSubId = $subsRes->json('data.0.id');
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("[PaddleProcessor] Could not resolve subscription from customer {$targetSubId}: " . $e->getMessage());
+            }
+        }
+
+        $response = \Illuminate\Support\Facades\Http::withToken($apiKey)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->post("{$baseUrl}/subscriptions/{$targetSubId}/cancel", [
+                'effective_from' => $effectiveFrom,
+            ]);
+
+        // If sandbox failed with invalid_url or not found, try the alternate environment if configured
+        if ($response->failed() && $response->status() === 404 && $this->sandbox) {
+            $liveKey = config('services.paddle.api_key') ?? '';
+            if (!empty($liveKey)) {
+                $response = \Illuminate\Support\Facades\Http::withToken($liveKey)
+                    ->withHeaders(['Content-Type' => 'application/json'])
+                    ->post("https://api.paddle.com/subscriptions/{$targetSubId}/cancel", [
+                        'effective_from' => $effectiveFrom,
+                    ]);
+            }
+        }
+
+        if ($response->failed()) {
+            \Illuminate\Support\Facades\Log::error("Paddle cancelSubscription failed for {$targetSubId} (input was {$subscriptionId}): " . $response->body());
+            throw new \RuntimeException('Paddle subscription cancellation failed: ' . $response->body());
+        }
+
+        return true;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Protected helpers (overridable in extension class)
     // ─────────────────────────────────────────────────────────────────────────

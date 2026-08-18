@@ -44,6 +44,7 @@ class OrderStatusTrackerPlugin implements DisplayPlugin
 
             $order = null;
             $error = null;
+            $successMessage = null;
 
             if ($hasSubmitted) {
                 if (empty($inputOrderNum) || empty($inputEmail)) {
@@ -52,6 +53,20 @@ class OrderStatusTrackerPlugin implements DisplayPlugin
                     $order = $this->lookupOrder($inputOrderNum, $inputEmail);
                     if (!$order) {
                         $error = $errorNotFound;
+                    } elseif (request()->has('ost_cancel_sub_id')) {
+                        $cancelDetailId = (int) request()->input('ost_cancel_sub_id');
+                        $detailToCancel = $order->details->firstWhere('id', $cancelDetailId);
+                        if ($detailToCancel && $detailToCancel->active_subscription) {
+                            try {
+                                app(\App\Services\Payments\SubscriptionService::class)->cancelSubscription($detailToCancel, 'Cancelled by customer via Order Status Tracker lookup');
+                                $successMessage = siteLabel('account.cancel_success', 'Subscription has been cancelled successfully.');
+                                // Refresh order details
+                                $order = $this->lookupOrder($inputOrderNum, $inputEmail);
+                            } catch (\Throwable $e) {
+                                Log::error("OrderStatusTrackerPlugin cancel subscription error: " . $e->getMessage());
+                                $error = siteLabel('account.cancel_failed', 'Failed to cancel subscription: ') . $e->getMessage();
+                            }
+                        }
                     }
                 }
             }
@@ -66,6 +81,14 @@ class OrderStatusTrackerPlugin implements DisplayPlugin
                 $html .= '<div class="mb-6 border-b border-slate-100 dark:border-slate-700 pb-4">';
                 $html .= '<h3 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">' . e($headerTitle) . '</h3>';
                 $html .= '<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter your order details below to view current fulfillment status and tracking info.</p>';
+                $html .= '</div>';
+            }
+
+            // Success message display
+            if ($successMessage) {
+                $html .= '<div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-start gap-3 text-emerald-700 dark:text-emerald-300 text-sm font-semibold">';
+                $html .= '<svg class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+                $html .= '<div>' . e($successMessage) . '</div>';
                 $html .= '</div>';
             }
 
@@ -170,6 +193,35 @@ class OrderStatusTrackerPlugin implements DisplayPlugin
                             $html .= '</div>';
                         } elseif (!empty($item->item_shippable)) {
                             $html .= '<span class="inline-block bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px] px-1.5 py-0.5 rounded font-bold border border-indigo-200 dark:border-indigo-800 mt-1.5">Will be shipped</span>';
+                        }
+
+                        // Subscription Status & Cancel Button
+                        if (!empty($item->active_subscription)) {
+                            $cancelPrompt = siteLabel('account.cancel_confirm', 'Are you sure you want to cancel this recurring subscription?');
+                            $cancelLabel = siteLabel('account.cancel_subscription', 'Cancel Subscription');
+                            $activeLabel = siteLabel('account.subscription_active', 'Active Subscription');
+
+                            $html .= '<div class="flex flex-wrap items-center gap-2 mt-2">';
+                            $html .= '<span class="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-200 dark:border-emerald-800">';
+                            $html .= '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ' . e($activeLabel);
+                            $html .= '</span>';
+                            $html .= '<form action="' . e($actionUrl) . '" method="GET" class="inline" onsubmit="return confirm(\'' . addslashes($cancelPrompt) . '\');">';
+                            $html .= '<input type="hidden" name="ost_order_number" value="' . e($inputOrderNum) . '">';
+                            $html .= '<input type="hidden" name="ost_email" value="' . e($inputEmail) . '">';
+                            $html .= '<input type="hidden" name="ost_cancel_sub_id" value="' . (int)$item->id . '">';
+                            $html .= '<button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-lg text-xs font-bold transition duration-150 shadow-xs cursor-pointer">';
+                            $html .= '<svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> ';
+                            $html .= e($cancelLabel);
+                            $html .= '</button>';
+                            $html .= '</form>';
+                            $html .= '</div>';
+                        } elseif (!empty($item->subscription) && empty($item->active_subscription)) {
+                            $cancelledLabel = siteLabel('account.subscription_cancelled', 'Cancelled Subscription');
+                            $html .= '<div class="mt-2">';
+                            $html .= '<span class="inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] px-2 py-0.5 rounded-full font-bold border border-slate-200 dark:border-slate-700">';
+                            $html .= '<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> ' . e($cancelledLabel);
+                            $html .= '</span>';
+                            $html .= '</div>';
                         }
                         $html .= '</div>';
 
