@@ -477,9 +477,16 @@ class AdminReports extends Component
 
     public function exportCustomers(): StreamedResponse
     {
-        $users = User::whereIn('role_id', [1, 2])
-            ->orderBy('id')
-            ->get();
+        $users = User::where(function ($query) {
+            $query->whereIn('role_id', [1, 2])
+                  ->orWhereExists(function ($sub) {
+                      $sub->select(DB::raw(1))
+                          ->from('orders')
+                          ->whereColumn('orders.order_user_id', 'users.id');
+                  });
+        })
+        ->orderBy('id')
+        ->get();
 
         $rows = [];
         $rows[] = [
@@ -609,7 +616,16 @@ class AdminReports extends Component
         $totalSales = DB::table('order_payments')->where('payment_status', 1)->sum('payment_amount');
         $totalOrdersCount = DB::table('orders')->count();
         $pendingOrdersCount = DB::table('orders')->whereIn('order_status', [1, 5, 6, 10])->count();
-        $customersCount = DB::table('users')->whereIn('role_id', [\App\Enums\UserRole::User->value, \App\Enums\UserRole::Wholesale->value])->count();
+        $customersCount = DB::table('users')
+            ->where(function ($query) {
+                $query->whereIn('role_id', [\App\Enums\UserRole::User->value, \App\Enums\UserRole::Wholesale->value])
+                      ->orWhereExists(function ($sub) {
+                          $sub->select(DB::raw(1))
+                              ->from('orders')
+                              ->whereColumn('orders.order_user_id', 'users.id');
+                      });
+            })
+            ->count();
 
         // 2. Tax Report calculated summary
         $taxQuery = Order::with('user')

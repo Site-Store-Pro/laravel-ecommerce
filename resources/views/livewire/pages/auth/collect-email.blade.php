@@ -46,6 +46,14 @@ new #[Layout('layouts.public')] class extends Component
 
         session()->forget('social_registration');
 
+        // Associate unassigned cart items with newly registered social user
+        \App\Services\CartSessionService::associateCartOnLogin($user->id);
+
+        if (\App\Services\CartSessionService::getCartCount() > 0) {
+            $this->redirect(route('shop.checkout'), navigate: true);
+            return;
+        }
+
         // Redirect to the dashboard; the 'verified' middleware will guide them to the verification page
         $this->redirect(route('dashboard'), navigate: true);
     }

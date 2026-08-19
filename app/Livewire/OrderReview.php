@@ -222,6 +222,23 @@ class OrderReview extends Component
         $this->getActiveProcessorId();
     }
 
+    public function updatedSelectedShippingOption($value): void
+    {
+        if (\App\Services\GoogleAnalyticsService::isEnabled()) {
+            $totals = $this->calculateTotals();
+            $items = $this->getCartQuery()->get();
+            $this->dispatch('ga-ecommerce-event', [
+                'event' => 'add_shipping_info',
+                'data'  => [
+                    'currency'      => \App\Services\GoogleAnalyticsService::getCurrency(),
+                    'value'         => round((float) $totals['total'], 2),
+                    'shipping_tier' => $totals['shippingMethodName'] ?? 'Standard Shipping',
+                    'items'         => \App\Services\GoogleAnalyticsService::formatCart($items, $totals['total'])['items'],
+                ]
+            ]);
+        }
+    }
+
     public function getActiveProcessorId(): int
     {
         if ($this->activeProcessorId <= 0) {
@@ -403,6 +420,18 @@ class OrderReview extends Component
         $manager     = app(PaymentProcessorManager::class);
         $type        = $manager->activeProcessorType($processorId);
         $user        = Auth::user();
+
+        if (\App\Services\GoogleAnalyticsService::isEnabled()) {
+            $this->dispatch('ga-ecommerce-event', [
+                'event' => 'add_payment_info',
+                'data'  => [
+                    'currency'     => \App\Services\GoogleAnalyticsService::getCurrency(),
+                    'value'        => round((float) $total, 2),
+                    'payment_type' => ucfirst($type),
+                    'items'        => \App\Services\GoogleAnalyticsService::formatCart($items, $total)['items'],
+                ]
+            ]);
+        }
 
         // Detect subscription variant in the current cart
         $subVariant = $this->resolveSubscriptionVariant();

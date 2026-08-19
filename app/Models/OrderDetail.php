@@ -78,4 +78,9 @@ class OrderDetail extends Model
     {
         return $this->belongsTo(ProductVariant::class, 'inventory_id');
     }
+
+    public function contentAccessToken(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ContentAccessToken::class, 'order_detail_id');
+    }
 }

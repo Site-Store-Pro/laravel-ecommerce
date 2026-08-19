@@ -137,22 +137,28 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php $isGuestUser = $user->password === \App\Models\User::GUEST_PASSWORD; @endphp
-                                        @if ($isGuestUser)
-                                            <div class="flex flex-col gap-1">
-                                                <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 border border-orange-200 w-fit">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                                    Guest
+                                        <div class="flex flex-col gap-0.5">
+                                            @if ($isGuestUser)
+                                                <div class="flex flex-col gap-1">
+                                                    <span class="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 border border-orange-200 w-fit">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                                        Guest
+                                                    </span>
+                                                    <span class="text-xs text-amber-500 font-semibold">Unverified</span>
+                                                </div>
+                                            @elseif ($user->email_verified_at)
+                                                <span class="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                    Verified
                                                 </span>
+                                            @else
                                                 <span class="text-xs text-amber-500 font-semibold">Unverified</span>
-                                            </div>
-                                        @elseif ($user->email_verified_at)
-                                            <span class="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                                Verified
-                                            </span>
-                                        @else
-                                            <span class="text-xs text-amber-500 font-semibold">Unverified</span>
-                                        @endif
+                                            @endif
+
+                                            @if (!empty($user->provider))
+                                                <span class="text-[11px] text-slate-500 font-medium capitalize">{{ $user->provider }}</span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                         <a href="{{ route('admin.users.show', $user) }}" wire:navigate

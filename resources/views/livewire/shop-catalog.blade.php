@@ -4,7 +4,9 @@
     $objectClass    = $imgOrientation === '1:1' ? 'object-contain' : 'object-cover';
     $listSizeClass  = $imgOrientation === '1:1' ? 'w-24 h-24' : 'w-28 h-24';
 @endphp
-<div x-data="{ slideoutOpen: @entangle('slideoutOpen') }" class="pt-4 pb-12">
+<div x-data="{ slideoutOpen: @entangle('slideoutOpen') }" 
+     x-init="@if(!empty($gaEcommerceData)) if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('view_item_list', {{ json_encode($gaEcommerceData) }}); } @endif"
+     class="pt-4 pb-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @if(session()->has('status'))
             <div class="mb-6 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3 text-emerald-800 text-sm font-semibold">
@@ -425,7 +427,9 @@
                         @endphp
                         <div class="group bg-white dark:bg-slate-800 rounded-3xl border border-slate-150 dark:border-slate-700/60 overflow-hidden hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition duration-300 flex flex-col justify-between">
                             <div>
-                                <a href="{{ route('shop.product', $product->seo_slug) }}" class="block relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 {{ $aspectClass }}">
+                                <a href="{{ route('shop.product', $product->seo_slug) }}"
+                                   x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }"
+                                   class="block relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 {{ $aspectClass }}">
                                     @if($thumbUrl)
                                         <img src="{{ $thumbUrl }}" alt="{{ $product->title }}" class="w-full h-full {{ $objectClass }} group-hover:scale-105 transition duration-500">
                                     @else
@@ -442,7 +446,8 @@
                                         <a href="{{ route('shop.brand', $product->brand->slug) }}" class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 hover:underline mb-1 block">{{ $product->brand->name }}</a>
                                     @endif
                                     <h3 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2">
-                                        <a href="{{ route('shop.product', $product->seo_slug) }}">{{ $product->title }}</a>
+                                        <a href="{{ route('shop.product', $product->seo_slug) }}"
+                                           x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }">{{ $product->title }}</a>
                                     </h3>
                                     @if($product->short_description)
                                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">{{ strip_tags($product->short_description) }}</p>
@@ -476,7 +481,9 @@
                                     @endif
                                 </div>
                                 @if($product->requiresOptions())
-                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">@label('catalog.view_options', 'View Options')</a>
+                                    <a href="{{ route('shop.product', $product->seo_slug) }}"
+                                       x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }"
+                                       class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">@label('catalog.view_options', 'View Options')</a>
                                 @elseif($firstVariant && $inStock)
                                     <button wire:click="buyNow({{ $firstVariant->id }})" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">@label('catalog.buy_now', 'Buy Now')</button>
                                 @else
@@ -496,7 +503,9 @@
                             $thumbUrl = $firstVariant ? $firstVariant->thumbnailImageUrl() : null;
                         @endphp
                         <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-150 dark:border-slate-700/60 p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-6 hover:shadow-lg transition">
-                            <a href="{{ route('shop.product', $product->seo_slug) }}" class="shrink-0 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 {{ $listSizeClass }}">
+                            <a href="{{ route('shop.product', $product->seo_slug) }}"
+                               x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }"
+                               class="shrink-0 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 {{ $listSizeClass }}">
                                 @if($thumbUrl)
                                     <img src="{{ $thumbUrl }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
                                 @else
@@ -510,7 +519,8 @@
                                     <a href="{{ route('shop.brand', $product->brand->slug) }}" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline uppercase tracking-wider block mb-1">{{ $product->brand->name }}</a>
                                 @endif
                                 <h3 class="text-lg font-bold text-slate-900 dark:text-white hover:text-indigo-600 transition truncate">
-                                    <a href="{{ route('shop.product', $product->seo_slug) }}">{{ $product->title }}</a>
+                                    <a href="{{ route('shop.product', $product->seo_slug) }}"
+                                       x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }">{{ $product->title }}</a>
                                 </h3>
                                 @if($product->short_description)
                                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{{ strip_tags($product->short_description) }}</p>
@@ -543,7 +553,9 @@
                                     </div>
                                 @endif
                                 @if($product->requiresOptions())
-                                    <a href="{{ route('shop.product', $product->seo_slug) }}" class="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">@label('catalog.view_options', 'View Options')</a>
+                                    <a href="{{ route('shop.product', $product->seo_slug) }}"
+                                       x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }"
+                                       class="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">@label('catalog.view_options', 'View Options')</a>
                                 @elseif($firstVariant && $inStock)
                                     <button wire:click="buyNow({{ $firstVariant->id }})" class="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">@label('catalog.buy_now', 'Buy Now')</button>
                                 @else

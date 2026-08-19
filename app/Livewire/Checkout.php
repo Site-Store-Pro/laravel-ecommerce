@@ -272,15 +272,6 @@ class Checkout extends Component
             $this->shipping_country = $user->shipping_country ?? 'United States';
             $this->shipping_countrycode = $user->shipping_countrycode ?? 'US';
             $this->shipping_state = $user->shipping_state ?? '';
-
-            // Check if social user needs to fill in their shipping profile
-            if (!$this->requiresShipping && !empty($user->provider)) {
-                $hasAddress = !empty($user->shipping_address1) && !empty($user->shipping_city) && !empty($user->shopping_postalcode);
-                if (!$hasAddress) {
-                    $this->requiresShipping = true;
-                    session()->flash('info', 'Please complete your shipping address details to proceed with checkout.');
-                }
-            }
         }
     }
 
@@ -480,15 +471,25 @@ class Checkout extends Component
                 ->get();
         }
 
+        $gaEcommerceData = null;
+        if (\App\Services\GoogleAnalyticsService::isEnabled() && $items->isNotEmpty()) {
+            $gaEcommerceData = \App\Services\GoogleAnalyticsService::formatCart(
+                $items,
+                (float) $discountResult['adjusted_subtotal'],
+                session()->get('coupon_code')
+            );
+        }
+
         return view('livewire.checkout', [
-            'items' => $discountResult['items'],
-            'subtotal' => $discountResult['subtotal'],
-            'discounts' => $discountResult['discounts'],
-            'total_discount' => $discountResult['total_discount'],
-            'total' => $discountResult['adjusted_subtotal'],
-            'activeCoupon' => session()->get('coupon_code'),
-            'countries' => $dropdownCountries,
-            'states' => $states,
+            'items'           => $discountResult['items'],
+            'subtotal'        => $discountResult['subtotal'],
+            'discounts'       => $discountResult['discounts'],
+            'total_discount'  => $discountResult['total_discount'],
+            'total'           => $discountResult['adjusted_subtotal'],
+            'activeCoupon'    => session()->get('coupon_code'),
+            'countries'       => $dropdownCountries,
+            'states'          => $states,
+            'gaEcommerceData' => $gaEcommerceData,
         ]);
     }
 }

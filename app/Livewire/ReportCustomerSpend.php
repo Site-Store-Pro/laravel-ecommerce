@@ -30,8 +30,13 @@ class ReportCustomerSpend extends Component
         $query = DB::table('users')
             ->join('orders', 'orders.order_user_id', '=', 'users.id')
             ->whereBetween('orders.order_date', [$start, $end])
-            ->whereIn('users.role_id', [\App\Enums\UserRole::User->value, \App\Enums\UserRole::Wholesale->value]) // Customers only
-            ->select('users.id', 'users.name', 'users.email', DB::raw('count(orders.id) as orders_count'), DB::raw('sum(orders.order_total) as total_spend'))
+            ->select(
+                'users.id',
+                'users.name',
+                'users.email',
+                DB::raw('count(orders.id) as orders_count'),
+                DB::raw('sum(orders.order_total) as total_spend')
+            )
             ->groupBy('users.id', 'users.name', 'users.email');
 
         if ($this->viewMode === 'highest') {

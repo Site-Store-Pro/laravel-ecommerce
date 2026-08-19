@@ -882,6 +882,13 @@ class ShopCatalog extends Component
             $selectedCategoryModels = Category::withCurrentTranslations()->whereIn('id', $this->selectedCategories)->get()->keyBy('id');
         }
 
+        $gaEcommerceData = null;
+        if (\App\Services\GoogleAnalyticsService::isEnabled() && $products->isNotEmpty()) {
+            $listName = $activeCategory ? $activeCategory->name : ($activeBrand ? $activeBrand->name : (!empty($this->search) ? 'Search Results: ' . $this->search : 'Catalog Products'));
+            $listId = $activeCategory ? 'category_' . $activeCategory->id : ($activeBrand ? 'brand_' . $activeBrand->id : 'catalog_products');
+            $gaEcommerceData = \App\Services\GoogleAnalyticsService::formatItemList($products->items(), $listName, $listId);
+        }
+
         return view('livewire.shop-catalog', [
             'products'                   => $products,
             'userType'                   => $userType,
@@ -903,6 +910,7 @@ class ShopCatalog extends Component
             'currencySymbol'             => \App\Services\CurrencyService::symbol(),
             'vatInclusive'               => \App\Services\CurrencyService::isVatInclusive(),
             'merchantVatRate'            => \App\Services\CurrencyService::merchantVatRate(),
+            'gaEcommerceData'            => $gaEcommerceData,
         ])->layout('layouts.public', [
             'metaTitle' => $metaTitle,
             'title'     => $metaTitle,

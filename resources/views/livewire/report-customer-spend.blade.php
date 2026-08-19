@@ -62,7 +62,11 @@
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between text-xs">
                             <div>
-                                <a href="{{ route('admin.users.show', $customer->id) }}" wire:navigate class="font-extrabold text-slate-800 dark:text-slate-200 hover:underline">{{ $customer->name }}</a>
+                                @if($customer->id > 0)
+                                    <a href="{{ route('admin.users.show', $customer->id) }}" wire:navigate class="font-extrabold text-slate-800 dark:text-slate-200 hover:underline">{{ $customer->name }}</a>
+                                @else
+                                    <span class="font-extrabold text-slate-800 dark:text-slate-200">{{ $customer->name }}</span>
+                                @endif
                                 <span class="text-[10px] text-slate-400 block">{{ $customer->email }}</span>
                             </div>
                             <div class="text-right">

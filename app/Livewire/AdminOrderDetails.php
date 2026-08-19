@@ -49,6 +49,18 @@ class AdminOrderDetails extends Component
     public string $refundReason = '';
     public bool $refundPostToGateway = true;
 
+    // ── Download Expiration Modal ─────────────────────────────────────────────
+    public bool $showDownloadExpirationModal = false;
+    public ?int $editingOrderDetailId = null;
+    public string $editDownloadExpiration = '';
+    public string $editingItemName = '';
+
+    // ── Content Access Token Modal ────────────────────────────────────────────
+    public bool $showContentTokenModal = false;
+    public ?int $editingTokenId = null;
+    public string $editTokenExpiration = '';
+    public string $editingTokenUrl = '';
+
     public function mount(int $id): void
     {
         abort_unless(auth()->check() && auth()->user()->isStaff(), 403, 'Unauthorized staff access.');
@@ -59,7 +71,7 @@ class AdminOrderDetails extends Component
 
     private function loadOrder(): void
     {
-        $this->order = Order::with(['user', 'details.variant.product', 'payments.refunds', 'refunds.payment', 'statusList'])->findOrFail($this->orderId);
+        $this->order = Order::with(['user', 'details.variant.product', 'details.contentAccessToken', 'payments.refunds', 'refunds.payment', 'statusList'])->findOrFail($this->orderId);
         
         $alreadyRefunded = (float) $this->order->refunds->sum('amount');
         $this->refundAmount = max(0.00, (float)$this->order->order_total - $alreadyRefunded);
@@ -842,14 +854,112 @@ class AdminOrderDetails extends Component
         return max(0.0, (float) $this->order->order_total - $totalPaid);
     }
 
+    // ── Download Expiration Methods ───────────────────────────────────────────
+    public function openDownloadExpirationModal(int $orderDetailId): void
+    {
+        $detail = \App\Models\OrderDetail::findOrFail($orderDetailId);
+        $this->editingOrderDetailId = $orderDetailId;
+        $this->editingItemName = $detail->item_name;
+        $this->editDownloadExpiration = $detail->download_expiration ? $detail->download_expiration->format('Y-m-d\TH:i') : '';
+        $this->showDownloadExpirationModal = true;
+    }
+
+    public function setDownloadExpirationShortcut(string $type): void
+    {
+        $this->editDownloadExpiration = match ($type) {
+            'yesterday' => now()->subDay()->endOfDay()->format('Y-m-d\TH:i'),
+            '30days'    => now()->addDays(30)->endOfDay()->format('Y-m-d\TH:i'),
+            '90days'    => now()->addDays(90)->endOfDay()->format('Y-m-d\TH:i'),
+            '1year'     => now()->addYear()->endOfDay()->format('Y-m-d\TH:i'),
+            'lifetime'  => '',
+            default     => $this->editDownloadExpiration,
+        };
+    }
+
+    public function saveDownloadExpiration(): void
+    {
+        abort_unless(auth()->check() && auth()->user()->isStaff(), 403);
+        $detail = \App\Models\OrderDetail::findOrFail($this->editingOrderDetailId);
+        
+        $newExp = !empty($this->editDownloadExpiration) ? \Illuminate\Support\Carbon::parse($this->editDownloadExpiration) : null;
+        $detail->update(['download_expiration' => $newExp]);
+
+        $this->showDownloadExpirationModal = false;
+        $this->loadOrder();
+        session()->flash('status', 'Download expiration updated successfully.');
+    }
+
+    public function closeDownloadExpirationModal(): void
+    {
+        $this->showDownloadExpirationModal = false;
+    }
+
+    // ── Content Access Token Methods ──────────────────────────────────────────
+    public function openContentTokenModal(int $tokenId): void
+    {
+        $token = ContentAccessToken::findOrFail($tokenId);
+        $this->editingTokenId = $tokenId;
+        $this->editingTokenUrl = $token->redirect_url;
+        $this->editTokenExpiration = $token->expires_at ? $token->expires_at->format('Y-m-d\TH:i') : '';
+        $this->showContentTokenModal = true;
+    }
+
+    public function setTokenExpirationShortcut(string $type): void
+    {
+        $this->editTokenExpiration = match ($type) {
+            'yesterday' => now()->subDay()->endOfDay()->format('Y-m-d\TH:i'),
+            '30days'    => now()->addDays(30)->endOfDay()->format('Y-m-d\TH:i'),
+            '90days'    => now()->addDays(90)->endOfDay()->format('Y-m-d\TH:i'),
+            '1year'     => now()->addYear()->endOfDay()->format('Y-m-d\TH:i'),
+            'lifetime'  => '',
+            default     => $this->editTokenExpiration,
+        };
+    }
+
+    public function saveTokenExpiration(): void
+    {
+        abort_unless(auth()->check() && auth()->user()->isStaff(), 403);
+        $token = ContentAccessToken::findOrFail($this->editingTokenId);
+
+        $newExp = !empty($this->editTokenExpiration) ? \Illuminate\Support\Carbon::parse($this->editTokenExpiration) : null;
+        $token->update(['expires_at' => $newExp]);
+
+        $this->showContentTokenModal = false;
+        $this->loadOrder();
+        session()->flash('status', 'Content access expiration updated successfully.');
+    }
+
+    public function closeContentTokenModal(): void
+    {
+        $this->showContentTokenModal = false;
+    }
+
+    public function regenerateContentToken(int $tokenId): void
+    {
+        abort_unless(auth()->check() && auth()->user()->isStaff(), 403);
+        $token = ContentAccessToken::findOrFail($tokenId);
+        $token->update([
+            'token'      => (string) Str::uuid(),
+            'expires_at' => now()->addDays(90)->endOfDay(),
+        ]);
+        $this->loadOrder();
+        session()->flash('status', 'Content access token regenerated successfully with fresh 90-day expiry.');
+    }
+
     public function render(): View
     {
         $statuses = \App\Models\OrderStatusList::where('Active', 1)
             ->where('orderstatuscode', '!=', 5)
             ->orderBy('sortorder', 'asc')
             ->get();
+
+        $contentAccessTokens = ContentAccessToken::whereIn('order_detail_id', $this->order->details->pluck('id'))
+            ->with(['product', 'orderDetail'])
+            ->get();
+
         return view('livewire.admin-order-details', [
-            'statuses' => $statuses
+            'statuses'            => $statuses,
+            'contentAccessTokens' => $contentAccessTokens,
         ]);
     }
 }

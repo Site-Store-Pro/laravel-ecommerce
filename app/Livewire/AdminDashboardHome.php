@@ -47,7 +47,14 @@ class AdminDashboardHome extends Component
             ->count();
 
         $customersCount = DB::table('users')
-            ->whereIn('role_id', [\App\Enums\UserRole::User->value, \App\Enums\UserRole::Wholesale->value])
+            ->where(function ($query) {
+                $query->whereIn('role_id', [\App\Enums\UserRole::User->value, \App\Enums\UserRole::Wholesale->value])
+                      ->orWhereExists(function ($sub) {
+                          $sub->select(DB::raw(1))
+                              ->from('orders')
+                              ->whereColumn('orders.order_user_id', 'users.id');
+                      });
+            })
             ->count();
 
         $recentOrders = \App\Models\Order::with('user')

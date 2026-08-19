@@ -64,16 +64,35 @@ class PaddleProcessor implements PaymentProcessorInterface
         }
 
         try {
-            $paddle      = $this->client();
-            $transaction = $paddle->transactions->get($transactionId);
-
+            $paddle        = $this->client();
             $validStatuses = ['completed', 'paid'];
-            if (! in_array($transaction->status->getValue(), $validStatuses, true)) {
+
+            // Poll with brief backoff (up to 4 attempts / ~2.5s) in case Paddle's backend
+            // is still completing the transaction state right after client checkout callback fires
+            $attempts    = 0;
+            $maxAttempts = 4;
+            $transaction = null;
+
+            while ($attempts < $maxAttempts) {
+                $transaction = $paddle->transactions->get($transactionId);
+                $status      = $transaction->status->getValue();
+
+                if (in_array($status, $validStatuses, true)) {
+                    break;
+                }
+
+                $attempts++;
+                if ($attempts < $maxAttempts) {
+                    usleep(750000); // wait 750ms before re-checking
+                }
+            }
+
+            if (! $transaction || ! in_array($transaction->status->getValue(), $validStatuses, true)) {
                 return new PaymentResult(
                     success:           false,
                     authorizationCode: '',
                     transactionId:     $transactionId,
-                    errorMessage:      'Paddle transaction status: ' . $transaction->status->getValue(),
+                    errorMessage:      'Paddle transaction status: ' . ($transaction ? $transaction->status->getValue() : 'unknown'),
                     processorName:     $this->getName(),
                 );
             }

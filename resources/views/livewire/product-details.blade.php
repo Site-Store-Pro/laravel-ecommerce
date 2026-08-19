@@ -1,4 +1,6 @@
-<div class="pt-4 pb-12">
+<div x-data="{}" 
+     x-init="@if(!empty($gaEcommerceData)) if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('view_item', {{ json_encode($gaEcommerceData) }}); } @endif" 
+     class="pt-4 pb-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Breadcrumbs -->
         @if(\App\Models\CmsSetting::isEnabled('show_product_details_breadcrumbs', true))

@@ -190,7 +190,63 @@
                                         <td class="px-4 py-3.5">
                                             <div class="space-y-1">
                                                 @if($detail->download_item)
-                                                    <div><span class="inline-block bg-teal-50 text-teal-700 text-[10px] px-2 py-0.5 rounded font-bold border border-teal-150">Instant Download</span></div>
+                                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                                        <span class="inline-block bg-teal-50 text-teal-700 text-[10px] px-2 py-0.5 rounded font-bold border border-teal-150">File Download</span>
+                                                        <button type="button"
+                                                                wire:click="openDownloadExpirationModal({{ $detail->id }})"
+                                                                class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-100 hover:bg-teal-50 text-slate-600 hover:text-teal-700 border border-slate-200 hover:border-teal-200 transition cursor-pointer"
+                                                                title="Edit File Download Expiration">
+                                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                            <span>Edit File Expiry</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="text-[10px] text-slate-500">
+                                                        @if($detail->download_expiration)
+                                                            @if($detail->download_expiration->isPast())
+                                                                <span class="inline-flex items-center gap-1 text-rose-600 font-semibold bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
+                                                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                                    File Expired {{ $detail->download_expiration->format('M j, Y') }}
+                                                                </span>
+                                                            @else
+                                                                <span class="inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                                                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                                    File Expires {{ $detail->download_expiration->format('M j, Y') }}
+                                                                </span>
+                                                            @endif
+                                                        @else
+                                                            <span class="text-slate-400">File: No Expiry (Lifetime)</span>
+                                                        @endif
+                                                    </div>
+                                                @endif
+
+                                                @if($detail->contentAccessToken)
+                                                    <div class="flex items-center gap-1.5 flex-wrap pt-1 {{ $detail->download_item ? 'border-t border-slate-100' : '' }}">
+                                                        <span class="inline-block bg-violet-50 text-violet-700 text-[10px] px-2 py-0.5 rounded font-bold border border-violet-150">Gated Page Access</span>
+                                                        <button type="button"
+                                                                wire:click="openContentTokenModal({{ $detail->contentAccessToken->id }})"
+                                                                class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-100 hover:bg-violet-50 text-slate-600 hover:text-violet-700 border border-slate-200 hover:border-violet-200 transition cursor-pointer"
+                                                                title="Edit Gated Content Page Expiration">
+                                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                                            <span>Edit Page Expiry</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="text-[10px] text-slate-500">
+                                                        @if($detail->contentAccessToken->expires_at)
+                                                            @if($detail->contentAccessToken->isExpired())
+                                                                <span class="inline-flex items-center gap-1 text-rose-600 font-semibold bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100">
+                                                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                                    Page Expired {{ $detail->contentAccessToken->expires_at->format('M j, Y') }}
+                                                                </span>
+                                                            @else
+                                                                <span class="inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                                                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                                    Page Expires {{ $detail->contentAccessToken->expires_at->format('M j, Y') }}
+                                                                </span>
+                                                            @endif
+                                                        @else
+                                                            <span class="text-slate-400">Page: No Expiry (Lifetime)</span>
+                                                        @endif
+                                                    </div>
                                                 @endif
                                                 @if($detail->active_subscription)
                                                     <div>
@@ -235,6 +291,99 @@
                         </table>
                     </div>
                 </div>
+
+                @if($contentAccessTokens->isNotEmpty())
+                    <!-- Content Access Tokens Card -->
+                    <div class="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center text-violet-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-extrabold text-slate-900">Content Access Tokens</h3>
+                                    <p class="text-xs text-slate-400">Gated page access links, destination URLs, and expiry dates issued for this order.</p>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 bg-violet-50 text-violet-700 text-xs font-bold rounded-lg border border-violet-100">
+                                {{ $contentAccessTokens->count() }} {{ \Illuminate\Support\Str::plural('Token', $contentAccessTokens->count()) }}
+                            </span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-600">
+                                <thead class="bg-slate-50 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                    <tr>
+                                        <th class="px-4 py-3 rounded-l-xl">Line Item / Product</th>
+                                        <th class="px-4 py-3">Access Link &amp; Destination</th>
+                                        <th class="px-4 py-3 text-center">First Accessed</th>
+                                        <th class="px-4 py-3 text-center">Expires</th>
+                                        <th class="px-4 py-3 text-right rounded-r-xl">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    @foreach($contentAccessTokens as $token)
+                                        <tr class="hover:bg-slate-50/50 transition">
+                                            <td class="px-4 py-3.5 font-bold text-slate-800">
+                                                {{ $token->orderDetail->item_name ?? $token->product->title ?? 'Product #' . $token->product_id }}
+                                            </td>
+                                            <td class="px-4 py-3.5 space-y-1">
+                                                <div class="flex items-center gap-1.5 font-mono text-[11px] text-slate-700">
+                                                    <span class="truncate max-w-xs">{{ route('content.access', $token->token) }}</span>
+                                                    <a href="{{ route('content.access', $token->token) }}" target="_blank" class="text-indigo-600 hover:text-indigo-800" title="Test Link">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                                    </a>
+                                                </div>
+                                                <div class="text-[10px] text-slate-400 truncate max-w-xs">
+                                                    Destination: {{ $token->redirect_url }}
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3.5 text-center">
+                                                @if($token->accessed_at)
+                                                    <span class="inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 text-[10px]">
+                                                        {{ $token->accessed_at->format('M j, Y H:i') }}
+                                                    </span>
+                                                @else
+                                                    <span class="text-slate-400 italic text-[10px]">Not yet accessed</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-3.5 text-center">
+                                                @if($token->expires_at)
+                                                    @if($token->isExpired())
+                                                        <span class="inline-flex items-center gap-1 text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-100 text-[10px]">
+                                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                            Expired {{ $token->expires_at->format('M j, Y') }}
+                                                        </span>
+                                                    @else
+                                                        <span class="inline-flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 text-[10px]">
+                                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                            Expires {{ $token->expires_at->format('M j, Y') }}
+                                                        </span>
+                                                    @endif
+                                                @else
+                                                    <span class="text-slate-400 text-[10px]">No Expiry</span>
+                                                @endif
+                                            </td>
+                                            <td class="px-4 py-3.5 text-right space-x-1.5">
+                                                <button type="button"
+                                                        wire:click="openContentTokenModal({{ $token->id }})"
+                                                        class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[10px] font-bold border border-indigo-200 transition cursor-pointer">
+                                                    Edit Expiry
+                                                </button>
+                                                <button type="button"
+                                                        onclick="confirm('Regenerate this content access token? The previous link will become invalid and a new 90-day token will be issued.') || event.stopImmediatePropagation()"
+                                                        wire:click="regenerateContentToken({{ $token->id }})"
+                                                        class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold border border-slate-200 transition cursor-pointer">
+                                                    Regenerate
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Financial Statement summary -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
@@ -878,9 +1027,149 @@
                        </svg>
                        <span wire:loading.remove wire:target="processPaymentRefund">Confirm &amp; Process Refund</span>
                        <span wire:loading wire:target="processPaymentRefund">Processing Refund...</span>
-                   </button>
-               </div>
-            @endif
+                    </button>
+                </div>
+             @endif
+         </div>
+     </div>
+
+    {{-- ── Edit Download Expiration Modal ─────────────────────────────────────── --}}
+    <div
+        x-show="$wire.showDownloadExpirationModal"
+        x-transition:enter="ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+        x-cloak
+    >
+        <div
+            x-show="$wire.showDownloadExpirationModal"
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700 overflow-hidden"
+            @click.away="$wire.closeDownloadExpirationModal()"
+        >
+            <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/40">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-900/30 border border-teal-100 dark:border-teal-800 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Edit File Download Expiration</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs">{{ $editingItemName }}</p>
+                    </div>
+                </div>
+                <button type="button" wire:click="closeDownloadExpirationModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Expiration Date &amp; Time</label>
+                    <input type="datetime-local"
+                           wire:model="editDownloadExpiration"
+                           class="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:border-indigo-500 font-mono">
+                    <p class="text-[11px] text-slate-400 mt-1">Leave empty for lifetime access with no expiration date.</p>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Quick Presets</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" wire:click="setDownloadExpirationShortcut('30days')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-600 transition cursor-pointer">+30 Days</button>
+                        <button type="button" wire:click="setDownloadExpirationShortcut('90days')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-600 transition cursor-pointer">+90 Days</button>
+                        <button type="button" wire:click="setDownloadExpirationShortcut('1year')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-600 transition cursor-pointer">+1 Year</button>
+                        <button type="button" wire:click="setDownloadExpirationShortcut('yesterday')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-bold border border-rose-200 dark:border-rose-800 transition cursor-pointer">Expire (Yesterday)</button>
+                        <button type="button" wire:click="setDownloadExpirationShortcut('lifetime')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-600 transition cursor-pointer">No Expiry</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-2.5">
+                <button type="button" wire:click="closeDownloadExpirationModal" class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" wire:click="saveDownloadExpiration" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- ── Edit Content Access Token Modal ────────────────────────────────────── --}}
+    <div
+        x-show="$wire.showContentTokenModal"
+        x-transition:enter="ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+        x-cloak
+    >
+        <div
+            x-show="$wire.showContentTokenModal"
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700 overflow-hidden"
+            @click.away="$wire.closeContentTokenModal()"
+        >
+            <div class="px-6 py-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/40">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-violet-50 dark:bg-violet-900/30 border border-violet-100 dark:border-violet-800 flex items-center justify-center text-violet-600 dark:text-violet-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Edit Gated Page Access Expiration</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-xs">{{ $editingTokenUrl }}</p>
+                    </div>
+                </div>
+                <button type="button" wire:click="closeContentTokenModal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Access Expiration Date &amp; Time</label>
+                    <input type="datetime-local"
+                           wire:model="editTokenExpiration"
+                           class="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-white bg-white dark:bg-slate-900 focus:outline-none focus:border-indigo-500 font-mono">
+                    <p class="text-[11px] text-slate-400 mt-1">Leave empty for unlimited access with no expiration date.</p>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Quick Presets</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" wire:click="setTokenExpirationShortcut('30days')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-600 transition cursor-pointer">+30 Days</button>
+                        <button type="button" wire:click="setTokenExpirationShortcut('90days')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-600 transition cursor-pointer">+90 Days</button>
+                        <button type="button" wire:click="setTokenExpirationShortcut('1year')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-600 transition cursor-pointer">+1 Year</button>
+                        <button type="button" wire:click="setTokenExpirationShortcut('yesterday')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-bold border border-rose-200 dark:border-rose-800 transition cursor-pointer">Expire (Yesterday)</button>
+                        <button type="button" wire:click="setTokenExpirationShortcut('lifetime')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-600 transition cursor-pointer">No Expiry</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-2.5">
+                <button type="button" wire:click="closeContentTokenModal" class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" wire:click="saveTokenExpiration" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer">
+                    Save Changes
+                </button>
+            </div>
         </div>
     </div>
 </div>

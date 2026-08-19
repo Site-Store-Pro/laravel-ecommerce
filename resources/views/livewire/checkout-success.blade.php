@@ -1,4 +1,6 @@
-<div class="pt-4 pb-16">
+<div x-data="{}" 
+     x-init="@if(!empty($gaEcommerceData)) if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('purchase', {{ json_encode($gaEcommerceData) }}); } @endif"
+     class="pt-4 pb-16">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Success Confirmation Banner Card -->
         <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm text-center space-y-6">

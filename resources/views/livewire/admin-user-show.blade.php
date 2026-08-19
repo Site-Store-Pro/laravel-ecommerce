@@ -47,6 +47,9 @@
                                 <span class="text-xs text-amber-500 font-bold">Unverified</span>
                             @endif
                         </div>
+                        @if (!empty($user->provider))
+                            <div class="text-xs text-slate-600 font-medium capitalize">{{ $user->provider }}</div>
+                        @endif
                     </div>
                 </div>
             </div>

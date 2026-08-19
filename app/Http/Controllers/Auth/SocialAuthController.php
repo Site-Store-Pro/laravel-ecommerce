@@ -21,6 +21,11 @@ class SocialAuthController extends Controller
     {
         $this->validateProvider($provider);
 
+        // If the user has active cart items, record checkout as intended destination
+        if (\App\Services\CartSessionService::getCartCount() > 0) {
+            session(['url.intended' => route('shop.checkout')]);
+        }
+
         $driver = Socialite::driver($provider);
 
         if ($provider === 'github') {
@@ -87,6 +92,14 @@ class SocialAuthController extends Controller
         }
 
         Auth::login($user, remember: true);
+
+        // Associate unassigned cart items with the newly authenticated user
+        \App\Services\CartSessionService::associateCartOnLogin($user->id);
+
+        // If there are items in the cart, redirect directly to checkout
+        if (\App\Services\CartSessionService::getCartCount() > 0) {
+            return redirect()->route('shop.checkout');
+        }
 
         return redirect()->intended(route('dashboard'));
     }

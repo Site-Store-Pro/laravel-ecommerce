@@ -24,17 +24,23 @@ class CheckoutSuccess extends Component
     {
         $customerCountry = $this->order->user?->shipping_countrycode ?? 'US';
 
+        $gaEcommerceData = null;
+        if (\App\Services\GoogleAnalyticsService::isEnabled()) {
+            $gaEcommerceData = \App\Services\GoogleAnalyticsService::formatOrder($this->order);
+        }
+
         return view('livewire.checkout-success', [
-            'currencySymbol' => CurrencyService::symbol(),
-            'taxLabel'       => CurrencyService::taxLabel($customerCountry),
-            'vatInclusive'   => CurrencyService::isVatInclusive(),
-            'crossBorder'    => CurrencyService::isCrossBorderExport($customerCountry),
-            'vatEmbed'       => CurrencyService::isVatInclusive() && !CurrencyService::isCrossBorderExport($customerCountry)
+            'currencySymbol'  => CurrencyService::symbol(),
+            'taxLabel'        => CurrencyService::taxLabel($customerCountry),
+            'vatInclusive'    => CurrencyService::isVatInclusive(),
+            'crossBorder'     => CurrencyService::isCrossBorderExport($customerCountry),
+            'vatEmbed'        => CurrencyService::isVatInclusive() && !CurrencyService::isCrossBorderExport($customerCountry)
                 ? CurrencyService::extractVat(
                     (float)$this->order->order_subtotal,
                     CurrencyService::merchantVatRate()
                 )
                 : 0.0,
+            'gaEcommerceData' => $gaEcommerceData,
         ]);
     }
 }

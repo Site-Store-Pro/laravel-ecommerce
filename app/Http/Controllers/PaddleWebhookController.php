@@ -183,27 +183,40 @@ class PaddleWebhookController extends Controller
             return;
         }
 
-        if ($type === 'subscription.canceled' || in_array($status, ['canceled', 'cancelled', 'past_due'])) {
-            DB::table('order_details')
-                ->where('subscription_plan_id', $subId)
-                ->orWhere(function ($q) use ($subId) {
-                    $q->where('subscription', 1)
-                      ->whereExists(function ($subQ) use ($subId) {
-                          $subQ->select(DB::raw(1))
-                               ->from('order_payments')
-                               ->whereColumn('order_payments.order_id', 'order_details.order_id')
-                               ->where(function ($p) use ($subId) {
-                                   $p->where('authorization_code', $subId)
-                                     ->orWhere('processor_response', 'like', "%{$subId}%");
-                               });
+        if (in_array($status, ['canceled', 'past_due', 'paused'], true)) {
+            $yesterday = now()->subDay()->endOfDay();
+            $cancelledQuery = DB::table('order_details')
+                ->where(function ($q) use ($subId) {
+                    $q->where('subscription_plan_id', $subId)
+                      ->orWhere(function ($q2) use ($subId) {
+                          $q2->where('subscription', 1)
+                             ->whereExists(function ($subQ) use ($subId) {
+                                 $subQ->select(DB::raw(1))
+                                      ->from('order_payments')
+                                      ->whereColumn('order_payments.order_id', 'order_details.order_id')
+                                      ->where(function ($p) use ($subId) {
+                                          $p->where('authorization_code', $subId)
+                                            ->orWhere('processor_response', 'like', "%{$subId}%");
+                                      });
+                             });
                       });
-                })
-                ->update([
-                    'active_subscription' => 0,
-                    'subscription_status' => 'cancelled',
-                    'updated_at'          => now(),
-                ]);
-            Log::info("[Paddle Webhook] Marked subscription {$subId} as cancelled in order_details.");
+                });
+
+            $cancelledIds = (clone $cancelledQuery)->pluck('id');
+
+            $cancelledQuery->update([
+                'active_subscription' => 0,
+                'subscription_status' => 'cancelled',
+                'download_expiration' => $yesterday,
+                'updated_at'          => now(),
+            ]);
+
+            if ($cancelledIds->isNotEmpty()) {
+                DB::table('content_access_tokens')
+                    ->whereIn('order_detail_id', $cancelledIds)
+                    ->update(['expires_at' => $yesterday, 'updated_at' => now()]);
+            }
+            Log::info("[Paddle Webhook] Marked subscription {$subId} as cancelled in order_details and expired access.");
         } elseif ($status === 'active') {
             DB::table('order_details')
                 ->where('subscription_plan_id', $subId)

@@ -79,6 +79,29 @@ class ShoppingCart extends Component
     public function removeItem(int $itemId): void
     {
         $item = $this->getCartQuery()->findOrFail($itemId);
+
+        if (\App\Services\GoogleAnalyticsService::isEnabled()) {
+            $sku = null;
+            if (preg_match('/\(([^)]+)\)$/', $item->item_name ?? '', $matches)) {
+                $sku = $matches[1];
+            }
+            $this->dispatch('ga-ecommerce-event', [
+                'event' => 'remove_from_cart',
+                'data'  => [
+                    'currency' => \App\Services\GoogleAnalyticsService::getCurrency(),
+                    'value'    => round((float)($item->item_price ?? 0) * (int)($item->item_qty ?? 1), 2),
+                    'items'    => [
+                        [
+                            'item_id'   => $sku ?: ('ITEM-' . $item->id),
+                            'item_name' => preg_replace('/\s*\([^)]+\)$/', '', $item->item_name ?? 'Product'),
+                            'price'     => round((float)($item->item_price ?? 0), 2),
+                            'quantity'  => (int)($item->item_qty ?? 1),
+                        ]
+                    ]
+                ]
+            ]);
+        }
+
         $item->delete();
 
         $this->dispatch('cart-updated');
@@ -118,13 +141,19 @@ class ShoppingCart extends Component
             return $item;
         });
 
+        $gaEcommerceData = null;
+        if (\App\Services\GoogleAnalyticsService::isEnabled() && $items->isNotEmpty()) {
+            $gaEcommerceData = \App\Services\GoogleAnalyticsService::formatCart($items, (float)$discountResult['adjusted_subtotal']);
+        }
+
         return view('livewire.shopping-cart', [
-            'items'          => $items,
-            'subtotal'       => $discountResult['subtotal'],
-            'discounts'      => $discountResult['discounts'],
-            'total_discount' => $discountResult['total_discount'],
-            'total'          => $discountResult['adjusted_subtotal'],
-            'currencySymbol' => \App\Services\CurrencyService::symbol(),
+            'items'           => $items,
+            'subtotal'        => $discountResult['subtotal'],
+            'discounts'       => $discountResult['discounts'],
+            'total_discount'  => $discountResult['total_discount'],
+            'total'           => $discountResult['adjusted_subtotal'],
+            'currencySymbol'  => \App\Services\CurrencyService::symbol(),
+            'gaEcommerceData' => $gaEcommerceData,
         ]);
     }
 }

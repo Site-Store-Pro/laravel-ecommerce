@@ -124,27 +124,40 @@ class PayPalWebhookController extends Controller
             return;
         }
 
-        DB::table('order_details')
-            ->where('subscription_plan_id', $subscriptionId)
-            ->orWhere(function ($q) use ($subscriptionId) {
-                $q->where('subscription', 1)
-                  ->whereExists(function ($subQ) use ($subscriptionId) {
-                      $subQ->select(DB::raw(1))
-                           ->from('order_payments')
-                           ->whereColumn('order_payments.order_id', 'order_details.order_id')
-                           ->where(function ($p) use ($subscriptionId) {
-                               $p->where('authorization_code', $subscriptionId)
-                                 ->orWhere('processor_response', 'like', "%{$subscriptionId}%");
-                           });
+        $yesterday = now()->subDay()->endOfDay();
+        $cancelledQuery = DB::table('order_details')
+            ->where(function ($q) use ($subscriptionId) {
+                $q->where('subscription_plan_id', $subscriptionId)
+                  ->orWhere(function ($q2) use ($subscriptionId) {
+                      $q2->where('subscription', 1)
+                         ->whereExists(function ($subQ) use ($subscriptionId) {
+                             $subQ->select(DB::raw(1))
+                                  ->from('order_payments')
+                                  ->whereColumn('order_payments.order_id', 'order_details.order_id')
+                                  ->where(function ($p) use ($subscriptionId) {
+                                      $p->where('authorization_code', $subscriptionId)
+                                        ->orWhere('processor_response', 'like', "%{$subscriptionId}%");
+                                  });
+                         });
                   });
-            })
-            ->update([
-                'active_subscription' => 0,
-                'subscription_status' => 'cancelled',
-                'updated_at'          => now(),
-            ]);
+            });
 
-        Log::info("[PayPal Webhook] Marked subscription {$subscriptionId} as cancelled in order_details.");
+        $cancelledIds = (clone $cancelledQuery)->pluck('id');
+
+        $cancelledQuery->update([
+            'active_subscription' => 0,
+            'subscription_status' => 'cancelled',
+            'download_expiration' => $yesterday,
+            'updated_at'          => now(),
+        ]);
+
+        if ($cancelledIds->isNotEmpty()) {
+            DB::table('content_access_tokens')
+                ->whereIn('order_detail_id', $cancelledIds)
+                ->update(['expires_at' => $yesterday, 'updated_at' => now()]);
+        }
+
+        Log::info("[PayPal Webhook] Marked subscription {$subscriptionId} as cancelled in order_details and expired access.");
     }
 
     /**

@@ -692,6 +692,19 @@ class ProductDetails extends Component
         $this->addedItemName = $this->product->title . ' (' . $variant->sku . ')';
         $this->addedQty = $qtyToAdd;
 
+        if (\App\Services\GoogleAnalyticsService::isEnabled()) {
+            $this->dispatch('ga-ecommerce-event', [
+                'event' => 'add_to_cart',
+                'data'  => [
+                    'currency' => \App\Services\GoogleAnalyticsService::getCurrency(),
+                    'value'    => round($price * $qtyToAdd, 2),
+                    'items'    => [
+                        \App\Services\GoogleAnalyticsService::formatItem($this->product, $variant, $qtyToAdd, $price)
+                    ]
+                ]
+            ]);
+        }
+
         $this->dispatch('cart-updated');
         session()->flash('status', 'Item successfully added to your cart!');
 
@@ -777,6 +790,13 @@ class ProductDetails extends Component
             'isDefaultLanguage'            => app(\App\Services\LanguageService::class)->isDefault(),
             // Reactive OOS message for the currently selected variant.
             'outOfStockMessage'            => $this->outOfStockMessage,
+            'gaEcommerceData'              => \App\Services\GoogleAnalyticsService::isEnabled() ? [
+                'currency' => \App\Services\GoogleAnalyticsService::getCurrency(),
+                'value'    => (float) ($selectedVariant?->public_price ?? 0.00),
+                'items'    => [
+                    \App\Services\GoogleAnalyticsService::formatItem($this->product, $selectedVariant, $this->quantity ?: 1)
+                ]
+            ] : null,
         ])->layout('layouts.public', ['metaTitle' => $metaTitle]);
     }
 

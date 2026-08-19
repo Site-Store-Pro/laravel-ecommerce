@@ -28,10 +28,19 @@ new #[Layout('layouts.public')] class extends Component
 
         Session::regenerate();
 
+        if (Auth::check()) {
+            \App\Services\CartSessionService::associateCartOnLogin(Auth::id());
+        }
+
         // Guest users are auto-logged in by LoginForm and a redirect flash key is set.
         // Send them to set-password rather than the dashboard.
         if (Session::has('guest_redirect')) {
             $this->redirect(Session::pull('guest_redirect'), navigate: false);
+            return;
+        }
+
+        if (\App\Services\CartSessionService::getCartCount() > 0) {
+            $this->redirect(route('shop.checkout'), navigate: true);
             return;
         }
 

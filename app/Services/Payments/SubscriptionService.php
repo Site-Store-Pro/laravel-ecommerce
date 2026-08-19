@@ -28,10 +28,14 @@ class SubscriptionService
 
         if (empty($subscriptionId)) {
             Log::warning("[SubscriptionService] No subscription ID found for OrderDetail #{$orderDetail->id}. Marking cancelled locally.");
+            $yesterday = now()->subDay()->endOfDay();
             $orderDetail->update([
                 'active_subscription' => 0,
                 'subscription_status' => 'cancelled',
+                'download_expiration' => $yesterday,
             ]);
+            \App\Models\ContentAccessToken::where('order_detail_id', $orderDetail->id)
+                ->update(['expires_at' => $yesterday]);
             return true;
         }
 
@@ -45,12 +49,21 @@ class SubscriptionService
             default  => Log::warning("[SubscriptionService] Unknown subscription provider '{$provider}' for OrderDetail #{$orderDetail->id}. Skipping remote API call."),
         };
 
-        // Update database status
+        $yesterday = now()->subDay()->endOfDay();
+
+        // Update database status and set download_expiration to yesterday
         $orderDetail->update([
-            'active_subscription' => 0,
-            'subscription_status' => 'cancelled',
+            'active_subscription'   => 0,
+            'subscription_status'   => 'cancelled',
             'subscription_provider' => $provider,
+            'download_expiration'   => $yesterday,
         ]);
+
+        // Expire associated content access tokens to yesterday
+        \App\Models\ContentAccessToken::where('order_detail_id', $orderDetail->id)
+            ->update([
+                'expires_at' => $yesterday,
+            ]);
 
         return true;
     }

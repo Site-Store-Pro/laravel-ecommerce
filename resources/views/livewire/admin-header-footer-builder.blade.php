@@ -5,7 +5,7 @@
     showWidgetLibrary: false,
     draggingIndex: null,
     targetIndex: null
-}" class="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6 relative">
+}" class="py-6 px-4 sm:px-6 lg:px-8 max-w-[1850px] w-full mx-auto space-y-6 relative">
 
     {{-- TinyMCE Library --}}
     <script src="{{ asset('build/node_modules/tinymce/tinymce.min.js') }}" onerror="if(!window.tinymce){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js';document.head.appendChild(s);}"></script>

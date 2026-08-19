@@ -25,7 +25,7 @@ class ContentAccessController extends Controller
         }
 
         if ($record->isExpired()) {
-            abort(410, 'This content access link has expired.');
+            abort(403, 'This content access link has expired.');
         }
 
         // Record first access timestamp (non-blocking — don't fail if it errors)

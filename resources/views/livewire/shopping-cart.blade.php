@@ -1,4 +1,6 @@
-<div class="pt-4 pb-12">
+<div x-data="{}" 
+     x-init="@if(!empty($gaEcommerceData)) if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('view_cart', {{ json_encode($gaEcommerceData) }}); } @endif"
+     class="pt-4 pb-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 mb-12">@label('cart.page_heading', 'Your Shopping Cart')</h1>
 

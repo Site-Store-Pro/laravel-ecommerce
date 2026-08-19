@@ -66,6 +66,13 @@ new #[Layout('layouts.public')] class extends Component
 
         Auth::login($user);
 
+        \App\Services\CartSessionService::associateCartOnLogin($user->id);
+
+        if (\App\Services\CartSessionService::getCartCount() > 0) {
+            $this->redirect(route('shop.checkout'), navigate: true);
+            return;
+        }
+
         $this->redirect(
             route('dashboard'),
             navigate: true
