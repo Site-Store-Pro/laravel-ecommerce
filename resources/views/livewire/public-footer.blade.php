@@ -79,7 +79,7 @@
         </div>
     @else
         <div class="footer_row4">
-            <div>© {{ date('Y') }} {{ \App\Models\CmsSetting::getSiteName() }}. @label('footer.all_rights_reserved', 'All rights reserved.')</div>
+            <div>© {{ date('Y') }} {{ \App\Models\CmsSetting::getSiteName() }}. All rights reserved.</div>
         </div>
     @endif
 

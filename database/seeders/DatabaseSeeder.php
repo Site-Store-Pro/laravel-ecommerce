@@ -3685,7 +3685,7 @@ SQL
 
         // Table: plugin_options
         DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `plugin_options` (`id`, `plugin_id`, `field_name`, `field_label`, `field_type`, `field_data_format`, `field_default_value`, `field_selections`, `field_min_value`, `field_max_value`, `field_editor`, `field_help`, `field_required`, `field_error_msg`, `field_html`, `sort_order`) VALUES (262, 15, 'header_title', 'Form Header Title', 'input', 'string', 'Track Your Order', NULL, NULL, NULL, NULL, NULL, 'no', NULL, NULL, 10);
+INSERT IGNORE INTO `plugin_options` (`id`, `plugin_id`, `field_name`, `field_label`, `field_type`, `field_data_format`, `field_default_value`, `field_selections`, `field_min_value`, `field_max_value`, `field_editor`, `field_help`, `field_required`, `field_error_msg`, `field_html`, `sort_order`) VALUES (262, 15, 'header_title', 'Form Header Title', 'input', 'string', 'Order Lookup | Subscription Management', NULL, NULL, NULL, NULL, NULL, 'no', NULL, NULL, 10);
 SQL
 );
 
@@ -4807,7 +4807,7 @@ SQL
 
         // Table: plugin_settings
         DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `plugin_settings` (`id`, `plugin_id`, `field_name`, `field_value`) VALUES (140, 15, 'header_title', 'Track Your Order');
+INSERT IGNORE INTO `plugin_settings` (`id`, `plugin_id`, `field_name`, `field_value`) VALUES (140, 15, 'header_title', 'Order Lookup | Subscription Management');
 SQL
 );
 
@@ -4987,7 +4987,7 @@ SQL
 
         // Table: plugins
         DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `plugins` (`id`, `api_id`, `name`, `version`, `type`, `author`, `filename`, `install_type`, `description`, `shortcode`, `activation_required`, `activation_instructions`, `activation_failed_msg`, `activation_success_msg`, `usage_instructions`, `help_info`, `help_url`, `activation_date`, `activation_status`, `activation_key`, `serial_number`, `created_at`, `updated_at`) VALUES (15, NULL, 'Order Status Tracker (2026)', '1.0', 'display', 'Built-in', 'order_tracker_2026', 1, 'Front-end order lookup widget allowing customers to enter order number and email to view current fulfillment status and items on the same page. Shortcode: [plugin:order-tracker-2026]', 'order-tracker-2026', 'no', NULL, NULL, NULL, '<p>Add <strong>[plugin:order-tracker-2026]</strong> to any CMS page to display the order status tracking form. Custom parameter override: <code>[plugin:order-tracker-2026 header=\"Track Your Order\"]</code>.</p>', NULL, NULL, NULL, 1, NULL, NULL, '2026-08-10 01:52:56', '2026-08-10 01:52:56');
+INSERT IGNORE INTO `plugins` (`id`, `api_id`, `name`, `version`, `type`, `author`, `filename`, `install_type`, `description`, `shortcode`, `activation_required`, `activation_instructions`, `activation_failed_msg`, `activation_success_msg`, `usage_instructions`, `help_info`, `help_url`, `activation_date`, `activation_status`, `activation_key`, `serial_number`, `created_at`, `updated_at`) VALUES (15, NULL, 'Order Status Tracker (2026)', '1.0', 'display', 'Built-in', 'order_tracker_2026', 1, 'Front-end order lookup widget allowing customers to enter order number and email to view current fulfillment status and items on the same page. Shortcode: [plugin:order-tracker-2026]', 'order-tracker-2026', 'no', NULL, NULL, NULL, '<p>Add <strong>[plugin:order-tracker-2026]</strong> to any CMS page to display the order status tracking form. Custom parameter override: <code>[plugin:order-tracker-2026 header=\"Order Lookup | Subscription Management\"]</code>.</p>', NULL, NULL, NULL, 1, NULL, NULL, '2026-08-10 01:52:56', '2026-08-10 01:52:56');
 SQL
 );
 
@@ -6899,11 +6899,6 @@ INSERT IGNORE INTO `site_label_sections` (`id`, `name`, `slug`, `description`, `
 SQL
 );
 
-        // Table: site_label_sections
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_label_sections` (`id`, `name`, `slug`, `description`, `sort_order`, `created_at`, `updated_at`) VALUES (2, 'Footer', 'footer', 'Footer links and copyright text', 2, '2026-07-29 12:35:27', '2026-07-29 12:35:27');
-SQL
-);
 
         // Table: site_label_sections
         DB::unprepared(<<<'SQL'
@@ -7133,35 +7128,7 @@ INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_i
 SQL
 );
 
-        // Table: site_label_translations
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_id`, `label_value`, `translation_status`, `translated_at`, `created_at`, `updated_at`) VALUES (27, 27, 2, 'Todos los derechos reservados.', 'ai_translated', '2026-08-10 16:13:29', '2026-07-28 00:50:47', '2026-08-10 16:13:30');
-SQL
-);
 
-        // Table: site_label_translations
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_id`, `label_value`, `translation_status`, `translated_at`, `created_at`, `updated_at`) VALUES (28, 28, 2, 'Inicio', 'ai_translated', '2026-08-10 16:13:30', '2026-07-28 00:50:47', '2026-08-10 16:13:30');
-SQL
-);
-
-        // Table: site_label_translations
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_id`, `label_value`, `translation_status`, `translated_at`, `created_at`, `updated_at`) VALUES (29, 29, 2, 'Base de Conocimientos', 'ai_translated', '2026-08-10 16:13:30', '2026-07-28 00:50:47', '2026-08-10 16:13:31');
-SQL
-);
-
-        // Table: site_label_translations
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_id`, `label_value`, `translation_status`, `translated_at`, `created_at`, `updated_at`) VALUES (30, 30, 2, 'Tablero', 'ai_translated', '2026-08-10 16:13:31', '2026-07-28 00:50:48', '2026-08-10 16:13:32');
-SQL
-);
-
-        // Table: site_label_translations
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_id`, `label_value`, `translation_status`, `translated_at`, `created_at`, `updated_at`) VALUES (31, 31, 2, 'Iniciar sesión', 'ai_translated', '2026-08-10 16:13:32', '2026-07-28 00:50:49', '2026-08-10 16:13:32');
-SQL
-);
 
         // Table: site_label_translations
         DB::unprepared(<<<'SQL'
@@ -9989,35 +9956,7 @@ INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_i
 SQL
 );
 
-        // Table: site_label_translations
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_id`, `label_value`, `translation_status`, `translated_at`, `created_at`, `updated_at`) VALUES (503, 27, 3, 'Tous droits réservés.', 'ai_translated', '2026-08-10 17:17:56', '2026-08-04 17:09:29', '2026-08-10 17:17:57');
-SQL
-);
 
-        // Table: site_label_translations
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_id`, `label_value`, `translation_status`, `translated_at`, `created_at`, `updated_at`) VALUES (504, 28, 3, 'Accueil', 'ai_translated', '2026-08-10 17:17:57', '2026-08-04 17:09:30', '2026-08-10 17:17:57');
-SQL
-);
-
-        // Table: site_label_translations
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_id`, `label_value`, `translation_status`, `translated_at`, `created_at`, `updated_at`) VALUES (505, 29, 3, 'Base de connaissances', 'ai_translated', '2026-08-10 17:17:57', '2026-08-04 17:09:31', '2026-08-10 17:17:58');
-SQL
-);
-
-        // Table: site_label_translations
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_id`, `label_value`, `translation_status`, `translated_at`, `created_at`, `updated_at`) VALUES (506, 30, 3, 'Tableau de bord', 'ai_translated', '2026-08-10 17:17:58', '2026-08-04 17:09:31', '2026-08-10 17:17:58');
-SQL
-);
-
-        // Table: site_label_translations
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_label_translations` (`id`, `site_label_id`, `language_id`, `label_value`, `translation_status`, `translated_at`, `created_at`, `updated_at`) VALUES (507, 31, 3, 'Se connecter', 'ai_translated', '2026-08-10 17:17:58', '2026-08-04 17:09:32', '2026-08-10 17:18:00');
-SQL
-);
 
         // Table: site_label_translations
         DB::unprepared(<<<'SQL'
@@ -12845,35 +12784,7 @@ INSERT IGNORE INTO `site_labels` (`id`, `label_key`, `section_id`, `file_name`, 
 SQL
 );
 
-        // Table: site_labels
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_labels` (`id`, `label_key`, `section_id`, `file_name`, `label_description`, `label_default`, `label_custom`, `last_updated`, `created_at`, `updated_at`) VALUES (27, 'footer.all_rights_reserved', 2, 'footer.blade.php', 'Footer copyright text', 'All rights reserved.', NULL, '2026-07-28 00:27:23', '2026-07-27 12:27:18', '2026-07-29 12:39:06');
-SQL
-);
 
-        // Table: site_labels
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_labels` (`id`, `label_key`, `section_id`, `file_name`, `label_description`, `label_default`, `label_custom`, `last_updated`, `created_at`, `updated_at`) VALUES (28, 'footer.nav_home', 2, 'footer.blade.php', 'Footer home link', 'Home', NULL, '2026-07-28 00:27:23', '2026-07-27 12:27:18', '2026-07-29 12:39:06');
-SQL
-);
-
-        // Table: site_labels
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_labels` (`id`, `label_key`, `section_id`, `file_name`, `label_description`, `label_default`, `label_custom`, `last_updated`, `created_at`, `updated_at`) VALUES (29, 'footer.nav_knowledge_base', 2, 'footer.blade.php', 'Footer knowledge base link', 'Knowledge Base', NULL, '2026-07-28 00:27:23', '2026-07-27 12:27:18', '2026-07-29 12:39:06');
-SQL
-);
-
-        // Table: site_labels
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_labels` (`id`, `label_key`, `section_id`, `file_name`, `label_description`, `label_default`, `label_custom`, `last_updated`, `created_at`, `updated_at`) VALUES (30, 'footer.nav_dashboard', 2, 'footer.blade.php', 'Footer dashboard link', 'Dashboard', NULL, '2026-07-28 00:27:23', '2026-07-27 12:27:18', '2026-07-29 12:39:06');
-SQL
-);
-
-        // Table: site_labels
-        DB::unprepared(<<<'SQL'
-INSERT IGNORE INTO `site_labels` (`id`, `label_key`, `section_id`, `file_name`, `label_description`, `label_default`, `label_custom`, `last_updated`, `created_at`, `updated_at`) VALUES (31, 'footer.nav_sign_in', 2, 'footer.blade.php', 'Footer sign in link', 'Sign In', NULL, '2026-07-28 00:27:23', '2026-07-27 12:27:18', '2026-07-29 12:39:06');
-SQL
-);
 
         // Table: site_labels
         DB::unprepared(<<<'SQL'

@@ -27,7 +27,7 @@ class OrderStatusTrackerPlugin implements DisplayPlugin
             $langId = app(LanguageService::class)->currentId();
             $settings = $plugin->getSettingsForLanguage($langId);
 
-            $headerTitle      = $params['header']              ?? $settings['header_title']       ?? 'Track Your Order';
+            $headerTitle      = $params['header']              ?? $settings['header_title']       ?? 'Order Lookup | Subscription Management';
             $orderNumberLabel = $params['order_number_label']  ?? $settings['order_number_label'] ?? 'Order Number';
             $emailLabel       = $params['email_label']         ?? $settings['email_label']        ?? 'Email Address';
             $buttonLabel      = $params['button_label']        ?? $settings['button_label']       ?? 'Track Order';

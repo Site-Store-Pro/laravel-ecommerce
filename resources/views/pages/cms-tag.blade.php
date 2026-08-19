@@ -19,6 +19,8 @@
         <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
         {{-- flag-icons: CSS-based flag rendering for language switcher --}}
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css">
+        <x-site-theme-styles />
+        <x-header-footer-styles />
     </head>
     <body class="antialiased font-sans bg-slate-50 text-slate-800 overflow-x-hidden selection:bg-indigo-500 selection:text-white">
         <!-- Background Glows -->
@@ -128,7 +130,7 @@
             </main>
 
             <!-- Footer -->
-            @include('layouts.footer', ['theme' => 'light'])
+            <livewire:public-footer />
         </div>
     </body>
 </html>
