@@ -14,8 +14,6 @@
 [![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4.svg)](https://php.net)
 
 
-# Site Store Pro
-
 **Site Store Pro** is a production-ready **eCommerce, CMS, and Helpdesk platform** built with **Laravel 13** and **Livewire 3**.
 
 Originally launched as a PHP shopping cart in **2005**, Site Store Pro has evolved through more than **20 years of real-world eCommerce usage powering thousand of online stores worldwide** into a modern, scalable, and fully open-source platform for today's online businesses
