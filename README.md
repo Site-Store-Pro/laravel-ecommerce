@@ -26,7 +26,9 @@ The Site Store Pro Laravel platform brings eCommerce, content management, and cu
 
 Site Store Pro is designed to give businesses **complete ownership and control** over every aspect of their online operation. From choosing where and how the platform is hosted to managing customer and business data, configuring the storefront, and selecting payment processors, you remain in control.
 
-With Site Store Pro, there are no restrictions tying your business to a specific hosting provider, payment gateway, or proprietary ecosystem. Site Store Pro gives you the flexibility to choose the infrastructure, services, and integrations that best fit your specific business requirements.
+Site Store Pro makes it simple to integrate your current branding either through direct theme modification via the web-based admin settings and/or by modifying the Tailwind CSS and site blade files directly. You are not limited to a pre-defined set of design templates and can customize the appearance of the store to match any design requirement.
+
+With Site Store Pro, there are no restrictions tying your business to a specific hosting provider, payment gateway, or proprietary ecosystem. Site Store Pro gives you the flexibility to integrate the exact appearance, infrastructure, and features that best fit your specific business requirements.
 
 ### Key Features
 
