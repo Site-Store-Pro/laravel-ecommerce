@@ -201,7 +201,7 @@ After running migrations and seeding, your Site Store Pro installation includes 
 | **Password** | `SampleUser12345#` |
 
 > [!WARNING]
-> Change the default admin password immediately after your first login, especially before deploying to any publicly accessible environment. Navigate to **Admin → Users** to update the admin account to a secure password.
+> Change the default admin password immediately after your first login, especially before deploying to any publicly accessible environment. To change the temporary password: Click on Top Right Green Dot (Next To Light/Dark Mode Icon), then click on 'My Profile' to set a secure password.
 
 ---
 
