@@ -258,7 +258,7 @@ composer require phpoffice/phpspreadsheet
 
 The MIT License (MIT)
 
-Copyright (c) 2026 Visperity LLC | Site Store Pro.
+Copyright (c) 2026 Visperity LLC.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
