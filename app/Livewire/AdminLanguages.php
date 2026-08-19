@@ -161,6 +161,9 @@ class AdminLanguages extends Component
             \App\Models\NavItem::class,
             \App\Models\CmsListMenuItem::class,
             \App\Models\SiteLabel::class,
+            \App\Models\Category::class,
+            \App\Models\CmsPagesCategory::class,
+            \App\Models\CmsPagesTag::class,
             \App\Models\KbCategory::class,
             \App\Models\EmailTemplate::class,
             \App\Models\CmsModal::class,
@@ -168,6 +171,9 @@ class AdminLanguages extends Component
             \App\Models\CmsSlide::class,
             \App\Models\CmsBuilderBlock::class,
             \App\Models\ProductInventoryAlert::class,
+            \App\Models\ProductField::class,
+            \App\Models\ProductFieldOption::class,
+            \App\Models\ProductReview::class,
         ];
 
         $count = 0;
@@ -204,6 +210,7 @@ class AdminLanguages extends Component
             duration: 10000
         );
     }
+
     public function translateMissing(int $id): void
     {
         $models = [
@@ -214,6 +221,9 @@ class AdminLanguages extends Component
             \App\Models\NavItem::class,
             \App\Models\CmsListMenuItem::class,
             \App\Models\SiteLabel::class,
+            \App\Models\Category::class,
+            \App\Models\CmsPagesCategory::class,
+            \App\Models\CmsPagesTag::class,
             \App\Models\KbCategory::class,
             \App\Models\EmailTemplate::class,
             \App\Models\CmsModal::class,
@@ -221,6 +231,9 @@ class AdminLanguages extends Component
             \App\Models\CmsSlide::class,
             \App\Models\CmsBuilderBlock::class,
             \App\Models\ProductInventoryAlert::class,
+            \App\Models\ProductField::class,
+            \App\Models\ProductFieldOption::class,
+            \App\Models\ProductReview::class,
         ];
 
         $count = 0;
@@ -315,7 +328,6 @@ class AdminLanguages extends Component
         $service = app(TranslationService::class);
         $variantStats = $service->variantTranslationStats($languageId);
         return [
-
             'cms_pages'              => $service->translationStats(\App\Models\CmsPage::class, $languageId),
             'products'               => $service->translationStats(\App\Models\Product::class, $languageId),
             'variant_attributes'     => [
@@ -342,8 +354,12 @@ class AdminLanguages extends Component
             'email_templates'        => $service->translationStats(\App\Models\EmailTemplate::class, $languageId),
             'modals'                 => $service->translationStats(\App\Models\CmsModal::class, $languageId),
             'cms_faqs'               => $service->translationStats(\App\Models\CmsFaq::class, $languageId),
+            'slideshow_slides'        => $service->translationStats(\App\Models\CmsSlide::class, $languageId),
             'builder_blocks'         => $service->translationStats(\App\Models\CmsBuilderBlock::class, $languageId),
             'inventory_alerts'       => $service->translationStats(\App\Models\ProductInventoryAlert::class, $languageId),
+            'product_fields'         => $service->translationStats(\App\Models\ProductField::class, $languageId),
+            'product_field_options'  => $service->translationStats(\App\Models\ProductFieldOption::class, $languageId),
+            'product_reviews'        => $service->translationStats(\App\Models\ProductReview::class, $languageId),
             'plugins'                => $service->pluginTranslationStats($languageId),
         ];
     }

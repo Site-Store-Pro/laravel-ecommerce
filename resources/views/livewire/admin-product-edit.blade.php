@@ -1044,6 +1044,24 @@
 
                             @if($fieldTransLangCode)
                                 <div class="space-y-4 bg-white rounded-xl p-4 border border-violet-100">
+
+                                    {{-- AI translate actions --}}
+                                    <div class="flex items-center flex-wrap gap-2 pb-3 border-b border-slate-100">
+                                        <button type="button" wire:click="aiTranslateFieldInline" wire:loading.attr="disabled"
+                                                title="Generate a fresh AI translation now. Results fill the fields below for your review before saving."
+                                                class="flex items-center gap-2 px-4 py-2 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-xl text-xs font-bold transition">
+                                            <span wire:loading wire:target="aiTranslateFieldInline" class="animate-spin w-3.5 h-3.5 border-2 border-violet-400 border-t-transparent rounded-full inline-block"></span>
+                                            <svg class="w-4 h-4" wire:loading.remove wire:target="aiTranslateFieldInline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                            ✦ Generate Translation
+                                        </button>
+                                        <button type="button" wire:click="autoTranslateField" wire:loading.attr="disabled"
+                                                title="Queue a background translation job. Refresh the page after a moment to see the results."
+                                                class="flex items-center gap-2 px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold transition">
+                                            <span wire:loading wire:target="autoTranslateField" class="animate-spin w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full inline-block"></span>
+                                            Queue Bulk Job
+                                        </button>
+                                    </div>
+
                                     {{-- Field Label Translation --}}
                                     <div>
                                         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Field Label / Prompt</label>
@@ -1083,6 +1101,7 @@
                                     </div>
                                 </div>
                             @endif
+
                         </div>
                         @endif
                     </div>

@@ -72,7 +72,7 @@ class ProductReviewsList extends Component
         $product = Product::findOrFail($this->productId);
         $product->recalculateRatingIfZero();
 
-        $query = $product->reviews()->where('approved', true);
+        $query = $product->reviews()->where('approved', true)->withCurrentTranslations();
 
         if ($this->sort === 'highest') {
             $query->orderBy('rating', 'desc')->orderBy('created_at', 'desc');

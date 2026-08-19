@@ -58,6 +58,9 @@ class AdminLanguageTranslations extends Component
             'slideshow_slides'        => $service->translationStats(\App\Models\CmsSlide::class, $this->languageId),
             'builder_blocks'         => $service->translationStats(\App\Models\CmsBuilderBlock::class, $this->languageId),
             'inventory_alerts'       => $service->translationStats(\App\Models\ProductInventoryAlert::class, $this->languageId),
+            'product_fields'         => $service->translationStats(\App\Models\ProductField::class,          $this->languageId),
+            'product_field_options'  => $service->translationStats(\App\Models\ProductFieldOption::class,    $this->languageId),
+            'product_reviews'        => $service->translationStats(\App\Models\ProductReview::class,         $this->languageId),
             'plugins'                => $service->pluginTranslationStats($this->languageId),
         ];
     }
@@ -113,6 +116,9 @@ class AdminLanguageTranslations extends Component
             'slideshow_slides'    => \App\Models\CmsSlide::class,
             'builder_blocks'     => \App\Models\CmsBuilderBlock::class,
             'inventory_alerts'   => \App\Models\ProductInventoryAlert::class,
+            'product_fields'        => \App\Models\ProductField::class,
+            'product_field_options' => \App\Models\ProductFieldOption::class,
+            'product_reviews'       => \App\Models\ProductReview::class,
         ];
 
         $modelClass = $map[$type] ?? null;
@@ -166,6 +172,9 @@ class AdminLanguageTranslations extends Component
             'slideshow_slides'    => \App\Models\CmsSlide::class,
             'builder_blocks'     => \App\Models\CmsBuilderBlock::class,
             'inventory_alerts'   => \App\Models\ProductInventoryAlert::class,
+            'product_fields'        => \App\Models\ProductField::class,
+            'product_field_options' => \App\Models\ProductFieldOption::class,
+            'product_reviews'       => \App\Models\ProductReview::class,
         ];
         $modelClass = $map[$type] ?? null;
         if ($modelClass) {
@@ -195,7 +204,10 @@ class AdminLanguageTranslations extends Component
             'cms_faqs'           => [\App\Models\CmsFaq::class,            'cms_faq_id',               'question'],
             'slideshow_slides'    => [\App\Models\CmsSlide::class,           'cms_slide_id',             'slide_heading'],
             'builder_blocks'     => [\App\Models\CmsBuilderBlock::class,   'cms_builder_block_id',     'title'],
-            'inventory_alerts'   => [\App\Models\ProductInventoryAlert::class, 'product_inventory_alert_id', 'message'],
+            'inventory_alerts'      => [\App\Models\ProductInventoryAlert::class, 'product_inventory_alert_id', 'message'],
+            'product_fields'        => [\App\Models\ProductField::class,          'product_field_id',           'label'],
+            'product_field_options' => [\App\Models\ProductFieldOption::class,    'product_field_option_id',    'option_value'],
+            'product_reviews'       => [\App\Models\ProductReview::class,        'product_review_id',          'comments'],
         ];
 
         $items = collect();

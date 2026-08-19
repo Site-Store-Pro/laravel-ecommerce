@@ -199,6 +199,15 @@ class TranslationService
             'ProductInventoryAlert' => [
                 'message' => 'Custom out of stock message for products — clear, concise customer notification',
             ],
+            'ProductField' => [
+                'label' => 'product customization field label shown to the customer at checkout (e.g. "Personalization Text", "Choose Colour")',
+            ],
+            'ProductFieldOption' => [
+                'option_value' => 'product customization field choice option shown to the customer (e.g. "Red", "Small", "Gift wrap")',
+            ],
+            'ProductReview' => [
+                'comments' => 'customer review comments and feedback for a product — preserve the reviewer tone and sentiment',
+            ],
         ];
 
         return $map[class_basename($record)] ?? [];
@@ -224,6 +233,9 @@ class TranslationService
             'CmsSlide'              => 'cms_slide_id',
             'CmsBuilderBlock'       => 'cms_builder_block_id',
             'ProductInventoryAlert' => 'product_inventory_alert_id',
+            'ProductField'          => 'product_field_id',
+            'ProductFieldOption'    => 'product_field_option_id',
+            'ProductReview'         => 'product_review_id',
         ];
         return $overrides[class_basename($record)] ?? $record->getForeignKey();
     }
@@ -245,8 +257,13 @@ class TranslationService
 
         $total      = $modelClass::count();
         $translated = $translationClass::where('language_id', $languageId)->count();
-        $reviewed   = $translationClass::where('language_id', $languageId)->where('translation_status', 'reviewed')->count();
-        $pending    = $total - $translated;
+
+        $table    = (new $translationClass())->getTable();
+        $reviewed = \Illuminate\Support\Facades\Schema::hasColumn($table, 'translation_status')
+            ? $translationClass::where('language_id', $languageId)->where('translation_status', 'reviewed')->count()
+            : 0;
+
+        $pending = $total - $translated;
 
         return compact('total', 'translated', 'pending', 'reviewed');
     }

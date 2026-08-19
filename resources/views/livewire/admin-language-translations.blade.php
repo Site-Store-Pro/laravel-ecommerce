@@ -55,6 +55,9 @@
                     'slideshow_slides'        => 'Slideshow Slides',
                     'builder_blocks'         => 'Header/Footer Blocks',
                     'inventory_alerts'       => 'Inventory Alerts',
+                    'product_fields'         => 'Custom Field Labels',
+                    'product_field_options'  => 'Custom Field Options',
+                    'product_reviews'        => 'Product Reviews',
                     'plugins'                => 'Plugins',
                 ];
             @endphp

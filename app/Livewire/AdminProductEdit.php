@@ -2917,4 +2917,74 @@ class AdminProductEdit extends Component
 
         $this->dispatch('toast', type: 'success', message: 'Field translation saved.');
     }
+
+    /**
+     * Inline AI translation for field label and option values.
+     * Calls OpenAI synchronously and pre-fills all translation fields so the
+     * admin can review before clicking "Save Field Translation".
+     */
+    public function aiTranslateFieldInline(): void
+    {
+        if (!$this->fieldTransLangId || !$this->selectedFieldId) return;
+
+        $lang  = \App\Models\Language::find($this->fieldTransLangId);
+        $field = \App\Models\ProductField::with('options')->find($this->selectedFieldId);
+        if (!$lang || !$field) return;
+
+        try {
+            $svc      = app(\App\Services\TranslationService::class);
+            $langName = $lang->name;
+
+            // Translate field label
+            if (!empty(trim($field->label))) {
+                $this->trans_field_label = $svc->translateText(
+                    $field->label,
+                    $langName,
+                    'product customization field label shown to the customer at checkout'
+                );
+            }
+
+            // Translate each saved option value
+            $this->trans_field_options = [];
+            foreach ($field->options as $option) {
+                if (!empty(trim($option->option_value))) {
+                    $this->trans_field_options[$option->id] = $svc->translateText(
+                        $option->option_value,
+                        $langName,
+                        'product customization field choice option shown to the customer'
+                    );
+                }
+            }
+
+            $this->dispatch('toast', type: 'success', message: 'AI translation ready — review and click Save Field Translation.');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', type: 'error', message: 'AI translation failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Queue background translation jobs for the field label and each option value
+     * via the existing TranslateContentJob pipeline.
+     */
+    public function autoTranslateField(): void
+    {
+        if (!$this->fieldTransLangId || !$this->selectedFieldId) return;
+
+        \App\Jobs\TranslateContentJob::dispatch(
+            \App\Models\ProductField::class,
+            $this->selectedFieldId,
+            $this->fieldTransLangId
+        );
+
+        $field = \App\Models\ProductField::with('options')->find($this->selectedFieldId);
+        foreach ($field?->options ?? [] as $option) {
+            \App\Jobs\TranslateContentJob::dispatch(
+                \App\Models\ProductFieldOption::class,
+                $option->id,
+                $this->fieldTransLangId
+            );
+        }
+
+        $this->dispatch('toast', type: 'success', message: 'Translation jobs queued. Refresh in a moment to see the results.');
+    }
 }
