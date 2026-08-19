@@ -49,6 +49,16 @@ class UserDashboard extends Component
         if (!in_array($this->tab, ['orders', 'downloads', 'tickets'])) {
             $this->tab = 'orders';
         }
+
+        // Redirect away from disabled tabs
+        $settings = \App\Models\CmsSetting::allCached();
+        if (!empty($settings['disable_account_downloads_tab']) && $settings['disable_account_downloads_tab'] === '1' && $this->tab === 'downloads') {
+            $this->tab = 'orders';
+        }
+        if (!empty($settings['disable_account_tickets_tab']) && $settings['disable_account_tickets_tab'] === '1' && $this->tab === 'tickets') {
+            $this->tab = 'orders';
+        }
+
         return null;
     }
 
@@ -129,13 +139,17 @@ class UserDashboard extends Component
                 ->find($this->selectedOrderId)
             : null;
 
+        $settings = \App\Models\CmsSetting::allCached();
+
         return view('livewire.user-dashboard', [
-            'tickets' => $tickets,
-            'statuses' => TicketStatus::cases(),
-            'counts' => $counts,
-            'orders' => $orders,
-            'downloads' => $downloads,
-            'selectedOrder' => $selectedOrder,
+            'tickets'             => $tickets,
+            'statuses'            => TicketStatus::cases(),
+            'counts'              => $counts,
+            'orders'              => $orders,
+            'downloads'           => $downloads,
+            'selectedOrder'       => $selectedOrder,
+            'downloadsTabEnabled' => empty($settings['disable_account_downloads_tab']) || $settings['disable_account_downloads_tab'] !== '1',
+            'ticketsTabEnabled'   => empty($settings['disable_account_tickets_tab'])   || $settings['disable_account_tickets_tab']   !== '1',
         ]);
     }
 }

@@ -73,12 +73,14 @@
                     </div>
                 </div>
 
-                {{-- New Ticket quick-action (always visible) --}}
+                {{-- New Ticket quick-action (only visible when tickets tab is enabled) --}}
+                @if($ticketsTabEnabled)
                 <a href="{{ route('tickets.create') }}" wire:navigate
                    class="hidden sm:inline-flex items-center gap-1.5 justify-center rounded-2xl bg-gradient-to-tr from-indigo-500 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-100 hover:from-indigo-600 hover:to-violet-700 transition-all hover:scale-[1.02] active:scale-[0.98]">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     @label('account.new_ticket', 'New Ticket')
                 </a>
+                @endif
             </div>
         </div>
 
@@ -92,17 +94,21 @@
                     @label('account.orders_tab', 'Orders')
                 </button>
                 {{-- Downloads --}}
+                @if($downloadsTabEnabled)
                 <button wire:click="$set('tab', 'downloads')" id="tab-downloads"
                         class="shrink-0 border-b-2 py-3.5 px-4 text-sm font-semibold transition-all focus:outline-none rounded-t-lg
                         {{ $tab === 'downloads' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }}">
                     @label('account.downloads_tab', 'Downloads')
                 </button>
+                @endif
                 {{-- Tickets --}}
+                @if($ticketsTabEnabled)
                 <button wire:click="$set('tab', 'tickets')" id="tab-tickets"
                         class="shrink-0 border-b-2 py-3.5 px-4 text-sm font-semibold transition-all focus:outline-none rounded-t-lg
                         {{ $tab === 'tickets' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700' }}">
                     @label('account.support_tab', 'Support Tickets')
                 </button>
+                @endif
             </nav>
         </div>
     </div>
@@ -320,7 +326,7 @@
                 @endif
 
             {{-- ═══ DOWNLOADS TAB ════════════════════════════════════════════════ --}}
-            @elseif($tab === 'downloads')
+            @elseif($tab === 'downloads' && $downloadsTabEnabled)
                 <div class="bg-white border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-6 border-b border-slate-100 flex items-center justify-between">
                         <h3 class="font-bold text-lg text-slate-800">@label('account.your_downloads', 'Your Downloads')</h3>
@@ -397,7 +403,7 @@
                 </div>
 
             {{-- ═══ TICKETS TAB ══════════════════════════════════════════════════ --}}
-            @elseif($tab === 'tickets')
+            @elseif($tab === 'tickets' && $ticketsTabEnabled)
 
                 {{-- Stats Grid --}}
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

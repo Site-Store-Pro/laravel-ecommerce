@@ -481,15 +481,16 @@ class Checkout extends Component
         }
 
         return view('livewire.checkout', [
-            'items'           => $discountResult['items'],
-            'subtotal'        => $discountResult['subtotal'],
-            'discounts'       => $discountResult['discounts'],
-            'total_discount'  => $discountResult['total_discount'],
-            'total'           => $discountResult['adjusted_subtotal'],
-            'activeCoupon'    => session()->get('coupon_code'),
-            'countries'       => $dropdownCountries,
-            'states'          => $states,
-            'gaEcommerceData' => $gaEcommerceData,
+            'items'            => $discountResult['items'],
+            'subtotal'         => $discountResult['subtotal'],
+            'discounts'        => $discountResult['discounts'],
+            'total_discount'   => $discountResult['total_discount'],
+            'total'            => $discountResult['adjusted_subtotal'],
+            'activeCoupon'     => session()->get('coupon_code'),
+            'countries'        => $dropdownCountries,
+            'states'           => $states,
+            'gaEcommerceData'  => $gaEcommerceData,
+            'hideCompanyField' => \App\Models\CmsSetting::isEnabled('checkout_hide_company_field'),
         ]);
     }
 }

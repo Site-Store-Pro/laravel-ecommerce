@@ -183,6 +183,13 @@ class AdminSettings extends Component
     public bool   $enable_abandoned_cart_reminder_1 = true;
     public bool   $enable_abandoned_cart_reminder_2 = true;
 
+    // Account Dashboard Tab Visibility
+    public bool $disable_account_downloads_tab = false;
+    public bool $disable_account_tickets_tab   = false;
+
+    // Checkout Field Visibility
+    public bool $checkout_hide_company_field = false;
+
     // Breadcrumbs & Shop Customization
     public bool   $show_product_details_breadcrumbs = true;
     public bool   $show_shop_breadcrumbs = true;
@@ -300,6 +307,13 @@ class AdminSettings extends Component
         $this->shop_disable_default_product_listing  = (bool) ($settings['shop_disable_default_product_listing'] ?? false);
         $this->shop_hide_filters_until_applied       = (bool) ($settings['shop_hide_filters_until_applied'] ?? false);
         $this->shop_header_custom_html               = (string) ($settings['shop_header_custom_html'] ?? '');
+
+        // Account Dashboard Tab Visibility
+        $this->disable_account_downloads_tab = (bool) ($settings['disable_account_downloads_tab'] ?? false);
+        $this->disable_account_tickets_tab   = (bool) ($settings['disable_account_tickets_tab'] ?? false);
+
+        // Checkout Field Visibility
+        $this->checkout_hide_company_field = (bool) ($settings['checkout_hide_company_field'] ?? false);
 
         // Admin area button colours
         $this->admin_btn_primary_bg      = $settings['admin_btn_primary_bg']      ?? '#4f46e5';
@@ -468,6 +482,9 @@ class AdminSettings extends Component
             'admin_btn_primary_text'     => 'nullable|string|max:100',
             'admin_btn_primary_hover_bg' => 'nullable|string|max:100',
             'admin_btn_primary_border'   => 'nullable|string|max:100',
+            'disable_account_downloads_tab' => 'boolean',
+            'disable_account_tickets_tab'   => 'boolean',
+            'checkout_hide_company_field'   => 'boolean',
         ]);
 
         // Handle logo file upload (local, s3, custom_s3)
@@ -627,6 +644,11 @@ class AdminSettings extends Component
             'shop_disable_default_product_listing'  => $this->shop_disable_default_product_listing ? '1' : '0',
             'shop_hide_filters_until_applied'      => $this->shop_hide_filters_until_applied ? '1' : '0',
             'shop_header_custom_html'              => $this->shop_header_custom_html ?? '',
+            // Account Dashboard Tab Visibility
+            'disable_account_downloads_tab' => $this->disable_account_downloads_tab ? '1' : '0',
+            'disable_account_tickets_tab'   => $this->disable_account_tickets_tab   ? '1' : '0',
+            // Checkout Field Visibility
+            'checkout_hide_company_field'   => $this->checkout_hide_company_field   ? '1' : '0',
             // Admin area button colours
             'admin_btn_primary_bg'       => trim($this->admin_btn_primary_bg)      ?: '#4f46e5',
             'admin_btn_primary_text'     => trim($this->admin_btn_primary_text)    ?: '#ffffff',
