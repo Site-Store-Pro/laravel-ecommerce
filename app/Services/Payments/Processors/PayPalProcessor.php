@@ -444,4 +444,152 @@ class PayPalProcessor implements PaymentProcessorInterface
     {
         return 'PayPal Payments';
     }
+
+    /**
+     * Process a partial or full refund with PayPal.
+     *
+     * @param  string      $transactionId PayPal Capture ID, Order ID, or Subscription ID (I-...)
+     * @param  float       $amount        Refund amount in major currency units (e.g. 25.50)
+     * @param  string|null $reason        Optional admin reason/note
+     * @param  string      $currency      ISO 4217 currency code (default 'USD')
+     */
+    public function refund(string $transactionId, float $amount, ?string $reason = null, string $currency = 'USD'): PaymentResult
+    {
+        $transactionId = trim($transactionId);
+        if (empty($transactionId)) {
+            return new PaymentResult(
+                success:           false,
+                authorizationCode: '',
+                errorMessage:      'No PayPal capture ID or order ID provided for refund.',
+                processorName:     $this->getName(),
+            );
+        }
+
+        try {
+            $accessToken = $this->getAccessToken();
+            $baseUrl     = $this->getBaseUrl();
+            $targetCaptureId = $transactionId;
+            $isSubscriptionTxn = false;
+
+            // If a Subscription ID (I-...) was passed, find the latest transaction
+            if (str_starts_with($targetCaptureId, 'I-')) {
+                $isSubscriptionTxn = true;
+                $startTime = now()->subYears(2)->format('Y-m-d\TH:i:s\Z');
+                $endTime   = now()->addDay()->format('Y-m-d\TH:i:s\Z');
+                $subRes = Http::withToken($accessToken)
+                    ->get("{$baseUrl}/v1/billing/subscriptions/{$targetCaptureId}/transactions", [
+                        'start_time' => $startTime,
+                        'end_time'   => $endTime,
+                    ]);
+                if ($subRes->successful() && !empty($subRes->json('transactions.0.id'))) {
+                    $targetCaptureId = $subRes->json('transactions.0.id');
+                }
+            }
+
+            // If an Order ID was passed instead of capture ID, retrieve the order to get the capture ID
+            if (!str_starts_with($targetCaptureId, 'I-') && strlen($targetCaptureId) <= 20 && !str_starts_with($targetCaptureId, 'CAPTURE-')) {
+                try {
+                    $orderCheck = Http::withToken($accessToken)->get("{$baseUrl}/v2/checkout/orders/{$targetCaptureId}");
+                    if ($orderCheck->successful()) {
+                        $orderData = $orderCheck->json();
+                        $resolvedCapture = $orderData['purchase_units'][0]['payments']['captures'][0]['id'] ?? null;
+                        if ($resolvedCapture) {
+                            $targetCaptureId = $resolvedCapture;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("[PayPalProcessor] Order lookup skipped for {$targetCaptureId}: " . $e->getMessage());
+                }
+            }
+
+            $payload = [
+                'amount' => [
+                    'value'         => number_format($amount, 2, '.', ''),
+                    'currency_code' => strtoupper($currency ?: 'USD'),
+                ],
+            ];
+            if (!empty($reason)) {
+                $payload['note_to_payer'] = $reason;
+            }
+
+            // Primary: Attempt refund via PayPal Captures API v2
+            $response = Http::withToken($accessToken)
+                ->withHeaders([
+                    'PayPal-Request-Id' => uniqid('rfnd_', true),
+                    'Content-Type'      => 'application/json',
+                ])
+                ->post("{$baseUrl}/v2/payments/captures/{$targetCaptureId}/refund", $payload);
+
+            // Fallback for subscription sale transactions if v2 capture returned 404 or unprocessable
+            if ($response->failed() && ($isSubscriptionTxn || str_starts_with($targetCaptureId, 'SALE-') || $response->status() === 404)) {
+                $salePayload = [
+                    'amount' => [
+                        'total'    => number_format($amount, 2, '.', ''),
+                        'currency' => strtoupper($currency ?: 'USD'),
+                    ],
+                ];
+                if (!empty($reason)) {
+                    $salePayload['description'] = $reason;
+                }
+
+                $saleResponse = Http::withToken($accessToken)
+                    ->withHeaders(['Content-Type' => 'application/json'])
+                    ->post("{$baseUrl}/v1/payments/sale/{$targetCaptureId}/refund", $salePayload);
+
+                if ($saleResponse->successful()) {
+                    $saleData = $saleResponse->json();
+                    $refundId = $saleData['id'] ?? ('PAYPAL-RFND-' . strtoupper(\Illuminate\Support\Str::random(8)));
+                    return new PaymentResult(
+                        success:           true,
+                        authorizationCode: $refundId,
+                        transactionId:     $refundId,
+                        processorName:     $this->getName(),
+                    );
+                }
+            }
+
+            if ($response->failed()) {
+                $err = $response->json() ?? [];
+                $detailMsgs = [];
+                if (!empty($err['details']) && is_array($err['details'])) {
+                    foreach ($err['details'] as $detail) {
+                        $desc = $detail['description'] ?? $detail['issue'] ?? null;
+                        if ($desc) {
+                            $detailMsgs[] = $desc;
+                        }
+                    }
+                }
+                $errorMessage = !empty($detailMsgs)
+                    ? implode('; ', $detailMsgs)
+                    : ($err['message'] ?? $err['error_description'] ?? $response->body());
+
+                \Illuminate\Support\Facades\Log::error("PayPal refund failed for capture {$targetCaptureId}: " . $response->body());
+                return new PaymentResult(
+                    success:           false,
+                    authorizationCode: '',
+                    errorMessage:      'PayPal Refund Error: ' . $errorMessage,
+                    processorName:     $this->getName(),
+                );
+            }
+
+            $data = $response->json();
+            $refundId = $data['id'] ?? ('PAYPAL-RFND-' . strtoupper(\Illuminate\Support\Str::random(8)));
+
+            return new PaymentResult(
+                success:           true,
+                authorizationCode: $refundId,
+                transactionId:     $refundId,
+                processorName:     $this->getName(),
+            );
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("PayPal refund exception for {$transactionId}: " . $e->getMessage());
+            return new PaymentResult(
+                success:           false,
+                authorizationCode: '',
+                errorMessage:      'PayPal Refund Failed: ' . $e->getMessage(),
+                processorName:     $this->getName(),
+            );
+        }
+    }
 }

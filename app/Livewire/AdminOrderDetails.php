@@ -42,6 +42,13 @@ class AdminOrderDetails extends Component
     public string $pmtAuthCode = '';
     public string $pmtNotes = '';
 
+    // ── Payment Refund Modal ──────────────────────────────────────────────────
+    public bool $showRefundModal = false;
+    public ?int $refundingPaymentId = null;
+    public string $refundPaymentAmount = '';
+    public string $refundReason = '';
+    public bool $refundPostToGateway = true;
+
     public function mount(int $id): void
     {
         abort_unless(auth()->check() && auth()->user()->isStaff(), 403, 'Unauthorized staff access.');
@@ -52,7 +59,7 @@ class AdminOrderDetails extends Component
 
     private function loadOrder(): void
     {
-        $this->order = Order::with(['user', 'details.variant.product', 'payments', 'refunds', 'statusList'])->findOrFail($this->orderId);
+        $this->order = Order::with(['user', 'details.variant.product', 'payments.refunds', 'refunds.payment', 'statusList'])->findOrFail($this->orderId);
         
         $alreadyRefunded = (float) $this->order->refunds->sum('amount');
         $this->refundAmount = max(0.00, (float)$this->order->order_total - $alreadyRefunded);
@@ -141,49 +148,94 @@ class AdminOrderDetails extends Component
 
     // ---------- Process Refund ----------
 
-    public function processRefund(): void
+    // ---------- Payment Refund Modal Handlers ----------
+
+    public function openRefundModal(int $paymentId): void
     {
-        $alreadyRefunded = (float) $this->order->refunds->sum('amount');
-        $remainingRefundable = (float) ($this->order->order_total - $alreadyRefunded);
+        $payment = $this->order->payments->firstWhere('id', $paymentId);
+        if (!$payment) {
+            session()->flash('error', 'Payment record not found.');
+            return;
+        }
+
+        $remaining = (float) $payment->remaining_refundable;
+        if ($remaining <= 0) {
+            session()->flash('error', 'This payment has already been fully refunded.');
+            return;
+        }
+
+        $this->refundingPaymentId = $paymentId;
+        // Default to the full remaining payment amount as requested
+        $this->refundPaymentAmount = number_format($remaining, 2, '.', '');
+        $this->refundReason = '';
+        
+        $method = strtolower(trim((string) $payment->payment_method));
+        $authCode = trim((string) $payment->authorization_code);
+        
+        // Auto-check postToGateway for online gateway payments
+        $this->refundPostToGateway = (
+            str_contains($method, 'stripe') ||
+            str_contains($method, 'paddle') ||
+            str_contains($method, 'paypal') ||
+            str_starts_with($authCode, 'pi_') ||
+            str_starts_with($authCode, 'txn_') ||
+            str_starts_with($authCode, 'i-')
+        );
+
+        $this->showRefundModal = true;
+    }
+
+    public function closeRefundModal(): void
+    {
+        $this->showRefundModal = false;
+        $this->refundingPaymentId = null;
+        $this->refundPaymentAmount = '';
+        $this->refundReason = '';
+    }
+
+    public function processPaymentRefund(\App\Services\Payments\PaymentRefundService $refundService): void
+    {
+        abort_unless(auth()->check() && auth()->user()->isStaff(), 403);
+
+        if (!$this->refundingPaymentId) {
+            session()->flash('error', 'No payment selected for refund.');
+            return;
+        }
+
+        $payment = $this->order->payments->firstWhere('id', $this->refundingPaymentId);
+        if (!$payment) {
+            session()->flash('error', 'Payment record not found.');
+            return;
+        }
+
+        $remaining = (float) $payment->remaining_refundable;
 
         $this->validate([
-            'refundAmount' => 'required|numeric|min:0.01|max:' . $remainingRefundable,
+            'refundPaymentAmount' => 'required|numeric|min:0.01|max:' . $remaining,
+            'refundReason'        => 'nullable|string|max:500',
         ], [
-            'refundAmount.max' => 'The refund amount cannot exceed the remaining refundable order total of $' . number_format($remainingRefundable, 2) . '.',
+            'refundPaymentAmount.max' => 'The refund amount cannot exceed the remaining refundable payment balance of $' . number_format($remaining, 2) . '.',
+        ], [
+            'refundPaymentAmount' => 'Refund Amount',
         ]);
 
-        // Create refund record
-        OrderRefund::create([
-            'order_id' => $this->order->id,
-            'amount' => $this->refundAmount,
-            'refund_date' => now(),
-            'authorization_code' => 'RFND-' . strtoupper(Str::random(6)),
-            'processor_response' => 'Successful simulated partial refund of $' . number_format($this->refundAmount, 2)
-        ]);
+        try {
+            $amount = (float) $this->refundPaymentAmount;
+            $refund = $refundService->refundPayment(
+                payment:       $payment,
+                amount:        $amount,
+                reason:        trim($this->refundReason) ?: null,
+                postToGateway: (bool) $this->refundPostToGateway
+            );
 
-        $newRefundedTotal = $alreadyRefunded + $this->refundAmount;
+            $this->closeRefundModal();
+            $this->loadOrder();
 
-        // If fully refunded, mark status as Refunded (3)
-        if (abs($newRefundedTotal - (float)$this->order->order_total) < 0.01) {
-            $this->order->order_status = 3; // Fully Refunded
+            session()->flash('status', 'Refund of $' . number_format($amount, 2) . ' processed successfully.');
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("AdminOrderDetails refund error for payment #{$this->refundingPaymentId}: " . $e->getMessage());
+            session()->flash('error', 'Failed to process refund: ' . $e->getMessage());
         }
-        $this->order->save();
-
-        // Restock inventory on first refund to prevent double restocking
-        if ($this->order->refunds->count() === 1) {
-            foreach ($this->order->details as $detail) {
-                if ($detail->inventory_id > 0) {
-                    $inventory = ProductInventory::where('variant_id', $detail->inventory_id)->first();
-                    if ($inventory) {
-                        $inventory->quantity_available += (int)$detail->item_qty;
-                        $inventory->save();
-                    }
-                }
-            }
-        }
-
-        session()->flash('status', 'Refund of $' . number_format($this->refundAmount, 2) . ' processed successfully.');
-        $this->loadOrder();
     }
 
     // ---------- Delete Order ----------

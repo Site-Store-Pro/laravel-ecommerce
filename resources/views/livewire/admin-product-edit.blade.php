@@ -1521,7 +1521,7 @@
 
     <!-- Floating Save All Sections Button -->
     <div class="fixed bottom-8 right-8 z-40">
-        <button @click="if (typeof tinymce !== 'undefined') { let ed = tinymce.get('long_description_editor'); if (ed) $wire.set('long_description', ed.getContent()); }"
+        <button @click="if (typeof tinymce !== 'undefined') { let ed = tinymce.get('long_description_editor'); if (ed) $wire.set('long_description', ed.getContent(), false); } document.activeElement?.blur();"
                 wire:click="saveAllSections"
                 wire:loading.attr="disabled"
                 type="button"

@@ -14,6 +14,7 @@ class OrderRefund extends Model
 
     protected $fillable = [
         'order_id',
+        'order_payment_id',
         'amount',
         'refund_date',
         'authorization_code',
@@ -28,5 +29,10 @@ class OrderRefund extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class, 'order_id');
+    }
+
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(OrderPayment::class, 'order_payment_id');
     }
 }

@@ -10,7 +10,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">SKU <span class="text-red-500">*</span></label>
-                                    <input type="text" wire:model="sku" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-semibold text-sm">
+                                    <input type="text" wire:model.blur="sku" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-semibold text-sm">
                                     @error('sku') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="bg-indigo-50/80 border-2 border-indigo-300/80 rounded-2xl p-3 shadow-sm relative">
@@ -22,13 +22,13 @@
                                     </div>
                                     <div class="relative">
                                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-indigo-500 font-bold text-sm">$</span>
-                                        <input type="number" step="0.01" wire:model="public_price" class="w-full pl-7 pr-3 py-2 bg-white border border-indigo-300 text-indigo-950 font-black text-base rounded-xl focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 shadow-inner" placeholder="0.00" required>
+                                        <input type="number" step="0.01" wire:model.blur="public_price" class="w-full pl-7 pr-3 py-2 bg-white border border-indigo-300 text-indigo-950 font-black text-base rounded-xl focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 shadow-inner" placeholder="0.00" required>
                                     </div>
                                     @error('public_price') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">Wholesale Price ($)</label>
-                                    <input type="number" step="0.01" wire:model="wholesale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
+                                    <input type="number" step="0.01" wire:model.blur="wholesale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
                                 </div>
                             </div>
 
@@ -43,36 +43,36 @@
                                 @if($on_sale == 1)
                                     <div>
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Sale Price ($)</label>
-                                        <input type="number" step="0.01" wire:model="sale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <input type="number" step="0.01" wire:model.blur="sale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                     </div>
                                     <div>
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Sale Start Date</label>
-                                        <input type="datetime-local" wire:model="sale_price_start_at" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <input type="datetime-local" wire:model.blur="sale_price_start_at" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                     </div>
                                     <div>
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Sale Stop Date</label>
-                                        <input type="datetime-local" wire:model="sale_price_end_at" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <input type="datetime-local" wire:model.blur="sale_price_end_at" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                     </div>
                                 @endif
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">UPC Code</label>
-                                    <input type="text" wire:model="upc_code" placeholder="e.g. 012345678905" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    <input type="text" wire:model.blur="upc_code" placeholder="e.g. 012345678905" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Item Cost ($)</label>
-                                    <input type="number" step="0.01" min="0" wire:model="item_cost" placeholder="0.00" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    <input type="number" step="0.01" min="0" wire:model.blur="item_cost" placeholder="0.00" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">MAP Price ($)</label>
-                                    <input type="number" step="0.01" min="0" wire:model="item_map" placeholder="0.00" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    <input type="number" step="0.01" min="0" wire:model.blur="item_map" placeholder="0.00" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Variant Fee ($)</label>
-                                    <input type="number" step="0.01" wire:model="variant_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    <input type="number" step="0.01" wire:model.blur="variant_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Wholesale Variant Fee ($)</label>
-                                    <input type="number" step="0.01" wire:model="wholesale_variant_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    <input type="number" step="0.01" wire:model.blur="wholesale_variant_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Allow Personalization</label>
@@ -84,19 +84,19 @@
                                 @if($personalization_active)
                                     <div>
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Personalization Fee ($)</label>
-                                        <input type="number" step="0.01" wire:model="personalization_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <input type="number" step="0.01" wire:model.blur="personalization_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                     </div>
                                     <div>
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Personalization Label</label>
-                                        <input type="text" wire:model="personalization_label" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Add Gift Wrapping / Personalization">
+                                        <input type="text" wire:model.blur="personalization_label" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Add Gift Wrapping / Personalization">
                                     </div>
                                     <div>
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Details / Message Label</label>
-                                        <input type="text" wire:model="personalization_details_label" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Personalization Details / Gift Message">
+                                        <input type="text" wire:model.blur="personalization_details_label" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Personalization Details / Gift Message">
                                     </div>
                                     <div class="col-span-1 md:col-span-3">
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Placeholder Text</label>
-                                        <input type="text" wire:model="personalization_placeholder" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Enter names for engraving, personalization details, or a custom gift message here...">
+                                        <input type="text" wire:model.blur="personalization_placeholder" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Enter names for engraving, personalization details, or a custom gift message here...">
                                     </div>
                                 @endif
                             </div>
@@ -1228,7 +1228,7 @@
                                             Regenerate
                                         </button>
                                     </div>
-                                    <input type="text" wire:model="sku"
+                                    <input type="text" wire:model.blur="sku"
                                            class="w-full px-4 py-2.5 bg-white border rounded-2xl focus:outline-none text-slate-800 text-sm transition-colors
                                                   {{ $errors->has('sku') ? 'border-rose-400 bg-rose-50 focus:border-rose-500' : 'border-slate-200 focus:border-indigo-500' }}"
                                            placeholder="e.g. MY-PRODUCT-AB1C"
@@ -1251,13 +1251,13 @@
                                     </div>
                                     <div class="relative">
                                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-indigo-500 font-bold text-sm">$</span>
-                                        <input type="number" step="0.01" wire:model="public_price" class="w-full pl-7 pr-3 py-2 bg-white border border-indigo-300 text-indigo-950 font-black text-base rounded-xl focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 shadow-inner" placeholder="0.00" required>
+                                        <input type="number" step="0.01" wire:model.blur="public_price" class="w-full pl-7 pr-3 py-2 bg-white border border-indigo-300 text-indigo-950 font-black text-base rounded-xl focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 shadow-inner" placeholder="0.00" required>
                                     </div>
                                     @error('public_price') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">Wholesale Price ($)</label>
-                                    <input type="number" step="0.01" wire:model="wholesale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
+                                    <input type="number" step="0.01" wire:model.blur="wholesale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
                                 </div>
                             </div>
 
@@ -1272,16 +1272,16 @@
                                 @if($on_sale == 1)
                                     <div>
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Sale Price ($)</label>
-                                        <input type="number" step="0.01" wire:model="sale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <input type="number" step="0.01" wire:model.blur="sale_price" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                     </div>
                                 @endif
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Variant Fee ($)</label>
-                                    <input type="number" step="0.01" wire:model="variant_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    <input type="number" step="0.01" wire:model.blur="variant_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Wholesale Variant Fee ($)</label>
-                                    <input type="number" step="0.01" wire:model="wholesale_variant_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                    <input type="number" step="0.01" wire:model.blur="wholesale_variant_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Allow Personalization</label>
@@ -1293,19 +1293,19 @@
                                 @if($personalization_active)
                                     <div>
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Personalization Fee ($)</label>
-                                        <input type="number" step="0.01" wire:model="personalization_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <input type="number" step="0.01" wire:model.blur="personalization_fee" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                     </div>
                                     <div>
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Personalization Label</label>
-                                        <input type="text" wire:model="personalization_label" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Add Gift Wrapping / Personalization">
+                                        <input type="text" wire:model.blur="personalization_label" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Add Gift Wrapping / Personalization">
                                     </div>
                                     <div>
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Details / Message Label</label>
-                                        <input type="text" wire:model="personalization_details_label" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Personalization Details / Gift Message">
+                                        <input type="text" wire:model.blur="personalization_details_label" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Personalization Details / Gift Message">
                                     </div>
                                     <div class="col-span-1 md:col-span-3">
                                         <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Placeholder Text</label>
-                                        <input type="text" wire:model="personalization_placeholder" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Enter names for engraving, personalization details, or a custom gift message here...">
+                                        <input type="text" wire:model.blur="personalization_placeholder" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500" placeholder="e.g. Enter names for engraving, personalization details, or a custom gift message here...">
                                     </div>
                                 @endif
                                 @if(isset($activeLanguages) && $activeLanguages->count() > 0)

@@ -509,18 +509,35 @@ class AdminProductEdit extends Component
 
     public function saveAllSections(): void
     {
+        $hasVariantAction = false;
+
+        // 1. If currently editing an existing variant
         if ($this->isEditingVariant && $this->selectedVariantId > 0) {
             $this->updateVariant(true);
-            return;
-        } elseif ($this->isCreatingVariant) {
+            $hasVariantAction = true;
+        } 
+        // 2. If currently creating a new variant
+        elseif ($this->isCreatingVariant) {
             $this->saveVariant(true);
-            return;
+            $hasVariantAction = true;
         }
 
-        if ($this->saveCoreProductSections(false)) {
-            session()->flash('status', 'All product sections saved successfully.');
-            $this->dispatch('toast', type: 'success', message: 'All product sections saved successfully.');
-            $this->loadProduct();
+        // 3. If currently editing/adding a custom customization field/options
+        if ($this->isEditingField || !empty(trim($this->customFieldLabel ?? '')) || !empty($this->fieldOptions)) {
+            if (!empty(trim($this->customFieldLabel ?? ''))) {
+                $this->saveCustomField();
+            }
+        }
+
+        // 4. Save core product sections if not already saved by variant update
+        if (!$hasVariantAction) {
+            if ($this->saveCoreProductSections(false)) {
+                session()->flash('status', 'All product sections saved successfully.');
+                $this->dispatch('toast', type: 'success', message: 'All product sections saved successfully.');
+                $this->loadProduct();
+            }
+        } else {
+            $this->dispatch('toast', type: 'success', message: 'All product sections and variant details saved successfully.');
         }
     }
 
@@ -1119,6 +1136,7 @@ class AdminProductEdit extends Component
 
         $this->isCreatingVariant = false;
         session()->flash('status', 'Variant added successfully.');
+        $this->dispatch('toast', type: 'success', message: 'Variant added successfully.');
         $this->loadProduct();
     }
 
@@ -1584,6 +1602,7 @@ class AdminProductEdit extends Component
         $this->selectedVariantId = 0;
         $this->qtyDiscounts = [];
         session()->flash('status', 'Variant details and stock levels updated successfully.');
+        $this->dispatch('toast', type: 'success', message: 'Variant details and stock levels updated successfully.');
         $this->loadProduct();
     }
 

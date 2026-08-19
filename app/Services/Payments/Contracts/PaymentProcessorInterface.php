@@ -26,4 +26,14 @@ interface PaymentProcessorInterface
      * Human-readable name used in order payment records.
      */
     public function getName(): string;
+
+    /**
+     * Process a partial or full refund with the payment processor API.
+     *
+     * @param  string      $transactionId Gateway authorization code / transaction ID / payment intent
+     * @param  float       $amount        Refund amount in major currency units (e.g. 25.50)
+     * @param  string|null $reason        Optional admin reason/note
+     * @param  string      $currency      ISO 4217 currency code (default 'USD')
+     */
+    public function refund(string $transactionId, float $amount, ?string $reason = null, string $currency = 'USD'): PaymentResult;
 }

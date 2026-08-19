@@ -429,34 +429,6 @@
                                 @endif
                             </div>
                         @endif
-
-                        <!-- Refund Form -->
-                        @if($order->order_total > 0.00)
-                            <div class="space-y-4 pt-2">
-                                <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Process Refund</h4>
-                                
-                                @if($remainingRefundable <= 0)
-                                    <div class="p-3 bg-red-50 border border-red-100 text-xs font-semibold text-red-800 rounded-2xl">
-                                        This order has been fully refunded. No additional refunds can be processed.
-                                    </div>
-                                @else
-                                    <form wire:submit.prevent="processRefund" class="space-y-3">
-                                        <div>
-                                            <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Refund Amount ($)</label>
-                                            <input type="number" step="0.01" min="0.01" max="{{ $remainingRefundable }}" wire:model="refundAmount" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 font-bold text-sm">
-                                            @error('refundAmount') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
-                                        </div>
-                                        <button type="submit" onclick="return confirm('Are you sure you want to refund this specific amount?')" wire:loading.attr="disabled" wire:target="processRefund" class="w-full py-2.5 bg-red-600 text-white text-xs font-bold rounded-xl shadow-md hover:bg-red-500 flex items-center justify-center gap-1.5">
-                                            <svg wire:loading wire:target="processRefund" class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            <span>Submit Refund</span>
-                                        </button>
-                                    </form>
-                                @endif
-                            </div>
-                        @endif
                     </div>
                 </div>
 
@@ -515,6 +487,10 @@
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                                     @foreach($order->payments as $payment)
+                                        @php
+                                            $refundedAmt = (float) $payment->refunded_amount;
+                                            $remRefundable = (float) $payment->remaining_refundable;
+                                        @endphp
                                         <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-900/30 transition">
                                             <td class="px-4 py-3 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                                 {{ $payment->payment_date ? $payment->payment_date->format('M j, Y g:i A') : '—' }}
@@ -528,10 +504,21 @@
                                                 </span>
                                             </td>
                                             <td class="px-4 py-3">
-                                                @if($payment->payment_status == 1)
+                                                @if($payment->payment_status == 2 || ($refundedAmt > 0 && $remRefundable <= 0.005))
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">
+                                                        Refunded
+                                                    </span>
+                                                @elseif($payment->payment_status == 3 || $refundedAmt > 0)
+                                                    <div class="flex flex-col">
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 w-fit">
+                                                            Partially Refunded
+                                                        </span>
+                                                        <span class="text-[10px] font-semibold text-rose-500 mt-0.5">-${{ number_format($refundedAmt, 2) }} refunded</span>
+                                                    </div>
+                                                @elseif($payment->payment_status == 1)
                                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Paid</span>
                                                 @else
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Pending</span>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">Pending</span>
                                                 @endif
                                             </td>
                                             <td class="px-4 py-3 text-right font-extrabold text-slate-900 dark:text-white whitespace-nowrap">
@@ -539,6 +526,22 @@
                                             </td>
                                             <td class="px-4 py-3">
                                                 <div class="flex items-center justify-center gap-2">
+                                                    @if($remRefundable > 0)
+                                                        <button
+                                                            type="button"
+                                                            wire:click="openRefundModal({{ $payment->id }})"
+                                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 active:bg-red-200 dark:bg-red-950/60 dark:text-red-300 dark:hover:bg-red-900/60 border border-red-200 dark:border-red-800 rounded-xl transition shadow-xs hover:shadow-sm"
+                                                            title="Refund this payment"
+                                                        >
+                                                            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 015 5v2m0 0l-4-4m4 4l4-4M3 10l4-4m-4 4l4 4"/></svg>
+                                                            <span>Refund</span>
+                                                        </button>
+                                                    @else
+                                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-slate-400 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl cursor-default" title="Payment fully refunded">
+                                                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                            <span>Refunded</span>
+                                                        </span>
+                                                    @endif
                                                     <button
                                                         wire:click="openEditPayment({{ $payment->id }})"
                                                         class="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
@@ -571,9 +574,16 @@
                                 <span class="font-medium">Total Paid</span>
                                 <span class="font-semibold text-emerald-600 dark:text-emerald-400">${{ number_format($order->payments->sum('payment_amount'), 2) }}</span>
                             </div>
+                            @php $totalRefunded = (float) $order->refunds->sum('amount'); @endphp
+                            @if($totalRefunded > 0)
+                                <div class="flex items-center justify-between text-sm font-semibold text-rose-600 dark:text-rose-400">
+                                    <span>Total Refunded</span>
+                                    <span>-${{ number_format($totalRefunded, 2) }}</span>
+                                </div>
+                            @endif
                             <div class="flex items-center justify-between text-sm font-bold border-t border-slate-200 dark:border-slate-700 pt-2 mt-2">
                                 <span class="text-slate-700 dark:text-slate-300">Balance Due</span>
-                                @php $balanceDue = max(0, (float)$order->order_total - (float)$order->payments->sum('payment_amount')); @endphp
+                                @php $balanceDue = max(0, (float)$order->order_total - (float)$order->payments->sum('payment_amount') + $totalRefunded); @endphp
                                 <span class="{{ $balanceDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }} text-base">
                                     ${{ number_format($balanceDue, 2) }}
                                     @if($balanceDue <= 0)
@@ -660,9 +670,6 @@
                             <option value="Cash">Cash</option>
                             <option value="Check">Check</option>
                             <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="Stripe">Stripe</option>
-                            <option value="PayPal">PayPal</option>
-                            <option value="Paddle">Paddle</option>
                             <option value="Other">Other</option>
                         </select>
                         @error('pmtMethod') <p class="text-xs text-rose-500 mt-1">{{ $message }}</p> @enderror
@@ -709,6 +716,171 @@
                     <span wire:loading wire:target="savePayment">Saving...</span>
                 </button>
             </div>
+        </div>
+    </div>
+
+    {{-- ── Process Payment Refund Modal ─────────────────────────────────────── --}}
+    <div
+        x-show="$wire.showRefundModal"
+        x-transition:enter="ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+        x-cloak
+    >
+        <div
+            x-show="$wire.showRefundModal"
+            x-transition:enter="ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="ease-in duration-150"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700 overflow-hidden"
+            @click.away="$wire.closeRefundModal()"
+        >
+            @php
+                $selectedPayment = $refundingPaymentId ? $order->payments->firstWhere('id', $refundingPaymentId) : null;
+            @endphp
+
+            <div class="px-6 py-5 bg-gradient-to-r from-amber-500/10 via-rose-500/5 to-transparent border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+               <div class="flex items-center gap-3">
+                   <div class="w-9 h-9 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 015 5v2m0 0l-4-4m4 4l4-4M3 10l4-4m-4 4l4 4"/></svg>
+                   </div>
+                   <div>
+                       <h2 class="text-base font-extrabold text-slate-900 dark:text-white">
+                           Refund Payment
+                       </h2>
+                       <p class="text-xs text-slate-500 dark:text-slate-400">
+                           Payment #{{ $refundingPaymentId }} &bull; {{ $selectedPayment?->payment_method ?? 'Payment' }}
+                       </p>
+                   </div>
+               </div>
+               <button
+                   wire:click="closeRefundModal"
+                   class="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+               >
+                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+               </button>
+            </div>
+
+            @if($selectedPayment)
+               <div class="p-6 space-y-5">
+                   {{-- Payment Summary Box --}}
+                   <div class="bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-4 space-y-2 text-xs">
+                       <div class="flex items-center justify-between">
+                           <span class="text-slate-500 dark:text-slate-400 font-medium">Original Payment</span>
+                           <span class="font-bold text-slate-800 dark:text-slate-200">${{ number_format($selectedPayment->payment_amount, 2) }}</span>
+                       </div>
+                       @if($selectedPayment->refunded_amount > 0)
+                           <div class="flex items-center justify-between text-rose-500 font-semibold">
+                               <span>Already Refunded</span>
+                               <span>-${{ number_format($selectedPayment->refunded_amount, 2) }}</span>
+                           </div>
+                       @endif
+                       <div class="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 font-bold">
+                           <span>Max Remaining Refundable</span>
+                           <span class="text-sm">${{ number_format($selectedPayment->remaining_refundable, 2) }}</span>
+                       </div>
+                       @if($selectedPayment->authorization_code)
+                           <div class="flex items-center justify-between text-[11px] pt-1 border-t border-slate-200 dark:border-slate-700">
+                               <span class="text-slate-400">Gateway Auth/Ref Code:</span>
+                               <span class="font-mono text-indigo-600 dark:text-indigo-400 font-semibold">{{ $selectedPayment->authorization_code }}</span>
+                           </div>
+                       @endif
+                   </div>
+
+                   {{-- Refund Amount Field --}}
+                   <div>
+                       <div class="flex items-center justify-between mb-1.5">
+                           <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                               Refund Amount ($) <span class="text-rose-500">*</span>
+                           </label>
+                           <button
+                               type="button"
+                               wire:click="$set('refundPaymentAmount', '{{ number_format($selectedPayment->remaining_refundable, 2, '.', '') }}')"
+                               class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                           >
+                               Set Full Amount (${{ number_format($selectedPayment->remaining_refundable, 2) }})
+                           </button>
+                       </div>
+                       <div class="relative">
+                           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">$</span>
+                           <input
+                               type="number"
+                               wire:model.blur="refundPaymentAmount"
+                               step="0.01"
+                               min="0.01"
+                               max="{{ $selectedPayment->remaining_refundable }}"
+                               class="w-full pl-7 pr-3 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-extrabold focus:ring-2 focus:ring-amber-500 focus:outline-none transition"
+                           />
+                       </div>
+                       @error('refundPaymentAmount') <p class="text-xs text-rose-500 mt-1 font-semibold">{{ $message }}</p> @enderror
+                       <p class="text-[11px] text-slate-400 mt-1">
+                           Defaulted to full remaining balance (${{ number_format($selectedPayment->remaining_refundable, 2) }}). You can edit this for partial refunds.
+                       </p>
+                   </div>
+
+                   {{-- Refund Reason --}}
+                   <div>
+                       <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                           Reason / Note <span class="text-slate-400 font-normal">(optional)</span>
+                       </label>
+                       <textarea
+                           wire:model.blur="refundReason"
+                           rows="2"
+                           placeholder="e.g. Customer requested refund, returned items, billing dispute..."
+                           class="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-xl text-xs bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:outline-none transition resize-none"
+                       ></textarea>
+                   </div>
+
+                   {{-- Gateway API Toggle --}}
+                   <div class="p-3 bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 rounded-xl">
+                       <label class="flex items-start gap-2.5 cursor-pointer">
+                           <input
+                               type="checkbox"
+                               wire:model="refundPostToGateway"
+                               class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                           />
+                           <div>
+                               <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                                   Post refund via Payment Processor API
+                               </span>
+                               <span class="text-[11px] text-slate-500 dark:text-slate-400 block leading-tight">
+                                   Automatically submits the refund request to {{ $selectedPayment->payment_method ?: 'the payment gateway' }} API. Uncheck only if you want an offline ledger entry or already refunded directly.
+                               </span>
+                           </div>
+                       </label>
+                   </div>
+               </div>
+
+               <div class="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-slate-900/30">
+                   <button
+                       wire:click="closeRefundModal"
+                       class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition"
+                   >
+                       Cancel
+                   </button>
+                   <button
+                       wire:click="processPaymentRefund"
+                       wire:loading.attr="disabled"
+                       wire:target="processPaymentRefund"
+                       onclick="return confirm('Are you sure you want to process this refund?')"
+                       class="px-5 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-md shadow-red-600/20"
+                   >
+                       <svg wire:loading wire:target="processPaymentRefund" class="animate-spin h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                       </svg>
+                       <span wire:loading.remove wire:target="processPaymentRefund">Confirm &amp; Process Refund</span>
+                       <span wire:loading wire:target="processPaymentRefund">Processing Refund...</span>
+                   </button>
+               </div>
+            @endif
         </div>
     </div>
 </div>

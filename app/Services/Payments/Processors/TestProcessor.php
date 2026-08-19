@@ -48,4 +48,16 @@ class TestProcessor implements PaymentProcessorInterface
     {
         return 'Test Gateway (Simulated)';
     }
+
+    public function refund(string $transactionId, float $amount, ?string $reason = null, string $currency = 'USD'): PaymentResult
+    {
+        $refundCode = 'TEST-RFND-' . strtoupper(Str::random(8));
+
+        return new PaymentResult(
+            success:           true,
+            authorizationCode: $refundCode,
+            transactionId:     $refundCode,
+            processorName:     $this->getName(),
+        );
+    }
 }

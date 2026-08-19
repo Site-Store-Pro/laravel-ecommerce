@@ -440,6 +440,140 @@ class PaddleProcessor implements PaymentProcessorInterface
         return true;
     }
 
+    /**
+     * Process a partial or full refund with Paddle Billing.
+     *
+     * @param  string      $transactionId Paddle Transaction ID (txn_...) or Subscription ID (sub_...)
+     * @param  float       $amount        Refund amount in major currency units (e.g. 25.50)
+     * @param  string|null $reason        Optional admin reason/note
+     * @param  string      $currency      ISO 4217 currency code (default 'USD')
+     */
+    public function refund(string $transactionId, float $amount, ?string $reason = null, string $currency = 'USD'): PaymentResult
+    {
+        $transactionId = trim($transactionId);
+        if (empty($transactionId)) {
+            return new PaymentResult(
+                success:           false,
+                authorizationCode: '',
+                errorMessage:      'No Paddle transaction ID provided for refund.',
+                processorName:     $this->getName(),
+            );
+        }
+
+        $apiKey = $this->sandbox
+            ? (config('services.paddle.sandbox_api_key') ?? '')
+            : (config('services.paddle.api_key') ?? '');
+
+        if (empty($apiKey)) {
+            return new PaymentResult(
+                success:           false,
+                authorizationCode: '',
+                errorMessage:      'Paddle API Key is missing in environment.',
+                processorName:     $this->getName(),
+            );
+        }
+
+        $baseUrl = $this->sandbox
+            ? 'https://sandbox-api.paddle.com'
+            : 'https://api.paddle.com';
+
+        try {
+            $targetTxnId = $transactionId;
+
+            // If a Subscription ID or Customer ID was passed, find the most recent completed transaction
+            if (str_starts_with($targetTxnId, 'sub_')) {
+                $txnsRes = \Illuminate\Support\Facades\Http::withToken($apiKey)->get("{$baseUrl}/transactions", [
+                    'subscription_id' => $targetTxnId,
+                    'status'          => 'completed',
+                    'per_page'        => 1,
+                ]);
+                if ($txnsRes->successful() && !empty($txnsRes->json('data.0.id'))) {
+                    $targetTxnId = $txnsRes->json('data.0.id');
+                }
+            } elseif (str_starts_with($targetTxnId, 'ctm_')) {
+                $txnsRes = \Illuminate\Support\Facades\Http::withToken($apiKey)->get("{$baseUrl}/transactions", [
+                    'customer_id' => $targetTxnId,
+                    'status'      => 'completed',
+                    'per_page'    => 1,
+                ]);
+                if ($txnsRes->successful() && !empty($txnsRes->json('data.0.id'))) {
+                    $targetTxnId = $txnsRes->json('data.0.id');
+                }
+            }
+
+            // Fetch the transaction details to get line items and currency
+            $txnRes = \Illuminate\Support\Facades\Http::withToken($apiKey)->get("{$baseUrl}/transactions/{$targetTxnId}");
+            $txnData = $txnRes->json('data');
+
+            $items = [];
+            $adjustmentType = 'full';
+
+            if ($txnRes->successful() && !empty($txnData['details']['line_items'])) {
+                $lineItems = $txnData['details']['line_items'];
+                $totalTxnAmount = (float) ($txnData['details']['totals']['total'] ?? 0) / 100;
+
+                // If refund amount is less than total, make it partial
+                if ($totalTxnAmount > 0 && abs($amount - $totalTxnAmount) > 0.01) {
+                    $adjustmentType = 'partial';
+                    $firstItemId = $lineItems[0]['id'] ?? null;
+                    if ($firstItemId) {
+                        $items[] = [
+                            'item_id' => $firstItemId,
+                            'type'    => 'partial',
+                            'amount'  => (string) number_format($amount, 2, '.', ''),
+                        ];
+                    }
+                }
+            }
+
+            $payload = [
+                'action'         => 'refund',
+                'transaction_id' => $targetTxnId,
+                'reason'         => $reason ?: 'General customer refund',
+                'type'           => $adjustmentType,
+            ];
+
+            if (!empty($items)) {
+                $payload['items'] = $items;
+            }
+
+            $response = \Illuminate\Support\Facades\Http::withToken($apiKey)
+                ->withHeaders(['Content-Type' => 'application/json'])
+                ->post("{$baseUrl}/adjustments", $payload);
+
+            if ($response->failed()) {
+                $errBody = $response->json();
+                $detail = $errBody['error']['detail'] ?? $response->body();
+                \Illuminate\Support\Facades\Log::error("Paddle refund failed for {$targetTxnId}: " . $response->body());
+                return new PaymentResult(
+                    success:           false,
+                    authorizationCode: '',
+                    errorMessage:      'Paddle Refund Error: ' . $detail,
+                    processorName:     $this->getName(),
+                );
+            }
+
+            $adjData = $response->json('data');
+            $adjId = $adjData['id'] ?? ('adj_' . \Illuminate\Support\Str::random(16));
+
+            return new PaymentResult(
+                success:           true,
+                authorizationCode: $adjId,
+                transactionId:     $adjId,
+                processorName:     $this->getName(),
+            );
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Paddle refund exception for {$transactionId}: " . $e->getMessage());
+            return new PaymentResult(
+                success:           false,
+                authorizationCode: '',
+                errorMessage:      'Paddle Refund Failed: ' . $e->getMessage(),
+                processorName:     $this->getName(),
+            );
+        }
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Protected helpers (overridable in extension class)
     // ─────────────────────────────────────────────────────────────────────────

@@ -466,6 +466,106 @@ class StripeProcessor implements PaymentProcessorInterface
         }
     }
 
+    /**
+     * Process a partial or full refund with Stripe.
+     *
+     * @param  string      $transactionId PaymentIntent ID (pi_...), Charge ID (ch_...), or Subscription ID (sub_...)
+     * @param  float       $amount        Refund amount in major currency units (e.g. 25.50)
+     * @param  string|null $reason        Optional admin reason/note
+     * @param  string      $currency      ISO 4217 currency code (default 'USD')
+     */
+    public function refund(string $transactionId, float $amount, ?string $reason = null, string $currency = 'USD'): PaymentResult
+    {
+        $transactionId = trim($transactionId);
+        if (empty($transactionId)) {
+            return new PaymentResult(
+                success:           false,
+                authorizationCode: '',
+                errorMessage:      'No Stripe transaction or payment intent ID provided for refund.',
+                processorName:     $this->getName(),
+            );
+        }
+
+        try {
+            $client = $this->client();
+            $targetPaymentIntent = $transactionId;
+
+            // If a Subscription ID (sub_...) or Payment Method (pm_...) was passed, resolve the PaymentIntent
+            if (str_starts_with($transactionId, 'sub_')) {
+                try {
+                    $sub = $client->subscriptions->retrieve($transactionId);
+                    if (!empty($sub->latest_invoice)) {
+                        $invoiceId = is_string($sub->latest_invoice) ? $sub->latest_invoice : ($sub->latest_invoice->id ?? null);
+                        if ($invoiceId) {
+                            $invoice = $client->invoices->retrieve($invoiceId);
+                            if (!empty($invoice->payment_intent)) {
+                                $targetPaymentIntent = is_string($invoice->payment_intent) ? $invoice->payment_intent : ($invoice->payment_intent->id ?? $targetPaymentIntent);
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("[StripeProcessor] Could not retrieve invoice for subscription {$transactionId}: " . $e->getMessage());
+                }
+            } elseif (str_starts_with($transactionId, 'pm_')) {
+                // If only PaymentMethod is known, look up payment intents with this payment method or customer
+                try {
+                    $pm = $client->paymentMethods->retrieve($transactionId);
+                    if (!empty($pm->customer)) {
+                        $pis = $client->paymentIntents->all(['customer' => $pm->customer, 'limit' => 5]);
+                        if (!empty($pis->data)) {
+                            $targetPaymentIntent = $pis->data[0]->id;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("[StripeProcessor] Could not resolve payment intent from PM {$transactionId}: " . $e->getMessage());
+                }
+            }
+
+            $amountInCents = (int) round($amount * 100);
+            $params = [
+                'amount' => $amountInCents,
+            ];
+
+            if (str_starts_with($targetPaymentIntent, 'pi_')) {
+                $params['payment_intent'] = $targetPaymentIntent;
+            } elseif (str_starts_with($targetPaymentIntent, 'ch_') || str_starts_with($targetPaymentIntent, 'py_')) {
+                $params['charge'] = $targetPaymentIntent;
+            } else {
+                $params['payment_intent'] = $targetPaymentIntent;
+            }
+
+            if (!empty($reason)) {
+                $params['metadata'] = ['admin_reason' => $reason];
+            }
+
+            $refund = $client->refunds->create($params);
+
+            return new PaymentResult(
+                success:           true,
+                authorizationCode: $refund->id,
+                transactionId:     $refund->id,
+                processorName:     $this->getName(),
+            );
+
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            \Illuminate\Support\Facades\Log::error("Stripe refund failed for {$transactionId}: " . $e->getMessage());
+            return new PaymentResult(
+                success:           false,
+                authorizationCode: '',
+                errorMessage:      'Stripe Refund Error: ' . $e->getMessage(),
+                processorName:     $this->getName(),
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Stripe refund exception for {$transactionId}: " . $e->getMessage());
+            return new PaymentResult(
+                success:           false,
+                authorizationCode: '',
+                errorMessage:      'Stripe Refund Failed: ' . $e->getMessage(),
+                processorName:     $this->getName(),
+            );
+        }
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Protected helpers (overridable in extension class)
     // ─────────────────────────────────────────────────────────────────────────
