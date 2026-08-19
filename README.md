@@ -18,7 +18,9 @@
 
 Originally launched as a PHP shopping cart in **2005**, Site Store Pro has evolved through more than **20 years of real-world eCommerce usage powering thousands of online stores worldwide** into a modern, scalable, and fully open-source platform for today's online businesses
 
-The current Laravel platform modernizes the proven Site Store Pro foundation while preserving the flexibility and advanced functionality developed by [**Kevin Rounsavelle**](https://github.com/kevin-rounsavelle). The Site Store Pro Laravel platform brings eCommerce, content management, and customer support together in a single, unified application.
+The current Laravel platform modernizes the proven Site Store Pro foundation while preserving the flexibility and advanced functionality developed by [**Kevin Rounsavelle**](https://github.com/kevin-rounsavelle) and the team at [**Visperity**](https://visperity.com). 
+
+The Site Store Pro Laravel platform brings eCommerce, content management, and customer support together in a single, unified application.
 
 ## Complete Control of Your Online Business
 
