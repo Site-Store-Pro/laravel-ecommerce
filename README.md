@@ -153,6 +153,8 @@ composer require paddlehq/paddle-php-sdk
 
 # Both Stripe and Paddle
 composer require stripe/stripe-php paddlehq/paddle-php-sdk
+
+**Paypal is also built-in but does not require a composer installation.**
 ```
 
 > [!NOTE]
