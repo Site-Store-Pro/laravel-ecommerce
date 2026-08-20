@@ -142,7 +142,7 @@ npm run build
 ```
 
 ### 7. (Optional) Install Payment Provider SDKs
-Site Store Pro supports Stripe and Paddle as built-in payment providers:
+Site Store Pro supports Stripe, Paddle and PayPal as built-in payment providers:
 
 ```bash
 # Stripe Only
