@@ -100,7 +100,7 @@ php artisan key:generate
 Open the newly created `.env` file and update the database configuration to match your db setup:
 
 ```env
-APP_NAME="Site Store Pro"
+APP_NAME="Your Online Store Name"
 APP_URL=http://localhost
 
 DB_CONNECTION=mysql
