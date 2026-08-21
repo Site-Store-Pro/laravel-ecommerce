@@ -575,7 +575,7 @@ To change the temporary password:
 
 ## Redis Configuration & Troubleshooting
 
-Laravel defaults to the **`phpredis`** connector (`PhpRedisConnector`), which requires the native PHP C-extension (`ext-redis`). If your server or Docker container does not have this extension enabled, switching to Redis will result in:
+Laravel defaults to the **`phpredis`** connector (`PhpRedisConnector`), which requires the native PHP C-extension (`ext-redis`). If your server or Docker container does not have this extension enabled, switching to Redis for caching and sessions will result in:
 ```
 Class "Redis" not found (PhpRedisConnector.php:82)
 ```
