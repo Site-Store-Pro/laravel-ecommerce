@@ -469,6 +469,8 @@ class AdminCmsPageEdit extends Component
             'author_id' => auth()->id(),
         ];
 
+        $isNew = !$this->pageId;
+
         if ($this->pageId) {
             $this->page->update($data);
             session()->flash('status', 'Page updated successfully.');
@@ -514,7 +516,11 @@ class AdminCmsPageEdit extends Component
 
         $this->loadRevisions();
 
-        // Redirect back to list
+        if ($isNew) {
+            $this->redirect(route('admin.cms-pages.edit', $this->pageId), navigate: true);
+            return;
+        }
+
         return;
     }
 
