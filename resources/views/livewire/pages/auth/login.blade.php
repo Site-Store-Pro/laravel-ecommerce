@@ -24,7 +24,12 @@ new #[Layout('layouts.public')] class extends Component
             return;
         }
 
-        $this->form->authenticate();
+        $result = $this->form->authenticate();
+
+        if ($result === '2fa_required') {
+            $this->redirect(\App\Services\TwoFactorAuthService::getVerifyUrl('login'), navigate: true);
+            return;
+        }
 
         Session::regenerate();
 
@@ -39,7 +44,10 @@ new #[Layout('layouts.public')] class extends Component
             return;
         }
 
-        if (\App\Services\CartSessionService::getCartCount() > 0) {
+        $user = Auth::user();
+        $isCustomerRole = $user && in_array((int) ($user->role_id instanceof \App\Enums\UserRole ? $user->role_id->value : $user->role_id), [1, 2], true);
+
+        if ($isCustomerRole && \App\Services\CartSessionService::getCartCount() > 0) {
             $this->redirect(route('shop.checkout'), navigate: true);
             return;
         }

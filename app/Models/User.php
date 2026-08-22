@@ -18,7 +18,7 @@ use Illuminate\Notifications\Notifiable;
     'company', 'shipping_address1', 'shipping_address2',
     'shipping_city', 'shopping_postalcode', 'shipping_country',
     'shipping_countrycode', 'shipping_state', 'rewards_status', 'new_user_discount', 'preferred_discount_id', 'active',
-    'user_token_1', 'user_token_2', 'email_verified_at', 'opt_in'
+    'user_token_1', 'user_token_2', 'email_verified_at', 'opt_in', 'last_login_at'
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
@@ -72,6 +72,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at'     => 'datetime',
             'password'          => env('custom_login_security') ? 'hashed' : 'hashed', // Cast can be hashed but custom hasher manages it if enabled
             'role_id'           => UserRole::class,
             'opt_in'            => 'boolean',

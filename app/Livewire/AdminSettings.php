@@ -190,6 +190,10 @@ class AdminSettings extends Component
     // Checkout Field Visibility
     public bool $checkout_hide_company_field = false;
 
+    // Two-Factor Authentication (2FA) & Security
+    public bool $enable_checkout_2fa = false;
+    public bool $enable_login_2fa = false;
+
     // Breadcrumbs & Shop Customization
     public bool   $show_product_details_breadcrumbs = true;
     public bool   $show_shop_breadcrumbs = true;
@@ -314,6 +318,10 @@ class AdminSettings extends Component
 
         // Checkout Field Visibility
         $this->checkout_hide_company_field = (bool) ($settings['checkout_hide_company_field'] ?? false);
+
+        // Two-Factor Authentication (2FA) & Security
+        $this->enable_checkout_2fa = (bool) ($settings['enable_checkout_2fa'] ?? false);
+        $this->enable_login_2fa    = (bool) ($settings['enable_login_2fa'] ?? false);
 
         // Admin area button colours
         $this->admin_btn_primary_bg      = $settings['admin_btn_primary_bg']      ?? '#4f46e5';
@@ -485,6 +493,8 @@ class AdminSettings extends Component
             'disable_account_downloads_tab' => 'boolean',
             'disable_account_tickets_tab'   => 'boolean',
             'checkout_hide_company_field'   => 'boolean',
+            'enable_checkout_2fa'           => 'boolean',
+            'enable_login_2fa'              => 'boolean',
         ]);
 
         // Handle logo file upload (local, s3, custom_s3)
@@ -649,6 +659,9 @@ class AdminSettings extends Component
             'disable_account_tickets_tab'   => $this->disable_account_tickets_tab   ? '1' : '0',
             // Checkout Field Visibility
             'checkout_hide_company_field'   => $this->checkout_hide_company_field   ? '1' : '0',
+            // Two-Factor Authentication (2FA) & Security
+            'enable_checkout_2fa'           => $this->enable_checkout_2fa           ? '1' : '0',
+            'enable_login_2fa'              => $this->enable_login_2fa              ? '1' : '0',
             // Admin area button colours
             'admin_btn_primary_bg'       => trim($this->admin_btn_primary_bg)      ?: '#4f46e5',
             'admin_btn_primary_text'     => trim($this->admin_btn_primary_text)    ?: '#ffffff',

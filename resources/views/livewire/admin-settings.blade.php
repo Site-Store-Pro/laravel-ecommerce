@@ -2198,6 +2198,35 @@
                     </label>
                 </div>
 
+                {{-- ─── Two-Factor Authentication (2FA) & Security ─────────── --}}
+                {{-- Enable 2FA at Checkout --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Enable 2FA Email Verification at Checkout</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, non-social customers must verify a 6-digit numeric code sent to their email before completing their purchase. Returning customers who placed an order within the last 30 days are automatically exempt.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="enable_checkout_2fa" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                {{-- Enable 2FA on Login --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Enable 2FA Email Verification on Login</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, non-social users (including administrators) returning to log in after 30+ days of inactivity must verify a 6-digit numeric code sent to their email to access their account or admin portal.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="enable_login_2fa" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
                 {{-- Shop Header Custom HTML (TinyMCE) --}}
                 <div class="pt-5 border-t border-slate-100 dark:border-slate-700">
                     <div class="flex items-center justify-between mb-2">

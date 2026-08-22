@@ -252,6 +252,17 @@ class Checkout extends Component
             $user = Auth::user();
             // Associate current guest cart items with this user before leaving
             $this->getCartQuery()->update(['user_id' => $user->id]);
+
+            // Check 2FA requirement for checkout
+            if (\App\Services\TwoFactorAuthService::isCheckout2FaEnabled()
+                && ! \App\Services\TwoFactorAuthService::isCheckout2FaVerified()
+                && ! \App\Services\TwoFactorAuthService::isCustomerExemptFromCheckout2Fa($user, $user->email)
+            ) {
+                \App\Services\TwoFactorAuthService::startCheckoutChallenge($user->email, $user->name, $user->id);
+                $this->redirect(\App\Services\TwoFactorAuthService::getVerifyUrl('checkout'), navigate: false);
+                return;
+            }
+
             $this->redirect(route('shop.checkout-review'), navigate: false);
         }
     }
@@ -307,6 +318,16 @@ class Checkout extends Component
             if ($this->canBypassCheckout()) {
                 $user = Auth::user();
                 $this->getCartQuery()->update(['user_id' => $user->id]);
+
+                if (\App\Services\TwoFactorAuthService::isCheckout2FaEnabled()
+                    && ! \App\Services\TwoFactorAuthService::isCheckout2FaVerified()
+                    && ! \App\Services\TwoFactorAuthService::isCustomerExemptFromCheckout2Fa($user, $user->email)
+                ) {
+                    \App\Services\TwoFactorAuthService::startCheckoutChallenge($user->email, $user->name, $user->id);
+                    $this->redirect(\App\Services\TwoFactorAuthService::getVerifyUrl('checkout'), navigate: false);
+                    return;
+                }
+
                 $this->redirect(route('shop.checkout-review'), navigate: false);
                 return;
             }
@@ -441,6 +462,17 @@ class Checkout extends Component
         $this->getCartQuery()->update([
             'user_id' => $userId,
         ]);
+
+        $resolvedUser = Auth::user() ?? (isset($user) ? $user : User::find($userId));
+
+        // Check 2FA requirement for checkout
+        if (\App\Services\TwoFactorAuthService::isCheckout2FaEnabled()
+            && ! \App\Services\TwoFactorAuthService::isCheckout2FaVerified()
+            && ! \App\Services\TwoFactorAuthService::isCustomerExemptFromCheckout2Fa($resolvedUser, $this->email)
+        ) {
+            \App\Services\TwoFactorAuthService::startCheckoutChallenge($this->email, $this->name, $userId);
+            return redirect()->to(\App\Services\TwoFactorAuthService::getVerifyUrl('checkout'));
+        }
 
         return redirect()->route('shop.checkout-review');
     }

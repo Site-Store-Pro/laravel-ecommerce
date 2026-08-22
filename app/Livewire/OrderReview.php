@@ -163,6 +163,17 @@ class OrderReview extends Component
             return;
         }
 
+        // 2FA Security Guard
+        if (\App\Services\TwoFactorAuthService::isCheckout2FaEnabled()) {
+            $user = Auth::user();
+            if (! \App\Services\TwoFactorAuthService::isCheckout2FaVerified()
+                && ! \App\Services\TwoFactorAuthService::isCustomerExemptFromCheckout2Fa($user, $user?->email)
+            ) {
+                redirect()->route('shop.checkout');
+                return;
+            }
+        }
+
         $items = $this->getCartQuery()->get();
         if ($items->count() === 0) {
             redirect()->route('shop.cart');

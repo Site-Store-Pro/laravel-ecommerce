@@ -49,7 +49,9 @@ new #[Layout('layouts.public')] class extends Component
         // Associate unassigned cart items with newly registered social user
         \App\Services\CartSessionService::associateCartOnLogin($user->id);
 
-        if (\App\Services\CartSessionService::getCartCount() > 0) {
+        $isCustomerRole = in_array((int) ($user->role_id instanceof \App\Enums\UserRole ? $user->role_id->value : $user->role_id), [1, 2], true);
+
+        if ($isCustomerRole && \App\Services\CartSessionService::getCartCount() > 0) {
             $this->redirect(route('shop.checkout'), navigate: true);
             return;
         }

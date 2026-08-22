@@ -91,13 +91,16 @@ class SocialAuthController extends Controller
             }
         }
 
+        $user->update(['last_login_at' => now()]);
         Auth::login($user, remember: true);
 
         // Associate unassigned cart items with the newly authenticated user
         \App\Services\CartSessionService::associateCartOnLogin($user->id);
 
-        // If there are items in the cart, redirect directly to checkout
-        if (\App\Services\CartSessionService::getCartCount() > 0) {
+        $isCustomerRole = in_array((int) ($user->role_id instanceof \App\Enums\UserRole ? $user->role_id->value : $user->role_id), [1, 2], true);
+
+        // If there are items in the cart and user is a customer role (1 or 2), redirect to checkout
+        if ($isCustomerRole && \App\Services\CartSessionService::getCartCount() > 0) {
             return redirect()->route('shop.checkout');
         }
 

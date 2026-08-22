@@ -26,7 +26,7 @@ class LoginForm extends Form
      *
      * @throws ValidationException
      */
-    public function authenticate(): void
+    public function authenticate(): ?string
     {
         $this->ensureIsNotRateLimited();
 
@@ -47,17 +47,17 @@ class LoginForm extends Form
                 // Already verified — skip straight to set-password.
                 session()->flash('guest_redirect', route('guest.set-password'));
             }
-            return;
+            return null;
         }
 
         \App\Services\CustomHashContext::$currentEmail = $this->email;
         try {
-            $attempt = Auth::attempt($this->only(['email', 'password']), $this->remember);
+            $valid = Auth::validate($this->only(['email', 'password']));
         } finally {
             \App\Services\CustomHashContext::$currentEmail = null;
         }
 
-        if (! $attempt) {
+        if (! $valid) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -66,6 +66,25 @@ class LoginForm extends Form
         }
 
         RateLimiter::clear($this->throttleKey());
+
+        $user = \App\Models\User::where('email', $this->email)->first();
+
+        // Check 2FA requirement for login
+        if ($user && \App\Services\TwoFactorAuthService::isLogin2FaEnabled() && ! \App\Services\TwoFactorAuthService::isUserExemptFromLogin2Fa($user)) {
+            \App\Services\TwoFactorAuthService::startLoginChallenge($user, $this->remember);
+            return '2fa_required';
+        }
+
+        // Direct authentication when 2FA is disabled or user is exempt
+        \App\Services\CustomHashContext::$currentEmail = $this->email;
+        try {
+            Auth::login($user, $this->remember);
+            $user->update(['last_login_at' => now()]);
+        } finally {
+            \App\Services\CustomHashContext::$currentEmail = null;
+        }
+
+        return null;
     }
 
     /**

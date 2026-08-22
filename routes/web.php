@@ -56,6 +56,8 @@ Route::get('downloads/{orderDetail}/{token}', [\App\Http\Controllers\ProductDown
 Route::get('cms-download/{uuid}', [\App\Http\Controllers\CmsDownloadController::class, 'serve'])->name('cms.download')->where('uuid', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
 Route::get('api/live-search-api', [PluginApiController::class, 'liveSearchApi'])->name('api.live-search');
 
+Route::get('verify-code', \App\Livewire\TwoFactorVerify::class)->name('auth.verify-code');
+
 // Secure content access token redemption (no auth required — supports guest purchasers)
 Route::get('content-access/{token}', [ContentAccessController::class, 'redeem'])->name('content.access');
 
