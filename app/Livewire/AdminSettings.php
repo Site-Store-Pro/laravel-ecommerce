@@ -187,8 +187,9 @@ class AdminSettings extends Component
     public bool $disable_account_downloads_tab = false;
     public bool $disable_account_tickets_tab   = false;
 
-    // Checkout Field Visibility
+    // Checkout Field Visibility & Guest Checkout
     public bool $checkout_hide_company_field = false;
+    public bool $disable_guest_checkout = false;
 
     // Two-Factor Authentication (2FA) & Security
     public bool $enable_checkout_2fa = false;
@@ -316,8 +317,9 @@ class AdminSettings extends Component
         $this->disable_account_downloads_tab = (bool) ($settings['disable_account_downloads_tab'] ?? false);
         $this->disable_account_tickets_tab   = (bool) ($settings['disable_account_tickets_tab'] ?? false);
 
-        // Checkout Field Visibility
+        // Checkout Field Visibility & Guest Checkout
         $this->checkout_hide_company_field = (bool) ($settings['checkout_hide_company_field'] ?? false);
+        $this->disable_guest_checkout      = (bool) ($settings['disable_guest_checkout'] ?? false);
 
         // Two-Factor Authentication (2FA) & Security
         $this->enable_checkout_2fa = (bool) ($settings['enable_checkout_2fa'] ?? false);
@@ -493,6 +495,7 @@ class AdminSettings extends Component
             'disable_account_downloads_tab' => 'boolean',
             'disable_account_tickets_tab'   => 'boolean',
             'checkout_hide_company_field'   => 'boolean',
+            'disable_guest_checkout'        => 'boolean',
             'enable_checkout_2fa'           => 'boolean',
             'enable_login_2fa'              => 'boolean',
         ]);
@@ -657,8 +660,9 @@ class AdminSettings extends Component
             // Account Dashboard Tab Visibility
             'disable_account_downloads_tab' => $this->disable_account_downloads_tab ? '1' : '0',
             'disable_account_tickets_tab'   => $this->disable_account_tickets_tab   ? '1' : '0',
-            // Checkout Field Visibility
+            // Checkout Field Visibility & Guest Checkout
             'checkout_hide_company_field'   => $this->checkout_hide_company_field   ? '1' : '0',
+            'disable_guest_checkout'        => $this->disable_guest_checkout        ? '1' : '0',
             // Two-Factor Authentication (2FA) & Security
             'enable_checkout_2fa'           => $this->enable_checkout_2fa           ? '1' : '0',
             'enable_login_2fa'              => $this->enable_login_2fa              ? '1' : '0',

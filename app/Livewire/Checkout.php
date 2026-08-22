@@ -127,10 +127,14 @@ class Checkout extends Component
 
     protected function rules(): array
     {
+        $disableGuestCheckout = \App\Models\CmsSetting::isEnabled('disable_guest_checkout');
+
         $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'password' => 'nullable|string|min:8|confirmed',
+            'password' => (!Auth::check() && $disableGuestCheckout)
+                ? 'required|string|min:8|confirmed'
+                : 'nullable|string|min:8|confirmed',
         ];
 
         if ($this->requiresShipping) {

@@ -2198,6 +2198,20 @@
                     </label>
                 </div>
 
+                {{-- Disable Guest Checkout (Require Account Password) --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Disable Guest Checkout (Force Account Creation)</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, guest checkout without an account password is removed. All unauthenticated customers must provide and confirm a password (minimum 8 characters) to create an account when placing an order.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="disable_guest_checkout" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
                 {{-- ─── Two-Factor Authentication (2FA) & Security ─────────── --}}
                 {{-- Enable 2FA at Checkout --}}
                 <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">

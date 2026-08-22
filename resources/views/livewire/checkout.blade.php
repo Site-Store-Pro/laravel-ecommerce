@@ -210,17 +210,38 @@
                             @endif
 
                             @if(!auth()->check())
+                                @php
+                                    $disableGuestCheckout = \App\Models\CmsSetting::isEnabled('disable_guest_checkout');
+                                @endphp
                                 <div class="md:col-span-2 border-t border-slate-100 pt-4 mt-2">
-                                    <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">@label('checkout.field_password_optional', 'Create a Password (Optional)')</label>
-                                    <p class="text-xs text-slate-400 mb-2">@label('checkout.field_password_optional_message', 'Provide a password if you want to register and speed through future purchases.')</p>
+                                    <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">
+                                        @if($disableGuestCheckout)
+                                            @label('checkout.field_password_required', 'Create an Account Password') <span class="text-rose-500">*</span>
+                                        @else
+                                            @label('checkout.field_password_optional', 'Create a Password (Optional)')
+                                        @endif
+                                    </label>
+                                    <p class="text-xs text-slate-400 mb-2">
+                                        @if($disableGuestCheckout)
+                                            @label('checkout.field_password_required_message', 'An account password is required to complete your order and track your purchases.')
+                                        @else
+                                            @label('checkout.field_password_optional_message', 'Provide a password if you want to register and speed through future purchases.')
+                                        @endif
+                                    </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_password', 'Password')</label>
+                                            <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">
+                                                @label('checkout.field_password', 'Password')
+                                                @if($disableGuestCheckout) <span class="text-rose-500">*</span> @endif
+                                            </label>
                                             <input type="password" wire:model="password" placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                             @error('password') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                         </div>
                                         <div>
-                                            <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">@label('checkout.field_confirm_password', 'Confirm Password')</label>
+                                            <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">
+                                                @label('checkout.field_confirm_password', 'Confirm Password')
+                                                @if($disableGuestCheckout) <span class="text-rose-500">*</span> @endif
+                                            </label>
                                             <input type="password" wire:model="password_confirmation" placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                         </div>
                                     </div>
