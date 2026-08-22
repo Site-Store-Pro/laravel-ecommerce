@@ -1,4 +1,4 @@
-@section('title', 'Set Your Password')
+@section('title', siteLabel('account.set_password_title', 'Set Your Password'))
 
 <div class="min-h-[70vh] flex items-center justify-center px-6 py-16 bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
     <div class="max-w-md w-full space-y-6">

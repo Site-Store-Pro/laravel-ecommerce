@@ -1,4 +1,4 @@
-@section('title', '@label(\'account.my_account\', \'My Account\')')
+@section('title', siteLabel('account.my_account', 'My Account'))
 
 <div>
     {{-- ─── Page Header ─────────────────────────────────────────────────────── --}}

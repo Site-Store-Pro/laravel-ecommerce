@@ -1,3 +1,5 @@
+@section('title', $context === 'checkout' ? siteLabel('two_factor.checkout_heading', 'Verify Your Purchase') : siteLabel('two_factor.login_heading', 'Two-Factor Verification'))
+
 <div class="py-12 sm:py-16 px-4 flex flex-col items-center justify-center min-h-[65vh]">
     <div class="w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 p-6 sm:p-8 space-y-6">
         
