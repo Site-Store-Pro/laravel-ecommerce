@@ -4,7 +4,7 @@
             $scrollTo = 'body';
         }
         $scrollIntoViewJsSnippet = ($scrollTo !== false)
-            ? '(\$el.closest("' . $scrollTo . '") || \$el).scrollIntoView()'
+            ? '($el.closest("' . $scrollTo . '") || $el).scrollIntoView()'
             : '';
     @endphp
 
