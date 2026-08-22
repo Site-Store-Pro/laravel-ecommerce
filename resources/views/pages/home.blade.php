@@ -98,7 +98,7 @@
         </div>{{-- end min-h-screen outer wrapper --}}
 
         @if($page && $page->custom_js)
-            @if(str_contains($page->custom_js, '<script'))
+            @if(str_contains(strtolower($page->custom_js), '<script'))
                 {!! $page->custom_js !!}
             @else
                 <script>

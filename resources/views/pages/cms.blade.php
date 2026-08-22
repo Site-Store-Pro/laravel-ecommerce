@@ -303,6 +303,17 @@
 
         <!-- Custom JS / Third-party scripts (DB-driven) -->
         <x-site-custom-js-loader />
+
+        @if($page && $page->custom_js)
+            @if(str_contains(strtolower($page->custom_js), '<script'))
+                {!! $page->custom_js !!}
+            @else
+                <script>
+                    {!! $page->custom_js !!}
+                </script>
+            @endif
+        @endif
+
         {{-- AOS: Animate On Scroll — mobile-aware init --}}
         <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
         <script>
