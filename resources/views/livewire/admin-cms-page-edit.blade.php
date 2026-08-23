@@ -197,8 +197,9 @@
                                 <div class="w-full lg:w-1/4 space-y-2 flex flex-col" wire:key="left-editor-container">
                                     <label class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Left Sidebar Column</label>
                                     <div class="flex-1" wire:ignore 
-                                         x-data="{
+                                          x-data="{
                                              leftCol: @entangle('left_col'),
+                                             customCss: @entangle('custom_css'),
                                              initTiny() {
                                                  tinymce.init({
                                                      selector: '#cms_page_left_col_editor',
@@ -234,11 +235,12 @@
                                                          { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
                                                          { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
                                                      ],
-                                                     extended_valid_elements: '*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
+                                                     custom_elements: '~style',
+                                                     extended_valid_elements: 'style[*],script[*],*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
                                                      convert_urls: false,
                                                      relative_urls: false,
                                                      remove_script_host: false,
-                                                     valid_children: '+a[button]',
+                                                     valid_children: '+body[style],+div[style],+span[style],+section[style],+article[style],+main[style],+a[button]',
                                                      setup: (editor) => {
                                                          editor.on('init', () => {
                                                              editor.setContent(window.ensureProseWrapper(this.leftCol || ''));
@@ -246,14 +248,27 @@
                                                                  el.style.setProperty('max-width', 'none', 'important');
                                                                  el.style.setProperty('width', '100%');
                                                              });
+                                                             window.applyCustomCssToTinyMCE(editor, this.customCss);
                                                          });
+                                                         editor.on('change', () => {
+                                                             this.leftCol = editor.getContent();
+                                                         });
+                                                         editor.on('blur', () => {
+                                                             this.leftCol = editor.getContent();
+                                                         });
+                                                     }
+                                                 });
+                                                 this.$watch('customCss', (val) => {
+                                                     let editor = tinymce.get('cms_page_left_col_editor');
+                                                     if (editor) {
+                                                         window.applyCustomCssToTinyMCE(editor, val);
                                                      }
                                                  });
                                              },
                                              destroy() {
                                                  tinymce.remove('#cms_page_left_col_editor');
                                              }
-                                         }"
+                                          }"
                                          x-init="initTiny()">
                                         <textarea id="cms_page_left_col_editor" class="w-full h-full"></textarea>
                                     </div>
@@ -326,6 +341,7 @@
                                 <div class="flex-1" wire:ignore 
                                      x-data="{
                                          content: @entangle('content'),
+                                         customCss: @entangle('custom_css'),
                                          initTiny() {
                                              tinymce.init({
                                                  selector: '#cms_page_content_editor',
@@ -361,11 +377,12 @@
                                                      { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
                                                      { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
                                                  ],
-                                                 extended_valid_elements: '*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
-                                                     convert_urls: false,
-                                                     relative_urls: false,
-                                                     remove_script_host: false,
-                                                     valid_children: '+a[button]',
+                                                 custom_elements: '~style',
+                                                 extended_valid_elements: 'style[*],script[*],*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
+                                                 convert_urls: false,
+                                                 relative_urls: false,
+                                                 remove_script_host: false,
+                                                 valid_children: '+body[style],+div[style],+span[style],+section[style],+article[style],+main[style],+a[button]',
                                                  setup: (editor) => {
                                                      editor.on('init', () => {
                                                          const html = this.content || '';
@@ -374,6 +391,7 @@
                                                              el.style.setProperty('max-width', 'none', 'important');
                                                              el.style.setProperty('width', '100%');
                                                          });
+                                                         window.applyCustomCssToTinyMCE(editor, this.customCss);
                                                      });
                                                      editor.on('change', () => {
                                                          this.content = editor.getContent();
@@ -386,11 +404,17 @@
                                                      });
                                                  }
                                              });
-                                             },
-                                             destroy() {
-                                                 tinymce.remove('#cms_page_content_editor');
-                                             }
-                                             }"
+                                             this.$watch('customCss', (val) => {
+                                                 let editor = tinymce.get('cms_page_content_editor');
+                                                 if (editor) {
+                                                     window.applyCustomCssToTinyMCE(editor, val);
+                                                 }
+                                             });
+                                         },
+                                         destroy() {
+                                             tinymce.remove('#cms_page_content_editor');
+                                         }
+                                     }"
                                              x-init="initTiny()">
                                     <textarea id="cms_page_content_editor" class="w-full"></textarea>
                                 </div>
@@ -403,7 +427,8 @@
                                     <label class="text-xs font-bold text-slate-400 block uppercase tracking-wider">Right Sidebar Column</label>
                                     <div class="flex-1" wire:ignore 
                                          x-data="{
-rightCol: @entangle('right_col'),
+                                             rightCol: @entangle('right_col'),
+                                             customCss: @entangle('custom_css'),
                                              initTiny() {
                                                  tinymce.init({
                                                      selector: '#cms_page_right_col_editor',
@@ -439,11 +464,12 @@ rightCol: @entangle('right_col'),
                                                          { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
                                                          { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
                                                      ],
-                                                     extended_valid_elements: '*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
+                                                     custom_elements: '~style',
+                                                     extended_valid_elements: 'style[*],script[*],*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
                                                      convert_urls: false,
                                                      relative_urls: false,
                                                      remove_script_host: false,
-                                                     valid_children: '+a[button]',
+                                                     valid_children: '+body[style],+div[style],+span[style],+section[style],+article[style],+main[style],+a[button]',
                                                      setup: (editor) => {
                                                          editor.on('init', () => {
                                                              const html = this.rightCol || '';
@@ -452,6 +478,7 @@ rightCol: @entangle('right_col'),
                                                                  el.style.setProperty('max-width', 'none', 'important');
                                                                  el.style.setProperty('width', '100%');
                                                              });
+                                                             window.applyCustomCssToTinyMCE(editor, this.customCss);
                                                          });
                                                          editor.on('change', () => {
                                                              this.rightCol = editor.getContent();
@@ -464,11 +491,17 @@ rightCol: @entangle('right_col'),
                                                          });
                                                      }
                                                  });
+                                                 this.$watch('customCss', (val) => {
+                                                     let editor = tinymce.get('cms_page_right_col_editor');
+                                                     if (editor) {
+                                                         window.applyCustomCssToTinyMCE(editor, val);
+                                                     }
+                                                 });
                                              },
                                              destroy() {
                                                  tinymce.remove('#cms_page_right_col_editor');
                                              }
-                                             }"
+                                         }"
                                              x-init="initTiny()">
                                         <textarea id="cms_page_right_col_editor" class="w-full h-full"></textarea>
                                     </div>
@@ -1383,6 +1416,35 @@ rightCol: @entangle('right_col'),
             return '<' + 'div class="prose prose-slate max-w-none">' + html + '</' + 'div>';
         };
 
+        window.applyCustomCssToTinyMCE = function (editor, rawCss) {
+            if (!editor || !editor.getDoc || !editor.getDoc()) return;
+            const doc = editor.getDoc();
+            const head = doc.head || doc.getElementsByTagName('head')[0];
+            if (!head) return;
+
+            // Remove any previously injected custom css/link tags
+            const existing = head.querySelectorAll('.cms-injected-custom-css');
+            existing.forEach(el => el.remove());
+
+            if (!rawCss || typeof rawCss !== 'string' || !rawCss.trim()) return;
+
+            const trimmed = rawCss.trim();
+            if (trimmed.includes('<link') || trimmed.includes('<style')) {
+                const temp = document.createElement('div');
+                temp.innerHTML = trimmed;
+                temp.querySelectorAll('link, style').forEach(node => {
+                    node.classList.add('cms-injected-custom-css');
+                    head.appendChild(node.cloneNode(true));
+                });
+            } else {
+                const style = doc.createElement('style');
+                style.type = 'text/css';
+                style.className = 'cms-injected-custom-css';
+                style.appendChild(doc.createTextNode(trimmed));
+                head.appendChild(style);
+            }
+        };
+
         window.cmsTinyMCEImageUploadHandler = function (blobInfo, progress) {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
@@ -1595,6 +1657,7 @@ rightCol: @entangle('right_col'),
                             <div wire:ignore wire:key="trans-editor-container-{{ $activeLangCode }}"
                                  x-data="{
                                      transContent: @entangle('trans_content'),
+                                     customCss: @entangle('custom_css'),
                                      initTiny() {
                                          if (tinymce.get('cms_page_trans_content_editor')) {
                                              tinymce.remove('#cms_page_trans_content_editor');
@@ -1633,11 +1696,12 @@ rightCol: @entangle('right_col'),
                                                  { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
                                                  { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
                                              ],
-                                             extended_valid_elements: '*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
+                                             custom_elements: '~style',
+                                             extended_valid_elements: 'style[*],script[*],*[class|style|id|name|open|data-aos|data-aos-duration|data-aos-delay|data-aos-offset|data-aos-easing|data-aos-once|data-aos-mirror|data-aos-mobile],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*],button[*]',
                                              convert_urls: false,
                                              relative_urls: false,
                                              remove_script_host: false,
-                                             valid_children: '+a[button]',
+                                             valid_children: '+body[style],+div[style],+span[style],+section[style],+article[style],+main[style],+a[button]',
                                              setup: (editor) => {
                                                  editor.on('init', () => {
                                                      const html = this.transContent || '';
@@ -1646,6 +1710,7 @@ rightCol: @entangle('right_col'),
                                                          el.style.setProperty('max-width', 'none', 'important');
                                                          el.style.setProperty('width', '100%');
                                                      });
+                                                     window.applyCustomCssToTinyMCE(editor, this.customCss);
                                                  });
                                                  editor.on('change', () => {
                                                      this.transContent = editor.getContent();
@@ -1659,6 +1724,12 @@ rightCol: @entangle('right_col'),
                                              let editor = tinymce.get('cms_page_trans_content_editor');
                                              if (editor && editor.getContent() !== val) {
                                                  editor.setContent(window.ensureProseWrapper(val || ''));
+                                             }
+                                         });
+                                         this.$watch('customCss', (val) => {
+                                             let editor = tinymce.get('cms_page_trans_content_editor');
+                                             if (editor) {
+                                                 window.applyCustomCssToTinyMCE(editor, val);
                                              }
                                          });
                                      },
