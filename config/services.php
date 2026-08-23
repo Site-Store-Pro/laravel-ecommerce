@@ -68,6 +68,8 @@ return [
         'secret_key' => env('STRIPE_SECRET_KEY'),
         'sandbox_publishable_key' => env('STRIPE_SANDBOX_PUBLISHABLE_KEY'),
         'sandbox_secret_key' => env('STRIPE_SANDBOX_SECRET_KEY'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'sandbox_webhook_secret' => env('STRIPE_SANDBOX_WEBHOOK_SECRET'),
     ],
 
     'paddle' => [
@@ -75,6 +77,8 @@ return [
         'sandbox_client_token' => env('PADDLE_SANDBOX_CLIENT_TOKEN'),
         'api_key' => env('PADDLE_API_KEY'),
         'sandbox_api_key' => env('PADDLE_SANDBOX_API_KEY'),
+        'webhook_secret' => env('PADDLE_WEBHOOK_SECRET'),
+        'sandbox_webhook_secret' => env('PADDLE_SANDBOX_WEBHOOK_SECRET'),
     ],
 
     'paypal' => [
@@ -82,6 +86,8 @@ return [
         'client_secret' => env('PAYPAL_CLIENT_SECRET'),
         'sandbox_client_id' => env('PAYPAL_SANDBOX_CLIENT_ID'),
         'sandbox_client_secret' => env('PAYPAL_SANDBOX_CLIENT_SECRET'),
+        'webhook_id' => env('PAYPAL_WEBHOOK_ID'),
+        'sandbox_webhook_id' => env('PAYPAL_SANDBOX_WEBHOOK_ID'),
     ],
 
 ];

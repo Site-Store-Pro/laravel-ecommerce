@@ -36,10 +36,16 @@ class StripeWebhookController extends Controller
     {
         $payload   = $request->getContent();
         $sigHeader = $request->header('Stripe-Signature');
-        $secret    = env('STRIPE_WEBHOOK_SECRET', '');
+
+        $record = \App\Models\OrderProcessor::where('processor_id', 1)->first();
+        $isSandbox = $record ? (bool) ! $record->production : true;
+
+        $secret = $isSandbox
+            ? (config('services.stripe.sandbox_webhook_secret') ?: env('STRIPE_SANDBOX_WEBHOOK_SECRET') ?: config('services.stripe.webhook_secret') ?: env('STRIPE_WEBHOOK_SECRET', ''))
+            : (config('services.stripe.webhook_secret') ?: env('STRIPE_WEBHOOK_SECRET') ?: env('STRIPE_LIVE_WEBHOOK_SECRET', ''));
 
         if (empty($secret)) {
-            Log::error('[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not set in .env');
+            Log::error('[Stripe Webhook] STRIPE_WEBHOOK_SECRET (or STRIPE_SANDBOX_WEBHOOK_SECRET) is not set in .env');
             return response('Webhook secret not configured.', 500);
         }
 

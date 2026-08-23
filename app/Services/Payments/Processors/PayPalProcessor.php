@@ -35,7 +35,7 @@ use Illuminate\Support\Facades\Log;
  */
 class PayPalProcessor implements PaymentProcessorInterface
 {
-    public function __construct(private readonly bool $sandbox) {}
+    public function __construct(private readonly bool $sandbox = false) {}
 
     // ─────────────────────────────────────────────────────────────────────────
     // PaymentProcessorInterface implementation
@@ -381,13 +381,13 @@ class PayPalProcessor implements PaymentProcessorInterface
             : config('services.paypal.client_secret') ?? env('PAYPAL_CLIENT_SECRET', '');
     }
 
-    private function getBaseUrl(?bool $forceSandbox = null): string
+    public function getBaseUrl(?bool $forceSandbox = null): string
     {
         $isSandbox = $forceSandbox !== null ? $forceSandbox : $this->sandbox;
         return $isSandbox ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
     }
 
-    private function getAccessToken(?bool $forceSandbox = null): string
+    public function getAccessToken(?bool $forceSandbox = null): string
     {
         $clientId = $this->getClientId($forceSandbox);
         $clientSecret = $this->getClientSecret($forceSandbox);

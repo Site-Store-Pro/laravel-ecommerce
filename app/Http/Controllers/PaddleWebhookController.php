@@ -37,13 +37,19 @@ class PaddleWebhookController extends Controller
     public function handle(Request $request): Response
     {
         $payload   = $request->getContent();
-        $sigHeader = $request->header('Paddle-Signature', '');
-        $secret    = env('PADDLE_WEBHOOK_SECRET', '');
+        $record = \App\Models\OrderProcessor::where('processor_id', 2)->first();
+        $isSandbox = $record ? (bool) ! $record->production : true;
+
+        $secret = $isSandbox
+            ? (config('services.paddle.sandbox_webhook_secret') ?: env('PADDLE_SANDBOX_WEBHOOK_SECRET') ?: config('services.paddle.webhook_secret') ?: env('PADDLE_WEBHOOK_SECRET', ''))
+            : (config('services.paddle.webhook_secret') ?: env('PADDLE_WEBHOOK_SECRET') ?: env('PADDLE_LIVE_WEBHOOK_SECRET', ''));
 
         if (empty($secret)) {
-            Log::error('[Paddle Webhook] PADDLE_WEBHOOK_SECRET is not set in .env');
+            Log::error('[Paddle Webhook] PADDLE_WEBHOOK_SECRET (or PADDLE_SANDBOX_WEBHOOK_SECRET) is not set in .env');
             return response('Webhook secret not configured.', 500);
         }
+
+        $sigHeader = $request->header('Paddle-Signature', '');
 
         // ── Verify Paddle signature ───────────────────────────────────────────
         if (!$this->verifySignature($payload, $sigHeader, $secret)) {

@@ -48,10 +48,16 @@ class PayPalWebhookController extends Controller
             'summary' => $payload['summary'] ?? null,
         ]);
 
-        // Optional webhook signature verification via PayPal REST API if PAYPAL_WEBHOOK_ID configured
-        $webhookId = config('services.paypal.webhook_id', env('PAYPAL_WEBHOOK_ID'));
+        // Webhook signature verification via PayPal REST API if configured
+        $record = \App\Models\OrderProcessor::where('processor_id', 3)->first();
+        $isSandbox = $record ? (bool) ! $record->production : true;
+
+        $webhookId = $isSandbox
+            ? (config('services.paypal.sandbox_webhook_id') ?: env('PAYPAL_SANDBOX_WEBHOOK_ID') ?: config('services.paypal.webhook_id') ?: env('PAYPAL_WEBHOOK_ID') ?: env('PAYPAL_WEBHOOK_SECRET'))
+            : (config('services.paypal.webhook_id') ?: env('PAYPAL_WEBHOOK_ID') ?: env('PAYPAL_LIVE_WEBHOOK_ID') ?: env('PAYPAL_WEBHOOK_SECRET'));
+
         if (!empty($webhookId)) {
-            if (!$this->verifySignature($request, $webhookId)) {
+            if (!$this->verifySignature($request, (string) $webhookId, $isSandbox)) {
                 Log::warning('[PayPal Webhook] Signature verification failed.');
                 return response('Invalid signature', 400);
             }
@@ -254,12 +260,12 @@ class PayPalWebhookController extends Controller
     /**
      * Verify webhook signature with PayPal API
      */
-    private function verifySignature(Request $request, string $webhookId): bool
+    private function verifySignature(Request $request, string $webhookId, bool $isSandbox = false): bool
     {
         try {
-            $processor = new PayPalProcessor();
-            $accessToken = $processor->getAccessToken();
-            $baseUrl = $processor->getBaseUrl();
+            $processor = new PayPalProcessor($isSandbox);
+            $accessToken = $processor->getAccessToken($isSandbox);
+            $baseUrl = $processor->getBaseUrl($isSandbox);
 
             $verificationPayload = [
                 'auth_algo'         => $request->header('PAYPAL-AUTH-ALGO'),
@@ -278,6 +284,8 @@ class PayPalWebhookController extends Controller
                 $status = $response->json('verification_status');
                 return strtoupper($status) === 'SUCCESS';
             }
+
+            Log::warning('[PayPal Webhook] Signature verification API failed: ' . $response->body());
         } catch (\Throwable $e) {
             Log::error('[PayPal Webhook] Verification exception: ' . $e->getMessage());
         }
