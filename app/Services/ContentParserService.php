@@ -33,6 +33,9 @@ class ContentParserService
             // Expand [plugin:slug] shortcodes after Blade compilation
             $rendered = app(ShortcodeProcessor::class)->process($rendered);
 
+            // Minify embedded <style> blocks in the CMS content before output
+            $rendered = static::minifyEmbeddedStyles($rendered);
+
             return $rendered;
         } catch (\Throwable $e) {
             // Log the error and fall back to raw content so the page doesn't crash completely
@@ -42,6 +45,27 @@ class ContentParserService
             ]);
             return $content;
         }
+    }
+
+    /**
+     * Finds all <style>...</style> blocks in the HTML/CMS content and minifies their CSS.
+     */
+    public static function minifyEmbeddedStyles(string $html): string
+    {
+        if (!str_contains($html, '<style')) {
+            return $html;
+        }
+
+        return preg_replace_callback(
+            '/<style(\b[^>]*)>(.*?)<\/style>/is',
+            function ($matches) {
+                $attributes = $matches[1];
+                $rawCss     = $matches[2];
+                $minified   = CssMinifierService::minify($rawCss);
+                return "<style{$attributes}>{$minified}</style>";
+            },
+            $html
+        );
     }
 }
 
