@@ -54,8 +54,10 @@
         <div class="relative w-full bg-slate-50/50 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-700 rounded-2xl p-4 overflow-hidden">
             @php
                 $pointsCount = count($chartData);
-                $maxRevenue = collect($chartData)->max('revenue') ?: 1;
-                $maxOrders = collect($chartData)->max('count') ?: 1;
+                $maxRevenue = (float) collect($chartData)->max('revenue');
+                $maxRevenue = $maxRevenue > 0 ? $maxRevenue : 1.0;
+                $maxOrders = (int) collect($chartData)->max('count');
+                $maxOrders = $maxOrders > 0 ? $maxOrders : 1;
                 
                 $width = 500;
                 $height = 120;

@@ -52,12 +52,13 @@
     <div class="space-y-4">
         @if($customers->isNotEmpty())
             @php
-                $maxVal = collect($customers)->max('total_spend') ?: 1;
+                $maxVal = (float) collect($customers)->max('total_spend');
             @endphp
             <div class="space-y-3.5">
                 @foreach($customers as $customer)
                     @php
-                        $widthPercent = round(($customer->total_spend / $maxVal) * 100);
+                        $spend = (float) $customer->total_spend;
+                        $widthPercent = $maxVal > 0 ? round(($spend / $maxVal) * 100) : 0;
                     @endphp
                     <div class="space-y-1.5">
                         <div class="flex items-center justify-between text-xs">
