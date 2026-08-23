@@ -83,6 +83,10 @@
                                                    class="inline-flex items-center px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-[11px] font-extrabold rounded-lg transition duration-150 border border-indigo-100 shadow-sm">
                                                     Edit
                                                 </a>
+                                                <button type="button" wire:click="openCopyModal({{ $p->id }})"
+                                                   class="inline-flex items-center px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-[11px] font-extrabold rounded-lg transition duration-150 border border-amber-200 shadow-sm">
+                                                    Duplicate
+                                                </button>
                                                 @if($p->seo_slug)
                                                     <a href="{{ route('shop.product', ['seo_link' => $p->seo_slug]) }}" target="_blank"
                                                        class="inline-flex items-center px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-[11px] font-extrabold rounded-lg transition duration-150 border border-slate-200 shadow-sm">
@@ -150,7 +154,7 @@
                                 Add New Product
                             </a>
                         </div>
-                    </div>          </div>
+                    </div>
 
                     {{-- ─── Advanced Filter Panel ─── --}}
                     @if($showAdvancedFilters)
@@ -332,7 +336,7 @@
                     @else
                         <div class="space-y-6">
                             @foreach($products as $product)
-                                <div class="p-6 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">
+                                <div wire:key="product-row-{{ $product->id }}" class="p-6 bg-slate-50 border border-slate-100 rounded-2xl space-y-4">
                                     <div class="flex items-start gap-4">
                                         <!-- Thumbnail Image or Placeholder -->
                                         <div class="flex-shrink-0">
@@ -384,7 +388,7 @@
                                                         <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                                                         </svg>
-                                                        Copy
+                                                        Duplicate
                                                     </button>
                                                     <button onclick="confirm('Are you sure you want to delete this product?') || event.stopImmediatePropagation()" wire:click="deleteProduct({{ $product->id }})" class="inline-flex items-center gap-1.5 justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-all shadow-sm">
                                                         <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -451,13 +455,11 @@
                     @endif
                 </div>
             </div>
-        </div>
-    </div>
 
     <!-- Duplicate / Copy Product Modal -->
     @if($showCopyModal)
-        <div class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-            <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up" @click.outside="$wire.closeCopyModal()">
+        <div wire:key="duplicate-product-modal-backdrop" wire:click.self="closeCopyModal" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <div wire:key="duplicate-product-modal-card" class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div class="flex items-center gap-3">
                         <div class="p-2.5 bg-amber-50 rounded-2xl text-amber-600">

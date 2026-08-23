@@ -224,26 +224,44 @@ class AdminProducts extends Component
         DB::transaction(function () use ($original, &$newProduct) {
             // 1. Duplicate Base Product
             $newProduct = Product::create([
-                'active'                      => $original->active ?? true,
-                'title'                       => $this->copyProductTitle,
-                'short_description'           => $original->short_description,
-                'long_description'            => $original->long_description,
-                'meta_title'                  => $original->meta_title,
-                'meta_description'            => $original->meta_description,
-                'seo_slug'                    => $this->copyProductSlug,
-                'download_item'               => $original->download_item,
-                'shipping'                    => $original->shipping,
-                'brand_id'                    => $original->brand_id,
-                'max_qty'                     => $original->max_qty,
-                'checkout_redirect'           => $original->checkout_redirect,
-                'standalone_purchase'         => $original->standalone_purchase,
-                'dependent_variants'          => $original->dependent_variants,
-                'hide_inventory_levels'       => $original->hide_inventory_levels,
-                'layout_type'                 => $original->layout_type,
-                'reviews_enabled'             => $original->reviews_enabled,
-                'reviews_rating'              => $original->reviews_rating,
-                'featured_item'               => $original->featured_item,
-                'product_search_index_locked' => $original->product_search_index_locked,
+                'active'                          => $original->active ?? true,
+                'show_in_results'                 => $original->show_in_results ?? true,
+                'title'                           => $this->copyProductTitle,
+                'short_description'               => $original->short_description,
+                'long_description'                => $original->long_description,
+                'bullet_point_1'                  => $original->bullet_point_1,
+                'bullet_point_2'                  => $original->bullet_point_2,
+                'bullet_point_3'                  => $original->bullet_point_3,
+                'bullet_point_4'                  => $original->bullet_point_4,
+                'meta_title'                      => $original->meta_title,
+                'meta_description'                => $original->meta_description,
+                'seo_slug'                        => $this->copyProductSlug,
+                'download_item'                   => $original->download_item,
+                'shipping'                        => $original->shipping,
+                'brand_id'                        => $original->brand_id,
+                'max_qty'                         => $original->max_qty,
+                'checkout_redirect'               => $original->checkout_redirect,
+                'completion_redirect'             => $original->completion_redirect,
+                'completion_redirect_label'       => $original->completion_redirect_label,
+                'standalone_purchase'             => $original->standalone_purchase,
+                'dependent_variants'              => $original->dependent_variants,
+                'hide_inventory_levels'           => $original->hide_inventory_levels,
+                'layout_type'                     => $original->layout_type,
+                'reviews_enabled'                 => $original->reviews_enabled,
+                'reviews_rating'                  => $original->reviews_rating,
+                'featured_item'                   => $original->featured_item,
+                'product_search_index'            => $original->product_search_index,
+                'product_search_index_locked'     => $original->product_search_index_locked,
+                'show_item_total'                 => $original->show_item_total ?? false,
+                'variant_label'                   => $original->variant_label,
+                'product_video_embed'             => $original->product_video_embed,
+                'is_donation_or_bill_pay'         => $original->is_donation_or_bill_pay ?? false,
+                'allow_custom_amount'             => $original->allow_custom_amount ?? false,
+                'custom_amount_min'               => $original->custom_amount_min,
+                'custom_amount_max'               => $original->custom_amount_max,
+                'custom_amount_options'           => $original->custom_amount_options,
+                'inventory_alert_id'              => $original->inventory_alert_id,
+                'show_variant_selector_thumbnail' => $original->show_variant_selector_thumbnail ?? false,
             ]);
 
             // 2. Sync Categories
@@ -437,6 +455,7 @@ class AdminProducts extends Component
 
         $this->closeCopyModal();
         session()->flash('status', "Product '{$newProduct->title}' duplicated successfully.");
+        $this->dispatch('toast', type: 'success', message: "Product '{$newProduct->title}' duplicated successfully.");
     }
 
     public function deleteProduct(int $productId): void
