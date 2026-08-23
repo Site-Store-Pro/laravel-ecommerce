@@ -126,9 +126,9 @@ class AdminProductEdit extends Component
     public string $weight_type = 'lbs';
     public string $variantAttributes = '';
     public array $inlineAttributes = [];
-    public int $quantity_available = 10;
-    public int $reserved_stock = 0;
-    public int $warehouse_stock_level = 0;
+    public $quantity_available = 10;
+    public $reserved_stock = 0;
+    public $warehouse_stock_level = 0;
     public bool $use_warehouse_stock = false;
     public ?int $location_id = 1;
     public array $variantWarehouseStock = [];
@@ -919,9 +919,9 @@ class AdminProductEdit extends Component
         $this->wholesale_variant_fee = $this->wholesale_variant_fee !== null && $this->wholesale_variant_fee !== '' ? (float) $this->wholesale_variant_fee : 0.00;
         $this->personalization_fee = $this->personalization_fee !== null && $this->personalization_fee !== '' ? (float) $this->personalization_fee : 0.00;
         $this->personalization_active = (int) ($this->personalization_active ?? 0);
-        $this->quantity_available = (int) ($this->quantity_available ?? 0);
-        $this->warehouse_stock_level = (int) ($this->warehouse_stock_level ?? 0);
-        $this->reserved_stock = (int) ($this->reserved_stock ?? 0);
+        $this->quantity_available = ($this->quantity_available !== null && $this->quantity_available !== '') ? (int) $this->quantity_available : 0;
+        $this->warehouse_stock_level = ($this->warehouse_stock_level !== null && $this->warehouse_stock_level !== '') ? (int) $this->warehouse_stock_level : 0;
+        $this->reserved_stock = ($this->reserved_stock !== null && $this->reserved_stock !== '') ? (int) $this->reserved_stock : 0;
         $this->paddle_currency_code = $this->paddle_currency_code ?: 'USD';
 
         $this->validate([
@@ -1376,9 +1376,9 @@ class AdminProductEdit extends Component
         $this->wholesale_variant_fee = $this->wholesale_variant_fee !== null && $this->wholesale_variant_fee !== '' ? (float) $this->wholesale_variant_fee : 0.00;
         $this->personalization_fee = $this->personalization_fee !== null && $this->personalization_fee !== '' ? (float) $this->personalization_fee : 0.00;
         $this->personalization_active = (int) ($this->personalization_active ?? 0);
-        $this->quantity_available = (int) ($this->quantity_available ?? 0);
-        $this->warehouse_stock_level = (int) ($this->warehouse_stock_level ?? 0);
-        $this->reserved_stock = (int) ($this->reserved_stock ?? 0);
+        $this->quantity_available = ($this->quantity_available !== null && $this->quantity_available !== '') ? (int) $this->quantity_available : 0;
+        $this->warehouse_stock_level = ($this->warehouse_stock_level !== null && $this->warehouse_stock_level !== '') ? (int) $this->warehouse_stock_level : 0;
+        $this->reserved_stock = ($this->reserved_stock !== null && $this->reserved_stock !== '') ? (int) $this->reserved_stock : 0;
         $this->paddle_currency_code = $this->paddle_currency_code ?: 'USD';
 
         $this->validate([

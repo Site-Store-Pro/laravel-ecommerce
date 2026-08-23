@@ -146,20 +146,32 @@ class HeaderFooterParserService
         $siteName = CmsSetting::getSiteName();
         $logoData = CmsSetting::resolveLogoUrl();
 
+        $showLogo  = CmsSetting::isEnabled('header_show_logo', true);
+        $showTitle = CmsSetting::isEnabled('header_show_site_title', true);
+
+        if (!$showLogo && !$showTitle) {
+            return '';
+        }
+
         $logoType = $logoData['type'] ?? null;
         $logoVal  = $logoData['value'] ?? null;
 
         $logoMediaHtml = '';
-        if ($logoType === 'svg' && !empty($logoVal)) {
-            $logoMediaHtml = '<span class="site-logo-icon flex items-center shrink-0">' . $logoVal . '</span>';
-        } elseif ($logoType === 'url' && !empty($logoVal)) {
-            $logoMediaHtml = '<img src="' . e($logoVal) . '" alt="' . e($siteName) . '" class="site-logo-img max-h-10 w-auto object-contain shrink-0">';
-        } else {
-            // Default fallback SVG icon (snazzy ribbon emblem without box) using menu label color
-            $logoMediaHtml = '<span class="site-logo-icon flex items-center justify-center shrink-0 text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" style="color: var(--nav-text, currentColor);"><svg class="w-6 h-6 shrink-0 transition-transform duration-300 group-hover:scale-105" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 14a5 5 0 100-10 5 5 0 000 10zM8.5 13.5L6.5 21 12 18.5 17.5 21l-2-7.5M12 7.5v3m-1.5-1.5h3"/></svg></span>';
+        if ($showLogo) {
+            if ($logoType === 'svg' && !empty($logoVal)) {
+                $logoMediaHtml = '<span class="site-logo-icon flex items-center shrink-0">' . $logoVal . '</span>';
+            } elseif ($logoType === 'url' && !empty($logoVal)) {
+                $logoMediaHtml = '<img src="' . e($logoVal) . '" alt="' . e($siteName) . '" class="site-logo-img max-h-10 w-auto object-contain shrink-0">';
+            } else {
+                // Default fallback SVG icon (snazzy ribbon emblem without box) using menu label color
+                $logoMediaHtml = '<span class="site-logo-icon flex items-center justify-center shrink-0 text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" style="color: var(--nav-text, currentColor);"><svg class="w-6 h-6 shrink-0 transition-transform duration-300 group-hover:scale-105" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 14a5 5 0 100-10 5 5 0 000 10zM8.5 13.5L6.5 21 12 18.5 17.5 21l-2-7.5M12 7.5v3m-1.5-1.5h3"/></svg></span>';
+            }
         }
 
-        $titleHtml = '<span class="site-logo-title text-lg font-extrabold tracking-tight text-slate-900 dark:text-white group-hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors truncate max-w-[130px] xs:max-w-[180px] sm:max-w-none">' . e($siteName) . '</span>';
+        $titleHtml = '';
+        if ($showTitle) {
+            $titleHtml = '<span class="site-logo-title text-lg font-extrabold tracking-tight text-slate-900 dark:text-white group-hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors truncate max-w-[130px] xs:max-w-[180px] sm:max-w-none">' . e($siteName) . '</span>';
+        }
 
         return '<a href="' . e(url('/')) . '" class="site-logo-link group inline-flex items-center gap-1 hover:opacity-95 transition-opacity w-auto max-w-max min-w-0 shrink-0 my-auto py-0.5" title="' . e($siteName) . '">'
             . $logoMediaHtml

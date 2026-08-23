@@ -21,6 +21,8 @@ class AdminSettings extends Component
 
     // Site Identity
     public string $site_name = '';
+    public bool   $header_show_logo = true;
+    public bool   $header_show_site_title = true;
     public string $logo_type = '';        // local|s3|cdn|url|svg
     public string $logo_path = '';
     public string $logo_cdn_url = '';
@@ -216,8 +218,10 @@ class AdminSettings extends Component
         $settings = CmsSetting::allCached();
 
         // Site Identity
-        $this->site_name     = $settings['site_name'] ?? '';
-        $this->logo_type     = $settings['logo_type'] ?? '';
+        $this->site_name              = $settings['site_name'] ?? '';
+        $this->header_show_logo       = (bool) ($settings['header_show_logo'] ?? true);
+        $this->header_show_site_title = (bool) ($settings['header_show_site_title'] ?? true);
+        $this->logo_type              = $settings['logo_type'] ?? '';
         $this->logo_path     = $settings['logo_path'] ?? '';
         $this->logo_cdn_url  = $settings['logo_cdn_url'] ?? '';
         $this->logo_svg_html = $settings['logo_svg_html'] ?? '';
@@ -531,8 +535,10 @@ class AdminSettings extends Component
         }
 
         CmsSetting::setMany([
-            'site_name'          => trim($this->site_name),
-            'logo_type'          => $this->logo_type,
+            'site_name'              => trim($this->site_name),
+            'header_show_logo'       => $this->header_show_logo ? '1' : '0',
+            'header_show_site_title' => $this->header_show_site_title ? '1' : '0',
+            'logo_type'              => $this->logo_type,
             'logo_path'          => trim($this->logo_path),
             'logo_cdn_url'       => trim($this->logo_cdn_url),
             'logo_svg_html'      => trim($this->logo_svg_html),

@@ -506,17 +506,17 @@
                                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <div>
                                         <label class="text-xs font-bold text-indigo-600 block mb-1 uppercase tracking-wider">Quantity Available (In Stock)</label>
-                                        <input type="number" wire:model.live="quantity_available" class="w-full px-4 py-2.5 bg-white border border-indigo-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-bold">
+                                        <input type="number" wire:model.blur="quantity_available" class="w-full px-4 py-2.5 bg-white border border-indigo-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-bold">
                                         @error('quantity_available') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
                                         <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Reserved Stock</label>
-                                        <input type="number" wire:model.live="reserved_stock" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <input type="number" wire:model.blur="reserved_stock" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                         @error('reserved_stock') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
                                         <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Main Warehouse Stock Level</label>
-                                        <input type="number" wire:model.live="warehouse_stock_level" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <input type="number" wire:model.blur="warehouse_stock_level" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                         @error('warehouse_stock_level') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
@@ -580,7 +580,7 @@
                                                         </div>
                                                         <div class="w-36">
                                                             <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Assigned Stock Qty</label>
-                                                            <input type="number" min="0" wire:model.live="variantWarehouseStock.{{ $index }}.stock_level" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs font-bold text-indigo-700 rounded-xl focus:outline-none focus:border-indigo-500">
+                                                            <input type="number" min="0" wire:model.blur="variantWarehouseStock.{{ $index }}.stock_level" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs font-bold text-indigo-700 rounded-xl focus:outline-none focus:border-indigo-500">
                                                         </div>
                                                         <div class="pt-5">
                                                             <button type="button" wire:click="removeWarehouseStockLine({{ $index }})" class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition cursor-pointer" title="Remove Location">
@@ -1464,17 +1464,17 @@
                                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <div>
                                         <label class="text-xs font-bold text-indigo-600 block mb-1 uppercase tracking-wider">Quantity Available (In Stock)</label>
-                                        <input type="number" wire:model.live="quantity_available" class="w-full px-4 py-2.5 bg-white border border-indigo-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-bold">
+                                        <input type="number" wire:model.blur="quantity_available" class="w-full px-4 py-2.5 bg-white border border-indigo-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-bold">
                                         @error('quantity_available') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
                                         <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Reserved Stock</label>
-                                        <input type="number" wire:model.live="reserved_stock" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <input type="number" wire:model.blur="reserved_stock" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                         @error('reserved_stock') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
                                         <label class="text-xs font-bold text-slate-500 block mb-1 uppercase tracking-wider">Main Warehouse Stock Level</label>
-                                        <input type="number" wire:model.live="warehouse_stock_level" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                                        <input type="number" wire:model.blur="warehouse_stock_level" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
                                         @error('warehouse_stock_level') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
@@ -1538,7 +1538,7 @@
                                                         </div>
                                                         <div class="w-36">
                                                             <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Assigned Stock Qty</label>
-                                                            <input type="number" min="0" wire:model.live="variantWarehouseStock.{{ $index }}.stock_level" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs font-bold text-indigo-700 rounded-xl focus:outline-none focus:border-indigo-500">
+                                                            <input type="number" min="0" wire:model.blur="variantWarehouseStock.{{ $index }}.stock_level" class="w-full px-3 py-2 bg-white border border-slate-200 text-xs font-bold text-indigo-700 rounded-xl focus:outline-none focus:border-indigo-500">
                                                         </div>
                                                         <div class="pt-5">
                                                             <button type="button" wire:click="removeWarehouseStockLine({{ $index }})" class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition cursor-pointer" title="Remove Location">

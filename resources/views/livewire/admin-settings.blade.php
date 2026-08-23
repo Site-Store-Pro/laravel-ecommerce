@@ -288,6 +288,31 @@
                     <p class="text-xs text-slate-400 mt-1.5">Overrides the site name shown in the navigation bar, title tags, and emails. Leave blank to use the APP_NAME .env value.</p>
                 </div>
 
+                {{-- Header Logo & Title Visibility Toggles --}}
+                <div class="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-600 rounded-2xl flex items-center justify-between">
+                        <div class="pr-3">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Show Logo / Icon in Header</label>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-400 mt-0.5">Toggle display of the logo image or SVG icon in the public site header.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                            <input type="checkbox" wire:model="header_show_logo" class="sr-only peer">
+                            <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-500 peer-checked:bg-indigo-600"></div>
+                        </label>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 dark:bg-slate-700/50 border border-slate-200/80 dark:border-slate-600 rounded-2xl flex items-center justify-between">
+                        <div class="pr-3">
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Show Site Title in Header</label>
+                            <p class="text-[11px] text-slate-400 dark:text-slate-400 mt-0.5">Toggle display of the text site title in the public site header.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                            <input type="checkbox" wire:model="header_show_site_title" class="sr-only peer">
+                            <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-500 peer-checked:bg-indigo-600"></div>
+                        </label>
+                    </div>
+                </div>
+
                 {{-- Logo Mode Selector --}}
                 <div class="pt-4">
                     <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-3">Logo Type</label>
