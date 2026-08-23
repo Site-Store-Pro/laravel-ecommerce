@@ -190,6 +190,9 @@ class AdminSettings extends Component
     // Checkout Field Visibility & Guest Checkout
     public bool $checkout_hide_company_field = false;
     public bool $disable_guest_checkout = false;
+    public bool $checkout_show_subtotal = true;
+    public bool $checkout_show_shipping = true;
+    public bool $checkout_show_tax      = true;
 
     // Two-Factor Authentication (2FA) & Security
     public bool $enable_checkout_2fa = false;
@@ -320,6 +323,9 @@ class AdminSettings extends Component
         // Checkout Field Visibility & Guest Checkout
         $this->checkout_hide_company_field = (bool) ($settings['checkout_hide_company_field'] ?? false);
         $this->disable_guest_checkout      = (bool) ($settings['disable_guest_checkout'] ?? false);
+        $this->checkout_show_subtotal      = (bool) ($settings['checkout_show_subtotal'] ?? true);
+        $this->checkout_show_shipping      = (bool) ($settings['checkout_show_shipping'] ?? true);
+        $this->checkout_show_tax           = (bool) ($settings['checkout_show_tax'] ?? true);
 
         // Two-Factor Authentication (2FA) & Security
         $this->enable_checkout_2fa = (bool) ($settings['enable_checkout_2fa'] ?? false);
@@ -663,6 +669,9 @@ class AdminSettings extends Component
             // Checkout Field Visibility & Guest Checkout
             'checkout_hide_company_field'   => $this->checkout_hide_company_field   ? '1' : '0',
             'disable_guest_checkout'        => $this->disable_guest_checkout        ? '1' : '0',
+            'checkout_show_subtotal'        => $this->checkout_show_subtotal        ? '1' : '0',
+            'checkout_show_shipping'        => $this->checkout_show_shipping        ? '1' : '0',
+            'checkout_show_tax'             => $this->checkout_show_tax             ? '1' : '0',
             // Two-Factor Authentication (2FA) & Security
             'enable_checkout_2fa'           => $this->enable_checkout_2fa           ? '1' : '0',
             'enable_login_2fa'              => $this->enable_login_2fa              ? '1' : '0',

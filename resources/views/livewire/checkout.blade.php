@@ -389,10 +389,12 @@
 
                 <!-- Order Totals -->
                 <div class="border-t border-slate-100 pt-6 mt-6 space-y-4">
-                    <div class="flex justify-between text-sm text-slate-500">
-                        <span>@label('checkout.subtotal', 'Subtotal')</span>
-                        <span class="font-semibold text-slate-850">${{ number_format($subtotal, 2) }}</span>
-                    </div>
+                    @if(\App\Models\CmsSetting::isEnabled('checkout_show_subtotal', true))
+                        <div class="flex justify-between text-sm text-slate-500">
+                            <span>@label('checkout.subtotal', 'Subtotal')</span>
+                            <span class="font-semibold text-slate-850">${{ number_format($subtotal, 2) }}</span>
+                        </div>
+                    @endif
 
                     @if($total_discount > 0)
                         @foreach($discounts as $disc)
@@ -403,10 +405,12 @@
                         @endforeach
                     @endif
 
-                    <div class="flex justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
-                        <span>@label('checkout.shipping', 'Shipping')</span>
-                        <span class="font-semibold text-emerald-600">@label('checkout.shipping_calculated', 'Calculated at review')</span>
-                    </div>
+                    @if(\App\Models\CmsSetting::isEnabled('checkout_show_shipping', true))
+                        <div class="flex justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
+                            <span>@label('checkout.shipping', 'Shipping')</span>
+                            <span class="font-semibold text-emerald-600">@label('checkout.shipping_calculated', 'Calculated at review')</span>
+                        </div>
+                    @endif
 
                     <div class="border-t border-slate-100 pt-4 flex justify-between text-lg font-extrabold text-slate-900">
                         <span>@label('checkout.total', 'Total')</span>

@@ -2198,6 +2198,48 @@
                     </label>
                 </div>
 
+                {{-- Show Subtotal Row --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Show Subtotal Row at Checkout &amp; Confirmation</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, the Subtotal row is displayed in checkout summary, checkout review, order confirmation, and order/reminder emails. Disable to hide the subtotal line entirely.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="checkout_show_subtotal" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                {{-- Show Shipping Row --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Show Shipping Row at Checkout &amp; Confirmation</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, the Shipping fee row is displayed in checkout summary, checkout review, order confirmation, and order/reminder emails. Disable to hide the shipping line.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="checkout_show_shipping" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                {{-- Show Sales Tax / VAT Row --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Show Sales Tax / VAT Row at Checkout &amp; Confirmation</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, the Sales Tax / VAT row is displayed in checkout summary, checkout review, order confirmation, and order/reminder emails. Disable to hide the tax line.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="checkout_show_tax" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
                 {{-- Disable Guest Checkout (Require Account Password) --}}
                 <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
                     <div>

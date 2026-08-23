@@ -22,7 +22,7 @@
         @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
-             x-data="paymentHandler('{{ $activeProcessorType }}', '{{ $stripePublishableKey }}', {{ $stripeAddressRequired ? 'true' : 'false' }}, {{ $isSubscription ? 'true' : 'false' }})">
+             x-data="paymentHandler('{{ $activeProcessorType }}', '{{ $stripePublishableKey }}', {{ $stripeAddressRequired ? 'true' : 'false' }}, {{ $isSubscription ? 'true' : 'false' }}, {{ $total <= 0 ? 'true' : 'false' }})">
             <!-- Left Side: Shipping Info & Payment -->
             <div class="lg:col-span-8 space-y-6">
                 <!-- Shipping Summary Card -->
@@ -172,128 +172,151 @@
                 {{-- ═══════════════════════════════════════════════════════ --}}
                 {{-- Payment Method                                          --}}
                 {{-- Rendered based on the active processor in the admin.    --}}
+                {{-- If order total is $0.00, billing/payment form is hidden --}}
                 {{-- ═══════════════════════════════════════════════════════ --}}
-                <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-
-                    <div class="flex items-center gap-2 border-b border-slate-100 pb-4 mb-6">
-                        <h2 class="text-lg font-bold text-slate-900">@label('review.payment_method', 'Payment Method')</h2>
-                        @if($activeProcessorIsSandbox)
-                            <span class="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">Sandbox</span>
-                        @endif
-                    </div>
-
-                    {{-- ─── Error banner ───────────────────────────────── --}}
-                    <div x-show="errorMessage" x-cloak
-                         class="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm font-semibold text-red-700 flex items-center gap-2">
-                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <span x-text="errorMessage"></span>
-                    </div>
-
-                    {{-- ─── Stripe ─────────────────────────────────────── --}}
-                    @if($activeProcessorType === 'stripe')
-                        {{-- Stripe.js loaded in @push('scripts') below --}}
-                        <div class="space-y-4">
-                            @if($stripeAddressRequired)
-                                <div class="mb-4">
-                                    <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider font-sans">@label('review.billing_address', 'Billing Address')</label>
-                                    <div id="billing-address-element" wire:ignore
-                                         class="px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus-within:border-indigo-500 transition-colors min-h-[50px]"></div>
-                                </div>
-                            @endif
+                @if($total <= 0)
+                    <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+                        <div class="flex items-center gap-3 border-b border-slate-100 pb-4 mb-4">
+                            <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                </svg>
+                            </div>
                             <div>
-                                <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider font-sans">
-                                    {{ $stripeAddressRequired ? siteLabel('review.payment_details', 'Payment Details') : siteLabel('review.card_details', 'Card Details') }}
-                                </label>
-                                <div id="stripe-card-element" wire:ignore
-                                     class="px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus-within:border-indigo-500 transition-colors min-h-[44px]"></div>
-                                <p class="mt-1.5 text-xs text-slate-400">@label('review.stripe_message', 'Secured by Stripe. Your card details are never stored on our servers.')</p>
+                                <h2 class="text-lg font-bold text-slate-900">@label('review.no_payment_required_title', 'No Payment Required')</h2>
+                                <p class="text-xs text-slate-500 font-medium">@label('review.no_payment_required_subtitle', 'The total for this order is $0.00. No payment or billing information is required.')</p>
                             </div>
                         </div>
+                        <div class="p-4 bg-emerald-50/70 border border-emerald-100 rounded-2xl flex items-center gap-3 text-emerald-800 text-xs font-semibold">
+                            <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span>@label('review.free_order_notice', 'Click Place Order to finalize and receive your order confirmation immediately.')</span>
+                        </div>
+                    </div>
+                @else
+                    <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
 
-                    {{-- ─── Paddle ─────────────────────────────────────── --}}
-                    @elseif($activeProcessorType === 'paddle')
-                        <div class="space-y-4">
-                            {{-- Paddle inline checkout mounts here --}}
-                            <div id="paddle-checkout-container" class="paddle-checkout-container w-full bg-white border border-slate-200 rounded-3xl overflow-hidden min-h-[450px]"></div>
+                        <div class="flex items-center gap-2 border-b border-slate-100 pb-4 mb-6">
+                            <h2 class="text-lg font-bold text-slate-900">@label('review.payment_method', 'Payment Method')</h2>
+                            @if($activeProcessorIsSandbox)
+                                <span class="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">Sandbox</span>
+                            @endif
                         </div>
 
-                    {{-- ─── PayPal ─────────────────────────────────────── --}}
-                    @elseif($activeProcessorType === 'paypal')
-                        <div class="space-y-4">
-                            <div id="paypal-button-container" class="w-full min-h-[150px] relative z-10" wire:ignore></div>
+                        {{-- ─── Error banner ───────────────────────────────── --}}
+                        <div x-show="errorMessage" x-cloak
+                             class="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm font-semibold text-red-700 flex items-center gap-2">
+                            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span x-text="errorMessage"></span>
                         </div>
 
-                    {{-- ─── Test Processor ─────────────────────────────── --}}
-                    @else
-                        <div class="space-y-4">
-                            <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs font-medium text-amber-800 flex items-start gap-2">
-                                <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                <span><strong class="block mb-0.5">@label('review.test_mode_heading', 'Test / Simulation Mode')</strong>@label('review.test_mode_message', 'This checkout is using the built-in test processor. No real payment will be processed. Use the options below to simulate different payment outcomes.')</span>
-                            </div>
-
-                            {{-- Simulate outcome radios --}}
-                            <div class="flex gap-3">
-                                <label class="flex-1 flex items-center gap-3 p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl cursor-pointer hover:border-emerald-400 transition-colors"
-                                       :class="{ 'border-emerald-500 bg-emerald-50': $wire.gatewayToken === '' }">
-                                    <input type="radio" wire:model="gatewayToken" value="" class="text-emerald-600 focus:ring-emerald-500">
-                                    <div>
-                                        <span class="text-sm font-bold text-emerald-800 block">@label('review.simulate_success', '✓ Simulate Success')</span>
-                                        <span class="text-xs text-emerald-600">@label('review.simulate_success_note', 'Order will be placed and confirmed')</span>
+                        {{-- ─── Stripe ─────────────────────────────────────── --}}
+                        @if($activeProcessorType === 'stripe')
+                            {{-- Stripe.js loaded in @push('scripts') below --}}
+                            <div class="space-y-4">
+                                @if($stripeAddressRequired)
+                                    <div class="mb-4">
+                                        <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider font-sans">@label('review.billing_address', 'Billing Address')</label>
+                                        <div id="billing-address-element" wire:ignore
+                                             class="px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus-within:border-indigo-500 transition-colors min-h-[50px]"></div>
                                     </div>
-                                </label>
-                                <label class="flex-1 flex items-center gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-2xl cursor-pointer hover:border-red-400 transition-colors"
-                                       :class="{ 'border-red-500 bg-red-50': $wire.gatewayToken === 'fail' }">
-                                    <input type="radio" wire:model="gatewayToken" value="fail" class="text-red-600 focus:ring-red-500">
-                                    <div>
-                                        <span class="text-sm font-bold text-red-800 block">@label('review.simulate_failure', '✗ Simulate Failure')</span>
-                                        <span class="text-xs text-red-600">@label('review.simulate_failure_note', 'Payment will be declined')</span>
-                                    </div>
-                                </label>
-                            </div>
-
-                            {{-- Dummy credit card form (visual only — no real processing) --}}
-                            <div class="p-5 bg-white border border-slate-200 rounded-2xl space-y-4" aria-hidden="true">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Sample Card Form (Test Mode — not processed)</p>
+                                @endif
                                 <div>
-                                    <label class="text-xs font-semibold text-slate-500 block mb-1">@label('review.card_number', 'Card Number')</label>
-                                    <div class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                        <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                                        <span class="text-sm text-slate-400 font-mono tracking-widest select-none">4242 4242 4242 4242</span>
-                                    </div>
+                                    <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider font-sans">
+                                        {{ $stripeAddressRequired ? siteLabel('review.payment_details', 'Payment Details') : siteLabel('review.card_details', 'Card Details') }}
+                                    </label>
+                                    <div id="stripe-card-element" wire:ignore
+                                         class="px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus-within:border-indigo-500 transition-colors min-h-[44px]"></div>
+                                    <p class="mt-1.5 text-xs text-slate-400">@label('review.stripe_message', 'Secured by Stripe. Your card details are never stored on our servers.')</p>
                                 </div>
-                                <div class="grid grid-cols-3 gap-4">
-                                    <div class="col-span-1">
-                                        <label class="text-xs font-semibold text-slate-500 block mb-1">@label('review.expiry', 'Expiry')</label>
-                                        <div class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                            <span class="text-sm text-slate-400 font-mono select-none">12 / 30</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-span-1">
-                                        <label class="text-xs font-semibold text-slate-500 block mb-1">@label('review.cvv', 'CVV')</label>
-                                        <div class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                            <span class="text-sm text-slate-400 font-mono select-none">123</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-span-1">
-                                        <label class="text-xs font-semibold text-slate-500 block mb-1">@label('review.zip', 'ZIP')</label>
-                                        <div class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                            <span class="text-sm text-slate-400 font-mono select-none">90210</span>
-                                        </div>
-                                    </div>
+                            </div>
+
+                        {{-- ─── Paddle ─────────────────────────────────────── --}}
+                        @elseif($activeProcessorType === 'paddle')
+                            <div class="space-y-4">
+                                {{-- Paddle inline checkout mounts here --}}
+                                <div id="paddle-checkout-container" class="paddle-checkout-container w-full bg-white border border-slate-200 rounded-3xl overflow-hidden min-h-[450px]"></div>
+                            </div>
+
+                        {{-- ─── PayPal ─────────────────────────────────────── --}}
+                        @elseif($activeProcessorType === 'paypal')
+                            <div class="space-y-4">
+                                <div id="paypal-button-container" class="w-full min-h-[150px] relative z-10" wire:ignore></div>
+                            </div>
+
+                        {{-- ─── Test Processor ─────────────────────────────── --}}
+                        @else
+                            <div class="space-y-4">
+                                <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs font-medium text-amber-800 flex items-start gap-2">
+                                    <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span><strong class="block mb-0.5">@label('review.test_mode_heading', 'Test / Simulation Mode')</strong>@label('review.test_mode_message', 'This checkout is using the built-in test processor. No real payment will be processed. Use the options below to simulate different payment outcomes.')</span>
                                 </div>
-                                <div>
-                                    <label class="text-xs font-semibold text-slate-500 block mb-1">@label('review.cardholder_name', 'Cardholder Name')</label>
-                                    <div class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                                        <span class="text-sm text-slate-400 select-none">Test Cardholder</span>
+
+                                {{-- Simulate outcome radios --}}
+                                <div class="flex gap-3">
+                                    <label class="flex-1 flex items-center gap-3 p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl cursor-pointer hover:border-emerald-400 transition-colors"
+                                           :class="{ 'border-emerald-500 bg-emerald-50': $wire.gatewayToken === '' }">
+                                        <input type="radio" wire:model="gatewayToken" value="" class="text-emerald-600 focus:ring-emerald-500">
+                                        <div>
+                                            <span class="text-sm font-bold text-emerald-800 block">@label('review.simulate_success', '✓ Simulate Success')</span>
+                                            <span class="text-xs text-emerald-600">@label('review.simulate_success_note', 'Order will be placed and confirmed')</span>
+                                        </div>
+                                    </label>
+                                    <label class="flex-1 flex items-center gap-3 p-4 bg-red-50 border-2 border-red-200 rounded-2xl cursor-pointer hover:border-red-400 transition-colors"
+                                           :class="{ 'border-red-500 bg-red-50': $wire.gatewayToken === 'fail' }">
+                                        <input type="radio" wire:model="gatewayToken" value="fail" class="text-red-600 focus:ring-red-500">
+                                        <div>
+                                            <span class="text-sm font-bold text-red-800 block">@label('review.simulate_failure', '✗ Simulate Failure')</span>
+                                            <span class="text-xs text-red-600">@label('review.simulate_failure_note', 'Payment will be declined')</span>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                {{-- Dummy credit card form (visual only — no real processing) --}}
+                                <div class="p-5 bg-white border border-slate-200 rounded-2xl space-y-4" aria-hidden="true">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Sample Card Form (Test Mode — not processed)</p>
+                                    <div>
+                                        <label class="text-xs font-semibold text-slate-500 block mb-1">@label('review.card_number', 'Card Number')</label>
+                                        <div class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                            <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                            <span class="text-sm text-slate-400 font-mono tracking-widest select-none">4242 4242 4242 4242</span>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-4">
+                                        <div class="col-span-1">
+                                            <label class="text-xs font-semibold text-slate-500 block mb-1">@label('review.expiry', 'Expiry')</label>
+                                            <div class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                                <span class="text-sm text-slate-400 font-mono select-none">12 / 30</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-span-1">
+                                            <label class="text-xs font-semibold text-slate-500 block mb-1">@label('review.cvv', 'CVV')</label>
+                                            <div class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                                <span class="text-sm text-slate-400 font-mono select-none">123</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-span-1">
+                                            <label class="text-xs font-semibold text-slate-500 block mb-1">@label('review.zip', 'ZIP')</label>
+                                            <div class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                                <span class="text-sm text-slate-400 font-mono select-none">90210</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-semibold text-slate-500 block mb-1">@label('review.cardholder_name', 'Cardholder Name')</label>
+                                        <div class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
+                                            <span class="text-sm text-slate-400 select-none">Test Cardholder</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    @endif
+                        @endif
 
-                </div>
+                    </div>
+                @endif
 
                 <!-- Order Comments -->
                 @if($allowComments)
@@ -360,10 +383,12 @@
                 </div>
 
                 <div class="border-t border-slate-100 pt-4 space-y-4">
-                    <div class="flex justify-between text-sm text-slate-500">
-                        <span>@label('review.subtotal', 'Subtotal')</span>
-                        <span class="font-semibold text-slate-800">${{ number_format($subtotal, 2) }}</span>
-                    </div>
+                    @if(\App\Models\CmsSetting::isEnabled('checkout_show_subtotal', true))
+                        <div class="flex justify-between text-sm text-slate-500">
+                            <span>@label('review.subtotal', 'Subtotal')</span>
+                            <span class="font-semibold text-slate-800">${{ number_format($subtotal, 2) }}</span>
+                        </div>
+                    @endif
 
                     @if($totalDiscount > 0)
                         @foreach($discounts as $disc)
@@ -386,7 +411,7 @@
                         @endforeach
                     @endif
 
-                    @if($requiresShipping)
+                    @if($requiresShipping && \App\Models\CmsSetting::isEnabled('checkout_show_tax', true))
                         {{-- Tax / VAT display --}}
                         @if($vatInclusive && !$crossBorder)
                             {{-- VAT-inclusive domestic: show embedded VAT as informational sub-line --}}
@@ -404,10 +429,12 @@
                             </div>
                         @endif
                     @endif
-                    <div class="flex justify-between text-sm text-slate-500">
-                        <span>@label('checkout.shipping', 'Shipping')</span>
-                        <span class="font-semibold text-slate-800">{{ $currencySymbol }}{{ number_format($shippingFee, 2) }}</span>
-                    </div>
+                    @if(\App\Models\CmsSetting::isEnabled('checkout_show_shipping', true))
+                        <div class="flex justify-between text-sm text-slate-500">
+                            <span>@label('checkout.shipping', 'Shipping')</span>
+                            <span class="font-semibold text-slate-800">{{ $currencySymbol }}{{ number_format($shippingFee, 2) }}</span>
+                        </div>
+                    @endif
                     @if($handlingFee > 0)
                         <div class="flex justify-between text-sm text-slate-500">
                             <span>@label('review.handling', 'Handling Surcharge')</span>
@@ -420,7 +447,7 @@
                     </div>
                 </div>
 
-                <div class="mt-8" x-show="processorType !== 'paddle'">
+                <div class="mt-8" x-show="isFreeOrder || processorType !== 'paddle'">
                     {{-- Place Order — inherits the paymentHandler Alpine scope from the payment card above --}}
                     <div x-show="errorMessage" x-cloak
                          class="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl text-sm font-semibold text-red-700 flex items-center gap-2">
@@ -429,7 +456,7 @@
                         </svg>
                         <span x-text="errorMessage"></span>
                     </div>
-                    <button x-show="processorType !== 'paypal'" type="button"
+                    <button x-show="isFreeOrder || processorType !== 'paypal'" type="button"
                             @click="handlePlaceOrder"
                             :disabled="processing"
                             :class="processing ? 'opacity-70 cursor-not-allowed' : 'hover:scale-[1.01]'"
@@ -451,17 +478,19 @@
 </div>{{-- end paymentHandler x-data grid --}}
 
 {{-- ═══════════════════════════════════════════════════════════════════════ --}}
-{{-- Payment Gateway Scripts (conditionally loaded)                         --}}
+{{-- Payment Gateway Scripts (conditionally loaded when total > 0)           --}}
 {{-- ═══════════════════════════════════════════════════════════════════════ --}}
-@if($activeProcessorType === 'stripe')
-    <script src="https://js.stripe.com/v3/" defer></script>
-@elseif($activeProcessorType === 'paddle')
-    <script src="https://cdn.paddle.com/paddle/v2/paddle.js" defer></script>
-@elseif($activeProcessorType === 'paypal' && !empty($paypalClientId))
-    @if($isSubscription)
-        <script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&vault=true&intent=subscription" defer></script>
-    @else
-        <script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&currency={{ $currencyCode }}&components=buttons" defer></script>
+@if($total > 0)
+    @if($activeProcessorType === 'stripe')
+        <script src="https://js.stripe.com/v3/" defer></script>
+    @elseif($activeProcessorType === 'paddle')
+        <script src="https://cdn.paddle.com/paddle/v2/paddle.js" defer></script>
+    @elseif($activeProcessorType === 'paypal' && !empty($paypalClientId))
+        @if($isSubscription)
+            <script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&vault=true&intent=subscription" defer></script>
+        @else
+            <script src="https://www.paypal.com/sdk/js?client-id={{ $paypalClientId }}&currency={{ $currencyCode }}&components=buttons" defer></script>
+        @endif
     @endif
 @endif
 
@@ -479,12 +508,13 @@
  * The component is instantiated twice (payment card + button) — Alpine
  * handles both through window-level event coordination.
  */
-function paymentHandler(processorType, stripePublishableKey = '', stripeAddressRequired = false, isSubscription = false) {
+function paymentHandler(processorType, stripePublishableKey = '', stripeAddressRequired = false, isSubscription = false, isFreeOrder = false) {
     return {
         processorType: processorType,
         stripePublishableKey: stripePublishableKey,
         stripeAddressRequired: stripeAddressRequired,
         isSubscription: isSubscription,
+        isFreeOrder: isFreeOrder,
         processing: false,
         errorMessage: '',
 
@@ -495,6 +525,9 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
         elementsInstance: null,
 
         init() {
+            if (this.isFreeOrder) {
+                return;
+            }
             if (this.processorType === 'stripe') {
                 this.$nextTick(() => {
                     this.initStripe();
@@ -744,6 +777,11 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
             this.processing = true;
 
             try {
+                if (this.isFreeOrder) {
+                    await this.$wire.placeOrder('');
+                    return;
+                }
+
                 // For Stripe Payment Element (Deferred Intent Flow), submit fields before async work
                 if (this.processorType === 'stripe' && this.elementsInstance) {
                     const { error: submitError } = await this.elementsInstance.submit();
@@ -801,7 +839,10 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                 }
 
                 // ─── STEP 2: Handle gateway-specific flow ────────────────
-                if (data.processor === 'stripe') {
+                if (data.processor === 'free') {
+                    await this.$wire.placeOrder('');
+
+                } else if (data.processor === 'stripe') {
                     await this.handleStripe(data);
 
                 } else if (data.processor === 'paddle') {

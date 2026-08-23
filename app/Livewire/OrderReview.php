@@ -426,6 +426,14 @@ class OrderReview extends Component
 
         $totals      = $this->calculateTotals();
         $total       = $totals['total'];
+
+        if ($total <= 0) {
+            return [
+                'processor' => 'free',
+                'total'     => 0,
+            ];
+        }
+
         $currency    = strtolower(CurrencyService::code());
         $processorId = $this->getActiveProcessorId();
         $manager     = app(PaymentProcessorManager::class);
@@ -727,28 +735,33 @@ class OrderReview extends Component
             return;
         }
 
-        // Resolve active processor and charge / verify
-        $processorId = $this->getActiveProcessorId();
-        $manager     = app(PaymentProcessorManager::class);
-        $driver      = $manager->resolve($processorId);
-        $currency    = strtoupper(CurrencyService::code());
+        $isFreeOrder = ($totals['total'] <= 0);
+        $payResult   = null;
 
-        $payload = match ($manager->activeProcessorType($processorId)) {
-            'stripe' => ['payment_intent_id' => $gatewayToken],
-            'paddle' => ['transaction_id'    => $gatewayToken],
-            'paypal' => (str_starts_with($gatewayToken, 'I-') || $this->paypalIsSubscription)
-                ? ['subscription_id' => $gatewayToken]
-                : ['order_id'        => $gatewayToken],
-            // For test processor, read gatewayToken from Livewire property (synced by wire:model radio).
-            // '' = simulate success, 'fail' = simulate decline.
-            default  => ['simulate' => $this->gatewayToken],
-        };
+        if (!$isFreeOrder) {
+            // Resolve active processor and charge / verify
+            $processorId = $this->getActiveProcessorId();
+            $manager     = app(PaymentProcessorManager::class);
+            $driver      = $manager->resolve($processorId);
+            $currency    = strtoupper(CurrencyService::code());
 
-        $payResult = $driver->charge($totals['total'], $currency, $payload);
+            $payload = match ($manager->activeProcessorType($processorId)) {
+                'stripe' => ['payment_intent_id' => $gatewayToken],
+                'paddle' => ['transaction_id'    => $gatewayToken],
+                'paypal' => (str_starts_with($gatewayToken, 'I-') || $this->paypalIsSubscription)
+                    ? ['subscription_id' => $gatewayToken]
+                    : ['order_id'        => $gatewayToken],
+                // For test processor, read gatewayToken from Livewire property (synced by wire:model radio).
+                // '' = simulate success, 'fail' = simulate decline.
+                default  => ['simulate' => $this->gatewayToken],
+            };
 
-        if (!$payResult->success) {
-            session()->flash('error', 'Payment failed: ' . ($payResult->errorMessage ?? 'Please try again.'));
-            return;
+            $payResult = $driver->charge($totals['total'], $currency, $payload);
+
+            if (!$payResult->success) {
+                session()->flash('error', 'Payment failed: ' . ($payResult->errorMessage ?? 'Please try again.'));
+                return;
+            }
         }
 
         // Generate a unique invoice number
@@ -895,26 +908,38 @@ class OrderReview extends Component
             }
         }
 
-        // Register payment
-        $processorResponse = $payResult->transactionId ?: 'No transaction ID';
-        if (!empty($this->stripeSubscriptionId)) {
-            $processorResponse = "Subscription: {$this->stripeSubscriptionId}" . ($processorResponse !== 'No transaction ID' ? " | {$processorResponse}" : '');
-        } elseif ($this->paypalIsSubscription || str_starts_with($gatewayToken, 'I-')) {
-            $processorResponse = "Subscription: {$gatewayToken}" . ($processorResponse !== 'No transaction ID' && $processorResponse !== $gatewayToken ? " | {$processorResponse}" : '');
+        if ($isFreeOrder) {
+            OrderPayment::create([
+                'order_id'           => $order->id,
+                'payment_date'       => now(),
+                'payment_amount'     => 0.00,
+                'payment_method'     => 'Free Order / No Payment Required',
+                'payment_status'     => 1, // Paid
+                'authorization_code' => 'FREE-' . $order->order_invoice_no,
+                'processor_response' => 'Order Total is $0.00. Completed without payment charge.',
+            ]);
+        } else {
+            // Register payment
+            $processorResponse = $payResult->transactionId ?: 'No transaction ID';
+            if (!empty($this->stripeSubscriptionId)) {
+                $processorResponse = "Subscription: {$this->stripeSubscriptionId}" . ($processorResponse !== 'No transaction ID' ? " | {$processorResponse}" : '');
+            } elseif ($this->paypalIsSubscription || str_starts_with($gatewayToken, 'I-')) {
+                $processorResponse = "Subscription: {$gatewayToken}" . ($processorResponse !== 'No transaction ID' && $processorResponse !== $gatewayToken ? " | {$processorResponse}" : '');
+            }
+
+            $authCode = $this->stripeSubscriptionId 
+                ?: ((str_starts_with($gatewayToken, 'I-') || $this->paypalIsSubscription) ? $gatewayToken : $payResult->authorizationCode);
+
+            OrderPayment::create([
+                'order_id'           => $order->id,
+                'payment_date'       => now(),
+                'payment_amount'     => $totals['total'],
+                'payment_method'     => $payResult->processorName,
+                'payment_status'     => 1, // Paid
+                'authorization_code' => $authCode,
+                'processor_response' => $processorResponse,
+            ]);
         }
-
-        $authCode = $this->stripeSubscriptionId 
-            ?: ((str_starts_with($gatewayToken, 'I-') || $this->paypalIsSubscription) ? $gatewayToken : $payResult->authorizationCode);
-
-        OrderPayment::create([
-            'order_id'           => $order->id,
-            'payment_date'       => now(),
-            'payment_amount'     => $totals['total'],
-            'payment_method'     => $payResult->processorName,
-            'payment_status'     => 1, // Paid
-            'authorization_code' => $authCode,
-            'processor_response' => $processorResponse,
-        ]);
 
         // Associate completed order ID and user ID with the current shopping cart records
         $this->getCartQuery()->update([
@@ -1011,10 +1036,12 @@ class OrderReview extends Component
             $itemsHtml .= '<tr><td colspan="2" style="padding-top: 16px;">';
             $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">';
             
-            $itemsHtml .= '<tr>';
-            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e(siteLabel('email.subtotal', 'Subtotal')) . '</td>';
-            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format((float)$order->order_subtotal) . '</td>';
-            $itemsHtml .= '</tr>';
+            if (CmsSetting::isEnabled('checkout_show_subtotal', true)) {
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e(siteLabel('email.subtotal', 'Subtotal')) . '</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format((float)$order->order_subtotal) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
 
             if ($order->order_discounts > 0) {
                 $itemsHtml .= '<tr>';
@@ -1023,31 +1050,35 @@ class OrderReview extends Component
                 $itemsHtml .= '</tr>';
             }
 
-            // Determine tax row label and display for the email
-            $emailTaxLabel = CurrencyService::taxLabel($user->shipping_countrycode ?? 'US');
-            $emailVatInclusive = CurrencyService::isVatInclusive();
-            $emailCrossBorder  = CurrencyService::isCrossBorderExport($user->shipping_countrycode ?? 'US');
+            if (CmsSetting::isEnabled('checkout_show_tax', true)) {
+                // Determine tax row label and display for the email
+                $emailTaxLabel = CurrencyService::taxLabel($user->shipping_countrycode ?? 'US');
+                $emailVatInclusive = CurrencyService::isVatInclusive();
+                $emailCrossBorder  = CurrencyService::isCrossBorderExport($user->shipping_countrycode ?? 'US');
 
-            if ($emailVatInclusive && !$emailCrossBorder) {
-                // VAT-inclusive domestic: show embedded VAT amount as an informational row
-                $emailVatRate   = CurrencyService::merchantVatRate();
-                $emailVatAmount = CurrencyService::extractVat((float)$order->order_subtotal, $emailVatRate);
-                $itemsHtml .= '<tr>';
-                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e(siteLabel('email.includes', 'Includes')) . ' ' . e($emailTaxLabel) . '</td>';
-                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format($emailVatAmount) . '</td>';
-                $itemsHtml .= '</tr>';
-            } elseif (!$emailVatInclusive || ($emailVatInclusive && $emailCrossBorder)) {
-                // US/CA merchant tax added on top, or cross-border export (VAT stripped, 0 tax)
-                $itemsHtml .= '<tr>';
-                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e($emailTaxLabel) . '</td>';
-                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format((float)$order->order_taxes) . '</td>';
-                $itemsHtml .= '</tr>';
+                if ($emailVatInclusive && !$emailCrossBorder) {
+                    // VAT-inclusive domestic: show embedded VAT amount as an informational row
+                    $emailVatRate   = CurrencyService::merchantVatRate();
+                    $emailVatAmount = CurrencyService::extractVat((float)$order->order_subtotal, $emailVatRate);
+                    $itemsHtml .= '<tr>';
+                    $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e(siteLabel('email.includes', 'Includes')) . ' ' . e($emailTaxLabel) . '</td>';
+                    $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format($emailVatAmount) . '</td>';
+                    $itemsHtml .= '</tr>';
+                } elseif (!$emailVatInclusive || ($emailVatInclusive && $emailCrossBorder)) {
+                    // US/CA merchant tax added on top, or cross-border export (VAT stripped, 0 tax)
+                    $itemsHtml .= '<tr>';
+                    $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e($emailTaxLabel) . '</td>';
+                    $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format((float)$order->order_taxes) . '</td>';
+                    $itemsHtml .= '</tr>';
+                }
             }
 
-            $itemsHtml .= '<tr>';
-            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e(siteLabel('email.shipping', 'Shipping')) . ' (' . e($totals['shippingMethodName']) . ')</td>';
-            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format((float)$order->order_shipping) . '</td>';
-            $itemsHtml .= '</tr>';
+            if (CmsSetting::isEnabled('checkout_show_shipping', true)) {
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e(siteLabel('email.shipping', 'Shipping')) . ' (' . e($totals['shippingMethodName']) . ')</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . CurrencyService::format((float)$order->order_shipping) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
 
             if ($order->order_handling > 0) {
                 $itemsHtml .= '<tr>';

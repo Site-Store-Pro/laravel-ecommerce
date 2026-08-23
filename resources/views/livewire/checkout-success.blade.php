@@ -78,33 +78,39 @@
 
                     <!-- Financial Summary -->
                     <div class="border-t border-slate-200/60 mt-4 pt-4 space-y-2">
-                        <div class="flex justify-between text-xs text-slate-500">
-                            <span>@label('success.subtotal', 'Subtotal')</span>
-                            <span class="font-semibold text-slate-800">{{ $currencySymbol }}{{ number_format($order->order_subtotal, 2) }}</span>
-                        </div>
+                        @if(\App\Models\CmsSetting::isEnabled('checkout_show_subtotal', true))
+                            <div class="flex justify-between text-xs text-slate-500">
+                                <span>@label('success.subtotal', 'Subtotal')</span>
+                                <span class="font-semibold text-slate-800">{{ $currencySymbol }}{{ number_format($order->order_subtotal, 2) }}</span>
+                            </div>
+                        @endif
                         @if($order->order_discounts > 0)
                             <div class="flex justify-between text-xs text-emerald-600 font-semibold">
                                 <span>@label('success.promotional_discount', 'Promotional Discount')</span>
                                 <span>-{{ $currencySymbol }}{{ number_format($order->order_discounts, 2) }}</span>
                             </div>
                         @endif
-                        @if($vatInclusive && !$crossBorder)
-                            @if($vatEmbed > 0)
-                                <div class="flex justify-between text-xs text-slate-400">
-                                    <span class="italic">@label('review.includes_tax', 'Includes') {{ $taxLabel }} {{ $currencySymbol }}{{ number_format($vatEmbed, 2) }}</span>
-                                    <span></span>
+                        @if(\App\Models\CmsSetting::isEnabled('checkout_show_tax', true))
+                            @if($vatInclusive && !$crossBorder)
+                                @if($vatEmbed > 0)
+                                    <div class="flex justify-between text-xs text-slate-400">
+                                        <span class="italic">@label('review.includes_tax', 'Includes') {{ $taxLabel }} {{ $currencySymbol }}{{ number_format($vatEmbed, 2) }}</span>
+                                        <span></span>
+                                    </div>
+                                @endif
+                            @else
+                                <div class="flex justify-between text-xs text-slate-500">
+                                    <span>{{ $taxLabel }}</span>
+                                    <span class="font-semibold text-slate-800">{{ $currencySymbol }}{{ number_format($order->order_taxes, 2) }}</span>
                                 </div>
                             @endif
-                        @else
+                        @endif
+                        @if(\App\Models\CmsSetting::isEnabled('checkout_show_shipping', true))
                             <div class="flex justify-between text-xs text-slate-500">
-                                <span>{{ $taxLabel }}</span>
-                                <span class="font-semibold text-slate-800">{{ $currencySymbol }}{{ number_format($order->order_taxes, 2) }}</span>
+                                <span>@label('cart.shipping', 'Shipping') ({{ $order->order_shipping_method_name ?? siteLabel('success.flat_rate', 'Flat Rate') }})</span>
+                                <span class="font-semibold text-slate-800">{{ $currencySymbol }}{{ number_format($order->order_shipping, 2) }}</span>
                             </div>
                         @endif
-                        <div class="flex justify-between text-xs text-slate-500">
-                            <span>@label('cart.shipping', 'Shipping') ({{ $order->order_shipping_method_name ?? siteLabel('success.flat_rate', 'Flat Rate') }})</span>
-                            <span class="font-semibold text-slate-800">{{ $currencySymbol }}{{ number_format($order->order_shipping, 2) }}</span>
-                        </div>
                         @if($order->order_handling > 0)
                             <div class="flex justify-between text-xs text-slate-500">
                                 <span>@label('success.handling', 'Handling Surcharge')</span>

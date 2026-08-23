@@ -480,10 +480,12 @@ class AdminOrderDetails extends Component
             $itemsHtml .= '<tr><td colspan="2" style="padding-top: 16px;">';
             $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">';
             
-            $itemsHtml .= '<tr>';
-            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Subtotal</td>';
-            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">$' . number_format($this->order->order_subtotal, 2) . '</td>';
-            $itemsHtml .= '</tr>';
+            if (\App\Models\CmsSetting::isEnabled('checkout_show_subtotal', true)) {
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Subtotal</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">$' . number_format($this->order->order_subtotal, 2) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
 
             if ($this->order->order_discounts > 0) {
                 $itemsHtml .= '<tr>';
@@ -492,15 +494,19 @@ class AdminOrderDetails extends Component
                 $itemsHtml .= '</tr>';
             }
 
-            $itemsHtml .= '<tr>';
-            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Tax</td>';
-            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">$' . number_format($this->order->order_taxes, 2) . '</td>';
-            $itemsHtml .= '</tr>';
+            if (\App\Models\CmsSetting::isEnabled('checkout_show_tax', true)) {
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Tax</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">$' . number_format($this->order->order_taxes, 2) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
 
-            $itemsHtml .= '<tr>';
-            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 12px;">Shipping</td>';
-            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 12px;" align="right">$' . number_format($this->order->order_shipping, 2) . '</td>';
-            $itemsHtml .= '</tr>';
+            if (\App\Models\CmsSetting::isEnabled('checkout_show_shipping', true)) {
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 12px;">Shipping</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 12px;" align="right">$' . number_format($this->order->order_shipping, 2) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
 
             $itemsHtml .= '<tr style="border-top: 1px solid #e2e8f0;">';
             $itemsHtml .= '<td style="font-size: 16px; font-weight: 800; color: #0f172a; padding-top: 12px;">Total Charged</td>';
@@ -649,10 +655,12 @@ class AdminOrderDetails extends Component
             $itemsHtml .= '<tr><td colspan="2" style="padding-top: 16px;">';
             $itemsHtml .= '<table width="100%" cellpadding="0" cellspacing="0" border="0">';
             
-            $itemsHtml .= '<tr>';
-            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Subtotal</td>';
-            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format((float)$order->order_subtotal) . '</td>';
-            $itemsHtml .= '</tr>';
+            if (\App\Models\CmsSetting::isEnabled('checkout_show_subtotal', true)) {
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Subtotal</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format((float)$order->order_subtotal) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
 
             if ($order->order_discounts > 0) {
                 $itemsHtml .= '<tr>';
@@ -661,31 +669,35 @@ class AdminOrderDetails extends Component
                 $itemsHtml .= '</tr>';
             }
 
-            // Determine tax row label and display for the email
-            $emailTaxLabel = \App\Services\CurrencyService::taxLabel($user->shipping_countrycode ?? 'US');
-            $emailVatInclusive = \App\Services\CurrencyService::isVatInclusive();
-            $emailCrossBorder  = \App\Services\CurrencyService::isCrossBorderExport($user->shipping_countrycode ?? 'US');
+            if (\App\Models\CmsSetting::isEnabled('checkout_show_tax', true)) {
+                // Determine tax row label and display for the email
+                $emailTaxLabel = \App\Services\CurrencyService::taxLabel($user->shipping_countrycode ?? 'US');
+                $emailVatInclusive = \App\Services\CurrencyService::isVatInclusive();
+                $emailCrossBorder  = \App\Services\CurrencyService::isCrossBorderExport($user->shipping_countrycode ?? 'US');
 
-            if ($emailVatInclusive && !$emailCrossBorder) {
-                // VAT-inclusive domestic: show embedded VAT amount as an informational row
-                $emailVatRate   = \App\Services\CurrencyService::merchantVatRate();
-                $emailVatAmount = \App\Services\CurrencyService::extractVat((float)$order->order_subtotal, $emailVatRate);
-                $itemsHtml .= '<tr>';
-                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Includes ' . e($emailTaxLabel) . '</td>';
-                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format($emailVatAmount) . '</td>';
-                $itemsHtml .= '</tr>';
-            } elseif (!$emailVatInclusive || ($emailVatInclusive && $emailCrossBorder)) {
-                // US/CA merchant tax added on top, or cross-border export (VAT stripped, 0 tax)
-                $itemsHtml .= '<tr>';
-                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e($emailTaxLabel) . '</td>';
-                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format((float)$order->order_taxes) . '</td>';
-                $itemsHtml .= '</tr>';
+                if ($emailVatInclusive && !$emailCrossBorder) {
+                    // VAT-inclusive domestic: show embedded VAT amount as an informational row
+                    $emailVatRate   = \App\Services\CurrencyService::merchantVatRate();
+                    $emailVatAmount = \App\Services\CurrencyService::extractVat((float)$order->order_subtotal, $emailVatRate);
+                    $itemsHtml .= '<tr>';
+                    $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Includes ' . e($emailTaxLabel) . '</td>';
+                    $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format($emailVatAmount) . '</td>';
+                    $itemsHtml .= '</tr>';
+                } elseif (!$emailVatInclusive || ($emailVatInclusive && $emailCrossBorder)) {
+                    // US/CA merchant tax added on top, or cross-border export (VAT stripped, 0 tax)
+                    $itemsHtml .= '<tr>';
+                    $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">' . e($emailTaxLabel) . '</td>';
+                    $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format((float)$order->order_taxes) . '</td>';
+                    $itemsHtml .= '</tr>';
+                }
             }
 
-            $itemsHtml .= '<tr>';
-            $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Shipping (' . e($order->order_shipping_method_name ?? 'Standard') . ')</td>';
-            $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format((float)$order->order_shipping) . '</td>';
-            $itemsHtml .= '</tr>';
+            if (\App\Models\CmsSetting::isEnabled('checkout_show_shipping', true)) {
+                $itemsHtml .= '<tr>';
+                $itemsHtml .= '<td style="font-size: 13px; color: #64748b; padding-bottom: 8px;">Shipping (' . e($order->order_shipping_method_name ?? 'Standard') . ')</td>';
+                $itemsHtml .= '<td style="font-size: 13px; font-weight: 600; color: #334155; padding-bottom: 8px;" align="right">' . \App\Services\CurrencyService::format((float)$order->order_shipping) . '</td>';
+                $itemsHtml .= '</tr>';
+            }
 
             if ($order->order_handling > 0) {
                 $itemsHtml .= '<tr>';
