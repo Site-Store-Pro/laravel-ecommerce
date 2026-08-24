@@ -200,6 +200,95 @@ class AdminHeaderFooterBuilder extends Component
             );
 
             CmsBuilderBlock::firstOrCreate(
+                ['target_element' => 'footer_row1', 'section_type' => 'footer'],
+                [
+                    'title'             => 'Footer Row #1 (Top Banner / Notice)',
+                    'type'              => 4,
+                    'is_placeholder'    => false,
+                    'sort_desktop'      => 1,
+                    'sort_tablet'       => 1,
+                    'sort_mobile'       => 1,
+                    'content_desktop'   => '',
+                    'content_tablet'    => '',
+                    'content_mobile'    => '',
+                    'is_active_desktop' => true,
+                    'is_active_tablet'  => true,
+                    'is_active_mobile'  => true,
+                ]
+            );
+
+            CmsBuilderBlock::firstOrCreate(
+                ['target_element' => 'footer_row2', 'section_type' => 'footer'],
+                [
+                    'title'             => 'Footer Row #2 (Upper Features / Promo)',
+                    'type'              => 4,
+                    'is_placeholder'    => false,
+                    'sort_desktop'      => 2,
+                    'sort_tablet'       => 2,
+                    'sort_mobile'       => 2,
+                    'content_desktop'   => '',
+                    'content_tablet'    => '',
+                    'content_mobile'    => '',
+                    'is_active_desktop' => true,
+                    'is_active_tablet'  => true,
+                    'is_active_mobile'  => true,
+                ]
+            );
+
+            CmsBuilderBlock::firstOrCreate(
+                ['target_element' => 'site_footer_columns_primary', 'section_type' => 'footer'],
+                [
+                    'title'             => 'Main Footer Columns Container',
+                    'type'              => 1,
+                    'is_placeholder'    => false,
+                    'sort_desktop'      => 3,
+                    'sort_tablet'       => 3,
+                    'sort_mobile'       => 3,
+                    'is_active_desktop' => true,
+                    'is_active_tablet'  => true,
+                    'is_active_mobile'  => true,
+                ]
+            );
+
+            foreach (['footer_col1' => 'Footer Column #1', 'footer_col2' => 'Footer Column #2', 'footer_col3' => 'Footer Column #3', 'footer_col4' => 'Footer Column #4'] as $colTarget => $colTitle) {
+                CmsBuilderBlock::firstOrCreate(
+                    ['target_element' => $colTarget, 'section_type' => 'footer'],
+                    [
+                        'title'             => $colTitle,
+                        'type'              => 5,
+                        'is_placeholder'    => false,
+                        'sort_desktop'      => match($colTarget) { 'footer_col1' => 10, 'footer_col2' => 11, 'footer_col3' => 12, 'footer_col4' => 13, default => 10 },
+                        'sort_tablet'       => 1,
+                        'sort_mobile'       => 1,
+                        'content_desktop'   => '',
+                        'content_tablet'    => '',
+                        'content_mobile'    => '',
+                        'is_active_desktop' => true,
+                        'is_active_tablet'  => true,
+                        'is_active_mobile'  => true,
+                    ]
+                );
+            }
+
+            CmsBuilderBlock::firstOrCreate(
+                ['target_element' => 'footer_row3', 'section_type' => 'footer'],
+                [
+                    'title'             => 'Footer Row #3 (Lower Badges / Social Row)',
+                    'type'              => 4,
+                    'is_placeholder'    => false,
+                    'sort_desktop'      => 50,
+                    'sort_tablet'       => 50,
+                    'sort_mobile'       => 50,
+                    'content_desktop'   => '',
+                    'content_tablet'    => '',
+                    'content_mobile'    => '',
+                    'is_active_desktop' => true,
+                    'is_active_tablet'  => true,
+                    'is_active_mobile'  => true,
+                ]
+            );
+
+            CmsBuilderBlock::firstOrCreate(
                 ['target_element' => 'copyright_container', 'section_type' => 'footer'],
                 [
                     'title'             => 'Copyright & Bottom Links Bar',
@@ -235,6 +324,42 @@ class AdminHeaderFooterBuilder extends Component
                 ]
             );
         }
+    }
+
+    public function enableFooterRow(string $targetElement, string $defaultTitle = 'Footer Row'): void
+    {
+        $block = CmsBuilderBlock::where('target_element', $targetElement)->where('section_type', 'footer')->first();
+        if (!$block) {
+            $block = CmsBuilderBlock::create([
+                'title'             => $defaultTitle,
+                'target_element'    => $targetElement,
+                'type'              => 4,
+                'section_type'      => 'footer',
+                'is_placeholder'    => false,
+                'sort_desktop'      => match($targetElement) {
+                    'footer_row1' => 1,
+                    'footer_row2' => 2,
+                    'footer_row3' => 50,
+                    default => 90,
+                },
+                'sort_tablet'       => 1,
+                'sort_mobile'       => 1,
+                'content_desktop'   => '',
+                'content_tablet'    => '',
+                'content_mobile'    => '',
+                'is_active_desktop' => true,
+                'is_active_tablet'  => true,
+                'is_active_mobile'  => true,
+            ]);
+        } else {
+            $block->update([
+                'is_active_desktop' => true,
+                'is_active_tablet'  => true,
+                'is_active_mobile'  => true,
+            ]);
+        }
+
+        $this->editBlock($block->id);
     }
 
     public function enableCopyrightBlock(): void

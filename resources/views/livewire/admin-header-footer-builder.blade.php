@@ -143,25 +143,25 @@
     {{-- Viewport Device Switcher & Control Buttons --}}
     @if($activeTab === 'header' || $activeTab === 'footer')
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            {{-- Device Selection --}}
+            {{-- Device Selection (Header Only) or Responsive Footer Notice --}}
             <div class="flex items-center gap-3 flex-wrap">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Device Mode:</span>
-                    <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl">
-                        <button wire:click="setDeviceView('desktop')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'desktop' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
-                            🖥️ Desktop (&ge; 1024px)
-                        </button>
-                        <button wire:click="setDeviceView('tablet')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'tablet' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
-                            📱 Tablet (768px - 1023px)
-                        </button>
-                        <button wire:click="setDeviceView('mobile')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'mobile' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
-                            📱 Mobile (&lt; 768px)
-                        </button>
-                    </div>
-                </div>
-
-                {{-- Single Responsive Header Override Toggle --}}
                 @if($activeTab === 'header')
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Device Mode:</span>
+                        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl">
+                            <button wire:click="setDeviceView('desktop')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'desktop' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
+                                🖥️ Desktop (&ge; 1024px)
+                            </button>
+                            <button wire:click="setDeviceView('tablet')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'tablet' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
+                                📱 Tablet (768px - 1023px)
+                            </button>
+                            <button wire:click="setDeviceView('mobile')" class="px-3 py-1.5 text-xs font-bold rounded-lg transition {{ $deviceView === 'mobile' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
+                                📱 Mobile (&lt; 768px)
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Single Responsive Header Override Toggle --}}
                     <div class="flex items-center gap-2 border-l border-slate-200 dark:border-slate-700 pl-3">
                         <label for="singleHeaderToggle" class="text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer flex items-center gap-2">
                             <span>Single Responsive Header:</span>
@@ -173,14 +173,23 @@
                             {{ $singleHeaderConfig ? 'ON (Single Responsive Header)' : 'OFF (Multi-Device Config)' }}
                         </span>
                     </div>
+                @else
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-bold">
+                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <span>Unified Responsive Footer Layout (Auto-adapts to Desktop, Tablet &amp; Mobile screens)</span>
+                        </span>
+                    </div>
                 @endif
             </div>
 
             {{-- Control Actions --}}
             <div class="flex items-center gap-2">
-                <button wire:click="openAddModal" class="px-3.5 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition flex items-center gap-1.5">
-                    <span>+ Create Custom Block</span>
-                </button>
+                @if($activeTab === 'header')
+                    <button wire:click="openAddModal" class="px-3.5 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition flex items-center gap-1.5">
+                        <span>+ Create Custom Block</span>
+                    </button>
+                @endif
                 <button wire:click="seedDefaultBlocks" onclick="confirm('Reset all header and footer blocks to default seed templates?') || event.stopImmediatePropagation()" class="px-3.5 py-2 text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl hover:bg-slate-200 transition">
                     🌱 Seed Defaults
                 </button>
@@ -202,7 +211,7 @@
 
             {{-- 1. Inactive / Available Elements Pool Tray --}}
             @php
-                $evalDevice = ($activeTab === 'header' && $singleHeaderConfig) ? 'desktop' : $deviceView;
+                $evalDevice = ($activeTab === 'header' && $singleHeaderConfig) ? 'desktop' : ($activeTab === 'footer' ? 'desktop' : $deviceView);
                 $currentBlocks = $activeTab === 'header' ? $headerBlocks : $footerBlocks;
                 $inactiveBlocks = $currentBlocks->filter(fn($b) => !$b->isActiveForDevice($evalDevice));
             @endphp
@@ -239,7 +248,7 @@
                         <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
                             <span>{{ ucfirst($activeTab) }} Visual Wireframe Canvas</span>
-                            <span class="text-2xs font-mono px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300">{{ ucfirst($deviceView) }} Geometry</span>
+                            <span class="text-2xs font-mono px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300">{{ $activeTab === 'footer' ? 'Unified Responsive' : ucfirst($deviceView) . ' Geometry' }}</span>
                         </h3>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             Mimicking the exact layout geometry of the {{ $activeTab }}. Dashed outlined elements sit in their true layout positions with Edit and Remove buttons.
@@ -660,56 +669,151 @@
 
                 @else
                     {{-- FOOTER GEOMETRIC WIREFRAME MOCKUP --}}
-                    <div class="footer-wireframe-mockup rounded-2xl border-2 border-slate-300 dark:border-slate-700 bg-slate-900 text-white p-4 space-y-4 shadow-inner">
-                        <div class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400 mb-2 flex items-center justify-between">
-                            <span>Main Footer Layout Grid (footer_container)</span>
-                            <span class="text-2xs text-slate-400">4 Columns</span>
-                        </div>
+                    @php
+                        $bRow1 = $footerBlocks->firstWhere('target_element', 'footer_row1');
+                        $bRow2 = $footerBlocks->firstWhere('target_element', 'footer_row2');
+                        $activeFCols = collect(['footer_col1', 'footer_col2', 'footer_col3', 'footer_col4'])
+                            ->map(fn($col) => ['name' => $col, 'block' => $footerBlocks->firstWhere('target_element', $col)])
+                            ->filter(fn($item) => $item['block'] && $item['block']->is_active_desktop);
+                        $bRow3 = $footerBlocks->firstWhere('target_element', 'footer_row3');
+                        $bCopy = $footerBlocks->firstWhere('target_element', 'copyright_container')
+                            ?? $footerBlocks->firstWhere('target_element', 'footer_row4');
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            @foreach(['footer_col1', 'footer_col2', 'footer_col3', 'footer_col4'] as $fCol)
-                                @php $bFCol = $footerBlocks->firstWhere('target_element', $fCol); @endphp
-                                <div class="rounded-xl border-2 border-dashed {{ $bFCol && $bFCol->isActiveForDevice($deviceView) ? 'border-indigo-500 bg-slate-800/80' : 'border-slate-700 bg-slate-800/30' }} p-3">
-                                    @if($bFCol && $bFCol->isActiveForDevice($deviceView))
-                                        <div class="flex items-center justify-between gap-2">
-                                            <div>
-                                                <span class="text-xs font-bold text-white block">{{ $bFCol->title }}</span>
-                                                <span class="text-2xs font-mono text-slate-400 block">{{ $fCol }}</span>
-                                            </div>
-                                            <div class="flex items-center gap-1 shrink-0">
-                                                <button wire:click="editBlock({{ $bFCol->id }})" class="px-2 py-1 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition flex items-center gap-1" title="Edit Block">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                                    <span>Edit</span>
-                                                </button>
-                                                <button wire:click="toggleActive({{ $bFCol->id }})" class="px-2 py-1 rounded-lg bg-rose-500 text-white text-xs font-medium hover:bg-rose-600 transition flex items-center gap-1" title="Remove">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                                    <span>Remove</span>
-                                                </button>
+                        $hasAnyActiveFooter = ($bRow1 && $bRow1->is_active_desktop)
+                            || ($bRow2 && $bRow2->is_active_desktop)
+                            || $activeFCols->isNotEmpty()
+                            || ($bRow3 && $bRow3->is_active_desktop)
+                            || ($bCopy && $bCopy->is_active_desktop);
+                    @endphp
+
+                    <div class="footer-wireframe-mockup rounded-2xl border-2 border-slate-300 dark:border-slate-700 bg-slate-900 text-white p-4 space-y-4 shadow-inner">
+                        
+                        @if(!$hasAnyActiveFooter)
+                            <div class="text-center py-10 px-4 bg-slate-800/50 rounded-xl border border-dashed border-slate-700">
+                                <span class="text-sm font-bold text-slate-300 block">All footer rows and columns are currently inactive</span>
+                                <p class="text-xs text-slate-500 mt-1">Use the "Available / Inactive Layout Blocks Pool" above to activate elements onto this wireframe canvas.</p>
+                            </div>
+                        @endif
+
+                        {{-- 1. Footer Row #1 (Top Banner / Notice) --}}
+                        @if($bRow1 && $bRow1->is_active_desktop)
+                            <div class="rounded-xl border-2 border-dashed border-indigo-500 bg-slate-800 p-3">
+                                <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+                                    <span class="text-indigo-300">Footer Row #1 (Top Banner / Notice — footer_row1)</span>
+                                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold">Active (Responsive)</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3 p-3 bg-slate-900 rounded-lg border border-slate-700">
+                                    <div>
+                                        <span class="text-xs text-slate-200 font-bold block">{{ $bRow1->title }}</span>
+                                        <span class="text-2xs font-mono text-slate-400 block mt-0.5">footer_row1</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <button wire:click="editBlock({{ $bRow1->id }})" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center gap-1" title="Edit Footer Row 1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            <span>Edit</span>
+                                        </button>
+                                        <button wire:click="toggleActive({{ $bRow1->id }})" class="px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold transition flex items-center gap-1" title="Disable Row">
+                                            <span>Deactivate</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- 2. Footer Row #2 (Upper Features / Promo Bar) --}}
+                        @if($bRow2 && $bRow2->is_active_desktop)
+                            <div class="rounded-xl border-2 border-dashed border-indigo-500 bg-slate-800 p-3">
+                                <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+                                    <span class="text-indigo-300">Footer Row #2 (Upper Features / Promo Bar — footer_row2)</span>
+                                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold">Active (Responsive)</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3 p-3 bg-slate-900 rounded-lg border border-slate-700">
+                                    <div>
+                                        <span class="text-xs text-slate-200 font-bold block">{{ $bRow2->title }}</span>
+                                        <span class="text-2xs font-mono text-slate-400 block mt-0.5">footer_row2</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <button wire:click="editBlock({{ $bRow2->id }})" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center gap-1" title="Edit Footer Row 2">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            <span>Edit</span>
+                                        </button>
+                                        <button wire:click="toggleActive({{ $bRow2->id }})" class="px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold transition flex items-center gap-1" title="Disable Row">
+                                            <span>Deactivate</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- 3. Main Footer Layout Grid (footer_container / site_footer_columns_primary) --}}
+                        @if($activeFCols->isNotEmpty())
+                            <div class="pt-2 border-t border-slate-800">
+                                <div class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400 mb-2 flex items-center justify-between">
+                                    <span>Main Footer Layout Grid (footer_container)</span>
+                                    <span class="text-2xs text-slate-400">{{ $activeFCols->count() }} Column{{ $activeFCols->count() === 1 ? '' : 's' }}</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    @foreach($activeFCols as $item)
+                                        @php 
+                                            $fCol = $item['name'];
+                                            $bFCol = $item['block'];
+                                        @endphp
+                                        <div class="rounded-xl border-2 border-dashed border-indigo-500 bg-slate-800/80 p-3">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <div>
+                                                    <span class="text-xs font-bold text-white block">{{ $bFCol->title }}</span>
+                                                    <span class="text-2xs font-mono text-slate-400 block">{{ $fCol }}</span>
+                                                </div>
+                                                <div class="flex items-center gap-1 shrink-0">
+                                                    <button wire:click="editBlock({{ $bFCol->id }})" class="px-2 py-1 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition flex items-center gap-1" title="Edit Block">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                        <span>Edit</span>
+                                                    </button>
+                                                    <button wire:click="toggleActive({{ $bFCol->id }})" class="px-2 py-1 rounded-lg bg-rose-500 text-white text-xs font-medium hover:bg-rose-600 transition flex items-center gap-1" title="Remove">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                        <span>Remove</span>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                    @else
-                                        <div class="text-xs text-slate-500 text-center py-4">{{ $fCol }} (Inactive)</div>
-                                    @endif
+                                    @endforeach
                                 </div>
-                            @endforeach
-                        </div>
-
-                        {{-- Bottom Copyright Bar --}}
-                        @php
-                            $bCopy = $footerBlocks->firstWhere('target_element', 'copyright_container')
-                                ?? $footerBlocks->firstWhere('target_element', 'footer_row4');
-                        @endphp
-                        <div class="rounded-xl border-2 border-dashed {{ $bCopy && $bCopy->isActiveForDevice($deviceView) ? 'border-indigo-500 bg-slate-800' : 'border-amber-500/70 bg-slate-800/60' }} p-3">
-                            <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
-                                <span>Copyright &amp; Bottom Links Bar (copyright_container / footer_row4)</span>
-                                @if($bCopy && $bCopy->isActiveForDevice($deviceView))
-                                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold">Active on {{ ucfirst($deviceView) }}</span>
-                                @else
-                                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-extrabold">Custom Bar Disabled (Using Site Default)</span>
-                                @endif
                             </div>
+                        @endif
 
-                            @if($bCopy)
+                        {{-- 4. Footer Row #3 (Lower Badges / Social Bar) --}}
+                        @if($bRow3 && $bRow3->is_active_desktop)
+                            <div class="rounded-xl border-2 border-dashed border-indigo-500 bg-slate-800 p-3">
+                                <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+                                    <span class="text-indigo-300">Footer Row #3 (Lower Badges / Social Bar — footer_row3)</span>
+                                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold">Active (Responsive)</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3 p-3 bg-slate-900 rounded-lg border border-slate-700">
+                                    <div>
+                                        <span class="text-xs text-slate-200 font-bold block">{{ $bRow3->title }}</span>
+                                        <span class="text-2xs font-mono text-slate-400 block mt-0.5">footer_row3</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <button wire:click="editBlock({{ $bRow3->id }})" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center gap-1" title="Edit Footer Row 3">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            <span>Edit</span>
+                                        </button>
+                                        <button wire:click="toggleActive({{ $bRow3->id }})" class="px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold transition flex items-center gap-1" title="Disable Row">
+                                            <span>Deactivate</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- 5. Bottom Copyright Bar --}}
+                        @if($bCopy && $bCopy->is_active_desktop)
+                            <div class="rounded-xl border-2 border-dashed border-indigo-500 bg-slate-800 p-3">
+                                <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+                                    <span>Copyright &amp; Bottom Links Bar (copyright_container / footer_row4)</span>
+                                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold">Active (Responsive)</span>
+                                </div>
                                 <div class="flex items-center justify-between gap-3 p-3 bg-slate-900 rounded-lg border border-slate-700">
                                     <div>
                                         <span class="text-xs text-slate-200 font-bold block">{{ $bCopy->title }}</span>
@@ -720,20 +824,13 @@
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                             <span>Edit</span>
                                         </button>
-                                        <button wire:click="toggleActive({{ $bCopy->id }})" class="px-3 py-1.5 rounded-lg {{ $bCopy->isActiveForDevice($deviceView) ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white' }} text-xs font-bold transition flex items-center gap-1">
-                                            <span>{{ $bCopy->isActiveForDevice($deviceView) ? 'Deactivate' : 'Activate' }}</span>
+                                        <button wire:click="toggleActive({{ $bCopy->id }})" class="px-3 py-1.5 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold transition flex items-center gap-1" title="Disable Row">
+                                            <span>Deactivate</span>
                                         </button>
                                     </div>
                                 </div>
-                            @else
-                                <div class="flex items-center justify-between gap-3 p-3 bg-slate-900 rounded-lg border border-slate-700">
-                                    <span class="text-xs text-slate-400 font-medium">Standard site copyright active. Click to enable custom editor block:</span>
-                                    <button wire:click="enableCopyrightBlock" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition">
-                                        + Enable &amp; Edit Copyright Bar
-                                    </button>
-                                </div>
-                            @endif
-                        </div>
+                            </div>
+                        @endif
                     </div>
                 @endif
             </div>
@@ -1104,7 +1201,7 @@
 
             {{-- 4. Realtime Iframe Viewport Preview Generator --}}
             <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3 gap-3">
                     <div>
                         <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
@@ -1115,10 +1212,26 @@
                             Isolated document context executing true responsive @media queries, hamburger menus, and collapsible drawers.
                         </p>
                     </div>
-                    <button onclick="document.getElementById('headerFooterPreviewIframe').contentWindow.location.reload()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 transition flex items-center gap-1">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                        <span>Refresh Frame</span>
-                    </button>
+
+                    {{-- Change Preview Layout Switcher & Refresh Button --}}
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl">
+                            <span class="text-2xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2">Change Preview Layout:</span>
+                            <button wire:click="setDeviceView('desktop')" class="px-3 py-1 text-xs font-bold rounded-lg transition {{ $deviceView === 'desktop' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
+                                🖥️ Desktop
+                            </button>
+                            <button wire:click="setDeviceView('tablet')" class="px-3 py-1 text-xs font-bold rounded-lg transition {{ $deviceView === 'tablet' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
+                                📱 Tablet
+                            </button>
+                            <button wire:click="setDeviceView('mobile')" class="px-3 py-1 text-xs font-bold rounded-lg transition {{ $deviceView === 'mobile' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900' }}">
+                                📱 Mobile
+                            </button>
+                        </div>
+                        <button onclick="document.getElementById('headerFooterPreviewIframe').contentWindow.location.reload()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl hover:bg-slate-200 transition flex items-center gap-1" title="Reload Preview Frame">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span>Refresh</span>
+                        </button>
+                    </div>
                 </div>
 
                 {{-- Responsive Width Bounded Iframe Frame Container --}}
@@ -1150,12 +1263,28 @@
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         <span>Reset Defaults</span>
                     </button>
-                    <button wire:click="saveCssVars" class="px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md transition flex items-center gap-1.5">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-                        <span>Save CSS Variables</span>
+                    <button wire:click="saveCssVars"
+                            wire:loading.attr="disabled"
+                            wire:target="saveCssVars"
+                            class="px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md transition flex items-center gap-1.5 disabled:opacity-60">
+                        <svg wire:loading.remove wire:target="saveCssVars" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                        <svg wire:loading wire:target="saveCssVars" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span wire:loading.remove wire:target="saveCssVars">Save CSS Variables</span>
+                        <span wire:loading wire:target="saveCssVars">Saving...</span>
                     </button>
                 </div>
             </div>
+
+            {{-- In-Tab Save Confirmation Notification --}}
+            @if (session()->has('message'))
+                <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/40 border-2 border-emerald-300 dark:border-emerald-700 flex items-center justify-between gap-3 text-emerald-900 dark:text-emerald-100 text-sm font-bold shadow-sm">
+                    <div class="flex items-center gap-2.5">
+                        <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>{{ session('message') }}</span>
+                    </div>
+                    <span class="text-2xs font-mono px-2.5 py-1 rounded bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 uppercase tracking-wider">Saved Successfully</span>
+                </div>
+            @endif
 
             {{-- Sticky Header Navigation Toggle & Body Offset --}}
             <div class="p-4 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-800 space-y-4">
@@ -1486,23 +1615,155 @@
                     </div>
                 </div>
                 <div class="flex justify-end">
-                    <button wire:click="saveCssVars" class="px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md transition flex items-center gap-1.5">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-                        Save Icon Settings
+                    <button wire:click="saveCssVars"
+                            wire:loading.attr="disabled"
+                            wire:target="saveCssVars"
+                            class="px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md transition flex items-center gap-1.5 disabled:opacity-60">
+                        <svg wire:loading.remove wire:target="saveCssVars" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                        <svg wire:loading wire:target="saveCssVars" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span wire:loading.remove wire:target="saveCssVars">Save Icon Settings</span>
+                        <span wire:loading wire:target="saveCssVars">Saving...</span>
                     </button>
                 </div>
             </div>
 
-            {{-- Custom CSS Overrides Textarea --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-100 dark:border-slate-700 pt-6">
-                <div>
-                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Custom Header CSS Overrides</label>
-                    <textarea wire:model="cssVars.header_custom_css" rows="5" class="w-full font-mono text-xs p-3 bg-slate-900 text-slate-100 rounded-xl focus:outline-none" placeholder=".header_container { /* custom css */ }"></textarea>
+            {{-- Custom CSS Overrides & Default Reference Section --}}
+            <div class="space-y-6 border-t border-slate-100 dark:border-slate-700 pt-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h4 class="text-sm font-extrabold text-slate-800 dark:text-white uppercase tracking-wider text-indigo-600 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                            <span>Custom CSS Overrides &amp; Default Reference</span>
+                        </h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Write custom CSS rules to override header and footer components. Default built-in CSS rules are displayed directly below each editor for reference.
+                        </p>
+                    </div>
+                    <button wire:click="saveCssVars"
+                            wire:loading.attr="disabled"
+                            wire:target="saveCssVars"
+                            class="px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-md transition flex items-center gap-1.5 shrink-0 self-start sm:self-auto disabled:opacity-60">
+                        <svg wire:loading.remove wire:target="saveCssVars" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                        <svg wire:loading wire:target="saveCssVars" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span wire:loading.remove wire:target="saveCssVars">Save CSS Overrides</span>
+                        <span wire:loading wire:target="saveCssVars">Saving...</span>
+                    </button>
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Custom Footer CSS Overrides</label>
-                    <textarea wire:model="cssVars.footer_custom_css" rows="5" class="w-full font-mono text-xs p-3 bg-slate-900 text-slate-100 rounded-xl focus:outline-none" placeholder=".footer_container { /* custom css */ }"></textarea>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {{-- Header Custom & Reference CSS --}}
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span>Custom Header CSS Overrides</span>
+                                    <span class="text-2xs font-normal text-indigo-600 dark:text-indigo-400 font-mono">(Editable)</span>
+                                </label>
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500">Target .header_container, .site_header_contents, etc.</span>
+                            </div>
+                            <textarea wire:model="cssVars.header_custom_css"
+                                      rows="14"
+                                      class="w-full font-mono text-xs p-3.5 bg-slate-900 text-emerald-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-slate-800 shadow-inner resize-y min-h-[280px]"
+                                      placeholder=".header_container {
+    /* Write your custom Header CSS rules here */
+}"></textarea>
+                        </div>
+
+                        {{-- Read-Only Default Header CSS Reference --}}
+                        <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Default Header CSS (Reference Only)</span>
+                                </div>
+                                <button type="button"
+                                        onclick="navigator.clipboard.writeText(document.getElementById('defaultHeaderCssRef').value); alert('Default Header CSS copied to clipboard!');"
+                                        class="px-2.5 py-1 text-2xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    <span>Copy Reference</span>
+                                </button>
+                            </div>
+                            <textarea id="defaultHeaderCssRef"
+                                      readonly
+                                      rows="12"
+                                      class="w-full font-mono text-2xs p-3 bg-slate-950 text-slate-400 rounded-lg border border-slate-800 focus:outline-none cursor-default resize-y select-all min-h-[220px]">{{ \App\Services\HeaderFooterCssManager::getDefaultHeaderCss() }}</textarea>
+                        </div>
+                    </div>
+
+                    {{-- Footer Custom & Reference CSS --}}
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                                    <span>Custom Footer CSS Overrides</span>
+                                    <span class="text-2xs font-normal text-indigo-600 dark:text-indigo-400 font-mono">(Editable)</span>
+                                </label>
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500">Target .footer_container, .footer_row1..4, etc.</span>
+                            </div>
+                            <textarea wire:model="cssVars.footer_custom_css"
+                                      rows="14"
+                                      class="w-full font-mono text-xs p-3.5 bg-slate-900 text-emerald-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-slate-800 shadow-inner resize-y min-h-[280px]"
+                                      placeholder=".footer_container {
+    /* Write your custom Footer CSS rules here */
+}"></textarea>
+                        </div>
+
+                        {{-- Read-Only Default Footer CSS Reference --}}
+                        <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Default Footer CSS (Reference Only)</span>
+                                </div>
+                                <button type="button"
+                                        onclick="navigator.clipboard.writeText(document.getElementById('defaultFooterCssRef').value); alert('Default Footer CSS copied to clipboard!');"
+                                        class="px-2.5 py-1 text-2xs font-semibold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    <span>Copy Reference</span>
+                                </button>
+                            </div>
+                            <textarea id="defaultFooterCssRef"
+                                      readonly
+                                      rows="12"
+                                      class="w-full font-mono text-2xs p-3 bg-slate-950 text-slate-400 rounded-lg border border-slate-800 focus:outline-none cursor-default resize-y select-all min-h-[220px]">{{ \App\Services\HeaderFooterCssManager::getDefaultFooterCss() }}</textarea>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            {{-- Floating 'Save All Sections' Action Bar on Right Side --}}
+            <div class="fixed bottom-8 right-8 z-40 flex flex-col items-end gap-3 pointer-events-auto">
+                {{-- Floating Toast Notification upon Saving --}}
+                @if (session()->has('message'))
+                    <div x-data="{ show: true }"
+                         x-show="show"
+                         x-init="setTimeout(() => show = false, 5000)"
+                         x-transition:enter="transition ease-out duration-300 transform"
+                         x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+                         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                         x-transition:leave="transition ease-in duration-200 transform"
+                         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                         x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+                         class="bg-emerald-600 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-emerald-400 text-xs font-bold max-w-sm backdrop-blur-md">
+                        <svg class="w-5 h-5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>{{ session('message') }}</span>
+                        <button @click="show = false" class="ml-auto text-emerald-200 hover:text-white font-bold text-base leading-none">&times;</button>
+                    </div>
+                @endif
+
+                {{-- Floating Action Button --}}
+                <button wire:click="saveCssVars"
+                        wire:loading.attr="disabled"
+                        wire:target="saveCssVars"
+                        class="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-95 text-white font-extrabold px-6 py-3.5 rounded-2xl shadow-2xl hover:shadow-indigo-500/30 border border-indigo-400/40 transition-all duration-200 flex items-center gap-2.5 group disabled:opacity-75">
+                    {{-- Idle Icon --}}
+                    <svg wire:loading.remove wire:target="saveCssVars" class="w-5 h-5 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                    {{-- Loading Spinner --}}
+                    <svg wire:loading wire:target="saveCssVars" class="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    
+                    <span wire:loading.remove wire:target="saveCssVars" class="tracking-wide text-sm">Save All Sections</span>
+                    <span wire:loading wire:target="saveCssVars" class="tracking-wide text-sm">Saving Changes...</span>
+                </button>
             </div>
         </div>
     @endif
