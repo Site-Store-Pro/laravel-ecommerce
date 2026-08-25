@@ -18,7 +18,7 @@ class LanguageSwitcher extends Component
         // The Referer header always points to the real page being viewed.
         $pageUrl = request()->headers->get('referer', url('/'));
 
-        $this->redirect($pageUrl, navigate: true);
+        $this->redirect($pageUrl);
     }
 
     public function render(): View
