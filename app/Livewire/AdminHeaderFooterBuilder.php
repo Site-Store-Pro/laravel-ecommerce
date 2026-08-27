@@ -250,14 +250,14 @@ class AdminHeaderFooterBuilder extends Component
                 ]
             );
 
-            foreach (['footer_col1' => 'Footer Column #1', 'footer_col2' => 'Footer Column #2', 'footer_col3' => 'Footer Column #3', 'footer_col4' => 'Footer Column #4'] as $colTarget => $colTitle) {
+            foreach (['footer_col1' => 'Footer Column #1', 'footer_col2' => 'Footer Column #2', 'footer_col3' => 'Footer Column #3', 'footer_col4' => 'Footer Column #4', 'footer_col5' => 'Footer Column #5'] as $colTarget => $colTitle) {
                 CmsBuilderBlock::firstOrCreate(
                     ['target_element' => $colTarget, 'section_type' => 'footer'],
                     [
                         'title'             => $colTitle,
                         'type'              => 5,
                         'is_placeholder'    => false,
-                        'sort_desktop'      => match($colTarget) { 'footer_col1' => 10, 'footer_col2' => 11, 'footer_col3' => 12, 'footer_col4' => 13, default => 10 },
+                        'sort_desktop'      => match($colTarget) { 'footer_col1' => 10, 'footer_col2' => 11, 'footer_col3' => 12, 'footer_col4' => 13, 'footer_col5' => 14, default => 10 },
                         'sort_tablet'       => 1,
                         'sort_mobile'       => 1,
                         'content_desktop'   => '',

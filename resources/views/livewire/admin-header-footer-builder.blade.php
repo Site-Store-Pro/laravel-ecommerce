@@ -672,7 +672,7 @@
                     @php
                         $bRow1 = $footerBlocks->firstWhere('target_element', 'footer_row1');
                         $bRow2 = $footerBlocks->firstWhere('target_element', 'footer_row2');
-                        $activeFCols = collect(['footer_col1', 'footer_col2', 'footer_col3', 'footer_col4'])
+                        $activeFCols = collect(['footer_col1', 'footer_col2', 'footer_col3', 'footer_col4', 'footer_col5'])
                             ->map(fn($col) => ['name' => $col, 'block' => $footerBlocks->firstWhere('target_element', $col)])
                             ->filter(fn($item) => $item['block'] && $item['block']->is_active_desktop);
                         $bRow3 = $footerBlocks->firstWhere('target_element', 'footer_row3');
@@ -753,7 +753,7 @@
                                     <span class="text-2xs text-slate-400">{{ $activeFCols->count() }} Column{{ $activeFCols->count() === 1 ? '' : 's' }}</span>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-{{ min(5, max(1, $activeFCols->count())) }} gap-4">
                                     @foreach($activeFCols as $item)
                                         @php 
                                             $fCol = $item['name'];
