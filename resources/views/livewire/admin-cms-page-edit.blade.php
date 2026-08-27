@@ -183,7 +183,7 @@
                             <label class="text-xs font-bold text-slate-400 block uppercase tracking-wider block mb-1">Page Layout Option</label>
                             <select wire:model.live="layout_type" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-medium">
                                 @foreach($layouts as $l)
-                                    <option value="{{ $l->id }}">{{ $l->name }}</option>
+                                    <option value="{{ is_object($l) ? $l->id : (is_array($l) ? ($l['id'] ?? '') : $l) }}">{{ is_object($l) ? $l->name : (is_array($l) ? ($l['name'] ?? $l) : $l) }}</option>
                                 @endforeach
                             </select>
                             @error('layout_type') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror

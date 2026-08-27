@@ -264,8 +264,10 @@ class AdminCmsPageEdit extends Component
     {
         if ($this->pageId) {
             $this->revisionsList = CmsPageRevision::where('cms_page_id', $this->pageId)
-                ->with('author')
+                ->select('id', 'cms_page_id', 'title', 'meta_title', 'revision_type', 'created_at', 'author_id')
+                ->with('author:id,name,email')
                 ->orderBy('created_at', 'desc')
+                ->limit(25)
                 ->get()
                 ->toArray();
         }
