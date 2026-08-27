@@ -918,21 +918,30 @@ class AdminCmsPageEdit extends Component
             $svc      = app(\App\Services\TranslationService::class);
             $langName = $lang->name;
 
+            $batch = [];
             if (!empty($page->title)) {
-                $this->trans_title = $svc->translateText($page->title, $langName, 'page title');
+                $batch['trans_title'] = ['text' => $page->title, 'hint' => 'page title'];
             }
             if (!empty($page->alternate_page_title)) {
-                $this->trans_alternate_page_title = $svc->translateText($page->alternate_page_title, $langName, 'page heading');
+                $batch['trans_alternate_page_title'] = ['text' => $page->alternate_page_title, 'hint' => 'page heading'];
             }
             if (!empty($page->meta_title)) {
-                $this->trans_meta_title = $svc->translateText($page->meta_title, $langName, 'SEO meta title');
+                $batch['trans_meta_title'] = ['text' => $page->meta_title, 'hint' => 'SEO meta title'];
             }
             if (!empty($page->meta_description)) {
-                $this->trans_meta_description = $svc->translateText($page->meta_description, $langName, 'SEO meta description');
+                $batch['trans_meta_description'] = ['text' => $page->meta_description, 'hint' => 'SEO meta description'];
             }
             if (!empty($page->content)) {
-                $this->trans_content = $svc->translateText($page->content, $langName, 'page content body HTML — preserve all HTML tags and shortcodes');
+                $batch['trans_content'] = ['text' => $page->content, 'hint' => 'page content body HTML — preserve all HTML tags and shortcodes'];
             }
+
+            $results = $svc->translateBatch($batch, $langName, 'CMS webpage translation');
+
+            if (isset($results['trans_title'])) $this->trans_title = $results['trans_title'];
+            if (isset($results['trans_alternate_page_title'])) $this->trans_alternate_page_title = $results['trans_alternate_page_title'];
+            if (isset($results['trans_meta_title'])) $this->trans_meta_title = $results['trans_meta_title'];
+            if (isset($results['trans_meta_description'])) $this->trans_meta_description = $results['trans_meta_description'];
+            if (isset($results['trans_content'])) $this->trans_content = $results['trans_content'];
 
             $this->trans_status = 'ai_translated';
             $this->dispatch('toast', message: 'AI translation ready — review all fields and click Save Translation.', type: 'success');

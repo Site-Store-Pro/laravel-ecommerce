@@ -33,8 +33,8 @@ class TranslationService
 
             $systemPrompt = 'You are a professional translator. ' .
                 'Translate the following content into ' . $targetLanguageName . '. ' .
-                'Preserve all HTML tags exactly as-is. ' .
-                'Preserve any placeholder tokens in the format __SC_N__ exactly as-is — do not translate them. ' .
+                'Preserve all HTML tags and attributes exactly as-is. ' .
+                'Preserve any placeholder tokens in the format __SSP_*__ exactly as-is — do not translate or alter them. ' .
                 'Return ONLY the translated text, no explanation.' .
                 ($context ? ' Context: ' . $context : '');
 
@@ -58,6 +58,107 @@ class TranslationService
     }
 
     /**
+     * Translate multiple fields in a single OpenAI request using JSON mode.
+     * Prevents multiple sequential HTTP roundtrips that cause Cloudflare 100s timeouts.
+     *
+     * @param array<string, array{text: string, hint?: string}> $fieldsMap
+     * @return array<string, string>
+     */
+    public function translateBatch(array $fieldsMap, string $targetLanguageName, string $generalContext = ''): array
+    {
+        if (empty($fieldsMap)) {
+            return [];
+        }
+
+        $apiKey = config('ai.openai_api_key');
+        if (empty($apiKey)) {
+            throw new \RuntimeException('OpenAI API key is not configured.');
+        }
+
+        $payload = [];
+        $placeholdersMap = [];
+        $hints = [];
+
+        foreach ($fieldsMap as $key => $item) {
+            $rawText = is_array($item) ? ($item['text'] ?? '') : (string) $item;
+            $hint = is_array($item) ? ($item['hint'] ?? '') : '';
+
+            if (empty(trim($rawText))) {
+                continue;
+            }
+
+            [$protected, $placeholders] = $this->extractShortcodes($rawText);
+            $payload[$key] = $protected;
+            $placeholdersMap[$key] = $placeholders;
+            if (!empty($hint)) {
+                $hints[] = "{$key}: {$hint}";
+            }
+        }
+
+        if (empty($payload)) {
+            return [];
+        }
+
+        try {
+            $client = \OpenAI::client($apiKey);
+
+            $systemPrompt = "You are a professional website translator.\n" .
+                "Translate the values in the provided JSON object into {$targetLanguageName}.\n" .
+                "RULES:\n" .
+                "1. Return ONLY a valid JSON object matching the exact input keys.\n" .
+                "2. Preserve all HTML structure, markup tags, classes, and attributes exactly as-is.\n" .
+                "3. Preserve all placeholder tokens in the format __SSP_*__ exactly as-is without modification.\n" .
+                "4. Maintain accurate contextual tone.\n" .
+                (!empty($hints) ? "Field Contexts:\n" . implode("\n", $hints) . "\n" : "") .
+                ($generalContext ? "General Context: {$generalContext}\n" : "");
+
+            $response = $client->chat()->create([
+                'model'           => 'gpt-4o-mini',
+                'response_format' => ['type' => 'json_object'],
+                'messages'        => [
+                    ['role' => 'system', 'content' => $systemPrompt],
+                    ['role' => 'user',   'content' => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)],
+                ],
+                'temperature'     => 0.3,
+            ]);
+
+            $content = $response->choices[0]->message->content ?? '';
+            $decoded = json_decode($content, true);
+
+            if (!is_array($decoded)) {
+                throw new \RuntimeException("Invalid JSON translation response from OpenAI.");
+            }
+
+            $results = [];
+            foreach ($payload as $key => $origProtected) {
+                $transText = $decoded[$key] ?? $origProtected;
+                $results[$key] = $this->reinsertShortcodes($transText, $placeholdersMap[$key] ?? []);
+            }
+
+            return $results;
+        } catch (\Throwable $e) {
+            Log::warning("[TranslationService] translateBatch failed, falling back to sequential: " . $e->getMessage());
+
+            // Fallback to sequential translateText if batch fails
+            $results = [];
+            foreach ($fieldsMap as $key => $item) {
+                $rawText = is_array($item) ? ($item['text'] ?? '') : (string) $item;
+                $hint = is_array($item) ? ($item['hint'] ?? '') : '';
+                if (empty(trim($rawText))) {
+                    $results[$key] = $rawText;
+                    continue;
+                }
+                try {
+                    $results[$key] = $this->translateText($rawText, $targetLanguageName, $hint ?: $generalContext);
+                } catch (\Throwable $err) {
+                    $results[$key] = $rawText;
+                }
+            }
+            return $results;
+        }
+    }
+
+    /**
      * Translate all translatable fields on a model instance for a given language.
      * Creates or updates the corresponding _translations child record.
      */
@@ -75,21 +176,27 @@ class TranslationService
             'translated_at'      => now(),
         ];
 
+        $batchInput = [];
         foreach ($fields as $field => $context_hint) {
             $original = $record->{$field} ?? '';
             if (empty(trim(strip_tags($original)))) {
                 $translationData[$field] = null;
                 continue;
             }
+            $batchInput[$field] = [
+                'text' => $original,
+                'hint' => $context_hint ?: $context,
+            ];
+        }
+
+        if (!empty($batchInput)) {
             try {
-                $translationData[$field] = $this->translateText(
-                    $original,
-                    $language->name,
-                    $context_hint ?: $context
-                );
+                $translatedBatch = $this->translateBatch($batchInput, $language->name, $context);
+                foreach ($translatedBatch as $field => $val) {
+                    $translationData[$field] = $val;
+                }
             } catch (\Throwable $e) {
-                Log::error('[TranslationService] Failed to translate field ' . $field . ': ' . $e->getMessage());
-                $translationData[$field] = null;
+                Log::error('[TranslationService] Failed to translate record in batch: ' . $e->getMessage());
             }
         }
 
@@ -115,10 +222,12 @@ class TranslationService
         return true;
     }
 
-    // ── Shortcode Protection ─────────────────────────────────────────────────
+    // ── Non-Translatable Asset & Shortcode Protection ────────────────────────
 
     /**
-     * Extract all shortcodes from text, replace with __SC_N__ placeholders.
+     * Extract non-translatable assets (style tags, script tags, SVG icons, shortcodes)
+     * and replace them with placeholder tokens to drastically reduce token count,
+     * protect code integrity, and prevent timeouts.
      * Returns [protected_text, placeholders_map].
      */
     private function extractShortcodes(string $text): array
@@ -126,19 +235,39 @@ class TranslationService
         $placeholders = [];
         $index = 0;
 
-        // Match [word:anything-inside] patterns (plugin shortcodes, page links, etc.)
-        $protected = preg_replace_callback(
+        // 1. Protect <style> blocks
+        $text = preg_replace_callback('/<style\b[^>]*>(.*?)<\/style>/is', function ($matches) use (&$placeholders, &$index) {
+            $key = '__SSP_STYLE_' . $index++ . '__';
+            $placeholders[$key] = $matches[0];
+            return $key;
+        }, $text);
+
+        // 2. Protect <script> blocks
+        $text = preg_replace_callback('/<script\b[^>]*>(.*?)<\/script>/is', function ($matches) use (&$placeholders, &$index) {
+            $key = '__SSP_SCRIPT_' . $index++ . '__';
+            $placeholders[$key] = $matches[0];
+            return $key;
+        }, $text);
+
+        // 3. Protect <svg> elements
+        $text = preg_replace_callback('/<svg\b[^>]*>(.*?)<\/svg>/is', function ($matches) use (&$placeholders, &$index) {
+            $key = '__SSP_SVG_' . $index++ . '__';
+            $placeholders[$key] = $matches[0];
+            return $key;
+        }, $text);
+
+        // 4. Protect [word:anything-inside] patterns (plugin shortcodes, page links, etc.)
+        $text = preg_replace_callback(
             '/\[[a-zA-Z][a-zA-Z0-9_-]*:[^\]]*\]/',
             function (array $matches) use (&$placeholders, &$index) {
-                $key = '__SC_' . $index . '__';
+                $key = '__SSP_SC_' . $index++ . '__';
                 $placeholders[$key] = $matches[0];
-                $index++;
                 return $key;
             },
             $text
         );
 
-        return [$protected ?? $text, $placeholders];
+        return [$text, $placeholders];
     }
 
     private function reinsertShortcodes(string $text, array $placeholders): string
