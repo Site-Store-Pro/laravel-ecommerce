@@ -264,8 +264,10 @@ class AdminCmsPageEdit extends Component
     {
         if ($this->pageId) {
             $this->revisionsList = CmsPageRevision::where('cms_page_id', $this->pageId)
-                ->with('author')
+                ->select('id', 'cms_page_id', 'title', 'meta_title', 'revision_type', 'created_at', 'author_id')
+                ->with('author:id,name,email')
                 ->orderBy('created_at', 'desc')
+                ->limit(25)
                 ->get()
                 ->toArray();
         }
@@ -682,11 +684,21 @@ class AdminCmsPageEdit extends Component
     public function render(): View
     {
         $showAiButton = !empty(config('ai.openai_api_key')) && function_exists('ai_cms_page_content');
-        $layouts = \Illuminate\Support\Facades\DB::table('cms_layouts')->orderBy('id', 'asc')->get();
-        $pageTypes = \Illuminate\Support\Facades\DB::table('cms_page_types')->orderBy('id', 'asc')->get();
-        $categoriesList = \App\Models\CmsPagesCategory::orderBy('name', 'asc')->get();
-        $tagsList = \App\Models\CmsPagesTag::orderBy('name', 'asc')->get();
-        $displayPlugins = \App\Models\Plugin::active()->ofType('display')->orderBy('name', 'asc')->get();
+        $layouts = \Illuminate\Support\Facades\Cache::remember('cms_layouts_all', 300, function () {
+            return \Illuminate\Support\Facades\DB::table('cms_layouts')->orderBy('id', 'asc')->get();
+        });
+        $pageTypes = \Illuminate\Support\Facades\Cache::remember('cms_page_types_all', 300, function () {
+            return \Illuminate\Support\Facades\DB::table('cms_page_types')->orderBy('id', 'asc')->get();
+        });
+        $categoriesList = \Illuminate\Support\Facades\Cache::remember('cms_categories_all', 300, function () {
+            return \App\Models\CmsPagesCategory::orderBy('name', 'asc')->get();
+        });
+        $tagsList = \Illuminate\Support\Facades\Cache::remember('cms_tags_all', 300, function () {
+            return \App\Models\CmsPagesTag::orderBy('name', 'asc')->get();
+        });
+        $displayPlugins = \Illuminate\Support\Facades\Cache::remember('cms_display_plugins_all', 300, function () {
+            return \App\Models\Plugin::active()->ofType('display')->orderBy('name', 'asc')->get();
+        });
 
         $searchedProducts = [];
         if (strlen($this->searchProduct) >= 2) {
