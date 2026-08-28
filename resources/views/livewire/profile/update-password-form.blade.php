@@ -40,11 +40,11 @@ new class extends Component
 
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
             @label('profile.update_password', 'Update Password')
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             @label('profile.update_password_message', 'Ensure your account is using a long, random password to stay secure.')
         </p>
     </header>

@@ -32,17 +32,17 @@ new class extends Component
 
 <section class="space-y-6">
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
             @label('profile.delete_account', 'Delete Account')
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.') }}
         </p>
     </header>
 
     @if (Auth::user()?->isAdmin() || Auth::user()?->isOrderProcessor())
-        <div class="p-4 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm font-semibold rounded-r-xl">
+        <div class="p-4 bg-rose-50 dark:bg-rose-950/40 border-l-4 border-rose-500 dark:border-rose-400 text-rose-700 dark:text-rose-300 text-sm font-semibold rounded-r-xl">
             {{ __('Administrators and Order Processors are not permitted to delete their own accounts.') }}
         </div>
     @else
@@ -55,11 +55,11 @@ new class extends Component
     <x-modal name="confirm-user-deletion" :show="$errors->isNotEmpty()" focusable>
         <form wire:submit="deleteUser" class="p-6">
 
-            <h2 class="text-lg font-medium text-gray-900">
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 @label('profile.delete_confirm_heading', 'Are you sure you want to delete your account?')
             </h2>
 
-            <p class="mt-1 text-sm text-gray-600">
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
                 {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Please enter your password to confirm you would like to permanently delete your account.') }}
             </p>
 

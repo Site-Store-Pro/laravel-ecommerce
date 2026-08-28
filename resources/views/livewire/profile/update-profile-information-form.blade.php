@@ -80,11 +80,11 @@ new class extends Component
 
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
             @label('profile.profile_info', 'Profile Information')
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
+        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             @label('profile.profile_info_message', 'Update your account\'s profile information and email address.')
         </p>
     </header>
@@ -103,16 +103,16 @@ new class extends Component
 
             @if (auth()->user() instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! auth()->user()->hasVerifiedEmail())
                 <div>
-                    <p class="text-sm mt-2 text-gray-800">
+                    <p class="text-sm mt-2 text-slate-700 dark:text-slate-300">
                         @label('profile.unverified', 'Your email address is unverified.')
 
-                        <button wire:click.prevent="sendVerification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <button wire:click.prevent="sendVerification" class="underline text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             @label('profile.resend_verification', 'Click here to re-send the verification email.')
                         </button>
                     </p>
 
                     @if (session('status') === 'verification-link-sent')
-                        <p class="mt-2 font-medium text-sm text-green-600">
+                        <p class="mt-2 font-medium text-sm text-emerald-600 dark:text-emerald-400">
                             {{ __('A new verification link has been sent to your email address.') }}
                         </p>
                     @endif
@@ -126,10 +126,10 @@ new class extends Component
         @if(in_array($roleVal, [1, 2]))
             <div class="pt-2">
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" wire:model="opt_in" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                    <input type="checkbox" wire:model="opt_in" class="rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-indigo-600 focus:ring-indigo-500">
                     <span class="text-sm font-medium text-slate-700 dark:text-slate-300">@label('profile.opt_in_label', 'Opt-in to Newsletter & Promotional Updates')</span>
                 </label>
-                <p class="text-xs text-slate-500 mt-1">@label('profile.opt_in_help', 'Receive promotional discounts, product updates, and news.')</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">@label('profile.opt_in_help', 'Receive promotional discounts, product updates, and news.')</p>
             </div>
         @endif
 
