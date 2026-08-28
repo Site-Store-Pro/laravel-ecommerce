@@ -58,6 +58,8 @@
                     'product_fields'         => 'Custom Field Labels',
                     'product_field_options'  => 'Custom Field Options',
                     'product_reviews'        => 'Product Reviews',
+                    'cms_forms'              => 'CMS Forms',
+                    'cms_form_fields'        => 'Form Fields',
                     'plugins'                => 'Plugins',
                 ];
             @endphp
