@@ -376,19 +376,22 @@
                     <div class="space-y-6" wire:key="banner-fields">
                         
                         {{-- Active Image Preview & Clear Card --}}
-                        @if(!empty($banner_image_url))
+                        @php
+                            $resolvedBannerPreview = \App\Services\EmailTemplateService::resolveImageUrl($banner_image_url);
+                        @endphp
+                        @if(!empty($resolvedBannerPreview))
                             <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div class="flex items-center gap-4">
                                     <div class="w-24 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-300 dark:border-slate-700 flex items-center justify-center shrink-0">
-                                        <img src="{{ $banner_image_url }}" alt="Banner Preview" class="w-full h-full object-cover">
+                                        <img src="{{ $resolvedBannerPreview }}" alt="Banner Preview" class="w-full h-full object-cover">
                                     </div>
                                     <div class="space-y-1">
                                         <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Active Banner Image</span>
-                                        <span class="text-2xs font-mono text-slate-500 dark:text-slate-400 break-all block max-w-md">{{ $banner_image_url }}</span>
+                                        <span class="text-2xs font-mono text-slate-500 dark:text-slate-400 break-all block max-w-md">{{ $resolvedBannerPreview }}</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 shrink-0">
-                                    <a href="{{ $banner_image_url }}" target="_blank" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                                    <a href="{{ $resolvedBannerPreview }}" target="_blank" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
                                         Open Image
                                     </a>
                                     <button type="button" wire:click="clearBannerImage" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300 hover:bg-rose-100 transition flex items-center gap-1">
@@ -653,19 +656,22 @@
                     <div class="space-y-6" wire:key="footer-image-fields">
                         
                         {{-- Active Image Preview & Clear Card --}}
-                        @if(!empty($footer_image_url))
+                        @php
+                            $resolvedFooterPreview = \App\Services\EmailTemplateService::resolveImageUrl($footer_image_url);
+                        @endphp
+                        @if(!empty($resolvedFooterPreview))
                             <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div class="flex items-center gap-4">
                                     <div class="w-20 h-14 rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-300 dark:border-slate-700 flex items-center justify-center shrink-0">
-                                        <img src="{{ $footer_image_url }}" alt="Footer Logo Preview" class="w-full h-full object-contain p-1">
+                                        <img src="{{ $resolvedFooterPreview }}" alt="Footer Logo Preview" class="w-full h-full object-contain p-1">
                                     </div>
                                     <div class="space-y-1">
                                         <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Active Footer Logo</span>
-                                        <span class="text-2xs font-mono text-slate-500 dark:text-slate-400 break-all block max-w-md">{{ $footer_image_url }}</span>
+                                        <span class="text-2xs font-mono text-slate-500 dark:text-slate-400 break-all block max-w-md">{{ $resolvedFooterPreview }}</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2 shrink-0">
-                                    <a href="{{ $footer_image_url }}" target="_blank" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                                    <a href="{{ $resolvedFooterPreview }}" target="_blank" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
                                         Open Image
                                     </a>
                                     <button type="button" wire:click="clearFooterImage" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300 hover:bg-rose-100 transition flex items-center gap-1">

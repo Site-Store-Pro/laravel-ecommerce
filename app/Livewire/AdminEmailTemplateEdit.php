@@ -118,7 +118,7 @@ class AdminEmailTemplateEdit extends Component
             $this->bcc_address = $this->template->bcc_address;
             $this->subject = $this->template->subject;
             $this->header_html = $this->template->header_html;
-            $this->banner_image_url = $this->template->banner_image_url;
+            $this->banner_image_url = EmailTemplateService::resolveImageUrl($this->template->banner_image_url);
             $this->banner_image_link = $this->template->banner_image_link;
             $this->show_banner = $this->template->show_banner;
             $this->salutation = $this->template->salutation;
@@ -129,7 +129,7 @@ class AdminEmailTemplateEdit extends Component
             $this->signature = $this->template->signature;
             $this->disclaimer = $this->template->disclaimer;
             $this->copyright = $this->template->copyright;
-            $this->footer_image_url = $this->template->footer_image_url;
+            $this->footer_image_url = EmailTemplateService::resolveImageUrl($this->template->footer_image_url);
             $this->footer_image_link = $this->template->footer_image_link;
             $this->show_footer_image = $this->template->show_footer_image;
             $this->footer_html = $this->template->footer_html;
@@ -142,6 +142,8 @@ class AdminEmailTemplateEdit extends Component
     public function save()
     {
         $data = $this->validate();
+        $data['banner_image_url'] = EmailTemplateService::resolveImageUrl($this->banner_image_url);
+        $data['footer_image_url'] = EmailTemplateService::resolveImageUrl($this->footer_image_url);
 
         if ($this->is_active) {
             // Deactivate all other templates of this type

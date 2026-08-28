@@ -60,15 +60,8 @@ class EmailTemplateService
             $bodyText .= '<p>{{cart_items_table}}</p>';
         }
 
-        $bannerUrl = $tpl->banner_image_url;
-        if ($bannerUrl && !str_starts_with($bannerUrl, 'http://') && !str_starts_with($bannerUrl, 'https://') && !str_starts_with($bannerUrl, '//')) {
-            $bannerUrl = rtrim(config('app.url', url('/')), '/') . '/' . ltrim($bannerUrl, '/');
-        }
-
-        $footerUrl = $tpl->footer_image_url;
-        if ($footerUrl && !str_starts_with($footerUrl, 'http://') && !str_starts_with($footerUrl, 'https://') && !str_starts_with($footerUrl, '//')) {
-            $footerUrl = rtrim(config('app.url', url('/')), '/') . '/' . ltrim($footerUrl, '/');
-        }
+        $bannerUrl = self::resolveImageUrl($tpl->banner_image_url);
+        $footerUrl = self::resolveImageUrl($tpl->footer_image_url);
 
         $data = [
             'subject' => self::renderSubject($tpl, $vars, $languageId),
@@ -182,46 +175,19 @@ class EmailTemplateService
         }
 
         if ($mode === 's3') {
-            $key = config('filesystems.disks.s3.key') ?: env('AWS_ACCESS_KEY_ID');
-            $secret = config('filesystems.disks.s3.secret') ?: env('AWS_SECRET_ACCESS_KEY');
+            $extension = method_exists($file, 'getClientOriginalExtension') ? ($file->getClientOriginalExtension() ?: 'jpg') : 'jpg';
+            $filename = uniqid('img_', true) . '.' . $extension;
+            
+            $path = \Illuminate\Support\Facades\Storage::disk('s3')->putFileAs($folder, $file, $filename);
+            if ($path === false) {
+                throw new \Exception('Failed to upload file to S3 storage.');
+            }
+
             $bucket = config('filesystems.disks.s3.bucket') ?: env('AWS_BUCKET');
             $region = config('filesystems.disks.s3.region') ?: env('AWS_DEFAULT_REGION', 'us-east-1');
-            $endpoint = config('filesystems.disks.s3.endpoint') ?: env('AWS_ENDPOINT');
+            $s3Url = "https://{$bucket}.s3.{$region}.amazonaws.com/{$path}";
 
-            if (empty($key) || empty($secret) || empty($bucket)) {
-                throw new \Exception('S3 credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET) are not configured in your .env file.');
-            }
-
-            $s3ClientConfig = [
-                'version' => 'latest',
-                'region'  => $region,
-                'credentials' => [
-                    'key'    => $key,
-                    'secret' => $secret,
-                ],
-            ];
-            if (!empty($endpoint)) {
-                $s3ClientConfig['endpoint'] = $endpoint;
-            }
-
-            $s3Client = new \Aws\S3\S3Client($s3ClientConfig);
-            $extension = method_exists($file, 'getClientOriginalExtension') ? ($file->getClientOriginalExtension() ?: 'jpg') : 'jpg';
-            $filename = $folder . '/' . uniqid('img_', true) . '.' . $extension;
-
-            $s3Client->putObject([
-                'Bucket'      => $bucket,
-                'Key'         => $filename,
-                'SourceFile'  => $file->getRealPath(),
-                'ContentType' => (method_exists($file, 'getMimeType') ? $file->getMimeType() : null) ?: 'image/jpeg',
-                'ACL'         => 'public-read',
-            ]);
-
-            $cfUrl = env('AWS_CLOUDFRONT_URL') ?: (env('CLOUDFRONT_URL') ?: config('filesystems.disks.s3.url'));
-            if (!empty($cfUrl)) {
-                return rtrim($cfUrl, '/') . '/' . $filename;
-            }
-
-            return "https://{$bucket}.s3.{$region}.amazonaws.com/{$filename}";
+            return self::resolveImageUrl($s3Url) ?? $s3Url;
         }
 
         if ($mode === 'custom_s3') {
@@ -257,16 +223,57 @@ class EmailTemplateService
                 'Key'         => $filename,
                 'SourceFile'  => $file->getRealPath(),
                 'ContentType' => (method_exists($file, 'getMimeType') ? $file->getMimeType() : null) ?: 'image/jpeg',
-                'ACL'         => 'public-read',
             ]);
 
             if (!empty($cloudfront)) {
                 return rtrim($cloudfront, '/') . '/' . $filename;
             }
 
-            return "https://{$bucket}.s3.{$region}.amazonaws.com/{$filename}";
+            $s3Url = "https://{$bucket}.s3.{$region}.amazonaws.com/{$filename}";
+            return self::resolveImageUrl($s3Url) ?? $s3Url;
         }
 
         throw new \Exception("Unsupported upload mode: {$mode}");
+    }
+
+    /**
+     * Resolve an image URL: transforms S3 direct bucket URLs to CloudFront/CDN URL if configured in .env,
+     * and ensures relative paths are fully qualified absolute URLs.
+     */
+    public static function resolveImageUrl(?string $url): ?string
+    {
+        if (empty($url)) {
+            return null;
+        }
+
+        $url = trim($url);
+
+        // Check if CloudFront / CDN URL is configured in .env
+        $cdnUrl = env('CDN_URL')
+            ?: (env('AWS_CLOUDFRONT_URL')
+            ?: (env('CLOUDFRONT_URL')
+            ?: (env('AWS_URL')
+            ?: config('filesystems.disks.s3.url'))));
+
+        if (!empty($cdnUrl)) {
+            $cdnUrl = rtrim($cdnUrl, '/');
+
+            // Pattern 1: https://{bucket}.s3.{region}.amazonaws.com/{path} or https://{bucket}.s3.amazonaws.com/{path}
+            if (preg_match('#^https?://[^/]+\.s3(?:\.[a-z0-9-]+)?\.amazonaws\.com/(.+)$#i', $url, $m)) {
+                return $cdnUrl . '/' . ltrim($m[1], '/');
+            }
+
+            // Pattern 2: https://s3.{region}.amazonaws.com/{bucket}/{path} or https://s3.amazonaws.com/{bucket}/{path}
+            if (preg_match('#^https?://s3(?:\.[a-z0-9-]+)?\.amazonaws\.com/[^/]+/(.+)$#i', $url, $m)) {
+                return $cdnUrl . '/' . ltrim($m[1], '/');
+            }
+        }
+
+        // Normalize relative local path to absolute URL
+        if (!str_starts_with($url, 'http://') && !str_starts_with($url, 'https://') && !str_starts_with($url, '//')) {
+            $url = rtrim(config('app.url', url('/')), '/') . '/' . ltrim($url, '/');
+        }
+
+        return $url;
     }
 }

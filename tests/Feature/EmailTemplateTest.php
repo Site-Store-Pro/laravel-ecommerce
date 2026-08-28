@@ -323,4 +323,41 @@ class EmailTemplateTest extends TestCase
             ->assertSet('footer_file', null)
             ->assertDispatched('toast');
     }
+
+    public function test_email_template_cloudfront_cdn_image_resolution(): void
+    {
+        $this->seed();
+
+        // Set CloudFront / CDN URL in config/env
+        $_ENV['CDN_URL'] = 'https://cdn.example.com';
+        $_SERVER['CDN_URL'] = 'https://cdn.example.com';
+        putenv('CDN_URL=https://cdn.example.com');
+        config(['filesystems.disks.s3.url' => 'https://cdn.example.com']);
+
+        $s3Url1 = 'https://my-bucket.s3.us-east-2.amazonaws.com/email_templates/banners/hero.jpg';
+        $s3Url2 = 'https://s3.us-east-2.amazonaws.com/my-bucket/email_templates/footers/logo.png';
+
+        $this->assertEquals(
+            'https://cdn.example.com/email_templates/banners/hero.jpg',
+            EmailTemplateService::resolveImageUrl($s3Url1)
+        );
+
+        $this->assertEquals(
+            'https://cdn.example.com/email_templates/footers/logo.png',
+            EmailTemplateService::resolveImageUrl($s3Url2)
+        );
+
+        $template = EmailTemplate::first();
+        $template->update([
+            'banner_image_url' => $s3Url1,
+            'footer_image_url' => $s3Url2,
+            'show_banner' => 1,
+            'show_footer_image' => 1,
+        ]);
+
+        $rendered = EmailTemplateService::renderBody($template, ['customer_name' => 'Jane']);
+        $this->assertStringContainsString('https://cdn.example.com/email_templates/banners/hero.jpg', $rendered);
+        $this->assertStringContainsString('https://cdn.example.com/email_templates/footers/logo.png', $rendered);
+        $this->assertStringNotContainsString('my-bucket.s3.us-east-2.amazonaws.com', $rendered);
+    }
 }
