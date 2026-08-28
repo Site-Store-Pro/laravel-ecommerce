@@ -51,13 +51,38 @@ class HeaderFooterParserService
         }
 
         // 2c. Expand Cart Features tags
-        if (Str::contains($content, ['{{Cart Features}}', '{{cart_features}}', '{{header_features}}'])) {
+        if (Str::contains($content, ['{{Cart Features}}', '{{cart_features}}', '{{header_features}}', '{{Cart & User Account Icons}}', '{{cart_user_account_icons}}', '{{Cart & User Account}}', '{{cart_account}}', '{{user_account_icons}}'])) {
             $showDarkModeSwitcher = CmsSetting::isEnabled('show_frontend_dark_mode_switcher');
             $switcherHtml = '';
             if ($showDarkModeSwitcher) {
                 $switcherHtml = '
-                <div x-data="{ isDark: document.documentElement.classList.contains(\'dark\') }">
-                    <button type="button" @click="isDark = !isDark; document.documentElement.classList.toggle(\'dark\', isDark); Livewire.dispatch(\'toggle-frontend-dark-mode\')" class="p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none flex items-center justify-center" title="Toggle Dark Mode" aria-label="Toggle dark mode">
+                <div x-data="{
+                    isDark: document.documentElement.classList.contains(\'dark\'),
+                    init() {
+                        var cookieMatch = document.cookie.match(/(?:^|;\s*)frontend_theme=([^;]+)/);
+                        var stored = cookieMatch ? decodeURIComponent(cookieMatch[1]) : (localStorage.getItem(\'frontend_theme\') || \'\');
+                        if (stored === \'dark\') {
+                            this.isDark = true;
+                            document.documentElement.classList.add(\'dark\');
+                        } else if (stored === \'light\') {
+                            this.isDark = false;
+                            document.documentElement.classList.remove(\'dark\');
+                        } else {
+                            this.isDark = document.documentElement.classList.contains(\'dark\');
+                        }
+                    },
+                    toggleTheme() {
+                        this.isDark = !this.isDark;
+                        document.documentElement.classList.toggle(\'dark\', this.isDark);
+                        var val = this.isDark ? \'dark\' : \'light\';
+                        try { localStorage.setItem(\'frontend_theme\', val); } catch (e) {}
+                        document.cookie = \'frontend_theme=\' + val + \'; path=/; max-age=31536000; SameSite=Lax\';
+                        if (window.Livewire) {
+                            Livewire.dispatch(\'toggle-frontend-dark-mode\', { theme: val });
+                        }
+                    }
+                }" x-init="init()">
+                    <button type="button" @click="toggleTheme()" class="p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none flex items-center justify-center cursor-pointer" title="Toggle Dark Mode" aria-label="Toggle dark mode">
                         <svg x-show="isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
                         <svg x-show="!isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                     </button>
@@ -73,7 +98,11 @@ class HeaderFooterParserService
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                 </a>
             </div>';
-            $content = str_replace(['{{Cart Features}}', '{{cart_features}}', '{{header_features}}'], $featuresHtml, $content);
+            $content = str_replace([
+                '{{Cart Features}}', '{{cart_features}}', '{{header_features}}',
+                '{{Cart & User Account Icons}}', '{{cart_user_account_icons}}',
+                '{{Cart & User Account}}', '{{cart_account}}', '{{user_account_icons}}'
+            ], $featuresHtml, $content);
         }
 
         // 4. Expand News Flash Display

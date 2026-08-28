@@ -5,10 +5,22 @@
         : null;
     $metaTitle = $page?->meta_title ?: (config('app.name', 'Support Ticketing') . ' | Premier E-Commerce & Customer Care');
     $metaDescription = $page?->meta_description ?: 'Browse our curated catalog of physical and digital products, enjoy fast fulfillment, and experience premier 24/7 support.';
-    try {
-        $frontendDark = \App\Models\CmsSetting::isEnabled('frontend_dark_mode');
-    } catch (\Exception $e) {
-        $frontendDark = false;
+    $sessionTheme = session('frontend_theme') ?: session('theme_mode');
+    $cookieTheme = request()->cookie('frontend_theme')
+        ?: ($_COOKIE['frontend_theme'] ?? (request()->cookie('theme_mode') ?: ($_COOKIE['theme_mode'] ?? null)));
+
+    if (auth()->check() && !empty(auth()->user()->theme_preference)) {
+        $frontendDark = auth()->user()->theme_preference === 'dark';
+    } elseif (!empty($sessionTheme)) {
+        $frontendDark = $sessionTheme === 'dark';
+    } elseif (!empty($cookieTheme)) {
+        $frontendDark = $cookieTheme === 'dark';
+    } else {
+        try {
+            $frontendDark = \App\Models\CmsSetting::isEnabled('frontend_dark_mode');
+        } catch (\Throwable $e) {
+            $frontendDark = false;
+        }
     }
 @endphp
 <!DOCTYPE html>
@@ -17,6 +29,23 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="theme-color" content="#f8fafc">
+
+        {{-- Instant client-side theme gating to prevent FOUC / theme flash --}}
+        <script>
+            (function() {
+                var cookieMatch = document.cookie.match(/(?:^|;\s*)(?:frontend_theme|theme_mode)=([^;]+)/);
+                var storedCookie = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+                var storedLocal = null;
+                try { storedLocal = localStorage.getItem('frontend_theme'); } catch (e) {}
+                var theme = storedCookie || storedLocal;
+                var isDark = theme ? (theme === 'dark') : {{ $frontendDark ? 'true' : 'false' }};
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            })();
+        </script>
         <title>{{ $metaTitle }}</title>
         @if($metaDescription)
             <meta name="description" content="{{ $metaDescription }}">

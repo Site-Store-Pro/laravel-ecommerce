@@ -18,7 +18,7 @@ use Illuminate\Notifications\Notifiable;
     'company', 'shipping_address1', 'shipping_address2',
     'shipping_city', 'shopping_postalcode', 'shipping_country',
     'shipping_countrycode', 'shipping_state', 'rewards_status', 'new_user_discount', 'preferred_discount_id', 'active',
-    'user_token_1', 'user_token_2', 'email_verified_at', 'opt_in', 'last_login_at'
+    'user_token_1', 'user_token_2', 'email_verified_at', 'opt_in', 'last_login_at', 'theme_preference'
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail

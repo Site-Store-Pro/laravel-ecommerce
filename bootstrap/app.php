@@ -21,6 +21,14 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->trustProxies(at: '*');
 
+        $middleware->encryptCookies(except: [
+            'frontend_theme',
+            'theme_mode',
+            'app_theme',
+            'cart_session_id',
+            'app_language',
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\ProcessShortcodes::class,
             \App\Http\Middleware\SetLocale::class,
