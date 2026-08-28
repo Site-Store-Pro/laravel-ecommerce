@@ -200,22 +200,6 @@ class TranslationService
             }
         }
 
-        // Handle CmsFormField options array translation
-        if (class_basename($record) === 'CmsFormField' && !empty($record->options) && is_array($record->options)) {
-            $translatedOptions = [];
-            foreach ($record->options as $opt) {
-                if (empty(trim((string)$opt))) {
-                    continue;
-                }
-                try {
-                    $translatedOptions[] = $this->translateText((string)$opt, $language->name, 'dropdown choice or radio/checkbox option label for form field');
-                } catch (\Throwable $e) {
-                    $translatedOptions[] = $opt;
-                }
-            }
-            $translationData['options'] = $translatedOptions;
-        }
-
         // Upsert the translation record
         $fkField = $this->getForeignKeyFor($record);
         $translationData[$fkField] = $record->id;
@@ -353,17 +337,6 @@ class TranslationService
             'ProductReview' => [
                 'comments' => 'customer review comments and feedback for a product — preserve the reviewer tone and sentiment',
             ],
-            'CmsForm' => [
-                'name'                 => 'form title / name',
-                'submit_button_label'  => 'form submit button label (e.g. "Send Message", "Submit", "Subscribe")',
-                'confirmation_message' => 'form submission confirmation/success message (HTML)',
-            ],
-            'CmsFormField' => [
-                'label'                  => 'form field label',
-                'instructions'           => 'form field instructions or helper text',
-                'required_error_message' => 'form field validation error message',
-                'html_above'             => 'HTML block displayed above the form field',
-            ],
         ];
 
         return $map[class_basename($record)] ?? [];
@@ -392,8 +365,6 @@ class TranslationService
             'ProductField'          => 'product_field_id',
             'ProductFieldOption'    => 'product_field_option_id',
             'ProductReview'         => 'product_review_id',
-            'CmsForm'               => 'cms_form_id',
-            'CmsFormField'          => 'cms_form_field_id',
         ];
         return $overrides[class_basename($record)] ?? $record->getForeignKey();
     }

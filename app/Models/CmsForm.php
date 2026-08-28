@@ -2,20 +2,11 @@
 
 namespace App\Models;
 
-use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CmsForm extends Model
 {
-    use HasTranslations;
-
-    protected array $translatable = [
-        'name',
-        'submit_button_label',
-        'confirmation_message',
-    ];
-
     protected $fillable = [
         'name',
         'slug',
@@ -46,11 +37,6 @@ class CmsForm extends Model
     public function submissions(): HasMany
     {
         return $this->hasMany(CmsFormSubmission::class, 'form_id')->orderByDesc('submitted_at');
-    }
-
-    public function translations(): HasMany
-    {
-        return $this->hasMany(CmsFormTranslation::class, 'cms_form_id');
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

@@ -2,23 +2,11 @@
 
 namespace App\Models;
 
-use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CmsFormField extends Model
 {
-    use HasTranslations;
-
-    protected array $translatable = [
-        'label',
-        'instructions',
-        'required_error_message',
-        'html_above',
-        'options',
-    ];
-
     protected $fillable = [
         'form_id',
         'type',
@@ -44,11 +32,6 @@ class CmsFormField extends Model
     public function form(): BelongsTo
     {
         return $this->belongsTo(CmsForm::class, 'form_id');
-    }
-
-    public function translations(): HasMany
-    {
-        return $this->hasMany(CmsFormFieldTranslation::class, 'cms_form_field_id');
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

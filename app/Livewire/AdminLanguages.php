@@ -174,8 +174,6 @@ class AdminLanguages extends Component
             \App\Models\ProductField::class,
             \App\Models\ProductFieldOption::class,
             \App\Models\ProductReview::class,
-            \App\Models\CmsForm::class,
-            \App\Models\CmsFormField::class,
         ];
 
         $count = 0;
@@ -236,8 +234,6 @@ class AdminLanguages extends Component
             \App\Models\ProductField::class,
             \App\Models\ProductFieldOption::class,
             \App\Models\ProductReview::class,
-            \App\Models\CmsForm::class,
-            \App\Models\CmsFormField::class,
         ];
 
         $count = 0;
@@ -364,8 +360,6 @@ class AdminLanguages extends Component
             'product_fields'         => $service->translationStats(\App\Models\ProductField::class, $languageId),
             'product_field_options'  => $service->translationStats(\App\Models\ProductFieldOption::class, $languageId),
             'product_reviews'        => $service->translationStats(\App\Models\ProductReview::class, $languageId),
-            'cms_forms'              => $service->translationStats(\App\Models\CmsForm::class, $languageId),
-            'cms_form_fields'        => $service->translationStats(\App\Models\CmsFormField::class, $languageId),
             'plugins'                => $service->pluginTranslationStats($languageId),
         ];
     }

@@ -173,8 +173,6 @@
                                 'Custom Field Labels'    => $stats['product_fields'],
                                 'Custom Field Options'   => $stats['product_field_options'],
                                 'Product Reviews'        => $stats['product_reviews'],
-                                'CMS Forms'              => $stats['cms_forms'],
-                                'Form Fields'            => $stats['cms_form_fields'],
                                 'Plugin Labels'          => $stats['plugins'],
                             ] as $label => $stat)
                                 @php

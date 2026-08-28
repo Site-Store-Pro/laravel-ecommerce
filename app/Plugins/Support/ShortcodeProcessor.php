@@ -75,9 +75,7 @@ class ShortcodeProcessor
         }
 
         try {
-            $form = CmsForm::with(['fields' => function ($q) {
-                $q->withCurrentTranslations();
-            }])->withCurrentTranslations()->find($id);
+            $form = CmsForm::with('fields')->find($id);
 
             if (! $form || ! $form->is_active) {
                 return '<!-- [cms-form-inactive: ' . $id . '] -->';
