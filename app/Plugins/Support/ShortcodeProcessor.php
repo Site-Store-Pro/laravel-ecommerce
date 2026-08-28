@@ -17,6 +17,7 @@ class ShortcodeProcessor
 
     /**
      * Process all shortcodes in content.
+     * Pass -1: Site URL shortcodes
      * Pass 0:  [cms-form id=N]
      * Pass 1a: [code-embed:N] / [code-embed:N label="..."]
      * Pass 1b: [download:N]  / [download:N label="..."]
@@ -27,6 +28,9 @@ class ShortcodeProcessor
         // Pass -1 — Site URL shortcodes
         $content = str_replace(['[site_url]', '[site-url]', '[url]'], url('/'), $content);
 
+        // Normalize HTML entities that WYSIWYG editors might inject into shortcodes
+        $content = str_replace(['&#91;', '&#93;', '&lsqb;', '&rsqb;'], ['[', ']', '[', ']'], $content);
+
         // Pass 0 — CMS Form shortcodes
         $content = $this->processCmsForms($content);
 
@@ -36,8 +40,8 @@ class ShortcodeProcessor
         // Pass 1b — CMS Download shortcodes
         $content = $this->processDownloads($content);
 
-        // Pass 2 — Plugin shortcodes
-        $pattern = '/\[plugin:([a-z0-9\-_]+)([^\]]*)\]/i';
+        // Pass 2 — Plugin shortcodes (flexible whitespace around colon and parameters)
+        $pattern = '/\[plugin:\s*([a-z0-9\-_]+)([^\]]*)\]/i';
 
         return preg_replace_callback($pattern, function (array $matches) {
             $slug   = strtolower(trim($matches[1]));
@@ -75,6 +79,7 @@ class ShortcodeProcessor
         }
 
         try {
+            // Eager-load active language translations for form and fields
             $form = CmsForm::with(['fields' => function ($q) {
                 $q->withCurrentTranslations();
             }])->withCurrentTranslations()->find($id);
@@ -433,7 +438,15 @@ class ShortcodeProcessor
      */
     protected function renderPlugin(string $slug, array $params): string
     {
-        $pluginInstance = $this->manager->getDisplay($slug);
+        $normalizedSlug = str_replace('_', '-', strtolower(trim($slug)));
+
+        $pluginInstance = $this->manager->getDisplay($normalizedSlug);
+
+        if (!$pluginInstance) {
+            if (in_array($normalizedSlug, ['pricing-grid', 'pricing-grid-2026', 'pricing', 'pricing-table', 'visperity-pricing', 'visperity-pricing-grid', 'visperity-plans', 'plans'], true)) {
+                $pluginInstance = $this->manager->getDisplay('pricing-grid-2026');
+            }
+        }
 
         if (!$pluginInstance) {
             // Plugin not registered — silent for visitors, comment for devs
@@ -441,11 +454,12 @@ class ShortcodeProcessor
         }
 
         // Load DB record for settings
-        $pluginModel = Plugin::where('shortcode', $slug)->where('activation_status', 1)->first();
+        $pluginModel = Plugin::where('shortcode', $slug)->first()
+            ?? Plugin::where('shortcode', $pluginInstance->slug())->first()
+            ?? new Plugin(['shortcode' => $pluginInstance->slug(), 'activation_status' => 1, 'name' => $pluginInstance->name()]);
 
-        if (!$pluginModel) {
-            // Registered but inactive in DB
-            return '';
+        if ($pluginModel->exists && !$pluginModel->activation_status) {
+            return '<!-- [plugin-inactive: ' . e($slug) . '] -->';
         }
 
         try {
