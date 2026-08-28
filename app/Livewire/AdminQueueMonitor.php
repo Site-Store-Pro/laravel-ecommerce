@@ -217,11 +217,102 @@ class AdminQueueMonitor extends Component
         $this->flash('Queue worker stopped.', 'success');
     }
 
-    /** Wipe the log file. */
+    /** Wipe the log file and purge all failed job records. */
     public function clearLog(): void
     {
-        file_put_contents($this->logFile, '');
-        $this->flash('Log cleared.', 'success');
+        if (file_exists($this->logFile)) {
+            @file_put_contents($this->logFile, '');
+        }
+
+        try {
+            DB::table('failed_jobs')->truncate();
+        } catch (\Throwable) {}
+
+        unset($this->logLines, $this->failedJobs, $this->processedCount, $this->failedCount, $this->pendingJobs, $this->failedJobList);
+
+        $this->flash('Worker log and previous failed job error records cleared successfully.', 'success');
+    }
+
+    /** Wipe all failed job records from the database. */
+    public function flushFailedJobs(): void
+    {
+        try {
+            DB::table('failed_jobs')->truncate();
+            unset($this->failedJobs, $this->failedJobList);
+            $this->flash('All failed job records flushed from database.', 'success');
+        } catch (\Throwable $e) {
+            $this->flash('Failed to flush jobs: ' . $e->getMessage(), 'error');
+        }
+    }
+
+    /** Push all failed jobs back onto the queue for retry. */
+    public function retryAllFailedJobs(): void
+    {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('queue:retry', ['id' => ['all']]);
+            unset($this->failedJobs, $this->failedJobList, $this->pendingJobs);
+            $this->flash('All failed jobs pushed back to queue for retry.', 'success');
+        } catch (\Throwable $e) {
+            $this->flash('Failed to retry jobs: ' . $e->getMessage(), 'error');
+        }
+    }
+
+    /** Retry a specific failed job. */
+    public function retryJob($id): void
+    {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('queue:retry', ['id' => [(string) $id]]);
+            unset($this->failedJobs, $this->failedJobList, $this->pendingJobs);
+            $this->flash("Job #{$id} returned to queue for retry.", 'success');
+        } catch (\Throwable $e) {
+            $this->flash("Failed to retry job #{$id}: " . $e->getMessage(), 'error');
+        }
+    }
+
+    /** Delete a single failed job record. */
+    public function deleteJob($id): void
+    {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('queue:forget', ['id' => (string) $id]);
+            unset($this->failedJobs, $this->failedJobList);
+            $this->flash("Failed job #{$id} deleted.", 'success');
+        } catch (\Throwable $e) {
+            $this->flash("Failed to delete job #{$id}: " . $e->getMessage(), 'error');
+        }
+    }
+
+    /** List of latest failed jobs from DB with decoded summaries. */
+    #[Computed]
+    public function failedJobList(): array
+    {
+        try {
+            return DB::table('failed_jobs')
+                ->orderBy('failed_at', 'desc')
+                ->limit(50)
+                ->get()
+                ->map(function ($row) {
+                    $displayName = 'Unknown Job';
+                    try {
+                        $payload = json_decode($row->payload, true);
+                        $displayName = $payload['displayName'] ?? $payload['data']['commandName'] ?? 'Queued Job';
+                    } catch (\Throwable) {}
+
+                    $firstLineException = strtok($row->exception ?? '', "\n");
+
+                    return [
+                        'id'           => $row->id,
+                        'uuid'         => $row->uuid ?? null,
+                        'queue'        => $row->queue,
+                        'name'         => $displayName,
+                        'failed_at'    => $row->failed_at,
+                        'error_short'  => $firstLineException ?: 'Unknown exception occurred.',
+                        'error_full'   => $row->exception ?? '',
+                    ];
+                })
+                ->toArray();
+        } catch (\Throwable) {
+            return [];
+        }
     }
 
     public function flash(string $message, string $type = 'success'): void

@@ -84,14 +84,42 @@
                 </button>
                 @endif
 
-                {{-- Clear log --}}
+                {{-- Retry All Failed --}}
+                @if($this->failedJobs > 0)
+                <button wire:click="retryAllFailedJobs"
+                        wire:confirm="Retry all {{ $this->failedJobs }} failed jobs?"
+                        wire:loading.attr="disabled"
+                        wire:target="retryAllFailedJobs"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors disabled:opacity-60">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span>Retry Failed ({{ $this->failedJobs }})</span>
+                </button>
+                @endif
+
+                {{-- Flush Failed Jobs --}}
+                @if($this->failedJobs > 0)
+                <button wire:click="flushFailedJobs"
+                        wire:confirm="Flush all {{ $this->failedJobs }} failed job error records from the database?"
+                        wire:loading.attr="disabled"
+                        wire:target="flushFailedJobs"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    <span>Flush Errors</span>
+                </button>
+                @endif
+
+                {{-- Clear log & reset errors --}}
                 <button wire:click="clearLog"
-                        wire:confirm="Clear the log? This cannot be undone."
+                        wire:confirm="Clear the worker log and reset all previous failed job records? This cannot be undone."
                         class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
-                    Clear Log
+                    Clear Log &amp; Errors
                 </button>
 
             </div>
@@ -257,9 +285,86 @@
 
             </div>
         </div>
-
-
     </div>
+
+    {{-- ── Failed Jobs & Error Log Table ─────────────────────────────────────── --}}
+    @if(!empty($this->failedJobList))
+    <div class="px-6 pb-6 space-y-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-red-200 dark:border-red-900/50 overflow-hidden shadow-sm">
+            <div class="bg-red-50/70 dark:bg-red-950/30 px-6 py-3.5 border-b border-red-200 dark:border-red-900/50 flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <h3 class="text-sm font-bold text-red-900 dark:text-red-200 uppercase tracking-wider">
+                        Failed Jobs &amp; Error Log ({{ count($this->failedJobList) }})
+                    </h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button wire:click="retryAllFailedJobs"
+                            wire:confirm="Retry all {{ count($this->failedJobList) }} failed jobs?"
+                            class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Retry All
+                    </button>
+                    <button wire:click="flushFailedJobs"
+                            wire:confirm="Flush all failed job error records from the database?"
+                            class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40 transition flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        Flush All Records
+                    </button>
+                </div>
+            </div>
+
+            <div class="divide-y divide-gray-200 dark:divide-gray-700 overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-left text-xs">
+                    <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">
+                        <tr>
+                            <th class="px-4 py-2.5">ID / Job Name</th>
+                            <th class="px-4 py-2.5">Queue</th>
+                            <th class="px-4 py-2.5">Failed At</th>
+                            <th class="px-4 py-2.5">Error Summary</th>
+                            <th class="px-4 py-2.5 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                        @foreach($this->failedJobList as $job)
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition" x-data="{ showTrace: false }">
+                                <td class="px-4 py-3 align-top font-medium text-gray-900 dark:text-white">
+                                    <div class="font-mono text-2xs text-gray-400">#{{ $job['id'] }}</div>
+                                    <div class="font-semibold text-xs text-indigo-600 dark:text-indigo-400">{{ class_basename($job['name']) }}</div>
+                                </td>
+                                <td class="px-4 py-3 align-top font-mono text-2xs text-gray-500 dark:text-gray-400">
+                                    {{ $job['queue'] }}
+                                </td>
+                                <td class="px-4 py-3 align-top text-gray-500 dark:text-gray-400 text-2xs whitespace-nowrap">
+                                    {{ $job['failed_at'] }}
+                                </td>
+                                <td class="px-4 py-3 align-top text-red-600 dark:text-red-400 text-xs">
+                                    <div class="font-mono text-2xs leading-snug">{{ $job['error_short'] }}</div>
+                                    <button @click="showTrace = !showTrace" class="text-2xs text-indigo-600 dark:text-indigo-400 underline mt-1 block">
+                                        <span x-text="showTrace ? 'Hide stack trace' : 'View full trace'"></span>
+                                    </button>
+                                    <pre x-show="showTrace" class="mt-2 p-2.5 bg-gray-900 text-gray-300 rounded font-mono text-[10px] whitespace-pre-wrap max-h-48 overflow-y-auto" style="display: none;">{{ $job['error_full'] }}</pre>
+                                </td>
+                                <td class="px-4 py-3 align-top text-right whitespace-nowrap">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <button wire:click="retryJob('{{ $job['id'] }}')" title="Retry this job" class="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 hover:bg-emerald-100 transition">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                        </button>
+                                        <button wire:click="deleteJob('{{ $job['id'] }}')" title="Delete this record" class="p-1.5 rounded-lg bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-300 hover:bg-red-100 transition">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- ── Polling heartbeat (3s while running, 15s while idle) ─────────────── --}}
     @if($isRunning)
