@@ -61,6 +61,8 @@ class AdminLanguageTranslations extends Component
             'product_fields'         => $service->translationStats(\App\Models\ProductField::class,          $this->languageId),
             'product_field_options'  => $service->translationStats(\App\Models\ProductFieldOption::class,    $this->languageId),
             'product_reviews'        => $service->translationStats(\App\Models\ProductReview::class,         $this->languageId),
+            'cms_forms'              => $service->translationStats(\App\Models\CmsForm::class,               $this->languageId),
+            'cms_form_fields'        => $service->translationStats(\App\Models\CmsFormField::class,          $this->languageId),
             'plugins'                => $service->pluginTranslationStats($this->languageId),
         ];
     }
@@ -119,6 +121,8 @@ class AdminLanguageTranslations extends Component
             'product_fields'        => \App\Models\ProductField::class,
             'product_field_options' => \App\Models\ProductFieldOption::class,
             'product_reviews'       => \App\Models\ProductReview::class,
+            'cms_forms'             => \App\Models\CmsForm::class,
+            'cms_form_fields'       => \App\Models\CmsFormField::class,
         ];
 
         $modelClass = $map[$type] ?? null;
@@ -175,6 +179,8 @@ class AdminLanguageTranslations extends Component
             'product_fields'        => \App\Models\ProductField::class,
             'product_field_options' => \App\Models\ProductFieldOption::class,
             'product_reviews'       => \App\Models\ProductReview::class,
+            'cms_forms'             => \App\Models\CmsForm::class,
+            'cms_form_fields'       => \App\Models\CmsFormField::class,
         ];
         $modelClass = $map[$type] ?? null;
         if ($modelClass) {
@@ -208,6 +214,8 @@ class AdminLanguageTranslations extends Component
             'product_fields'        => [\App\Models\ProductField::class,          'product_field_id',           'label'],
             'product_field_options' => [\App\Models\ProductFieldOption::class,    'product_field_option_id',    'option_value'],
             'product_reviews'       => [\App\Models\ProductReview::class,        'product_review_id',          'comments'],
+            'cms_forms'             => [\App\Models\CmsForm::class,               'cms_form_id',                'name'],
+            'cms_form_fields'       => [\App\Models\CmsFormField::class,          'cms_form_field_id',          'label'],
         ];
 
         $items = collect();
