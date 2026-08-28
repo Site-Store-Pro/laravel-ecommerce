@@ -19,11 +19,11 @@ class EmailTemplateTest extends TestCase
     {
         $this->seed(); // Runs standard migrations & seeds
 
-        // Verify we have all 12 types
-        $this->assertEquals(12, EmailTemplateType::count());
+        // Verify we have all 13 types (including 2FA)
+        $this->assertEquals(13, EmailTemplateType::count());
 
         // Verify we have seeded default profiles
-        $this->assertEquals(12, EmailTemplate::count());
+        $this->assertEquals(13, EmailTemplate::count());
 
         // Verify active templates exist for each type
         foreach (EmailTemplateType::all() as $type) {
@@ -245,5 +245,82 @@ class EmailTemplateTest extends TestCase
                    str_contains($mail->renderedBody, $appUrl . '/cart') &&
                    !str_contains($mail->renderedBody, '192.168.1.100');
         });
+    }
+
+    public function test_email_template_image_upload_and_rendering(): void
+    {
+        $this->seed();
+
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $admin = User::factory()->create([
+            'role_id' => \App\Enums\UserRole::Admin,
+        ]);
+
+        $template = EmailTemplate::first();
+
+        $bannerFile = \Illuminate\Http\UploadedFile::fake()->image('banner.png', 800, 200);
+        $footerFile = \Illuminate\Http\UploadedFile::fake()->image('footer.png', 300, 100);
+
+        \Livewire\Livewire::actingAs($admin)
+            ->test(\App\Livewire\AdminEmailTemplateEdit::class, ['id' => $template->id])
+            ->set('show_banner', true)
+            ->set('banner_upload_mode', 'local')
+            ->set('banner_file', $bannerFile)
+            ->call('uploadBanner')
+            ->assertSet('banner_file', null)
+            ->assertDispatched('toast')
+            ->set('banner_image_link', 'https://example.com/banner-promo')
+            ->set('show_footer_image', true)
+            ->set('footer_upload_mode', 'local')
+            ->set('footer_file', $footerFile)
+            ->call('uploadFooterImage')
+            ->assertSet('footer_file', null)
+            ->assertDispatched('toast')
+            ->set('footer_image_link', 'https://example.com/footer-link')
+            ->call('save')
+            ->assertRedirect(route('admin.email-templates.index'));
+
+        $template->refresh();
+        $this->assertTrue($template->show_banner);
+        $this->assertNotEmpty($template->banner_image_url);
+        $this->assertEquals('https://example.com/banner-promo', $template->banner_image_link);
+        $this->assertTrue($template->show_footer_image);
+        $this->assertNotEmpty($template->footer_image_url);
+        $this->assertEquals('https://example.com/footer-link', $template->footer_image_link);
+
+        // Verify HTML rendering contains images and clickable links
+        $renderedHtml = EmailTemplateService::renderBody($template, ['customer_name' => 'John Doe']);
+        $this->assertStringContainsString($template->banner_image_url, $renderedHtml);
+        $this->assertStringContainsString('https://example.com/banner-promo', $renderedHtml);
+        $this->assertStringContainsString($template->footer_image_url, $renderedHtml);
+        $this->assertStringContainsString('https://example.com/footer-link', $renderedHtml);
+    }
+
+    public function test_email_template_clear_image(): void
+    {
+        $this->seed();
+
+        $admin = User::factory()->create([
+            'role_id' => \App\Enums\UserRole::Admin,
+        ]);
+
+        $template = EmailTemplate::first();
+        $template->update([
+            'banner_image_url' => 'https://example.com/banner.jpg',
+            'footer_image_url' => 'https://example.com/footer.png',
+        ]);
+
+        \Livewire\Livewire::actingAs($admin)
+            ->test(\App\Livewire\AdminEmailTemplateEdit::class, ['id' => $template->id])
+            ->assertSet('banner_image_url', 'https://example.com/banner.jpg')
+            ->call('clearBannerImage')
+            ->assertSet('banner_image_url', null)
+            ->assertSet('banner_file', null)
+            ->assertDispatched('toast')
+            ->call('clearFooterImage')
+            ->assertSet('footer_image_url', null)
+            ->assertSet('footer_file', null)
+            ->assertDispatched('toast');
     }
 }

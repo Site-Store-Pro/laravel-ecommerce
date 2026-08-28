@@ -60,23 +60,33 @@ class EmailTemplateService
             $bodyText .= '<p>{{cart_items_table}}</p>';
         }
 
+        $bannerUrl = $tpl->banner_image_url;
+        if ($bannerUrl && !str_starts_with($bannerUrl, 'http://') && !str_starts_with($bannerUrl, 'https://') && !str_starts_with($bannerUrl, '//')) {
+            $bannerUrl = rtrim(config('app.url', url('/')), '/') . '/' . ltrim($bannerUrl, '/');
+        }
+
+        $footerUrl = $tpl->footer_image_url;
+        if ($footerUrl && !str_starts_with($footerUrl, 'http://') && !str_starts_with($footerUrl, 'https://') && !str_starts_with($footerUrl, '//')) {
+            $footerUrl = rtrim(config('app.url', url('/')), '/') . '/' . ltrim($footerUrl, '/');
+        }
+
         $data = [
             'subject' => self::renderSubject($tpl, $vars, $languageId),
             'header_html' => self::replaceVariables($tpl->getTranslated('header_html', $languageId), $vars),
-            'banner_image_url' => $tpl->banner_image_url,
+            'banner_image_url' => $bannerUrl,
             'banner_image_link' => $tpl->banner_image_link,
-            'show_banner' => $tpl->show_banner,
+            'show_banner' => (bool) $tpl->show_banner,
             'salutation' => self::replaceVariables($tpl->getTranslated('salutation', $languageId), $vars),
-            'include_salutation' => $tpl->include_salutation,
+            'include_salutation' => (bool) $tpl->include_salutation,
             'greeting' => self::replaceVariables($tpl->getTranslated('greeting', $languageId), $vars),
             'body' => self::replaceVariables($bodyText, $vars),
             'sign_off' => self::replaceVariables($tpl->getTranslated('sign_off', $languageId), $vars),
             'signature' => self::replaceVariables($tpl->getTranslated('signature', $languageId), $vars),
             'disclaimer' => self::replaceVariables($tpl->getTranslated('disclaimer', $languageId), $vars),
             'copyright' => self::replaceVariables($tpl->getTranslated('copyright', $languageId), $vars),
-            'footer_image_url' => $tpl->footer_image_url,
+            'footer_image_url' => $footerUrl,
             'footer_image_link' => $tpl->footer_image_link,
-            'show_footer_image' => $tpl->show_footer_image,
+            'show_footer_image' => (bool) $tpl->show_footer_image,
             'footer_html' => self::replaceVariables($tpl->getTranslated('footer_html', $languageId), $vars),
         ];
 
@@ -155,5 +165,108 @@ class EmailTemplateService
         $html .= '</div>';
 
         return $html;
+    }
+
+    /**
+     * Upload an email template image via Local storage, S3 (.env defaults), or Custom S3 credentials.
+     */
+    public static function processImageUpload(
+        $file,
+        string $mode,
+        array $customS3 = [],
+        string $folder = 'email_templates'
+    ): string {
+        if ($mode === 'local') {
+            $path = $file->store($folder, 'public');
+            return rtrim(config('app.url', url('/')), '/') . '/storage/' . $path;
+        }
+
+        if ($mode === 's3') {
+            $key = config('filesystems.disks.s3.key') ?: env('AWS_ACCESS_KEY_ID');
+            $secret = config('filesystems.disks.s3.secret') ?: env('AWS_SECRET_ACCESS_KEY');
+            $bucket = config('filesystems.disks.s3.bucket') ?: env('AWS_BUCKET');
+            $region = config('filesystems.disks.s3.region') ?: env('AWS_DEFAULT_REGION', 'us-east-1');
+            $endpoint = config('filesystems.disks.s3.endpoint') ?: env('AWS_ENDPOINT');
+
+            if (empty($key) || empty($secret) || empty($bucket)) {
+                throw new \Exception('S3 credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET) are not configured in your .env file.');
+            }
+
+            $s3ClientConfig = [
+                'version' => 'latest',
+                'region'  => $region,
+                'credentials' => [
+                    'key'    => $key,
+                    'secret' => $secret,
+                ],
+            ];
+            if (!empty($endpoint)) {
+                $s3ClientConfig['endpoint'] = $endpoint;
+            }
+
+            $s3Client = new \Aws\S3\S3Client($s3ClientConfig);
+            $extension = method_exists($file, 'getClientOriginalExtension') ? ($file->getClientOriginalExtension() ?: 'jpg') : 'jpg';
+            $filename = $folder . '/' . uniqid('img_', true) . '.' . $extension;
+
+            $s3Client->putObject([
+                'Bucket'      => $bucket,
+                'Key'         => $filename,
+                'SourceFile'  => $file->getRealPath(),
+                'ContentType' => (method_exists($file, 'getMimeType') ? $file->getMimeType() : null) ?: 'image/jpeg',
+                'ACL'         => 'public-read',
+            ]);
+
+            $cfUrl = env('AWS_CLOUDFRONT_URL') ?: (env('CLOUDFRONT_URL') ?: config('filesystems.disks.s3.url'));
+            if (!empty($cfUrl)) {
+                return rtrim($cfUrl, '/') . '/' . $filename;
+            }
+
+            return "https://{$bucket}.s3.{$region}.amazonaws.com/{$filename}";
+        }
+
+        if ($mode === 'custom_s3') {
+            $key = trim($customS3['key'] ?? '');
+            $secret = trim($customS3['secret'] ?? '');
+            $bucket = trim($customS3['bucket'] ?? '');
+            $region = trim($customS3['region'] ?? '') ?: 'us-east-1';
+            $cloudfront = trim($customS3['cloudfront'] ?? '');
+            $endpoint = trim($customS3['endpoint'] ?? '');
+
+            if (empty($key) || empty($secret) || empty($bucket)) {
+                throw new \Exception('Custom AWS Key, Secret, and Bucket name are required for custom S3 upload.');
+            }
+
+            $s3ClientConfig = [
+                'version' => 'latest',
+                'region'  => $region,
+                'credentials' => [
+                    'key'    => $key,
+                    'secret' => $secret,
+                ],
+            ];
+            if (!empty($endpoint)) {
+                $s3ClientConfig['endpoint'] = $endpoint;
+            }
+
+            $s3Client = new \Aws\S3\S3Client($s3ClientConfig);
+            $extension = method_exists($file, 'getClientOriginalExtension') ? ($file->getClientOriginalExtension() ?: 'jpg') : 'jpg';
+            $filename = $folder . '/' . uniqid('img_', true) . '.' . $extension;
+
+            $s3Client->putObject([
+                'Bucket'      => $bucket,
+                'Key'         => $filename,
+                'SourceFile'  => $file->getRealPath(),
+                'ContentType' => (method_exists($file, 'getMimeType') ? $file->getMimeType() : null) ?: 'image/jpeg',
+                'ACL'         => 'public-read',
+            ]);
+
+            if (!empty($cloudfront)) {
+                return rtrim($cloudfront, '/') . '/' . $filename;
+            }
+
+            return "https://{$bucket}.s3.{$region}.amazonaws.com/{$filename}";
+        }
+
+        throw new \Exception("Unsupported upload mode: {$mode}");
     }
 }

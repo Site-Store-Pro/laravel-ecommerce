@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -133,8 +134,8 @@ class Checkout extends Component
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'password' => (!Auth::check() && $disableGuestCheckout)
-                ? 'required|string|min:8|confirmed'
-                : 'nullable|string|min:8|confirmed',
+                ? ['required', 'string', 'confirmed', Password::defaults()]
+                : ['nullable', 'string', 'confirmed', Password::defaults()],
         ];
 
         if ($this->requiresShipping) {
@@ -156,6 +157,21 @@ class Checkout extends Component
         }
 
         return $rules;
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'name.required'             => siteLabel('checkout.error_name_required', 'Full Name is required.'),
+            'email.required'            => siteLabel('checkout.error_email_required', 'Email Address is required.'),
+            'email.email'               => siteLabel('checkout.error_email_invalid', 'Please enter a valid email address.'),
+            'password.required'         => siteLabel('checkout.error_password_required', 'An account password is required to complete checkout.'),
+            'password.confirmed'        => siteLabel('checkout.error_password_confirmed', 'The password confirmation does not match.'),
+            'shipping_address1.required'=> siteLabel('checkout.error_shipping_address1_required', 'Street address is required.'),
+            'shipping_city.required'    => siteLabel('checkout.error_shipping_city_required', 'City is required.'),
+            'shopping_postalcode.required' => siteLabel('checkout.error_shipping_postalcode_required', 'Postal / Zip code is required.'),
+            'shipping_state.required'   => siteLabel('checkout.error_shipping_state_required', 'State / Province is required.'),
+        ];
     }
 
     private function getCartSessionId(): string

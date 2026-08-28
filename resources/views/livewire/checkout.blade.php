@@ -227,6 +227,7 @@
                                         @else
                                             @label('checkout.field_password_optional_message', 'Provide a password if you want to register and speed through future purchases.')
                                         @endif
+                                        <span class="block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">@label('checkout.password_complexity_hint', 'Must be at least 8 characters with a mix of uppercase, lowercase, numbers, and symbols.')</span>
                                     </p>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
@@ -235,7 +236,12 @@
                                                 @if($disableGuestCheckout) <span class="text-rose-500">*</span> @endif
                                             </label>
                                             <input type="password" wire:model="password" placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
-                                            @error('password') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                            @error('password')
+                                                <div class="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800 shadow-xs">
+                                                    <span class="text-red-500 font-bold mr-1">⚠</span>
+                                                    {{ $message }}
+                                                </div>
+                                            @enderror
                                         </div>
                                         <div>
                                             <label class="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">

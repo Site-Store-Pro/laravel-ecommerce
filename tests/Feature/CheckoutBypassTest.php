@@ -14,6 +14,7 @@ class CheckoutBypassTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seed();
         $this->withoutMiddleware(\Illuminate\Cookie\Middleware\EncryptCookies::class);
     }
 

@@ -362,26 +362,158 @@
             <!-- 4. Top Banner Section -->
             <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
-                    <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">Image Banner Header</h3>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">Image Banner Header</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Display a branded header banner or promotional graphic at the top of the email.</p>
+                    </div>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" wire:model="show_banner" class="sr-only peer">
+                        <input type="checkbox" wire:model.live="show_banner" class="sr-only peer">
                         <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
                 </div>
 
                 @if($show_banner)
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" wire:key="banner-fields">
-                        <div>
-                            <label class="text-xs font-bold text-slate-400 dark:text-slate-500 block mb-2 uppercase tracking-wider">Banner Image URL</label>
-                            <input type="text" wire:model="banner_image_url" placeholder="https://example.com/images/banner.jpg" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
-                            @error('banner_image_url') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                    <div class="space-y-6" wire:key="banner-fields">
+                        
+                        {{-- Active Image Preview & Clear Card --}}
+                        @if(!empty($banner_image_url))
+                            <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-24 h-16 rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-300 dark:border-slate-700 flex items-center justify-center shrink-0">
+                                        <img src="{{ $banner_image_url }}" alt="Banner Preview" class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Active Banner Image</span>
+                                        <span class="text-2xs font-mono text-slate-500 dark:text-slate-400 break-all block max-w-md">{{ $banner_image_url }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <a href="{{ $banner_image_url }}" target="_blank" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                                        Open Image
+                                    </a>
+                                    <button type="button" wire:click="clearBannerImage" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300 hover:bg-rose-100 transition flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        Clear Image
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- Source Selection Mode Tabs --}}
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-1.5 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-x-auto">
+                                <button type="button" wire:click="setBannerUploadMode('url')" class="px-3.5 py-1.5 text-xs font-bold rounded-xl transition {{ $banner_upload_mode === 'url' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+                                    🔗 Direct / CDN URL Entry
+                                </button>
+                                <button type="button" wire:click="setBannerUploadMode('local')" class="px-3.5 py-1.5 text-xs font-bold rounded-xl transition {{ $banner_upload_mode === 'local' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+                                    💾 Local Upload
+                                </button>
+                                <button type="button" wire:click="setBannerUploadMode('s3')" class="px-3.5 py-1.5 text-xs font-bold rounded-xl transition {{ $banner_upload_mode === 's3' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+                                    ☁️ S3 (.env defaults)
+                                </button>
+                                <button type="button" wire:click="setBannerUploadMode('custom_s3')" class="px-3.5 py-1.5 text-xs font-bold rounded-xl transition {{ $banner_upload_mode === 'custom_s3' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+                                    ⚡ Custom S3 &amp; CloudFront
+                                </button>
+                            </div>
+
+                            {{-- Tab 1: Direct / CDN URL --}}
+                            @if($banner_upload_mode === 'url')
+                                <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                    <label class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Direct Image or CDN URL</label>
+                                    <input type="text" wire:model.live="banner_image_url" placeholder="https://cdn.example.com/images/email-banner.jpg" class="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                                    <p class="text-2xs text-slate-400">Direct URL entry overrides all other upload options and takes immediate effect.</p>
+                                </div>
+                            @endif
+
+                            {{-- Tab 2: Local Upload --}}
+                            @if($banner_upload_mode === 'local')
+                                <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                                    <label class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Select Image File for Local Storage</label>
+                                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                        <input type="file" wire:model="banner_file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                        <button type="button" wire:click="uploadBanner" wire:loading.attr="disabled" wire:target="banner_file, uploadBanner" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center justify-center gap-1.5">
+                                            <span wire:loading.remove wire:target="uploadBanner">Upload Local</span>
+                                            <span wire:loading wire:target="uploadBanner">Uploading...</span>
+                                        </button>
+                                    </div>
+                                    @error('banner_file') <span class="text-xs text-rose-500 font-semibold block">{{ $message }}</span> @enderror
+                                    <p class="text-2xs text-slate-400">Saved to public local disk (<code>storage/app/public/email_templates/banners</code>) with absolute public URL.</p>
+                                </div>
+                            @endif
+
+                            {{-- Tab 3: S3 Upload (.env default) --}}
+                            @if($banner_upload_mode === 's3')
+                                <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                                    <div class="flex flex-wrap items-center gap-3 text-2xs font-mono text-slate-500 bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                                        <span><strong>Bucket:</strong> {{ config('filesystems.disks.s3.bucket') ?: env('AWS_BUCKET', '(Not configured in .env)') }}</span>
+                                        <span>•</span>
+                                        <span><strong>Region:</strong> {{ config('filesystems.disks.s3.region') ?: env('AWS_DEFAULT_REGION', 'us-east-1') }}</span>
+                                        @if(env('AWS_CLOUDFRONT_URL') || env('CLOUDFRONT_URL') || config('filesystems.disks.s3.url'))
+                                            <span>•</span>
+                                            <span><strong>CDN:</strong> {{ env('AWS_CLOUDFRONT_URL') ?: (env('CLOUDFRONT_URL') ?: config('filesystems.disks.s3.url')) }}</span>
+                                        @endif
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                        <input type="file" wire:model="banner_file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                        <button type="button" wire:click="uploadBanner" wire:loading.attr="disabled" wire:target="banner_file, uploadBanner" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center justify-center gap-1.5">
+                                            <span wire:loading.remove wire:target="uploadBanner">Upload to S3</span>
+                                            <span wire:loading wire:target="uploadBanner">Uploading...</span>
+                                        </button>
+                                    </div>
+                                    @error('banner_file') <span class="text-xs text-rose-500 font-semibold block">{{ $message }}</span> @enderror
+                                    <p class="text-2xs text-slate-400">Uses default AWS S3 credentials from <code>.env</code> with automatic CloudFront URL mapping.</p>
+                                </div>
+                            @endif
+
+                            {{-- Tab 4: Custom S3 & CloudFront --}}
+                            @if($banner_upload_mode === 'custom_s3')
+                                <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Custom S3 / Compatible Object Storage Credentials</span>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">AWS Access Key ID *</label>
+                                            <input type="text" wire:model="banner_custom_s3_key" placeholder="AKIA..." class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">AWS Secret Access Key *</label>
+                                            <input type="password" wire:model="banner_custom_s3_secret" placeholder="Secret..." class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">Bucket Name *</label>
+                                            <input type="text" wire:model="banner_custom_s3_bucket" placeholder="my-custom-bucket" class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">Region</label>
+                                            <input type="text" wire:model="banner_custom_s3_region" placeholder="us-east-1" class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">CloudFront / CDN Base URL</label>
+                                            <input type="text" wire:model="banner_custom_s3_cloudfront" placeholder="https://d123.cloudfront.net" class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">Endpoint (MinIO/Wasabi/Spaces)</label>
+                                            <input type="text" wire:model="banner_custom_s3_endpoint" placeholder="https://s3.wasabisys.com" class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                                        <input type="file" wire:model="banner_file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                        <button type="button" wire:click="uploadBanner" wire:loading.attr="disabled" wire:target="banner_file, uploadBanner" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center justify-center gap-1.5">
+                                            <span wire:loading.remove wire:target="uploadBanner">Upload Custom S3</span>
+                                            <span wire:loading wire:target="uploadBanner">Uploading...</span>
+                                        </button>
+                                    </div>
+                                    @error('banner_file') <span class="text-xs text-rose-500 font-semibold block">{{ $message }}</span> @enderror
+                                </div>
+                            @endif
                         </div>
 
+                        {{-- Banner Clickable Destination Link --}}
                         <div>
-                            <label class="text-xs font-bold text-slate-400 dark:text-slate-500 block mb-2 uppercase tracking-wider">Banner Link URL (Clickable destination)</label>
-                            <input type="text" wire:model="banner_image_link" placeholder="https://example.com" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
+                            <label class="text-xs font-bold text-slate-400 dark:text-slate-500 block mb-2 uppercase tracking-wider">Banner Clickable Destination Link URL (Optional)</label>
+                            <input type="text" wire:model="banner_image_link" placeholder="https://example.com/promo-landing" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
                             @error('banner_image_link') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
                         </div>
+
                     </div>
                 @endif
             </div>
@@ -507,26 +639,158 @@
             <!-- 7. Bottom Image Footer section -->
             <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
-                    <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">Footer Image Logo</h3>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">Footer Image Logo</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Display a footer brand logo or security/certification badge at the bottom of the email.</p>
+                    </div>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" wire:model="show_footer_image" class="sr-only peer">
+                        <input type="checkbox" wire:model.live="show_footer_image" class="sr-only peer">
                         <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
                 </div>
 
                 @if($show_footer_image)
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" wire:key="footer-image-fields">
-                        <div>
-                            <label class="text-xs font-bold text-slate-400 dark:text-slate-500 block mb-2 uppercase tracking-wider">Footer Image URL</label>
-                            <input type="text" wire:model="footer_image_url" placeholder="https://example.com/images/footer-logo.png" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
-                            @error('footer_image_url') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                    <div class="space-y-6" wire:key="footer-image-fields">
+                        
+                        {{-- Active Image Preview & Clear Card --}}
+                        @if(!empty($footer_image_url))
+                            <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-20 h-14 rounded-xl bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-300 dark:border-slate-700 flex items-center justify-center shrink-0">
+                                        <img src="{{ $footer_image_url }}" alt="Footer Logo Preview" class="w-full h-full object-contain p-1">
+                                    </div>
+                                    <div class="space-y-1">
+                                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200 block">Active Footer Logo</span>
+                                        <span class="text-2xs font-mono text-slate-500 dark:text-slate-400 break-all block max-w-md">{{ $footer_image_url }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <a href="{{ $footer_image_url }}" target="_blank" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                                        Open Image
+                                    </a>
+                                    <button type="button" wire:click="clearFooterImage" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300 hover:bg-rose-100 transition flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        Clear Image
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- Source Selection Mode Tabs --}}
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-1.5 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-x-auto">
+                                <button type="button" wire:click="setFooterUploadMode('url')" class="px-3.5 py-1.5 text-xs font-bold rounded-xl transition {{ $footer_upload_mode === 'url' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+                                    🔗 Direct / CDN URL Entry
+                                </button>
+                                <button type="button" wire:click="setFooterUploadMode('local')" class="px-3.5 py-1.5 text-xs font-bold rounded-xl transition {{ $footer_upload_mode === 'local' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+                                    💾 Local Upload
+                                </button>
+                                <button type="button" wire:click="setFooterUploadMode('s3')" class="px-3.5 py-1.5 text-xs font-bold rounded-xl transition {{ $footer_upload_mode === 's3' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+                                    ☁️ S3 (.env defaults)
+                                </button>
+                                <button type="button" wire:click="setFooterUploadMode('custom_s3')" class="px-3.5 py-1.5 text-xs font-bold rounded-xl transition {{ $footer_upload_mode === 'custom_s3' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900' }}">
+                                    ⚡ Custom S3 &amp; CloudFront
+                                </button>
+                            </div>
+
+                            {{-- Tab 1: Direct / CDN URL --}}
+                            @if($footer_upload_mode === 'url')
+                                <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                    <label class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Direct Footer Image or CDN URL</label>
+                                    <input type="text" wire:model.live="footer_image_url" placeholder="https://cdn.example.com/images/footer-logo.png" class="w-full px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                                    <p class="text-2xs text-slate-400">Direct URL entry overrides all other upload options and takes immediate effect.</p>
+                                </div>
+                            @endif
+
+                            {{-- Tab 2: Local Upload --}}
+                            @if($footer_upload_mode === 'local')
+                                <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                                    <label class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Select Image File for Local Storage</label>
+                                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                        <input type="file" wire:model="footer_file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                        <button type="button" wire:click="uploadFooterImage" wire:loading.attr="disabled" wire:target="footer_file, uploadFooterImage" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center justify-center gap-1.5">
+                                            <span wire:loading.remove wire:target="uploadFooterImage">Upload Local</span>
+                                            <span wire:loading wire:target="uploadFooterImage">Uploading...</span>
+                                        </button>
+                                    </div>
+                                    @error('footer_file') <span class="text-xs text-rose-500 font-semibold block">{{ $message }}</span> @enderror
+                                    <p class="text-2xs text-slate-400">Saved to public local disk (<code>storage/app/public/email_templates/footers</code>) with absolute public URL.</p>
+                                </div>
+                            @endif
+
+                            {{-- Tab 3: S3 Upload (.env default) --}}
+                            @if($footer_upload_mode === 's3')
+                                <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                                    <div class="flex flex-wrap items-center gap-3 text-2xs font-mono text-slate-500 bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                                        <span><strong>Bucket:</strong> {{ config('filesystems.disks.s3.bucket') ?: env('AWS_BUCKET', '(Not configured in .env)') }}</span>
+                                        <span>•</span>
+                                        <span><strong>Region:</strong> {{ config('filesystems.disks.s3.region') ?: env('AWS_DEFAULT_REGION', 'us-east-1') }}</span>
+                                        @if(env('AWS_CLOUDFRONT_URL') || env('CLOUDFRONT_URL') || config('filesystems.disks.s3.url'))
+                                            <span>•</span>
+                                            <span><strong>CDN:</strong> {{ env('AWS_CLOUDFRONT_URL') ?: (env('CLOUDFRONT_URL') ?: config('filesystems.disks.s3.url')) }}</span>
+                                        @endif
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                        <input type="file" wire:model="footer_file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                        <button type="button" wire:click="uploadFooterImage" wire:loading.attr="disabled" wire:target="footer_file, uploadFooterImage" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center justify-center gap-1.5">
+                                            <span wire:loading.remove wire:target="uploadFooterImage">Upload to S3</span>
+                                            <span wire:loading wire:target="uploadFooterImage">Uploading...</span>
+                                        </button>
+                                    </div>
+                                    @error('footer_file') <span class="text-xs text-rose-500 font-semibold block">{{ $message }}</span> @enderror
+                                    <p class="text-2xs text-slate-400">Uses default AWS S3 credentials from <code>.env</code> with automatic CloudFront URL mapping.</p>
+                                </div>
+                            @endif
+
+                            {{-- Tab 4: Custom S3 & CloudFront --}}
+                            @if($footer_upload_mode === 'custom_s3')
+                                <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200 block">Custom S3 / Compatible Object Storage Credentials</span>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">AWS Access Key ID *</label>
+                                            <input type="text" wire:model="footer_custom_s3_key" placeholder="AKIA..." class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">AWS Secret Access Key *</label>
+                                            <input type="password" wire:model="footer_custom_s3_secret" placeholder="Secret..." class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">Bucket Name *</label>
+                                            <input type="text" wire:model="footer_custom_s3_bucket" placeholder="my-custom-bucket" class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">Region</label>
+                                            <input type="text" wire:model="footer_custom_s3_region" placeholder="us-east-1" class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">CloudFront / CDN Base URL</label>
+                                            <input type="text" wire:model="footer_custom_s3_cloudfront" placeholder="https://d123.cloudfront.net" class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                        <div>
+                                            <label class="text-2xs font-bold text-slate-400 block mb-1">Endpoint (MinIO/Wasabi/Spaces)</label>
+                                            <input type="text" wire:model="footer_custom_s3_endpoint" placeholder="https://s3.wasabisys.com" class="w-full px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs">
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                                        <input type="file" wire:model="footer_file" accept="image/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                        <button type="button" wire:click="uploadFooterImage" wire:loading.attr="disabled" wire:target="footer_file, uploadFooterImage" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center justify-center gap-1.5">
+                                            <span wire:loading.remove wire:target="uploadFooterImage">Upload Custom S3</span>
+                                            <span wire:loading wire:target="uploadFooterImage">Uploading...</span>
+                                        </button>
+                                    </div>
+                                    @error('footer_file') <span class="text-xs text-rose-500 font-semibold block">{{ $message }}</span> @enderror
+                                </div>
+                            @endif
                         </div>
 
+                        {{-- Footer Clickable Destination Link --}}
                         <div>
-                            <label class="text-xs font-bold text-slate-400 dark:text-slate-500 block mb-2 uppercase tracking-wider">Footer Logo Destination Link</label>
+                            <label class="text-xs font-bold text-slate-400 dark:text-slate-500 block mb-2 uppercase tracking-wider">Footer Logo Destination Link URL (Optional)</label>
                             <input type="text" wire:model="footer_image_link" placeholder="https://example.com" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-2xl focus:outline-none focus:border-indigo-500 text-sm">
                             @error('footer_image_link') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
                         </div>
+
                     </div>
                 @endif
 

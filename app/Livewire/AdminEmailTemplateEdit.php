@@ -8,10 +8,13 @@ use App\Services\EmailTemplateService;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.app')]
 class AdminEmailTemplateEdit extends Component
 {
+    use WithFileUploads;
+
     public ?int $templateId = null;
     public ?EmailTemplate $template = null;
 
@@ -39,6 +42,26 @@ class AdminEmailTemplateEdit extends Component
     public bool $show_footer_image = false;
     public ?string $footer_html = null;
     public bool $is_active = false;
+
+    // Upload state: Banner
+    public string $banner_upload_mode = 'url'; // 'url', 'local', 's3', 'custom_s3'
+    public $banner_file = null;
+    public string $banner_custom_s3_key = '';
+    public string $banner_custom_s3_secret = '';
+    public string $banner_custom_s3_region = 'us-east-1';
+    public string $banner_custom_s3_bucket = '';
+    public string $banner_custom_s3_cloudfront = '';
+    public string $banner_custom_s3_endpoint = '';
+
+    // Upload state: Footer
+    public string $footer_upload_mode = 'url'; // 'url', 'local', 's3', 'custom_s3'
+    public $footer_file = null;
+    public string $footer_custom_s3_key = '';
+    public string $footer_custom_s3_secret = '';
+    public string $footer_custom_s3_region = 'us-east-1';
+    public string $footer_custom_s3_bucket = '';
+    public string $footer_custom_s3_cloudfront = '';
+    public string $footer_custom_s3_endpoint = '';
 
     // Preview
     public bool $showPreviewModal = false;
@@ -228,6 +251,92 @@ class AdminEmailTemplateEdit extends Component
         } finally {
             $this->isTranslating = false;
         }
+    }
+
+    public function setBannerUploadMode(string $mode): void
+    {
+        $this->banner_upload_mode = in_array($mode, ['url', 'local', 's3', 'custom_s3']) ? $mode : 'url';
+    }
+
+    public function setFooterUploadMode(string $mode): void
+    {
+        $this->footer_upload_mode = in_array($mode, ['url', 'local', 's3', 'custom_s3']) ? $mode : 'url';
+    }
+
+    public function uploadBanner(): void
+    {
+        $this->validate([
+            'banner_file' => 'required|image|max:10240',
+        ]);
+
+        try {
+            $customConfig = [
+                'key'        => $this->banner_custom_s3_key,
+                'secret'     => $this->banner_custom_s3_secret,
+                'region'     => $this->banner_custom_s3_region ?: 'us-east-1',
+                'bucket'     => $this->banner_custom_s3_bucket,
+                'cloudfront' => $this->banner_custom_s3_cloudfront,
+                'endpoint'   => $this->banner_custom_s3_endpoint,
+            ];
+
+            $url = EmailTemplateService::processImageUpload(
+                $this->banner_file,
+                $this->banner_upload_mode,
+                $customConfig,
+                'email_templates/banners'
+            );
+
+            $this->banner_image_url = $url;
+            $this->banner_file = null;
+            $this->dispatch('toast', message: 'Banner image uploaded successfully.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'Banner upload failed: ' . $e->getMessage(), type: 'error');
+        }
+    }
+
+    public function clearBannerImage(): void
+    {
+        $this->banner_image_url = null;
+        $this->banner_file = null;
+        $this->dispatch('toast', message: 'Banner image cleared.', type: 'success');
+    }
+
+    public function uploadFooterImage(): void
+    {
+        $this->validate([
+            'footer_file' => 'required|image|max:10240',
+        ]);
+
+        try {
+            $customConfig = [
+                'key'        => $this->footer_custom_s3_key,
+                'secret'     => $this->footer_custom_s3_secret,
+                'region'     => $this->footer_custom_s3_region ?: 'us-east-1',
+                'bucket'     => $this->footer_custom_s3_bucket,
+                'cloudfront' => $this->footer_custom_s3_cloudfront,
+                'endpoint'   => $this->footer_custom_s3_endpoint,
+            ];
+
+            $url = EmailTemplateService::processImageUpload(
+                $this->footer_file,
+                $this->footer_upload_mode,
+                $customConfig,
+                'email_templates/footers'
+            );
+
+            $this->footer_image_url = $url;
+            $this->footer_file = null;
+            $this->dispatch('toast', message: 'Footer image uploaded successfully.', type: 'success');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'Footer image upload failed: ' . $e->getMessage(), type: 'error');
+        }
+    }
+
+    public function clearFooterImage(): void
+    {
+        $this->footer_image_url = null;
+        $this->footer_file = null;
+        $this->dispatch('toast', message: 'Footer image cleared.', type: 'success');
     }
 
     public function generatePreview(): void
