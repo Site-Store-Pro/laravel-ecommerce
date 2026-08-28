@@ -1,5 +1,9 @@
 @php
-    $gaId = \App\Services\GoogleAnalyticsService::getMeasurementId();
+    $roleId = auth()->check() ? (auth()->user()->role_id?->value ?? (int)auth()->user()->role_id) : 1;
+    $isAllowedUser = !auth()->check() || in_array($roleId, [1, 2]);
+    $isAdminPath = request()->is('admin*') || request()->routeIs('admin.*');
+
+    $gaId = ($isAllowedUser && !$isAdminPath) ? \App\Services\GoogleAnalyticsService::getMeasurementId() : null;
 @endphp
 @if($gaId)
     <!-- Google Analytics (GA4) -->

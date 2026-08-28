@@ -13,10 +13,18 @@ use Illuminate\Support\Collection;
 class GoogleAnalyticsService
 {
     /**
-     * Check if Google Analytics tracking is enabled in Admin Settings.
+     * Check if Google Analytics tracking is enabled in Admin Settings and active for the current user/context.
      */
     public static function isEnabled(): bool
     {
+        $roleId = auth()->check() ? (auth()->user()->role_id?->value ?? (int)auth()->user()->role_id) : 1;
+        $isAllowedUser = !auth()->check() || in_array($roleId, [1, 2]);
+        $isAdminPath = request()->is('admin*') || request()->routeIs('admin.*');
+
+        if (!$isAllowedUser || $isAdminPath) {
+            return false;
+        }
+
         return !empty(self::getMeasurementId());
     }
 
