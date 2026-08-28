@@ -90,7 +90,7 @@ new #[Layout('layouts.public')] class extends Component
                 <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Didn't receive the email? Check your spam folder, or:</p>
                 <button wire:click="sendVerification"
                         wire:loading.attr="disabled"
-                        class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 disabled:opacity-60 text-white font-bold px-6 py-3 rounded-2xl shadow-md shadow-indigo-200 hover:shadow-lg hover:shadow-indigo-300 transition-all flex items-center justify-center gap-2 text-sm">
+                        class="primary-btn btn-theme-primary w-full disabled:opacity-60 text-white font-bold px-6 py-3 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm">
                     <svg wire:loading.remove wire:target="sendVerification" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>

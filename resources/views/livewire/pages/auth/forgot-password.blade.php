@@ -147,7 +147,7 @@ new #[Layout('layouts.public')] class extends Component
         </div>
 
 
-        <button type="submit" class="auth-btn w-full">
+        <button type="submit" class="auth-btn primary-btn btn-theme-primary w-full">
 
             <span wire:loading.remove wire:target="sendPasswordResetLink">
                 @label('auth.send_reset', 'Send Reset Link')

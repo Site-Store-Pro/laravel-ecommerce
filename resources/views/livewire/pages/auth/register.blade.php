@@ -249,7 +249,7 @@ new #[Layout('layouts.public')] class extends Component
 
 
         <!-- Submit -->
-        <button type="submit" wire:loading.attr="disabled" class="auth-btn w-full mt-2">
+        <button type="submit" wire:loading.attr="disabled" class="auth-btn primary-btn btn-theme-primary w-full mt-2">
 
             <span wire:loading.remove wire:target="register">
                 @label('auth.create_account', 'Create Account')

@@ -154,7 +154,7 @@ new #[Layout('layouts.public')] class extends Component
         </div>
 
         <!-- Submit -->
-        <button type="submit" class="auth-btn w-full mt-2">
+        <button type="submit" class="auth-btn primary-btn btn-theme-primary w-full mt-2">
             <span wire:loading.remove wire:target="login">@label('auth.sign_in', 'Sign In')</span>
 
             <span wire:loading wire:target="login" class="flex items-center justify-center gap-2">

@@ -49,24 +49,30 @@ html, body {
             outline: none !important;
         }
 
-        .auth-btn {
-            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            border: none;
-            color: #fff;
-            font-weight: 600;
+        .auth-btn, .primary-btn {
+            background-color: var(--theme-primary, #4f46e5);
+            background-image: none;
+            border: 1px solid var(--theme-primary-border, var(--theme-primary, #4f46e5));
+            color: var(--theme-text, #ffffff);
+            font-weight: 700;
             letter-spacing: 0.025em;
             padding: 0.65rem 1.5rem;
-            border-radius: 0.6rem;
+            border-radius: var(--theme-border-radius, 0.75rem);
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 20px rgba(99,102,241,0.2);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            text-decoration: none;
         }
-        .auth-btn:hover {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            box-shadow: 0 6px 28px rgba(99,102,241,0.3);
-            transform: translateY(-1px);
+        .auth-btn:hover, .primary-btn:hover {
+            background-color: var(--theme-primary-hover, #4338ca);
+            background-image: none;
+            border-color: var(--theme-primary-hover, #4338ca);
+            color: var(--theme-primary-hover-text, var(--theme-text, #ffffff));
         }
-        .auth-btn:active { transform: translateY(0); }
+        .auth-btn:active, .primary-btn:active { transform: translateY(0); }
 
         .auth-link {
             color: #4f46e5;

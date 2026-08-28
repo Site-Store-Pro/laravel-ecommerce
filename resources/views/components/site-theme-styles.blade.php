@@ -94,20 +94,26 @@
     body:not(.admin-area) button:not(nav[role='navigation'] button),
     body:not(.admin-area) .btn,
     body:not(.admin-area) .btn-primary,
+    body:not(.admin-area) .primary-btn,
+    body:not(.admin-area) .auth-btn,
     body:not(.admin-area) a.bg-indigo-600,
     body:not(.admin-area) a.bg-purple-600,
     body:not(.admin-area) a.bg-violet-600,
     body:not(.admin-area) a.bg-indigo-50,
     body:not(.admin-area) a.bg-purple-50,
     body:not(.admin-area) a.bg-violet-50,
-    body:not(.admin-area) input[type=\"submit\"],
-    body:not(.admin-area) input[type=\"button\"] {
-        border-radius: var(--theme-border-radius);
+    body:not(.admin-area) input[type='submit'],
+    body:not(.admin-area) input[type='button'] {
+        border-radius: var(--theme-border-radius) !important;
     }
 
     /* Primary Theme Button — EXCLUDED on admin-area pages */
-    body:not(.admin-area) .btn-theme-primary {
+    body:not(.admin-area) .btn-theme-primary,
+    body:not(.admin-area) .btn-primary,
+    body:not(.admin-area) .primary-btn,
+    body:not(.admin-area) .auth-btn {
         background-color: var(--theme-primary) !important;
+        background-image: none !important;
         color: var(--theme-text, #ffffff) !important;
         border: 1px solid var(--theme-primary-border, var(--theme-primary)) !important;
         border-radius: var(--theme-border-radius) !important;
@@ -115,18 +121,26 @@
         font-weight: 700 !important;
         font-family: inherit !important;
         cursor: pointer !important;
-        display: inline-block !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         text-align: center !important;
         text-decoration: none !important;
         transition: background-color 0.2s, color 0.2s, border-color 0.2s !important;
     }
-    body:not(.admin-area) .btn-theme-primary:hover {
+    body:not(.admin-area) .btn-theme-primary:hover,
+    body:not(.admin-area) .btn-primary:hover,
+    body:not(.admin-area) .primary-btn:hover,
+    body:not(.admin-area) .auth-btn:hover {
         background-color: var(--theme-primary-hover) !important;
+        background-image: none !important;
         color: var(--theme-primary-hover-text, var(--theme-text, #ffffff)) !important;
         border-color: var(--theme-primary-hover) !important;
     }
     body:not(.admin-area) .btn-theme-primary *,
-    body:not(.admin-area) .btn-primary * {
+    body:not(.admin-area) .btn-primary *,
+    body:not(.admin-area) .primary-btn *,
+    body:not(.admin-area) .auth-btn * {
         color: inherit !important;
     }
 

@@ -90,7 +90,7 @@ new #[Layout('layouts.public')] class extends Component
         </div>
 
         <!-- Submit -->
-        <button type="submit" class="auth-btn w-full">
+        <button type="submit" class="auth-btn primary-btn btn-theme-primary w-full">
             <span wire:loading.remove wire:target="submit">@label('auth.complete_registration', 'Complete Registration')</span>
             <span wire:loading wire:target="submit" class="flex items-center justify-center gap-2">
                 <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
