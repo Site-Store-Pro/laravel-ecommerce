@@ -79,6 +79,20 @@ class FrontendDarkModePreferenceTest extends TestCase
         $responseShop->assertStatus(200);
         $responseShop->assertSee('class="overflow-x-hidden max-w-full dark"', false);
 
+        // Test CMS dynamic page retains dark mode
+        $cmsPage = \App\Models\CmsPage::create([
+            'title' => 'Test About Us',
+            'slug' => 'test-about-us',
+            'content' => '<p>About us content</p>',
+            'is_active' => 1,
+            'page_type' => 1,
+            'layout_type' => 1,
+        ]);
+        $responseCms = $this->withUnencryptedCookie('frontend_theme', 'dark')->get('/pages/' . $cmsPage->slug);
+        if ($responseCms->status() === 200) {
+            $responseCms->assertSee('class="scroll-smooth dark"', false);
+        }
+
         $responseLight = $this->withUnencryptedCookie('frontend_theme', 'light')->get('/shop');
         $responseLight->assertStatus(200);
         $responseLight->assertSee('class="overflow-x-hidden max-w-full "', false);

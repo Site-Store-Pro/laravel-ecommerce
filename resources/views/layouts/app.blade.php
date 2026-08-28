@@ -1,16 +1,56 @@
 @php
-    try {
-        $adminDark = \App\Models\CmsSetting::isEnabled('admin_dark_mode');
-    } catch (\Exception $e) {
-        $adminDark = false;
+    $isCustomer = auth()->check() && in_array(auth()->user()->role_id?->value, [1, 2]);
+    if ($isCustomer) {
+        $sessionTheme = session('frontend_theme') ?: session('theme_mode');
+        $cookieTheme = request()->cookie('frontend_theme')
+            ?: ($_COOKIE['frontend_theme'] ?? (request()->cookie('theme_mode') ?: ($_COOKIE['theme_mode'] ?? null)));
+
+        if (!empty(auth()->user()->theme_preference)) {
+            $isDark = auth()->user()->theme_preference === 'dark';
+        } elseif (!empty($sessionTheme)) {
+            $isDark = $sessionTheme === 'dark';
+        } elseif (!empty($cookieTheme)) {
+            $isDark = $cookieTheme === 'dark';
+        } else {
+            try {
+                $isDark = \App\Models\CmsSetting::isEnabled('frontend_dark_mode');
+            } catch (\Throwable $e) {
+                $isDark = false;
+            }
+        }
+    } else {
+        try {
+            $isDark = \App\Models\CmsSetting::isEnabled('admin_dark_mode');
+        } catch (\Throwable $e) {
+            $isDark = false;
+        }
     }
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ $adminDark ? 'dark' : '' }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ $isDark ? 'dark' : '' }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+
+        {{-- Instant client-side theme gating for customer dashboard --}}
+        @if($isCustomer)
+        <script>
+            (function() {
+                var cookieMatch = document.cookie.match(/(?:^|;\s*)(?:frontend_theme|theme_mode)=([^;]+)/);
+                var storedCookie = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+                var storedLocal = null;
+                try { storedLocal = localStorage.getItem('frontend_theme'); } catch (e) {}
+                var theme = storedCookie || storedLocal;
+                var isDark = theme ? (theme === 'dark') : {{ $isDark ? 'true' : 'false' }};
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            })();
+        </script>
+        @endif
 
         <title>{{ \App\Models\CmsSetting::getSiteName() }}</title>
 

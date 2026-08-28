@@ -1,9 +1,45 @@
+@php
+    $sessionTheme = session('frontend_theme') ?: session('theme_mode');
+    $cookieTheme = request()->cookie('frontend_theme')
+        ?: ($_COOKIE['frontend_theme'] ?? (request()->cookie('theme_mode') ?: ($_COOKIE['theme_mode'] ?? null)));
+
+    if (auth()->check() && !empty(auth()->user()->theme_preference)) {
+        $frontendDark = auth()->user()->theme_preference === 'dark';
+    } elseif (!empty($sessionTheme)) {
+        $frontendDark = $sessionTheme === 'dark';
+    } elseif (!empty($cookieTheme)) {
+        $frontendDark = $cookieTheme === 'dark';
+    } else {
+        try {
+            $frontendDark = \App\Models\CmsSetting::isEnabled('frontend_dark_mode');
+        } catch (\Throwable $e) {
+            $frontendDark = false;
+        }
+    }
+@endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth bg-slate-50 text-slate-800">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth {{ $frontendDark ? 'dark' : '' }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="theme-color" content="#f8fafc">
+
+        {{-- Instant client-side theme gating to prevent FOUC / theme flash --}}
+        <script>
+            (function() {
+                var cookieMatch = document.cookie.match(/(?:^|;\s*)(?:frontend_theme|theme_mode)=([^;]+)/);
+                var storedCookie = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+                var storedLocal = null;
+                try { storedLocal = localStorage.getItem('frontend_theme'); } catch (e) {}
+                var theme = storedCookie || storedLocal;
+                var isDark = theme ? (theme === 'dark') : {{ $frontendDark ? 'true' : 'false' }};
+                if (isDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            })();
+        </script>
         <title>Tag: {{ $tag->name }} | {{ config('app.name', 'Support Desk') }}</title>
         <meta name="description" content="Browse all articles and posts tagged with {{ $tag->name }}.">
 
