@@ -119,16 +119,24 @@
                     @click="
                         isDark = !isDark;
                         document.documentElement.classList.toggle('dark', isDark);
-                        $wire.toggleFrontendDarkMode();
+                        var mode = isDark ? 'dark' : 'light';
+                        try { localStorage.setItem('frontend_theme', mode); localStorage.setItem('theme_mode', mode); } catch(e){}
+                        document.cookie = 'frontend_theme=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
+                        document.cookie = 'theme_mode=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
+                        document.cookie = 'visperity_theme=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
+                        document.cookie = 'theme=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
+                        $wire.toggleFrontendDarkMode(mode);
                     "
-                    class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none transition-all duration-200 shadow-sm backdrop-blur-sm"
+                    class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none transition-all duration-200 shadow-sm backdrop-blur-sm cursor-pointer"
                     :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
                     aria-label="Toggle dark mode"
                 >
-                    <svg x-show="isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {{-- Sun icon (visible in dark mode) --}}
+                    <svg x-show="isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
                     </svg>
-                    <svg x-show="!isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {{-- Moon icon (visible in light mode) --}}
+                    <svg x-show="!isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                     </svg>
                 </button>
@@ -158,15 +166,23 @@
                     @click="
                         isDark = !isDark;
                         document.documentElement.classList.toggle('dark', isDark);
-                        $wire.toggleFrontendDarkMode();
+                        var mode = isDark ? 'dark' : 'light';
+                        try { localStorage.setItem('frontend_theme', mode); localStorage.setItem('theme_mode', mode); } catch(e){}
+                        document.cookie = 'frontend_theme=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
+                        document.cookie = 'theme_mode=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
+                        document.cookie = 'visperity_theme=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
+                        document.cookie = 'theme=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
+                        $wire.toggleFrontendDarkMode(mode);
                     "
-                    class="inline-flex items-center justify-center w-8 h-8 rounded-xl text-slate-500 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-xl text-slate-500 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none cursor-pointer"
                     :aria-label="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
                 >
-                    <svg x-show="isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {{-- Sun icon (visible in dark mode) --}}
+                    <svg x-show="isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/>
                     </svg>
-                    <svg x-show="!isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {{-- Moon icon (visible in light mode) --}}
+                    <svg x-show="!isDark" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                     </svg>
                 </button>

@@ -41,12 +41,11 @@ class PublicNavigation extends Component
     }
 
     /**
-     * Toggle the frontend dark mode setting and persist to DB.
+     * Toggle the frontend dark mode setting and persist to visitor/user preference.
      */
-    public function toggleFrontendDarkMode(): void
+    public function toggleFrontendDarkMode(?string $theme = null): void
     {
-        $current = CmsSetting::isEnabled('frontend_dark_mode');
-        CmsSetting::set('frontend_dark_mode', $current ? '0' : '1');
+        \App\Services\ThemePreferenceService::setFrontendTheme($theme);
     }
 
     private function loadCartCount(): void

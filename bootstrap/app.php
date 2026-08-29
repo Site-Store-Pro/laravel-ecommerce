@@ -24,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: [
             'frontend_theme',
             'theme_mode',
+            'visperity_theme',
+            'theme',
             'app_theme',
             'cart_session_id',
             'app_language',

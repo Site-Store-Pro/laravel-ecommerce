@@ -28,12 +28,17 @@ class LanguageService
         $code = Session::get(self::SESSION_KEY)
             ?: request()->cookie(self::COOKIE_KEY);
 
-        if ($code) {
-            $lang = Language::findByCode($code);
+        // Sanitize code: must be a short 2-10 char alphanumeric/hyphen string
+        if (is_string($code) && strlen($code) <= 10 && preg_match('/^[a-zA-Z0-9_-]{2,10}$/', $code)) {
+            $lang = Language::findByCode(strtolower($code));
             if ($lang && $lang->is_active) {
                 $this->currentLanguage = $lang;
                 return $lang;
             }
+        } elseif (!empty($code)) {
+            // Invalid, encrypted, or corrupted legacy cookie — purge it to prevent DB cache key overflow
+            Cookie::queue(Cookie::forget(self::COOKIE_KEY));
+            Session::forget(self::SESSION_KEY);
         }
 
         $this->currentLanguage = $this->getDefault();
@@ -75,13 +80,18 @@ class LanguageService
 
     public function setLanguage(string $code): bool
     {
+        $code = trim(strtolower($code));
+        if ($code === '' || strlen($code) > 10 || !preg_match('/^[a-zA-Z0-9_-]{2,10}$/', $code)) {
+            return false;
+        }
+
         $lang = Language::findByCode($code);
         if (!$lang || !$lang->is_active) {
             return false;
         }
 
         Session::put(self::SESSION_KEY, $code);
-        Cookie::queue(self::COOKIE_KEY, $code, 60 * 24 * 365); // 1 year
+        Cookie::queue(Cookie::make(self::COOKIE_KEY, $code, 60 * 24 * 365, '/', null, false, false)); // 1 year unencrypted
         $this->currentLanguage = $lang;
         return true;
     }

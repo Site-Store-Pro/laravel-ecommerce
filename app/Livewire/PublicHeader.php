@@ -36,32 +36,7 @@ class PublicHeader extends Component
     #[On('toggle-frontend-dark-mode')]
     public function toggleFrontendDarkMode(?string $theme = null): void
     {
-        if (empty($theme)) {
-            $cookieTheme = request()->cookie('frontend_theme');
-            if (auth()->check() && !empty(auth()->user()->theme_preference)) {
-                $isDark = auth()->user()->theme_preference === 'dark';
-            } elseif (!empty($cookieTheme)) {
-                $isDark = $cookieTheme === 'dark';
-            } else {
-                try {
-                    $isDark = \App\Models\CmsSetting::isEnabled('frontend_dark_mode');
-                } catch (\Throwable) {
-                    $isDark = false;
-                }
-            }
-            $theme = $isDark ? 'light' : 'dark';
-        }
-
-        // Store preference in session
-        session(['frontend_theme' => $theme]);
-
-        // Store preference in visitor cookie (1 year)
-        \Illuminate\Support\Facades\Cookie::queue('frontend_theme', $theme, 525600);
-
-        // Store preference in user account if logged in
-        if (auth()->check()) {
-            auth()->user()->update(['theme_preference' => $theme]);
-        }
+        \App\Services\ThemePreferenceService::setFrontendTheme($theme);
     }
 
     public function setDeviceView(string $device): void

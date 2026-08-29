@@ -1,30 +1,8 @@
 @php
     $isCustomer = auth()->check() && in_array(auth()->user()->role_id?->value, [1, 2]);
-    if ($isCustomer) {
-        $sessionTheme = session('frontend_theme') ?: session('theme_mode');
-        $cookieTheme = request()->cookie('frontend_theme')
-            ?: ($_COOKIE['frontend_theme'] ?? (request()->cookie('theme_mode') ?: ($_COOKIE['theme_mode'] ?? null)));
-
-        if (!empty(auth()->user()->theme_preference)) {
-            $isDark = auth()->user()->theme_preference === 'dark';
-        } elseif (!empty($sessionTheme)) {
-            $isDark = $sessionTheme === 'dark';
-        } elseif (!empty($cookieTheme)) {
-            $isDark = $cookieTheme === 'dark';
-        } else {
-            try {
-                $isDark = \App\Models\CmsSetting::isEnabled('frontend_dark_mode');
-            } catch (\Throwable $e) {
-                $isDark = false;
-            }
-        }
-    } else {
-        try {
-            $isDark = \App\Models\CmsSetting::isEnabled('admin_dark_mode');
-        } catch (\Throwable $e) {
-            $isDark = false;
-        }
-    }
+    $isDark = $isCustomer 
+        ? \App\Services\ThemePreferenceService::isFrontendDarkMode() 
+        : (auth()->check() ? \App\Models\CmsSetting::isEnabled('admin_dark_mode') : \App\Services\ThemePreferenceService::isFrontendDarkMode());
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ $isDark ? 'dark' : '' }}">
@@ -33,15 +11,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        {{-- Instant client-side theme gating for customer dashboard --}}
-        @if($isCustomer)
+        {{-- Instant client-side theme gating --}}
         <script>
             (function() {
-                var cookieMatch = document.cookie.match(/(?:^|;\s*)(?:frontend_theme|theme_mode)=([^;]+)/);
+                var cookieMatch = document.cookie.match(/(?:^|;\s*)(?:frontend_theme|theme_mode|visperity_theme|theme)=([^;]+)/);
                 var storedCookie = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
                 var storedLocal = null;
-                try { storedLocal = localStorage.getItem('frontend_theme'); } catch (e) {}
-                var theme = storedCookie || storedLocal;
+                try { storedLocal = localStorage.getItem('frontend_theme') || localStorage.getItem('theme_mode'); } catch (e) {}
+                var theme = storedLocal || storedCookie;
                 var isDark = theme ? (theme === 'dark') : {{ $isDark ? 'true' : 'false' }};
                 if (isDark) {
                     document.documentElement.classList.add('dark');
@@ -50,7 +27,6 @@
                 }
             })();
         </script>
-        @endif
 
         <title>{{ \App\Models\CmsSetting::getSiteName() }}</title>
 

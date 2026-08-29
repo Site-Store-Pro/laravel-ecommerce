@@ -91,6 +91,11 @@ class Language extends Model
 
     public static function findByCode(string $code): ?self
     {
+        $code = trim(strtolower($code));
+        if ($code === '' || strlen($code) > 10 || !preg_match('/^[a-zA-Z0-9_-]{2,10}$/', $code)) {
+            return null;
+        }
+
         $id = Cache::remember('language.code_id.' . $code, 3600,
             fn () => static::where('code', $code)->value('id')
         );
