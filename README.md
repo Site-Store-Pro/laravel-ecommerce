@@ -22,6 +22,7 @@
 - [Quick Reference](#quick-reference)
 - [Local Docker Development Setup Guide](#local-docker-development-setup-guide)
 - [Redis Configuration & Troubleshooting](#redis-configuration--troubleshooting)
+- [Professional Services by Visperity](#professional-services-by-visperity)
 - [License](#license)
 
 ---
@@ -62,7 +63,7 @@ With Site Store Pro, there are no restrictions tying your business to a specific
 | **eCommerce & Products** | Sell unlimited **Physical Goods**, **Digital Downloads**, and **Event Tickets** with dependent variants and inventory tracking. |
 | **Payments & Checkout** | Built-in support for **Stripe**, **Paddle**, and **PayPal** with tax, shipping, and discount code engines. |
 | **Support & Tickets** | Complete support ticketing platform, agent queue management, and a self-service **Knowledge Base**. |
-| **Administration** | Gated admin control panel with role-based access control. |
+| **Administration** | Gated admin control panel with role-based access co---
 
 ---
 
@@ -615,6 +616,85 @@ If you prefer the native C-extension:
 - **Set `.env`**: `REDIS_CLIENT=phpredis`.
 
 ---
+## Professional Services by Visperity
+
+While **Site Store Pro is completely free and open source**, businesses that need assistance with implementation, customization, migration, or ongoing development can work directly with the engineering team at **[Visperity](https://visperity.com)** — the team behind Site Store Pro with more than **20 years of eCommerce experience**.
+
+Visperity provides professional services to help businesses, developers, agencies, and organizations get Site Store Pro deployed and customized to their specific requirements.
+
+### Installation & Server Setup
+
+Get Site Store Pro professionally deployed and configured on your hosting environment with security hardening and performance optimization.
+
+- **Cloud Server Provisioning** — AWS, VPS, cPanel, and other hosting environments
+- **MySQL & Redis Configuration** — Database and caching configuration
+- **SSL & DNS Configuration** — Secure SSL certificates and domain mapping
+- **Environment Configuration** — `.env`, CDN storage, and SMTP email setup
+- **Payment Gateway Setup** — Sandbox-to-live configuration and verification
+- **Performance Optimization** — Application and server configuration focused on speed, reliability, and scalability
+
+### Design & Theme Integration
+
+Integrate Site Store Pro into an existing website design or create a completely custom storefront.
+
+- **Theme Modifications** — Customize the storefront through the Site Store Pro Admin Area
+- **Custom Blade & Tailwind CSS Development** — Build unique layouts and storefront experiences
+- **Design Implementation** — Convert Figma or Sketch mockups into a working Site Store Pro storefront
+- **Brand Integration** — Custom typography, color palettes, icons, and other visual elements
+- **Feature Customizations** — Develop custom layouts and functionality for unique business requirements
+- **Accessibility** — Implement accessibility-focused storefront experiences
+
+### eCommerce Migrations
+
+Move an existing online store to Site Store Pro while preserving important catalog and business data.
+
+Migration services are available for legacy and other eCommerce platforms, including:
+
+- **WooCommerce**
+- **Shopify**
+- **Magento**
+- **Custom or legacy eCommerce platforms**
+
+Migration projects can include product catalogs, variants, categories, and other platform-specific data depending on the source system and project requirements.
+
+### Custom Development & Integrations
+
+Site Store Pro provides full access to the underlying Laravel application, allowing businesses and agencies to develop custom functionality without being restricted to a proprietary hosted platform.
+
+Visperity can provide custom development and integration services including:
+
+- **Custom Laravel Development**
+- **Custom Storefront Functionality**
+- **Payment Gateway Integrations**
+- **ERP & Business System Integrations**
+- **API Development & Integration**
+- **Custom Administrative Features**
+- **Advanced Product & Catalog Requirements**
+- **Third-Party Service Integrations**
+
+### Admin & Staff Training
+
+Personalized one-on-one and team training can help store managers and fulfillment staff become comfortable operating Site Store Pro.
+
+Training can cover:
+
+- Product catalog and variant management
+- Discount rules, coupon codes, and promotions
+- Order processing and shipping workflows
+- Multi-language setup
+- Store launch assistance
+- Live Q&A sessions
+- Recorded video reference materials
+
+### Built by Visperity. Supported by Experience.
+
+Site Store Pro combines a modern **Laravel eCommerce architecture** with more than two decades of real-world eCommerce experience. For businesses that want to self-host and manage the platform themselves, the complete open-source codebase is available at no cost.
+
+For organizations that prefer professional assistance, **Visperity provides the engineering, implementation, design, migration, integration, and training services needed to take Site Store Pro from installation to production.**
+
+**[Learn More About Visperity Professional Services](https://visperity.com/site-store-pro-ecommerce-platform)**
+
+> **Note:** Professional services are provided separately from the free and open-source Site Store Pro software. Service fees vary based on the scope and complexity of the project.
 
 ## License
 
