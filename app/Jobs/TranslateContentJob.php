@@ -16,8 +16,8 @@ class TranslateContentJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
-    public int $backoff = 30;
-    public int $timeout = 120;
+    public int $backoff = 60;
+    public int $timeout = 600;
 
     public function __construct(
         public readonly string $modelClass,

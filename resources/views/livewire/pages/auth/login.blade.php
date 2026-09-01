@@ -148,7 +148,7 @@ new #[Layout('layouts.public')] class extends Component
                    name="remember"
                    class="checkbox-custom rounded">
 
-            <label for="remember" class="text-sm text-slate-500 cursor-pointer select-none">
+            <label for="remember" class="text-sm text-slate-500 cursor-pointer select-none" style="padding-top: 15px; padding-bottom: 10px;">
                 @label('auth.remember_me', 'Keep me signed in')
             </label>
         </div>

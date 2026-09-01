@@ -176,11 +176,24 @@ class TranslationService
             'translated_at'      => now(),
         ];
 
+        // ── For CmsPage, split large content from metadata fields ─────────────
+        // The `content` field on documentation/rich pages can be 20-50 KB of HTML.
+        // Bundling it with other fields in a single JSON batch causes gpt-4o-mini
+        // to time out (120s job limit) or exceed output token limits.
+        // Strategy: batch the lightweight metadata fields first, then translate
+        // content in chunks if it exceeds 8,000 characters.
+        $isCmsPage = class_basename($record) === 'CmsPage';
+        $heavyFields = $isCmsPage ? ['content'] : [];
+
         $batchInput = [];
         foreach ($fields as $field => $context_hint) {
             $original = $record->{$field} ?? '';
             if (empty(trim(strip_tags($original)))) {
                 $translationData[$field] = null;
+                continue;
+            }
+            // Defer heavy fields for separate handling
+            if (in_array($field, $heavyFields, true)) {
                 continue;
             }
             $batchInput[$field] = [
@@ -197,6 +210,44 @@ class TranslationService
                 }
             } catch (\Throwable $e) {
                 Log::error('[TranslationService] Failed to translate record in batch: ' . $e->getMessage());
+            }
+        }
+
+        // ── Translate heavy (large HTML content) fields in chunks ─────────────
+        foreach ($heavyFields as $field) {
+            $original = trim((string) ($record->{$field} ?? ''));
+            if (empty(strip_tags($original))) {
+                $translationData[$field] = null;
+                continue;
+            }
+
+            $chunkSize = 8000; // characters — safe for gpt-4o-mini within 120s timeout
+
+            if (mb_strlen($original) <= $chunkSize) {
+                // Small enough to send in one call
+                try {
+                    $translationData[$field] = $this->translateText($original, $language->name, 'CmsPage body HTML content — preserve all HTML structure, classes, and attributes exactly');
+                } catch (\Throwable $e) {
+                    Log::error("[TranslationService] Failed to translate CmsPage #{$record->id} field '{$field}': " . $e->getMessage());
+                    $translationData[$field] = $original; // keep original on failure
+                }
+            } else {
+                // Split into chunks by paragraph/block boundaries to avoid mid-tag cuts
+                $chunks = $this->splitHtmlIntoChunks($original, $chunkSize);
+                $translatedChunks = [];
+                foreach ($chunks as $i => $chunk) {
+                    try {
+                        $translatedChunks[] = $this->translateText(
+                            $chunk,
+                            $language->name,
+                            'CmsPage body HTML content chunk ' . ($i + 1) . ' of ' . count($chunks) . ' — preserve all HTML structure exactly'
+                        );
+                    } catch (\Throwable $e) {
+                        Log::warning("[TranslationService] CmsPage #{$record->id} chunk {$i} failed, using original: " . $e->getMessage());
+                        $translatedChunks[] = $chunk;
+                    }
+                }
+                $translationData[$field] = implode('', $translatedChunks);
             }
         }
 
@@ -236,6 +287,43 @@ class TranslationService
         }
 
         return true;
+    }
+
+    /**
+     * Split a large HTML string into chunks of approximately $maxChars characters,
+     * breaking only at block-level closing tag boundaries to preserve HTML validity.
+     * Uses a simple marker approach — no lookbehind — so it works on all PCRE2 versions.
+     *
+     * @return string[]
+     */
+    private function splitHtmlIntoChunks(string $html, int $maxChars): array
+    {
+        // Insert a control-character split marker after each block-closing tag.
+        // No lookbehind needed — works on PCRE2 10.x (all production server versions).
+        $marked = preg_replace(
+            '/<\/(div|section|article|p|h[1-6]|ul|ol|table|pre|blockquote)>/i',
+            '</$1>' . "\x01",
+            $html
+        );
+
+        // preg_replace returns null on error — fall back to single chunk
+        $blocks = ($marked !== null) ? explode("\x01", $marked) : [$html];
+
+        $chunks  = [];
+        $current = '';
+        foreach ($blocks as $block) {
+            if (mb_strlen($current) + mb_strlen($block) > $maxChars && $current !== '') {
+                $chunks[] = $current;
+                $current  = $block;
+            } else {
+                $current .= $block;
+            }
+        }
+        if ($current !== '') {
+            $chunks[] = $current;
+        }
+
+        return $chunks ?: [$html];
     }
 
     // ── Non-Translatable Asset & Shortcode Protection ────────────────────────
@@ -413,6 +501,30 @@ class TranslationService
             return ['total' => 0, 'translated' => 0, 'pending' => 0, 'reviewed' => 0];
         }
 
+        if ($modelClass === \App\Models\SiteLabel::class) {
+            $section404 = \App\Models\SiteLabelSection::where('slug', 'error-404')->first();
+            $section404Id = $section404?->id;
+
+            $total = \App\Models\SiteLabel::when($section404Id, fn($q) => $q->where('section_id', '!=', $section404Id))->count();
+
+            $excludedLabelIds = $section404Id ? \App\Models\SiteLabel::where('section_id', $section404Id)->pluck('id') : collect();
+
+            $translated = \App\Models\SiteLabelTranslation::where('language_id', $languageId)
+                ->when($excludedLabelIds->isNotEmpty(), fn($q) => $q->whereNotIn('site_label_id', $excludedLabelIds))
+                ->whereNotNull('label_value')
+                ->where('label_value', '!=', '')
+                ->count();
+
+            $reviewed = \App\Models\SiteLabelTranslation::where('language_id', $languageId)
+                ->when($excludedLabelIds->isNotEmpty(), fn($q) => $q->whereNotIn('site_label_id', $excludedLabelIds))
+                ->where('translation_status', 'reviewed')
+                ->count();
+
+            $pending = max(0, $total - $translated);
+
+            return compact('total', 'translated', 'pending', 'reviewed');
+        }
+
         $total      = $modelClass::count();
         $translated = $translationClass::where('language_id', $languageId)->count();
 
@@ -421,7 +533,35 @@ class TranslationService
             ? $translationClass::where('language_id', $languageId)->where('translation_status', 'reviewed')->count()
             : 0;
 
-        $pending = $total - $translated;
+        $pending = max(0, $total - $translated);
+
+        return compact('total', 'translated', 'pending', 'reviewed');
+    }
+
+    /**
+     * Count translation statistics for a specific site label section (e.g. error-404).
+     */
+    public function siteLabelSectionTranslationStats(string $sectionSlug, int $languageId): array
+    {
+        $section = \App\Models\SiteLabelSection::where('slug', $sectionSlug)->first();
+        if (!$section) {
+            return ['total' => 0, 'translated' => 0, 'pending' => 0, 'reviewed' => 0];
+        }
+
+        $labelIds = \App\Models\SiteLabel::where('section_id', $section->id)->pluck('id');
+        $total = $labelIds->count();
+        $translated = \App\Models\SiteLabelTranslation::where('language_id', $languageId)
+            ->whereIn('site_label_id', $labelIds)
+            ->whereNotNull('label_value')
+            ->where('label_value', '!=', '')
+            ->count();
+
+        $reviewed = \App\Models\SiteLabelTranslation::where('language_id', $languageId)
+            ->whereIn('site_label_id', $labelIds)
+            ->where('translation_status', 'reviewed')
+            ->count();
+
+        $pending = max(0, $total - $translated);
 
         return compact('total', 'translated', 'pending', 'reviewed');
     }
