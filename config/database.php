@@ -43,7 +43,7 @@ return [
             'synchronous' => null,
             'transaction_mode' => 'DEFERRED',
         ],
-
+  
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
@@ -60,8 +60,18 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA', env('DB_SSL_CA')),
+                PDO::MYSQL_ATTR_SSL_CERT => env('MYSQL_ATTR_SSL_CERT', env('DB_SSL_CERT')),
+                PDO::MYSQL_ATTR_SSL_KEY => env('MYSQL_ATTR_SSL_KEY', env('DB_SSL_KEY')),
+                PDO::MYSQL_ATTR_SSL_CIPHER => env('MYSQL_ATTR_SSL_CIPHER', env('DB_SSL_CIPHER')),
+                (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT') ? PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT : 1014) => (env('DB_SSL_VERIFY') !== null)
+                    ? filter_var(env('DB_SSL_VERIFY'), FILTER_VALIDATE_BOOLEAN)
+                    : (env('DB_SSL_VERIFY_SERVER_CERT') !== null
+                        ? filter_var(env('DB_SSL_VERIFY_SERVER_CERT'), FILTER_VALIDATE_BOOLEAN)
+                        : (env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT') !== null
+                            ? filter_var(env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT'), FILTER_VALIDATE_BOOLEAN)
+                            : null)),
+            ], fn ($value) => $value !== null && $value !== '') : [],
         ],
 
         'mariadb' => [
@@ -80,8 +90,18 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA', env('DB_SSL_CA')),
+                PDO::MYSQL_ATTR_SSL_CERT => env('MYSQL_ATTR_SSL_CERT', env('DB_SSL_CERT')),
+                PDO::MYSQL_ATTR_SSL_KEY => env('MYSQL_ATTR_SSL_KEY', env('DB_SSL_KEY')),
+                PDO::MYSQL_ATTR_SSL_CIPHER => env('MYSQL_ATTR_SSL_CIPHER', env('DB_SSL_CIPHER')),
+                (defined('PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT') ? PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT : 1014) => (env('DB_SSL_VERIFY') !== null)
+                    ? filter_var(env('DB_SSL_VERIFY'), FILTER_VALIDATE_BOOLEAN)
+                    : (env('DB_SSL_VERIFY_SERVER_CERT') !== null
+                        ? filter_var(env('DB_SSL_VERIFY_SERVER_CERT'), FILTER_VALIDATE_BOOLEAN)
+                        : (env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT') !== null
+                            ? filter_var(env('MYSQL_ATTR_SSL_VERIFY_SERVER_CERT'), FILTER_VALIDATE_BOOLEAN)
+                            : null)),
+            ], fn ($value) => $value !== null && $value !== '') : [],
         ],
 
         'pgsql' => [
