@@ -21,7 +21,9 @@
 - [Default Admin Login](#default-admin-login)
 - [Quick Reference](#quick-reference)
 - [Local Docker Development Setup Guide](#local-docker-development-setup-guide)
-- [Redis Configuration & Troubleshooting](#redis-configuration--troubleshooting)
+- [Server Configuration & Troubleshooting](#server-configuration--troubleshooting)
+  - [Fixing "tempnam(): file created in the system's temporary directory"](#1-directory-permissions--tempnam-errors)
+  - [Redis Configuration & "Class Redis not found"](#2-redis-configuration--troubleshooting)
 - [Professional Services by Visperity](#professional-services-by-visperity)
 - [License](#license)
 
@@ -63,7 +65,7 @@ With Site Store Pro, there are no restrictions tying your business to a specific
 | **eCommerce & Products** | Sell unlimited **Physical Goods**, **Digital Downloads**, and **Event Tickets** with dependent variants and inventory tracking. |
 | **Payments & Checkout** | Built-in support for **Stripe**, **Paddle**, and **PayPal** with tax, shipping, and discount code engines. |
 | **Support & Tickets** | Complete support ticketing platform, agent queue management, and a self-service **Knowledge Base**. |
-| **Administration** | Gated admin control panel with role-based access co---
+| **Administration** | Gated admin control panel with role-based access control. |
 
 ---
 
@@ -80,14 +82,14 @@ Before you begin, make sure your environment meets the following requirements:
 | **Redis** *(Optional)* | Redis 6.0+ for high-performance session management, caching, and background job queue workers. |
 
 > [!NOTE]
-> The `phpoffice/phpspreadsheet` package is required if you plan to use the bulk CSV/Excel product import and export feature. It is optional — see [Step 8](#8-optional-install-bulk-excel-file-import-support) below.
+> The `phpoffice/phpspreadsheet` package is required if you plan to use the bulk CSV/Excel product import and export feature. It is optional — see [Step 9](#9-optional-install-bulk-excel-file-import-support) below.
 
 ---
 
 ## Installation Steps
 
 ### 1. Clone the Repository
-Clone the Site Store Pro repository to your local machine (or online dev server) and navigate into the project directory. (Replace [Your install folder name or full path] with the folder where you want to install the application. (Make sure you are already inside the directory where you want to create the install folder or specify the full path to the install folder such as /var/www/sitestorepro-laravel-ecommerce)
+Clone the Site Store Pro repository to your local machine (or online dev server) and navigate into the project directory. (Replace `[Your install folder name or full path]` with the folder where you want to install the application. Make sure you are already inside the directory where you want to create the install folder or specify the full path such as `/var/www/sitestorepro-laravel-ecommerce`):
 ```bash
 git clone https://github.com/Site-Store-Pro/laravel-ecommerce [Your install folder name or full path]
 cd [Your install folder name or full path]
@@ -126,7 +128,29 @@ DB_USERNAME=your_db_user
 DB_PASSWORD=your_db_password
 ```
 
-### 4. Run Database Migrations and Seed
+### 4. Create Storage Directories & Set Permissions
+When installing on a remote Linux server or hosting environment, ensure that all required storage directories exist and have proper write permissions for your web server (`www-data`, `nginx`, or `apache`). 
+
+> [!IMPORTANT]
+> If directories like `storage/framework/views` or `storage/framework/cache/data` are missing or non-writable, PHP will trigger an error:  
+> `tempnam(): file created in the system's temporary directory`.
+
+```bash
+# Create any missing framework storage folders
+mkdir -p storage/framework/cache/data
+mkdir -p storage/framework/sessions
+mkdir -p storage/framework/views
+mkdir -p storage/framework/testing
+mkdir -p storage/logs
+mkdir -p bootstrap/cache
+
+# Set ownership and permissions (Linux / Ubuntu / Debian with Nginx or Apache)
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+```
+*(For shared hosting or cPanel, set `storage` and `bootstrap/cache` permissions to `775` or `755` via the cPanel File Manager or SSH).*
+
+### 5. Run Database Migrations and Seed
 Run a fresh migration and seed the database with baseline default data:
 
 ```bash
@@ -138,14 +162,14 @@ The seeder creates default roles, core configuration, site label sections, multi
 > [!WARNING]
 > `migrate:fresh` will **drop all existing tables** and rebuild from scratch. Never run this command on a production database or any database containing data you need to keep.
 
-### 5. (Optional) Load Developer QA Seed Data
+### 6. (Optional) Load Developer QA Seed Data
 If you want to install a demo storefront populated with sample products, variants, categories, brands, testimonials, slideshows, digital downloads, and 24 sample product reviews:
 
 ```bash
 php artisan db:seed --class=DemoStoreSeeder
 ```
 
-### 6. Compile Frontend Assets
+### 7. Compile Frontend Assets
 Build the frontend assets using Vite:
 
 ```bash
@@ -156,7 +180,7 @@ npm run dev
 npm run build
 ```
 
-### 7. (Optional) Install Payment Provider SDKs
+### 8. (Optional) Install Payment Provider SDKs
 Site Store Pro supports Stripe, Paddle and PayPal as built-in payment providers:
 
 ```bash
@@ -175,14 +199,14 @@ composer require stripe/stripe-php paddlehq/paddle-php-sdk
 > [!NOTE]
 > Payment provider credentials (API keys, publishable keys, webhook secrets) are configured via your `.env` file or Admin Settings after the respective SDK is installed.
 
-### 8. (Optional) Install Bulk Excel File Import Support
+### 9. (Optional) Install Bulk Excel File Import Support
 To enable bulk product import and export via Excel/CSV spreadsheet files, install the `phpoffice/phpspreadsheet` package:
 
 ```bash
 composer require phpoffice/phpspreadsheet
 ```
 
-### 9. (Optional) Configure Redis for Caching, Sessions, & Queues
+### 10. (Optional) Configure Redis for Caching, Sessions, & Queues
 To enable Redis for session handling, application caching, or background queues without requiring compiled native C-extensions (which avoids `Class "Redis" not found` errors), install the `predis/predis` package:
 
 ```bash
@@ -205,7 +229,7 @@ QUEUE_CONNECTION=redis
 > [!TIP]
 > If your server already has the native PHP `ext-redis` C-extension compiled and enabled in `php.ini`, you can set `REDIS_CLIENT=phpredis` instead.
 
-### 10. Create Storage Symlink
+### 11. Create Storage Symlink
 In production (and recommended for local development too), create the public storage symlink so uploaded images and files are accessible via the browser:
 
 ```bash
@@ -250,13 +274,18 @@ npm install
 cp .env.example .env
 php artisan key:generate
 
-# 4. Run migrations and seed
+# 4. Create missing storage directories and set permissions (Linux/Server)
+mkdir -p storage/framework/{cache/data,sessions,views,testing} storage/logs bootstrap/cache
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+
+# 5. Run migrations and seed
 php artisan migrate:fresh --seed
 
-# 5. Compile production assets
+# 6. Compile production assets
 npm run build
 
-# 6. Create storage symlink
+# 7. Create storage symlink
 php artisan storage:link
 ```
 </details>
@@ -573,14 +602,49 @@ To change the temporary password:
 
 ---
 
-## Redis Configuration & Troubleshooting
+## Server Configuration & Troubleshooting
+
+### 1. Directory Permissions & `tempnam()` Errors
+If you see the error:
+```
+tempnam(): file created in the system's temporary directory
+```
+This occurs when PHP attempts to create cached Blade views in `storage/framework/views` (or session/cache files) and finds that the directory **does not exist** or **is not writable** by the web server user.
+
+#### Solution:
+1. **Create missing framework directories**:
+   ```bash
+   mkdir -p storage/framework/{cache/data,sessions,views,testing} storage/logs bootstrap/cache
+   ```
+2. **Grant write permissions**:
+   - **Linux / Ubuntu / Debian (Nginx or Apache):**
+     ```bash
+     sudo chown -R www-data:www-data storage bootstrap/cache
+     sudo chmod -R 775 storage bootstrap/cache
+     ```
+   - **CentOS / RHEL / AlmaLinux:**
+     ```bash
+     sudo chown -R nginx:nginx storage bootstrap/cache  # (or apache:apache)
+     sudo chmod -R 775 storage bootstrap/cache
+     ```
+   - **cPanel / Shared Hosting:** Set `storage` and `bootstrap/cache` permissions to `775` (or `755`).
+3. **Clear cached views & config**:
+   ```bash
+   php artisan view:clear
+   php artisan cache:clear
+   php artisan config:clear
+   ```
+
+---
+
+### 2. Redis Configuration & Troubleshooting
 
 Laravel defaults to the **`phpredis`** connector (`PhpRedisConnector`), which requires the native PHP C-extension (`ext-redis`). If your server or Docker container does not have this extension enabled, switching to Redis for caching and sessions will result in:
 ```
 Class "Redis" not found (PhpRedisConnector.php:82)
 ```
 
-### Recommended Fix: Use `predis` (Pure PHP Driver)
+#### Recommended Fix: Use `predis` (Pure PHP Driver)
 `predis` runs entirely in userland PHP and requires no external `.dll` or `.so` extensions:
 
 1. **Install `predis`:**
@@ -608,7 +672,7 @@ Class "Redis" not found (PhpRedisConnector.php:82)
    docker compose exec app php artisan config:clear
    ```
 
-### Alternative: Enable Native `phpredis` C-Extension
+#### Alternative: Enable Native `phpredis` C-Extension
 If you prefer the native C-extension:
 - **Windows**: Add `extension=php_redis.dll` (or `extension=redis`) to `php.ini` and restart web server.
 - **Linux**: Install via `sudo apt-get install php-redis` or `sudo pecl install redis`.
