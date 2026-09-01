@@ -90,8 +90,8 @@ Before you begin, make sure your environment meets the following requirements:
 Clone the Site Store Pro repository to your local machine (or online dev server) and navigate into the project directory:
 
 ```bash
-git clone <repository-url> laravel-ecommerce
-cd laravel-ecommerce
+git clone https://github.com/Site-Store-Pro/laravel-ecommerce [your-install-name]
+cd [your-install-name]
 ```
 
 ### 2. Install Dependencies
@@ -240,8 +240,8 @@ After running migrations and seeding, your Site Store Pro installation includes 
 
 ```bash
 # 1. Clone and enter the project
-git clone <repository-url> laravel-ecommerce
-cd laravel-ecommerce
+git clone https://github.com/Site-Store-Pro/laravel-ecommerce [your-install-name]
+cd [your-install-name]
 
 # 2. Install dependencies
 composer install
@@ -317,8 +317,8 @@ Docker runs natively via the macOS Hypervisor framework.
 
 1. Open your terminal (PowerShell on Windows, or Terminal on macOS) and clone the application:
    ```bash
-   git clone https://github.com
-   cd laravel-ecommerce
+   git clone https://github.com/Site-Store-Pro/laravel-ecommerce [your-install-name]
+   cd [your-install-name]
    ```
 
 2. Initialize your local configuration file from the template:
