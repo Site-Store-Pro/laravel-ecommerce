@@ -87,11 +87,10 @@ Before you begin, make sure your environment meets the following requirements:
 ## Installation Steps
 
 ### 1. Clone the Repository
-Clone the Site Store Pro repository to your local machine (or online dev server) and navigate into the project directory. (Replace [your-install-name] with the folder you want to install the application info:
-
+Clone the Site Store Pro repository to your local machine (or online dev server) and navigate into the project directory. (Replace [Your install folder name or full path] with the folder you want to install the application info. (Make sure you are already inside the directory where you want to create the install folder or specify the full path to the install folder such as /var/www/sitestorepro-laravel-ecommerce)
 ```bash
-git clone https://github.com/Site-Store-Pro/laravel-ecommerce [your-install-name]
-cd [your-install-name]
+git clone https://github.com/Site-Store-Pro/laravel-ecommerce [Your install folder name or full path]
+cd [Your install folder name or full path]
 ```
 
 ### 2. Install Dependencies
