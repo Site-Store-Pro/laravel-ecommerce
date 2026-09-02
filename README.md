@@ -114,11 +114,15 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Open the newly created `.env` file and update the database configuration to match your db setup:
+Open the newly created `.env` file and update the database configuration to match your db setup and install URL and subdirectory (if applicable);
 
 ```env
 APP_NAME="Your Online Store Name"
 APP_URL=http://localhost
+ASSET_URL=http://localhost
+
+LIVEWIRE_SUBDIRECTORY=
+# example /sub-dir-name
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
