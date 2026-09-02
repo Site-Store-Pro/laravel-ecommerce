@@ -114,7 +114,7 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Open the newly created `.env` file and update the database configuration to match your db setup and install URL and subdirectory (if applicable);
+Open the newly created `.env` file and update the database configuration to match your db setup and install URL (both APP_URL and ASSET_URL should reflect be the same URL value) and your install's subdirectory (if applicable);
 
 ```env
 APP_NAME="Your Online Store Name"
