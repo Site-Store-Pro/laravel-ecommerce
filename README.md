@@ -144,7 +144,12 @@ mkdir -p storage/framework/testing
 mkdir -p storage/logs
 mkdir -p bootstrap/cache
 
-# Set ownership and permissions (Linux / Ubuntu / Debian with Nginx or Apache)
+# Set ownership and permissions:
+# For AWS EC2 / ECS (Amazon Linux with Apache):
+sudo chown -R ec2-user:apache storage bootstrap/cache
+sudo chmod -R 2775 storage bootstrap/cache
+
+# For Ubuntu / Debian (Nginx or Apache):
 sudo chown -R www-data:www-data storage bootstrap/cache
 sudo chmod -R 775 storage bootstrap/cache
 ```
@@ -617,6 +622,11 @@ This occurs when PHP attempts to create cached Blade views in `storage/framework
    mkdir -p storage/framework/{cache/data,sessions,views,testing} storage/logs bootstrap/cache
    ```
 2. **Grant write permissions**:
+   - **AWS EC2 / ECS (Amazon Linux with Apache):**
+     ```bash
+     sudo chown -R ec2-user:apache storage bootstrap/cache
+     sudo chmod -R 2775 storage bootstrap/cache
+     ```
    - **Linux / Ubuntu / Debian (Nginx or Apache):**
      ```bash
      sudo chown -R www-data:www-data storage bootstrap/cache
