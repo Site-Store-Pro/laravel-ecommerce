@@ -58,31 +58,41 @@ class ProductDownloadController extends Controller
             'Associated product variant could not be found.'
         );
 
-        // 6.5 Direct URL Download Mode (Overrides any uploaded download files or S3 options)
+        // 6.5 Direct URL Download Mode (Memory-safe forced chunked stream)
         if (!empty($variant->direct_download_url)) {
             $directUrl = trim($variant->direct_download_url);
-            $filename = basename(parse_url($directUrl, PHP_URL_PATH)) ?: 'download-file';
 
+            if (!preg_match('#^https?://#i', $directUrl)) {
+                $directUrl = 'https://' . ltrim($directUrl, '/');
+            }
+
+            $filename = basename(parse_url($directUrl, PHP_URL_PATH)) ?: 'download-file';
             if (!str_contains($filename, '.')) {
                 $filename .= '.bin';
             }
 
-            try {
-                $httpResponse = \Illuminate\Support\Facades\Http::timeout(30)->get($directUrl);
-                if ($httpResponse->successful()) {
-                    $contentType = $httpResponse->header('Content-Type') ?: 'application/octet-stream';
-                    return response()->streamDownload(function () use ($httpResponse) {
-                        echo $httpResponse->body();
-                    }, $filename, [
-                        'Content-Type' => $contentType,
-                        'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error("Direct download URL stream failed for variant {$variant->id}: " . $e->getMessage());
-            }
+            return response()->streamDownload(function () use ($directUrl) {
+                $context = stream_context_create([
+                    'http' => [
+                        'follow_location' => 1,
+                        'timeout' => 60,
+                        'ignore_errors' => true,
+                    ],
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                    ],
+                ]);
 
-            return redirect()->away($directUrl);
+                $handle = @fopen($directUrl, 'rb', false, $context);
+                if ($handle) {
+                    while (!feof($handle) && connection_status() === CONNECTION_NORMAL) {
+                        echo fread($handle, 1024 * 1024);
+                        flush();
+                    }
+                    fclose($handle);
+                }
+            }, $filename);
         }
 
         // 7. Resolve storage disk
@@ -115,6 +125,9 @@ class ProductDownloadController extends Controller
             $cdn = $variant->download_cdn_url ?: config('app.cdn_url');
             if ($cdn) {
                 $url = rtrim($cdn, '/') . '/' . ltrim($variant->download_location, '/');
+                if (!preg_match('#^https?://#i', $url)) {
+                    $url = 'https://' . ltrim($url, '/');
+                }
                 return redirect()->away($url);
             }
             return redirect()->away(Storage::disk($diskName)->url($variant->download_location));
