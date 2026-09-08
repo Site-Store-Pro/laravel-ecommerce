@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class OrderDetail extends Model
 {
@@ -15,6 +16,7 @@ class OrderDetail extends Model
 
     protected $fillable = [
         'order_id',
+        'order_detail_external_id',
         'item_name',
         'item_qty',
         'final_price',
@@ -77,6 +79,43 @@ class OrderDetail extends Model
     public function variant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'inventory_id');
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (OrderDetail $detail) {
+            if (empty($detail->order_detail_external_id)) {
+                $detail->order_detail_external_id = (string) Str::uuid();
+            }
+        });
+    }
+
+    /**
+     * Retrieve the model for a bound value.
+     * Supports both numeric primary key (backwards compatibility) and UUID external ID.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        if (is_numeric($value)) {
+            return $this->where($field ?? 'id', $value)->first();
+        }
+
+        return $this->where($field ?? 'order_detail_external_id', $value)->first();
+    }
+
+    /**
+     * Get the secure download URL for this item if downloadable.
+     */
+    public function getDownloadUrlAttribute(): ?string
+    {
+        if (!$this->download_item || !$this->order || empty($this->order->order_external_id)) {
+            return null;
+        }
+
+        return route('products.download', [
+            $this->order_detail_external_id ?: $this->id,
+            $this->order->order_external_id,
+        ]);
     }
 
     public function contentAccessToken(): \Illuminate\Database\Eloquent\Relations\HasOne

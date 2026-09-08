@@ -366,7 +366,7 @@
                                             @if(($item->download_expiration && now()->greaterThan($item->download_expiration)) || $item->downloads_counter >= $item->downloads_max_allowed)
                                                 <span class="inline-flex items-center px-2.5 py-1.5 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-100 dark:border-rose-800 uppercase">@label('account.expired', 'Expired')</span>
                                             @else
-                                                <a href="{{ route('products.download', [$item->id, $item->order->order_external_id]) }}"
+                                                <a href="{{ route('products.download', [$item->order_detail_external_id ?: $item->id, $item->order->order_external_id]) }}"
                                                    class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 transition-all shadow-sm">
                                                     @label('account.download', 'Download')
                                                 </a>

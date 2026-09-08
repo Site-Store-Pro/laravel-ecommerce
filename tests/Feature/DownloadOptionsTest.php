@@ -14,6 +14,14 @@ class DownloadOptionsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        \Illuminate\Support\Facades\DB::table('user_roles')->insertOrIgnore(['id' => 1, 'name' => 'Customer']);
+        \Illuminate\Support\Facades\DB::table('user_roles')->insertOrIgnore(['id' => 3, 'name' => 'Admin']);
+    }
+
     public function test_checkout_saves_variant_download_expiration_and_max_downloads(): void
     {
         $user = User::create([

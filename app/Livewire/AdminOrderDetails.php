@@ -522,7 +522,7 @@ class AdminOrderDetails extends Component
             $linksHtml = '<div style="margin-top: 15px; font-family: sans-serif;">';
             foreach ($this->order->details as $item) {
                 if ($item->download_item) {
-                    $downloadUrl = route('products.download', [$item->id, $this->order->order_external_id]);
+                    $downloadUrl = route('products.download', [$item->order_detail_external_id ?: $item->id, $this->order->order_external_id]);
                     $linksHtml .= '<div style="margin-bottom: 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px;">';
                     $linksHtml .= '<strong style="color: #166534; font-size: 14px; display: block; margin-bottom: 4px;">' . e($item->item_name) . '</strong>';
                     $linksHtml .= '<a href="' . $downloadUrl . '" style="background-color: #4f46e5; color: #ffffff; padding: 6px 12px; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 4px;">Download File</a>';
@@ -622,7 +622,7 @@ class AdminOrderDetails extends Component
                 $itemsHtml .= '<span style="color: #64748b; font-size: 12px; display: block; margin-top: 2px;">Quantity: ' . number_format($item->item_qty, 0) . '</span>';
                 $itemsHtml .= $itemTypeBadge;
                 if ($item->download_item) {
-                    $downloadUrl = route('products.download', [$item->id, $order->order_external_id]);
+                    $downloadUrl = route('products.download', [$item->order_detail_external_id ?: $item->id, $order->order_external_id]);
                     $itemsHtml .= '<div style="margin-top: 8px;">';
                     $itemsHtml .= '<a href="' . e($downloadUrl) . '" target="_blank" style="background-color: #4f46e5; color: #ffffff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: 1px solid #4338ca;">Download File</a>';
                     $itemsHtml .= '</div>';

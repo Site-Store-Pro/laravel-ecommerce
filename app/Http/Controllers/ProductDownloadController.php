@@ -9,8 +9,16 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductDownloadController extends Controller
 {
-    public function download(OrderDetail $orderDetail, string $token)
+    public function download($orderDetail, string $token)
     {
+        if (!($orderDetail instanceof OrderDetail)) {
+            $orderDetail = is_numeric($orderDetail)
+                ? OrderDetail::find($orderDetail)
+                : OrderDetail::where('order_detail_external_id', $orderDetail)->first();
+        }
+
+        abort_unless($orderDetail, 404, 'Download item not found.');
+
         // 1. Authorize token matching order external UUID
         abort_unless(
             $orderDetail->order && $orderDetail->order->order_external_id === $token,

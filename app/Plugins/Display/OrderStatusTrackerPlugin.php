@@ -183,7 +183,7 @@ class OrderStatusTrackerPlugin implements DisplayPlugin
                         $html .= '<span class="text-xs text-slate-500 dark:text-slate-400 block mt-0.5">Quantity: ' . number_format((float)($item->item_qty ?? 1), 0) . '</span>';
 
                         if (!empty($item->download_item) && !empty($order->order_external_id)) {
-                            $downloadUrl = route('products.download', [$item->id, $order->order_external_id]);
+                            $downloadUrl = route('products.download', [$item->order_detail_external_id ?: $item->id, $order->order_external_id]);
                             $html .= '<div class="flex flex-wrap items-center gap-2 mt-1.5">';
                             $html .= '<span class="inline-block bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 text-[10px] px-1.5 py-0.5 rounded font-bold border border-teal-200 dark:border-teal-800">Ready for download</span>';
                             $html .= '<a href="' . e($downloadUrl) . '" class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg transition duration-150 shadow-sm">';

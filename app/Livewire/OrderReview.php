@@ -1004,7 +1004,7 @@ class OrderReview extends Component
                 $itemsHtml .= '<span style="color: #64748b; font-size: 12px; display: block; margin-top: 2px;">' . e(siteLabel('email.quantity', 'Quantity')) . ': ' . number_format($item->item_qty, 0) . '</span>';
                 $itemsHtml .= $itemTypeBadge;
                 if ($item->download_item) {
-                    $downloadUrl = route('products.download', [$item->id, $order->order_external_id]);
+                    $downloadUrl = route('products.download', [$item->order_detail_external_id ?: $item->id, $order->order_external_id]);
                     $itemsHtml .= '<div style="margin-top: 8px;">';
                     $itemsHtml .= '<a href="' . e($downloadUrl) . '" target="_blank" style="background-color: #4f46e5; color: #ffffff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; border: 1px solid #4338ca;">' . e(siteLabel('email.download_file', 'Download File')) . '</a>';
                     $itemsHtml .= '</div>';

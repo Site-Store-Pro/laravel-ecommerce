@@ -56,7 +56,7 @@
                                 @if($item->download_item)
                                     <div class="flex flex-wrap items-center gap-2 mt-1">
                                         <span class="inline-block bg-teal-50 text-teal-700 text-[9px] px-1.5 py-0.5 rounded font-bold border border-teal-150">@label('success.ready_for_download', 'Ready for download')</span>
-                                        <a href="{{ route('products.download', [$item->id, $order->order_external_id]) }}" class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold rounded transition duration-150">
+                                        <a href="{{ route('products.download', [$item->order_detail_external_id ?: $item->id, $order->order_external_id]) }}" class="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-bold rounded transition duration-150">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                             </svg>
