@@ -155,7 +155,7 @@
                 <!-- Product Details Edit Panel -->
                 <div id="section-product-details" class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-6">
                     <h3 class="text-lg font-bold text-slate-900 pb-3 border-b border-slate-100">Product Details</h3>
-                    <form wire:submit.prevent="updateProduct" class="space-y-4">
+                    <form wire:submit.prevent="updateProduct" @submit="if (typeof tinymce !== 'undefined') { let ed = tinymce.get('long_description_editor'); if (ed) $wire.set('long_description', ed.getContent(), false); }" class="space-y-4">
                         {{-- Active Status Card --}}
                         <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                             <label class="flex items-start gap-3 cursor-pointer">
@@ -278,97 +278,120 @@
                                  x-data="{
                                      long_description: @entangle('long_description'),
                                      initTiny() {
-                                         tinymce.init({
-                                             selector: '#long_description_editor',
-                                             license_key: 'gpl',
-                                             promotion: false,
-                                             height: 850,
-                                             menubar: 'insert format tools table',
-                                             content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } .btn-theme-primary { background-color: #4f46e5 !important; color: #ffffff !important; border-radius: 0.75rem !important; border: none !important; padding: 10px 20px !important; font-weight: 700 !important; font-family: inherit !important; cursor: pointer !important; display: inline-block !important; text-align: center !important; text-decoration: none !important; transition: background-color 0.2s !important; } .btn-theme-primary:hover { background-color: #4338ca !important; }',
-                                             content_css: [
-                                                 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
-                                                 '/css/prose.css'
-                                             ],
-                                             convert_urls: false,
-                                             remove_script_host: false,
-                                             images_upload_handler: window.cmsTinyMCEImageUploadHandler,
-                                             plugins: 'advlist autolink lists link image charmap preview anchor searchreplace wordcount visualblocks supercode fullscreen insertdatetime media table help emoticons pagebreak directionality',
-                                             toolbar: [
-                                                 'supercode fullscreen | undo redo | styles blocks | bold italic underline strikethrough | forecolor backcolor',
-                                                 'fontfamily fontsize lineheight | alignleft aligncenter alignright alignjustify | outdent indent | removeformat | numlist bullist | pagebreak | charmap emoticons | link image media anchor | ltr rtl | preview'
-                                             ],
-                                             toolbar_mode: 'wrap',
-                                             cache_suffix: '?v=' + new Date().getTime(),
-                                             protect: [
-                                                 /\{\{[\s\S]*?\}\}/g,
-                                                 /\{!![\s\S]*?!!\}/g,
-                                                 /@\w+(\([^)]*\))?/g
-                                             ],
-                                             branding: false,
-                                             contextmenu: 'link image imagetools',
-                                             style_formats: [
-                                                 { title: 'Callout (Yellow/Warning)', block: 'div', classes: 'p-4 bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 text-amber-900 dark:text-amber-200 rounded-r-lg my-4', wrapper: true },
-                                                 { title: 'Callout (Blue/Info)', block: 'div', classes: 'p-4 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 text-blue-900 dark:text-blue-200 rounded-r-lg my-4', wrapper: true },
-                                                 { title: 'Callout (Green/Success)', block: 'div', classes: 'p-4 bg-emerald-50 dark:bg-emerald-950/20 border-l-4 border-emerald-500 text-emerald-900 dark:text-emerald-200 rounded-r-lg my-4', wrapper: true },
-                                                 { title: 'Callout (Red/Danger)', block: 'div', classes: 'p-4 bg-rose-50 dark:bg-rose-950/20 border-l-4 border-rose-500 text-rose-900 dark:text-rose-200 rounded-r-lg my-4', wrapper: true },
-                                                 { title: 'Feature Card', block: 'div', classes: 'p-6 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl shadow-sm my-6', wrapper: true },
-                                                 { title: 'Premium Button (Primary)', selector: 'a', classes: 'inline-block px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors no-underline' },
-                                                 { title: 'Premium Button (Outline)', selector: 'a', classes: 'inline-block px-5 py-2.5 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium rounded-xl transition-colors no-underline' },
-                                                 { title: 'Badge Primary', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full' },
-                                                 { title: 'Badge Success', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full' },
-                                                 { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
-                                                 { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
-                                             ],
-                                             extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*]',
-                                             supercode: {
-                                                 theme: 'monokai',
-                                                 fontSize: 14,
-                                                 autocomplete: true,
-                                                 dark: true
-                                             },
-                                             setup: (editor) => {
-                                                 editor.on('init', () => {
-                                                     const html = this.long_description || '';
-                                                     editor.setContent(window.ensureProseWrapper(html));
-                                                     // Force max-width:none on .prose via inline style — beats all CSS cascade & browser cache issues
-                                                     editor.getBody().querySelectorAll('.prose').forEach(el => {
-                                                         el.style.setProperty('max-width', 'none', 'important');
-                                                         el.style.setProperty('width', '100%');
+                                         let attempts = 0;
+                                         const tryInit = () => {
+                                             if (typeof tinymce === 'undefined') {
+                                                 if (attempts++ < 40) setTimeout(tryInit, 100);
+                                                 return;
+                                             }
+                                             if (tinymce.get('long_description_editor')) {
+                                                 tinymce.get('long_description_editor').remove();
+                                             }
+                                             tinymce.init({
+                                                 selector: '#long_description_editor',
+                                                 license_key: 'gpl',
+                                                 promotion: false,
+                                                 base_url: '/build/node_modules/tinymce',
+                                                 suffix: '.min',
+                                                 height: 850,
+                                                 menubar: 'insert format tools table',
+                                                 content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } .btn-theme-primary { background-color: #4f46e5 !important; color: #ffffff !important; border-radius: 0.75rem !important; border: none !important; padding: 10px 20px !important; font-weight: 700 !important; font-family: inherit !important; cursor: pointer !important; display: inline-block !important; text-align: center !important; text-decoration: none !important; transition: background-color 0.2s !important; } .btn-theme-primary:hover { background-color: #4338ca !important; }',
+                                                 content_css: [
+                                                     'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
+                                                     '/css/prose.css'
+                                                 ],
+                                                 convert_urls: false,
+                                                 remove_script_host: false,
+                                                 images_upload_handler: window.cmsTinyMCEImageUploadHandler,
+                                                 plugins: 'advlist autolink lists link image charmap preview anchor searchreplace wordcount visualblocks supercode fullscreen insertdatetime media table help emoticons pagebreak directionality',
+                                                 toolbar: [
+                                                     'supercode fullscreen | undo redo | styles blocks | bold italic underline strikethrough | forecolor backcolor',
+                                                     'fontfamily fontsize lineheight | alignleft aligncenter alignright alignjustify | outdent indent | removeformat | numlist bullist | pagebreak | charmap emoticons | link image media anchor | ltr rtl | preview'
+                                                 ],
+                                                 toolbar_mode: 'wrap',
+                                                 cache_suffix: '?v=' + new Date().getTime(),
+                                                 protect: [
+                                                     /\{\{[\s\S]*?\}\}/g,
+                                                     /\{!![\s\S]*?!!\}/g,
+                                                     /@\w+(\([^)]*\))?/g
+                                                 ],
+                                                 branding: false,
+                                                 contextmenu: 'link image imagetools',
+                                                 style_formats: [
+                                                     { title: 'Callout (Yellow/Warning)', block: 'div', classes: 'p-4 bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 text-amber-900 dark:text-amber-200 rounded-r-lg my-4', wrapper: true },
+                                                     { title: 'Callout (Blue/Info)', block: 'div', classes: 'p-4 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 text-blue-900 dark:text-blue-200 rounded-r-lg my-4', wrapper: true },
+                                                     { title: 'Callout (Green/Success)', block: 'div', classes: 'p-4 bg-emerald-50 dark:bg-emerald-950/20 border-l-4 border-emerald-500 text-emerald-900 dark:text-emerald-200 rounded-r-lg my-4', wrapper: true },
+                                                     { title: 'Callout (Red/Danger)', block: 'div', classes: 'p-4 bg-rose-50 dark:bg-rose-950/20 border-l-4 border-rose-500 text-rose-900 dark:text-rose-200 rounded-r-lg my-4', wrapper: true },
+                                                     { title: 'Feature Card', block: 'div', classes: 'p-6 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl shadow-sm my-6', wrapper: true },
+                                                     { title: 'Premium Button (Primary)', selector: 'a', classes: 'inline-block px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors no-underline' },
+                                                     { title: 'Premium Button (Outline)', selector: 'a', classes: 'inline-block px-5 py-2.5 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium rounded-xl transition-colors no-underline' },
+                                                     { title: 'Badge Primary', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full' },
+                                                     { title: 'Badge Success', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full' },
+                                                     { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
+                                                     { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
+                                                 ],
+                                                 extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*]',
+                                                 supercode: {
+                                                     theme: 'monokai',
+                                                     fontSize: 14,
+                                                     autocomplete: true,
+                                                     dark: true
+                                                 },
+                                                 setup: (editor) => {
+                                                     editor.on('init', () => {
+                                                         let initialHtml = (typeof this.long_description !== 'undefined' && this.long_description !== null && this.long_description !== '') 
+                                                             ? this.long_description 
+                                                             : (@js($long_description) || '');
+                                                         let ensureWrapper = (typeof window.ensureProseWrapper === 'function')
+                                                             ? window.ensureProseWrapper
+                                                             : (raw) => (raw && raw.trim() ? raw : '<p>&nbsp;</p>');
+                                                         let formatted = ensureWrapper(initialHtml);
+                                                         editor.setContent(formatted);
+                                                         this.long_description = editor.getContent();
+                                                         
+                                                         // Force max-width:none on .prose via inline style — beats all CSS cascade & browser cache issues
+                                                         editor.getBody().querySelectorAll('.prose').forEach(el => {
+                                                             el.style.setProperty('max-width', 'none', 'important');
+                                                             el.style.setProperty('width', '100%');
+                                                         });
                                                      });
-                                                 });
-                                                 editor.on('change blur keyup NodeChange SetContent Undo Redo', () => {
-                                                      let content = editor.getContent();
-                                                      this.long_description = content;
-                                                      $wire.set('long_description', content, false);
-                                                  });
-                                                 editor.on('NodeChange', () => {
-                                                     setTimeout(() => {
-                                                         let node = editor.selection.getNode();
-                                                         let body = editor.getBody();
-                                                         let blockNode = node;
-                                                         while (blockNode && blockNode.parentNode !== body) {
-                                                             blockNode = blockNode.parentNode;
-                                                         }
-                                                         if (blockNode && blockNode !== body) {
-                                                             if (blockNode.nodeName === 'DIV' || blockNode.nodeName === 'BLOCKQUOTE' || blockNode.nodeName === 'DETAILS' || (blockNode.classList && blockNode.classList.contains('faq-accordion'))) {
-                                                                 if (!blockNode.nextSibling) {
-                                                                     let p = editor.dom.create('p', {}, '<br data-mce-bogus=\'1\'>');
-                                                                     editor.dom.insertAfter(p, blockNode);
-                                                                     editor.nodeChanged();
+                                                     editor.on('change blur keyup NodeChange SetContent Undo Redo input', () => {
+                                                         let content = editor.getContent();
+                                                         this.long_description = content;
+                                                         $wire.set('long_description', content, false);
+                                                     });
+                                                     editor.on('NodeChange', () => {
+                                                         setTimeout(() => {
+                                                             let node = editor.selection.getNode();
+                                                             let body = editor.getBody();
+                                                             let blockNode = node;
+                                                             while (blockNode && blockNode.parentNode !== body) {
+                                                                 blockNode = blockNode.parentNode;
+                                                             }
+                                                             if (blockNode && blockNode !== body) {
+                                                                 if (blockNode.nodeName === 'DIV' || blockNode.nodeName === 'BLOCKQUOTE' || blockNode.nodeName === 'DETAILS' || (blockNode.classList && blockNode.classList.contains('faq-accordion'))) {
+                                                                     if (!blockNode.nextSibling) {
+                                                                         let p = editor.dom.create('p', {}, '<br data-mce-bogus=\'1\'>');
+                                                                         editor.dom.insertAfter(p, blockNode);
+                                                                         editor.nodeChanged();
+                                                                     }
                                                                  }
                                                              }
-                                                         }
-                                                     }, 50);
-                                                 });
-                                             }
-                                         });
+                                                         }, 50);
+                                                     });
+                                                 }
+                                             });
+                                         };
+                                         tryInit();
                                      },
                                      destroy() {
-                                         tinymce.remove('#long_description_editor');
+                                         if (typeof tinymce !== 'undefined' && tinymce.get('long_description_editor')) {
+                                             tinymce.get('long_description_editor').remove();
+                                         }
                                      }
-                                     }"
-                                     x-init="initTiny()">
-                                 <textarea id="long_description_editor" class="w-full"></textarea>
+                                 }"
+                                 x-init="initTiny()">
+                                <textarea id="long_description_editor" class="w-full"></textarea>
                             </div>
                             @error('long_description') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                         </div>
@@ -423,7 +446,7 @@
                         </div>
 
                         <div class="pt-6">
-                            <button type="submit" wire:loading.attr="disabled" wire:target="updateProduct" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-2xl shadow-md hover:opacity-90 flex items-center justify-center gap-2">
+                            <button type="submit" @click="if (typeof tinymce !== 'undefined' && tinymce.get('long_description_editor')) { $wire.set('long_description', tinymce.get('long_description_editor').getContent(), false); }" wire:loading.attr="disabled" wire:target="updateProduct" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-2xl shadow-md hover:opacity-90 flex items-center justify-center gap-2">
                                 <svg wire:loading wire:target="updateProduct" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>

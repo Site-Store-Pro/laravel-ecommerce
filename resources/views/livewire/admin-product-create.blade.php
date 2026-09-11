@@ -15,7 +15,9 @@
                 </div>
 
                 <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/80 rounded-3xl p-8 shadow-sm">
-                    <form wire:submit.prevent="saveProduct" class="space-y-6">
+                    <form wire:submit.prevent="saveProduct"
+                          @submit="if (typeof tinymce !== 'undefined' && tinymce.get('new_product_long_description_editor')) { $wire.set('long_description', tinymce.get('new_product_long_description_editor').getContent()); }"
+                          class="space-y-6">
                         {{-- Active Status Card --}}
                         <div class="p-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl">
                             <label class="flex items-start gap-3 cursor-pointer">
@@ -163,31 +165,54 @@
 
                             <div wire:ignore
                                  x-data="{
+                                     long_description: @entangle('long_description'),
                                      initTinyMCE() {
-                                         if (typeof tinymce === 'undefined') return;
-                                         if (tinymce.get('new_product_long_description_editor')) {
+                                         let attempts = 0;
+                                         const tryInit = () => {
+                                             if (typeof tinymce === 'undefined') {
+                                                 if (attempts++ < 30) setTimeout(tryInit, 100);
+                                                 return;
+                                             }
+                                             if (tinymce.get('new_product_long_description_editor')) {
+                                                 tinymce.get('new_product_long_description_editor').remove();
+                                             }
+                                             tinymce.init({
+                                                 selector: '#new_product_long_description_editor',
+                                                 license_key: 'gpl',
+                                                 promotion: false,
+                                                 base_url: '/build/node_modules/tinymce',
+                                                 suffix: '.min',
+                                                 height: 450,
+                                                 menubar: 'insert format tools table',
+                                                 content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; }',
+                                                 plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
+                                                 toolbar: 'undo redo | blocks | bold italic underline backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | link image media | code fullscreen',
+                                                 setup: (editor) => {
+                                                     editor.on('init', () => {
+                                                         if (this.long_description) {
+                                                             editor.setContent(this.long_description);
+                                                         }
+                                                     });
+                                                     editor.on('change blur keyup NodeChange SetContent Undo Redo input', () => {
+                                                         let content = editor.getContent();
+                                                         this.long_description = content;
+                                                         $wire.set('long_description', content, false);
+                                                     });
+                                                 }
+                                             });
+                                         };
+                                         tryInit();
+                                     },
+                                     destroy() {
+                                         if (typeof tinymce !== 'undefined' && tinymce.get('new_product_long_description_editor')) {
                                              tinymce.get('new_product_long_description_editor').remove();
                                          }
-                                         tinymce.init({
-                                             selector: '#new_product_long_description_editor',
-                                             license_key: 'gpl',
-                                             base_url: '/build/node_modules/tinymce',
-                                             suffix: '.min',
-                                             height: 350,
-                                             menubar: false,
-                                             plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table code help wordcount',
-                                             toolbar: 'undo redo | blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help | code',
-                                             setup: (editor) => {
-                                                 editor.on('change blur keyup', () => {
-                                                     $wire.set('long_description', editor.getContent());
-                                                 });
-                                             }
-                                         });
                                      }
                                  }"
                                  x-init="initTinyMCE()">
-                                <textarea id="new_product_long_description_editor" wire:model="long_description" class="w-full"></textarea>
+                                <textarea id="new_product_long_description_editor" class="w-full"></textarea>
                             </div>
+                            @error('long_description') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                         </div>
 
                         {{-- Action Buttons --}}
@@ -195,7 +220,9 @@
                             <a href="{{ route('admin.ecommerce.products') }}" wire:navigate class="px-5 py-2.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-600 dark:text-slate-300 text-sm font-semibold rounded-2xl transition">
                                 Cancel
                             </a>
-                            <button type="submit" wire:loading.attr="disabled"
+                            <button type="submit"
+                                    @click="if (typeof tinymce !== 'undefined' && tinymce.get('new_product_long_description_editor')) { $wire.set('long_description', tinymce.get('new_product_long_description_editor').getContent()); }"
+                                    wire:loading.attr="disabled"
                                     class="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-2xl shadow-md transition cursor-pointer">
                                 <span wire:loading.remove wire:target="saveProduct">Create Product &rarr;</span>
                                 <span wire:loading wire:target="saveProduct" class="inline-flex items-center gap-2">
@@ -207,4 +234,5 @@
                     </form>
                 </div>
     </div>
+    <script src="{{ asset('build/node_modules/tinymce/tinymce.min.js') }}"></script>
 </div>
