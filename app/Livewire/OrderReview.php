@@ -57,6 +57,76 @@ class OrderReview extends Component
     public array $billingCustomData = [];   // values keyed by field index
     public bool  $billingOptIn      = false; // manual opt-in checkbox at billing position
 
+    // Coupon Code
+    public string $couponCode = '';
+
+    public function applyCoupon(): void
+    {
+        $this->validate([
+            'couponCode' => 'required|string|max:50'
+        ]);
+
+        $now = now();
+        $coupon = Discount::where('is_active', 1)
+            ->where('discount_type_id', 1)
+            ->where('code', $this->couponCode)
+            ->where(function($q) use ($now) {
+                $q->whereNull('start_date')->orWhere('start_date', '<=', $now);
+            })
+            ->where(function($q) use ($now) {
+                $q->whereNull('expiration_date')->orWhere('expiration_date', '>=', $now);
+            })
+            ->first();
+
+        if ($coupon) {
+            $items = $this->getCartQuery()->get();
+            $discountResult = \App\Services\DiscountService::applyDiscountsToCart($items, Auth::user());
+            $subtotal = $discountResult['subtotal'];
+
+            if (($coupon->order_minimum > 0 && $subtotal < $coupon->order_minimum) || ($coupon->order_maximum > 0 && $subtotal > $coupon->order_maximum)) {
+                $this->addError('couponCode', "This coupon requires a subtotal between \$" . number_format($coupon->order_minimum, 2) . " and \$" . number_format($coupon->order_maximum, 2) . ".");
+                return;
+            }
+
+            $totalWeight = 0;
+            foreach ($items as $item) {
+                $totalWeight += $item->item_qty * $item->item_weight;
+            }
+            if (($coupon->order_weight_min > 0 && $totalWeight < $coupon->order_weight_min) || ($coupon->order_weight_max > 0 && $totalWeight > $coupon->order_weight_max)) {
+                $this->addError('couponCode', "This coupon requires order weight between {$coupon->order_weight_min} and {$coupon->order_weight_max}.");
+                return;
+            }
+
+            $totalQty = $items->sum('item_qty');
+            if (($coupon->order_qty_min > 0 && $totalQty < $coupon->order_qty_min) || ($coupon->order_qty_max > 0 && $totalQty > $coupon->order_qty_max)) {
+                $this->addError('couponCode', "This coupon requires order item quantity between {$coupon->order_qty_min} and {$coupon->order_qty_max}.");
+                return;
+            }
+
+            $userType = (Auth::check() && Auth::user()->isWholesale()) ? 2 : 1;
+            if ($coupon->wholesale_only && $userType != 2) {
+                $this->addError('couponCode', 'This coupon is only valid for wholesale customers.');
+                return;
+            }
+
+            session()->put('coupon_code', $this->couponCode);
+            session()->flash('status', "Coupon '{$this->couponCode}' applied successfully!");
+            $this->couponCode = '';
+            $this->dispatch('cart-updated');
+            $this->dispatch('refresh-payment-gateway');
+        } else {
+            $this->addError('couponCode', 'Invalid or expired coupon code.');
+        }
+    }
+
+    public function removeCoupon(): void
+    {
+        session()->forget('coupon_code');
+        session()->flash('status', 'Coupon code removed.');
+        $this->dispatch('cart-updated');
+        $this->dispatch('refresh-payment-gateway');
+    }
+
     private function getCartSessionId(): string
     {
         $cookieName = 'cart_session_id';
@@ -737,11 +807,11 @@ class OrderReview extends Component
 
         $isFreeOrder = ($totals['total'] <= 0);
         $payResult   = null;
+        $processorId = $this->getActiveProcessorId();
+        $manager     = app(PaymentProcessorManager::class);
 
         if (!$isFreeOrder) {
             // Resolve active processor and charge / verify
-            $processorId = $this->getActiveProcessorId();
-            $manager     = app(PaymentProcessorManager::class);
             $driver      = $manager->resolve($processorId);
             $currency    = strtoupper(CurrencyService::code());
 
@@ -1240,6 +1310,7 @@ class OrderReview extends Component
             'checkoutOptinMode'      => \App\Models\CmsSetting::get('checkout_optin_mode', 'off'),
             'checkoutOptinLabel'     => \App\Models\CmsSetting::get('checkout_optin_label', 'Yes, add me to the mailing list'),
             'checkoutOptinPosition'  => \App\Models\CmsSetting::get('checkout_optin_position', 'checkout'),
+            'activeCoupon'           => session('coupon_code'),
         ]);
     }
 }

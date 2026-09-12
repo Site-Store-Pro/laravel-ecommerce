@@ -22,7 +22,8 @@
         @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
-             x-data="paymentHandler('{{ $activeProcessorType }}', '{{ $stripePublishableKey }}', {{ $stripeAddressRequired ? 'true' : 'false' }}, {{ $isSubscription ? 'true' : 'false' }}, {{ $total <= 0 ? 'true' : 'false' }})">
+             x-data="paymentHandler('{{ $activeProcessorType }}', '{{ $stripePublishableKey }}', {{ $stripeAddressRequired ? 'true' : 'false' }}, {{ $isSubscription ? 'true' : 'false' }}, {{ $total <= 0 ? 'true' : 'false' }})"
+             @refresh-payment-gateway.window="rebootProcessor()">
             <!-- Left Side: Shipping Info & Payment -->
             <div class="lg:col-span-8 space-y-6">
                 <!-- Shipping Summary Card -->
@@ -238,7 +239,9 @@
                         @elseif($activeProcessorType === 'paddle')
                             <div class="space-y-4">
                                 {{-- Paddle inline checkout mounts here --}}
-                                <div id="paddle-checkout-container" class="paddle-checkout-container w-full bg-white border border-slate-200 rounded-3xl overflow-hidden min-h-[450px]"></div>
+                                <div class="p-3 sm:p-5 rounded-2xl border border-slate-200 shadow-sm" style="background-color: #f8fafc !important; color-scheme: light !important;">
+                                    <div id="paddle-checkout-container" class="paddle-checkout-container w-full min-h-[450px]" style="background-color: #f8fafc !important; color-scheme: light !important; color: #0f172a !important;" wire:ignore></div>
+                                </div>
                             </div>
 
                         {{-- ─── PayPal ─────────────────────────────────────── --}}
@@ -382,6 +385,27 @@
                     @endforeach
                 </div>
 
+                {{-- Coupon / Discount Code Form (if enabled on billing/both) --}}
+                @if(in_array(\App\Models\CmsSetting::get('coupon_entry_position', 'checkout'), ['billing', 'both']) && ($total > 0 || !empty($activeCoupon)))
+                    <div class="border-t border-slate-100 pt-5 mt-4 mb-4 space-y-3">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">@label('checkout.coupon_heading', 'Promo / Coupon Code')</h3>
+                        @if($activeCoupon)
+                            <div class="flex items-center justify-between bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-2 text-xs">
+                                <span class="font-bold text-emerald-800">@label('checkout.coupon_active', 'Coupon Active:') {{ $activeCoupon }}</span>
+                                <button type="button" wire:click="removeCoupon" class="text-rose-600 hover:text-rose-800 font-bold cursor-pointer">@label('checkout.coupon_remove', 'Remove')</button>
+                            </div>
+                        @else
+                            <div class="flex gap-2">
+                                <input type="text" wire:model="couponCode" placeholder="@label('checkout.coupon_placeholder', 'Enter coupon...')" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-xs">
+                                <button type="button" wire:click="applyCoupon" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow transition duration-150 cursor-pointer">
+                                    @label('checkout.coupon_apply', 'Apply')
+                                </button>
+                            </div>
+                            @error('couponCode') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                        @endif
+                    </div>
+                @endif
+
                 <div class="border-t border-slate-100 pt-4 space-y-4">
                     @if(\App\Models\CmsSetting::isEnabled('checkout_show_subtotal', true))
                         <div class="flex justify-between text-sm text-slate-500">
@@ -474,8 +498,7 @@
                 </div>
             </div>{{-- end lg:col-span-4 --}}
         </div>{{-- end grid --}}
-    </div>
-</div>{{-- end paymentHandler x-data grid --}}
+    </div>{{-- end max-w-7xl --}}
 
 {{-- ═══════════════════════════════════════════════════════════════════════ --}}
 {{-- Payment Gateway Scripts (conditionally loaded when total > 0)           --}}
@@ -540,6 +563,22 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                 this.$nextTick(() => {
                     this.initPaypal();
                 });
+            }
+        },
+
+        async rebootProcessor() {
+            if (this.processorType === 'paddle') {
+                const container = document.getElementById('paddle-checkout-container');
+                if (container) {
+                    container.innerHTML = '';
+                }
+                await this.initPaddle();
+            } else if (this.processorType === 'paypal') {
+                const container = document.getElementById('paypal-button-container');
+                if (container) {
+                    container.innerHTML = '';
+                }
+                await this.initPaypal();
             }
         },
 
@@ -639,6 +678,15 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                 Paddle.Environment.set(data.environment);
                 Paddle.Initialize({
                     token: data.clientToken,
+                    checkout: {
+                        settings: {
+                            displayMode: 'inline',
+                            theme: 'light',
+                            frameTarget: 'paddle-checkout-container',
+                            frameInitialHeight: 450,
+                            frameStyle: 'width: 100%; min-width: 312px; background-color: #f8fafc; border: none;',
+                        }
+                    },
                     eventCallback: async (event) => {
                         if (event.name === 'checkout.completed') {
                             this.processing = true;
@@ -657,9 +705,10 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                     transactionId: data.transactionId,
                     settings: {
                         displayMode: 'inline',
+                        theme: 'light',
                         frameTarget: 'paddle-checkout-container',
                         frameInitialHeight: 450,
-                        frameStyle: 'width: 100%; border: none;',
+                        frameStyle: 'width: 100%; min-width: 312px; background-color: #f8fafc; border: none;',
                     },
                 });
 
@@ -1012,3 +1061,16 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
     };
 }
 </script>
+
+<style>
+    #paddle-checkout-container,
+    #paddle-checkout-container *,
+    .paddle-checkout-container,
+    .paddle-checkout-container iframe {
+        background-color: #f8fafc !important;
+        background: #f8fafc !important;
+        color: #0f172a !important;
+        color-scheme: light !important;
+    }
+</style>
+</div>

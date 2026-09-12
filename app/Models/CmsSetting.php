@@ -79,6 +79,14 @@ class CmsSetting extends Model
     }
 
     /**
+     * Get the coupon/discount entry position setting (checkout|billing|both|none).
+     */
+    public static function getCouponEntryPosition(): string
+    {
+        return (string) static::get('coupon_entry_position', 'checkout');
+    }
+
+    /**
      * Get the configured site name, falling back to APP_NAME env.
      */
     public static function getSiteName(): string

@@ -2279,6 +2279,24 @@
                     </label>
                 </div>
 
+                {{-- Coupon / Discount Code Entry Location --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Coupon / Discount Code Entry Location</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            Select which page(s) display the discount/coupon code entry form. You can display it on the initial checkout page, the order review/billing page, both pages, or disable it.
+                        </p>
+                    </div>
+                    <div class="shrink-0 w-full sm:w-64">
+                        <select wire:model="coupon_entry_position" class="w-full text-xs font-medium bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="checkout">Checkout Page Only</option>
+                            <option value="billing">Billing / Review Page Only</option>
+                            <option value="both">Both Pages (Checkout &amp; Billing)</option>
+                            <option value="none">Disabled (No Entry Form)</option>
+                        </select>
+                    </div>
+                </div>
+
                 {{-- ─── Two-Factor Authentication (2FA) & Security ─────────── --}}
                 {{-- Enable 2FA at Checkout --}}
                 <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">

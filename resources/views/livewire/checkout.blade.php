@@ -375,23 +375,25 @@
                 </div>
 
                 <!-- Coupon Entry Form -->
-                <div class="border-t border-slate-100 pt-6 mt-6 space-y-3">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">@label('checkout.coupon_heading', 'Promo / Coupon Code')</h3>
-                    @if($activeCoupon)
-                        <div class="flex items-center justify-between bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-2 text-xs">
-                            <span class="font-bold text-emerald-800">@label('checkout.coupon_active', 'Coupon Active:') {{ $activeCoupon }}</span>
-                            <button type="button" wire:click="removeCoupon" class="text-rose-600 hover:text-rose-800 font-bold">@label('checkout.coupon_remove', 'Remove')</button>
-                        </div>
-                    @else
-                        <div class="flex gap-2">
-                            <input type="text" wire:model="couponCode" placeholder="@label('checkout.coupon_placeholder', 'Enter coupon...')" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-xs">
-                            <button type="button" wire:click="applyCoupon" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow transition duration-150">
-                                @label('checkout.coupon_apply', 'Apply')
-                            </button>
-                        </div>
-                        @error('couponCode') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
-                    @endif
-                </div>
+                @if(in_array(\App\Models\CmsSetting::get('coupon_entry_position', 'checkout'), ['checkout', 'both']))
+                    <div class="border-t border-slate-100 pt-6 mt-6 space-y-3">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">@label('checkout.coupon_heading', 'Promo / Coupon Code')</h3>
+                        @if($activeCoupon)
+                            <div class="flex items-center justify-between bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-2 text-xs">
+                                <span class="font-bold text-emerald-800">@label('checkout.coupon_active', 'Coupon Active:') {{ $activeCoupon }}</span>
+                                <button type="button" wire:click="removeCoupon" class="text-rose-600 hover:text-rose-800 font-bold">@label('checkout.coupon_remove', 'Remove')</button>
+                            </div>
+                        @else
+                            <div class="flex gap-2">
+                                <input type="text" wire:model="couponCode" placeholder="@label('checkout.coupon_placeholder', 'Enter coupon...')" class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-xs">
+                                <button type="button" wire:click="applyCoupon" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow transition duration-150">
+                                    @label('checkout.coupon_apply', 'Apply')
+                                </button>
+                            </div>
+                            @error('couponCode') <span class="text-xs text-rose-500 font-semibold block mt-1">{{ $message }}</span> @enderror
+                        @endif
+                    </div>
+                @endif
 
                 <!-- Order Totals -->
                 <div class="border-t border-slate-100 pt-6 mt-6 space-y-4">

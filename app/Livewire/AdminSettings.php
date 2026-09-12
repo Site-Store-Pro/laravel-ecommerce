@@ -190,11 +190,12 @@ class AdminSettings extends Component
     public bool $disable_account_tickets_tab   = false;
 
     // Checkout Field Visibility & Guest Checkout
-    public bool $checkout_hide_company_field = false;
-    public bool $disable_guest_checkout = false;
-    public bool $checkout_show_subtotal = true;
-    public bool $checkout_show_shipping = true;
-    public bool $checkout_show_tax      = true;
+    public bool   $checkout_hide_company_field = false;
+    public bool   $disable_guest_checkout = false;
+    public bool   $checkout_show_subtotal = true;
+    public bool   $checkout_show_shipping = true;
+    public bool   $checkout_show_tax      = true;
+    public string $coupon_entry_position  = 'checkout'; // checkout | billing | both | none
 
     // Two-Factor Authentication (2FA) & Security
     public bool $enable_checkout_2fa = false;
@@ -330,6 +331,7 @@ class AdminSettings extends Component
         $this->checkout_show_subtotal      = (bool) ($settings['checkout_show_subtotal'] ?? true);
         $this->checkout_show_shipping      = (bool) ($settings['checkout_show_shipping'] ?? true);
         $this->checkout_show_tax           = (bool) ($settings['checkout_show_tax'] ?? true);
+        $this->coupon_entry_position       = (string) ($settings['coupon_entry_position'] ?? 'checkout');
 
         // Two-Factor Authentication (2FA) & Security
         $this->enable_checkout_2fa = (bool) ($settings['enable_checkout_2fa'] ?? false);
@@ -506,6 +508,7 @@ class AdminSettings extends Component
             'disable_account_tickets_tab'   => 'boolean',
             'checkout_hide_company_field'   => 'boolean',
             'disable_guest_checkout'        => 'boolean',
+            'coupon_entry_position'         => 'required|in:checkout,billing,both,none',
             'enable_checkout_2fa'           => 'boolean',
             'enable_login_2fa'              => 'boolean',
         ]);
@@ -678,6 +681,7 @@ class AdminSettings extends Component
             'checkout_show_subtotal'        => $this->checkout_show_subtotal        ? '1' : '0',
             'checkout_show_shipping'        => $this->checkout_show_shipping        ? '1' : '0',
             'checkout_show_tax'             => $this->checkout_show_tax             ? '1' : '0',
+            'coupon_entry_position'         => $this->coupon_entry_position,
             // Two-Factor Authentication (2FA) & Security
             'enable_checkout_2fa'           => $this->enable_checkout_2fa           ? '1' : '0',
             'enable_login_2fa'              => $this->enable_login_2fa              ? '1' : '0',
