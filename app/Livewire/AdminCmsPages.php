@@ -15,6 +15,11 @@ class AdminCmsPages extends Component
 
     public string $search = '';
 
+    // Delete Page Modal Properties
+    public bool $showDeleteModal = false;
+    public ?int $deletePageId = null;
+    public string $deletePageTitle = '';
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -29,7 +34,7 @@ class AdminCmsPages extends Component
         session()->flash('status', 'Page active status updated successfully.');
     }
 
-    public function deletePage(int $id): void
+    public function confirmDeletePage(int $id): void
     {
         if ($id === 1) {
             session()->flash('error', 'The default home page (ID = 1) cannot be deleted.');
@@ -37,9 +42,41 @@ class AdminCmsPages extends Component
         }
 
         $page = CmsPage::findOrFail($id);
-        $page->delete();
+        $this->deletePageId = $page->id;
+        $this->deletePageTitle = $page->title;
+        $this->showDeleteModal = true;
+    }
 
-        session()->flash('status', 'Page deleted successfully.');
+    public function cancelDeletePage(): void
+    {
+        $this->showDeleteModal = false;
+        $this->deletePageId = null;
+        $this->deletePageTitle = '';
+    }
+
+    public function deletePage(?int $id = null): void
+    {
+        $targetId = $id ?? $this->deletePageId;
+        if (!$targetId) {
+            $this->cancelDeletePage();
+            return;
+        }
+
+        if ($targetId === 1) {
+            session()->flash('error', 'The default home page (ID = 1) cannot be deleted.');
+            $this->cancelDeletePage();
+            return;
+        }
+
+        $page = CmsPage::find($targetId);
+        if ($page) {
+            $pageTitle = $page->title;
+            $page->delete();
+            session()->flash('status', "Page '{$pageTitle}' deleted successfully.");
+            $this->dispatch('toast', type: 'success', message: "Page '{$pageTitle}' deleted successfully.");
+        }
+
+        $this->cancelDeletePage();
     }
 
     public function duplicatePage(int $id): void

@@ -18,6 +18,15 @@ class CmsPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \Illuminate\Support\Facades\DB::statement("INSERT IGNORE INTO `user_roles` (`id`, `name`, `description`) VALUES 
+            (1, 'User', 'Customer'),
+            (2, 'Wholesale', 'Wholesale'),
+            (3, 'Admin', 'Admin')");
+    }
+
     public function test_dynamic_page_catch_all_routing_loads_successful_response(): void
     {
         $author = User::factory()->create(['role_id' => UserRole::Admin->value]);
@@ -539,7 +548,7 @@ class CmsPageTest extends TestCase
             'hide_page_ranking' => 1
         ]);
 
-        $laravelTag = \App\Models\CmsPagesTag::where('slug', 'laravel')->first();
+        $laravelTag = \App\Models\CmsPagesTag::firstOrCreate(['slug' => 'laravel'], ['name' => 'Laravel']);
         $gatedPage->tags()->sync([$laravelTag->id]);
 
         // 1. Visit Tag page /tag/laravel

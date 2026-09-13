@@ -71,7 +71,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
                                 @forelse($pages as $page)
-                                    <tr class="hover:bg-slate-50/30 dark:hover:bg-slate-700/20 transition-colors">
+                                    <tr wire:key="page-row-{{ $page->id }}" class="hover:bg-slate-50/30 dark:hover:bg-slate-700/20 transition-colors">
                                         <td class="py-4 px-6">
                                             <div class="font-bold text-slate-900 dark:text-slate-100">{{ $page->title }}</div>
                                             <div class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Created on {{ $page->created_at->format('M d, Y') }}</div>
@@ -111,7 +111,7 @@
                                             </div>
                                         </td>
                                         <td class="py-4 px-6 text-center">
-                                            <button wire:click="toggleActive({{ $page->id }})" 
+                                            <button type="button" wire:click="toggleActive({{ $page->id }})" wire:loading.attr="disabled"
                                                     class="inline-flex items-center justify-center font-bold px-3 py-1 rounded-full text-xs transition-all {{ $page->is_active ? 'bg-emerald-50 border border-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-400' : 'bg-slate-100 border border-slate-200 text-slate-600 dark:bg-slate-700/60 dark:border-slate-600 dark:text-slate-400' }}">
                                                 {{ $page->is_active ? 'Active' : 'Inactive' }}
                                             </button>
@@ -125,7 +125,7 @@
                                                     </svg>
                                                     Edit
                                                 </a>
-                                                <button wire:click="duplicatePage({{ $page->id }})" 
+                                                <button type="button" wire:click="duplicatePage({{ $page->id }})" wire:loading.attr="disabled"
                                                         class="inline-flex items-center gap-1.5 justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-all shadow-sm">
                                                     <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
@@ -133,8 +133,7 @@
                                                     Duplicate
                                                 </button>
                                                 @if($page->id !== 1)
-                                                    <button wire:click="deletePage({{ $page->id }})" 
-                                                            wire:confirm="Are you sure you want to delete this dynamic page?"
+                                                    <button type="button" wire:click="confirmDeletePage({{ $page->id }})" wire:loading.attr="disabled"
                                                             class="inline-flex items-center gap-1.5 justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-all shadow-sm">
                                                         <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -172,4 +171,50 @@
             </div>
         </div>
     </div>
+
+    <!-- Delete Page Confirmation Modal -->
+    @if($showDeleteModal)
+        <div wire:key="delete-page-modal-backdrop" wire:click.self="cancelDeletePage" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <div wire:key="delete-page-modal-card" class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-700 space-y-5 animate-scale-up">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-rose-50 dark:bg-rose-950/50 rounded-2xl text-rose-600 dark:text-rose-400">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-extrabold text-slate-900 dark:text-slate-100">Delete Page</h3>
+                            <p class="text-xs text-slate-400 font-medium">This action cannot be undone.</p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="cancelDeletePage" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-sm text-slate-600 dark:text-slate-300 font-medium">
+                        Are you sure you want to permanently delete <strong class="text-slate-900 dark:text-slate-100 font-extrabold">{{ $deletePageTitle }}</strong>?
+                    </p>
+                    <p class="text-xs text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/60 rounded-xl p-3">
+                        All page revisions, categories assignments, tags assignments, and translations will be permanently removed.
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                    <button type="button" wire:click="cancelDeletePage" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-2xl transition">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="deletePage" wire:loading.attr="disabled" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold rounded-2xl shadow-md shadow-rose-100 dark:shadow-none transition flex items-center gap-2">
+                        <svg wire:loading wire:target="deletePage" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Delete Page</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

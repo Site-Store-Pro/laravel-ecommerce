@@ -164,6 +164,11 @@ class AdminProducts extends Component
     public string $copyProductSlug = '';
     public bool $copyVariantsAndImages = true;
 
+    // Delete Product Modal Properties
+    public bool $showDeleteModal = false;
+    public ?int $deleteProductId = null;
+    public string $deleteProductTitle = '';
+
     public function openCopyModal(int $productId): void
     {
         $product = Product::findOrFail($productId);
@@ -458,11 +463,42 @@ class AdminProducts extends Component
         $this->dispatch('toast', type: 'success', message: "Product '{$newProduct->title}' duplicated successfully.");
     }
 
-    public function deleteProduct(int $productId): void
+    public function confirmDeleteProduct(int $productId): void
     {
         $product = Product::findOrFail($productId);
-        $product->delete();
-        session()->flash('status', 'Product deleted successfully.');
+        $this->deleteProductId = $product->id;
+        $this->deleteProductTitle = $product->title;
+        $this->showDeleteModal = true;
+    }
+
+    public function cancelDeleteProduct(): void
+    {
+        $this->showDeleteModal = false;
+        $this->deleteProductId = null;
+        $this->deleteProductTitle = '';
+    }
+
+    public function deleteProduct(?int $productId = null): void
+    {
+        $targetId = $productId ?? $this->deleteProductId;
+        if (!$targetId) {
+            $this->cancelDeleteProduct();
+            return;
+        }
+
+        $product = Product::find($targetId);
+        if ($product) {
+            $productTitle = $product->title;
+            $product->delete();
+
+            // Clean up from expanded products if present
+            $this->expandedProducts = array_values(array_diff($this->expandedProducts, [$targetId]));
+
+            session()->flash('status', "Product '{$productTitle}' deleted successfully.");
+            $this->dispatch('toast', type: 'success', message: "Product '{$productTitle}' deleted successfully.");
+        }
+
+        $this->cancelDeleteProduct();
     }
 
     public function toggleProductExpand(int $productId): void

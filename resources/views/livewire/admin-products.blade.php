@@ -390,7 +390,7 @@
                                                         </svg>
                                                         Duplicate
                                                     </button>
-                                                    <button onclick="confirm('Are you sure you want to delete this product?') || event.stopImmediatePropagation()" wire:click="deleteProduct({{ $product->id }})" class="inline-flex items-center gap-1.5 justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-all shadow-sm">
+                                                    <button type="button" wire:click="confirmDeleteProduct({{ $product->id }})" wire:loading.attr="disabled" class="inline-flex items-center gap-1.5 justify-center rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-all shadow-sm">
                                                         <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                         </svg>
@@ -420,7 +420,7 @@
                                                             $attrs = json_decode($variant->attributes, true) ?: [];
                                                             $attrStr = collect($attrs)->map(fn($v, $k) => "$k: $v")->implode(', ');
                                                         @endphp
-                                                        <tr>
+                                                        <tr wire:key="variant-row-{{ $variant->id }}">
                                                             <td class="py-2.5 font-bold text-slate-800">{{ $variant->sku }}</td>
                                                             <td class="py-2.5">{{ $attrStr ?: 'None' }}</td>
                                                             <td class="py-2.5">${{ number_format($variant->public_price, 2) }}</td>
@@ -520,6 +520,52 @@
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                         <span>Duplicate Product</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Delete Product Confirmation Modal -->
+    @if($showDeleteModal)
+        <div wire:key="delete-product-modal-backdrop" wire:click.self="cancelDeleteProduct" class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <div wire:key="delete-product-modal-card" class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-rose-50 rounded-2xl text-rose-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-extrabold text-slate-900">Delete Product</h3>
+                            <p class="text-xs text-slate-400 font-medium">This action cannot be undone.</p>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="cancelDeleteProduct" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-sm text-slate-600 font-medium">
+                        Are you sure you want to permanently delete <strong class="text-slate-900 font-extrabold">{{ $deleteProductTitle }}</strong>?
+                    </p>
+                    <p class="text-xs text-rose-500 bg-rose-50 border border-rose-100 rounded-xl p-3">
+                        All associated variants, pricing, inventory stock, custom fields, and images for this item will be removed.
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                    <button type="button" wire:click="cancelDeleteProduct" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-2xl transition">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="deleteProduct" wire:loading.attr="disabled" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold rounded-2xl shadow-md shadow-rose-100 transition flex items-center gap-2">
+                        <svg wire:loading wire:target="deleteProduct" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Delete Product</span>
                     </button>
                 </div>
             </div>
