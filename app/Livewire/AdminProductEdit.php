@@ -24,6 +24,8 @@ class AdminProductEdit extends Component
     // Product Details Form
     public string $title = '';
     public string $short_description = '';
+    public string $search_results_description = '';
+    public string $quick_shop_description = '';
     public string $long_description = '';
     public string $meta_title = '';
     public string $meta_description = '';
@@ -66,6 +68,8 @@ class AdminProductEdit extends Component
     public ?float $custom_amount_max   = null;
     public string $custom_amount_options = '';
     public ?int   $inventory_alert_id    = null;  // Out-of-stock alert message assigned to this product
+    public bool   $quick_shop_active     = false; // Optional Quick Shop modal toggle (default OFF)
+    public string $quick_shop_label      = '';    // Custom Quick Shop button label (defaults to dynamic site label)
 
 
     // Translation Management
@@ -73,6 +77,8 @@ class AdminProductEdit extends Component
     public ?int $activeLangId = null;
     public string $trans_title = '';
     public string $trans_short_description = '';
+    public string $trans_search_results_description = '';
+    public string $trans_quick_shop_description = '';
     public string $trans_long_description = '';
     public string $trans_meta_title = '';
     public string $trans_meta_description = '';
@@ -348,6 +354,8 @@ class AdminProductEdit extends Component
         $this->show_in_results = $this->product->show_in_results !== null ? (bool) $this->product->show_in_results : true;
         $this->title = $this->product->title;
         $this->short_description = $this->product->short_description ?? '';
+        $this->search_results_description = $this->product->search_results_description ?? '';
+        $this->quick_shop_description = $this->product->quick_shop_description ?? '';
         $this->long_description = $this->product->long_description ?? '';
         $this->bullet_point_1 = (string) ($this->product->bullet_point_1 ?? '');
         $this->bullet_point_2 = (string) ($this->product->bullet_point_2 ?? '');
@@ -379,6 +387,8 @@ class AdminProductEdit extends Component
         $this->custom_amount_options = (string) ($this->product->custom_amount_options ?? '');
         $this->inventory_alert_id    = $this->product->inventory_alert_id ? (int) $this->product->inventory_alert_id : null;
         $this->show_variant_selector_thumbnail = (int) ($this->product->show_variant_selector_thumbnail ?? 0);
+        $this->quick_shop_active = (bool) ($this->product->quick_shop_active ?? false);
+        $this->quick_shop_label = (string) ($this->product->quick_shop_label ?? '');
     }
 
     public function updatedTitle(string $value): void
@@ -393,11 +403,6 @@ class AdminProductEdit extends Component
 
     /**
      * Internal helper: validates and saves all core product sections
-     * (Details, Advanced Settings, Layout & Video, and Variant Label)
-     * simultaneously so no unsaved section changes are lost when any save button is clicked.
-     */
-    /**
-     * Internal helper: validates and saves all core product sections
      * (Details, Advanced Settings, Layout & Video, Variant Label, and any open Variant edit)
      * simultaneously so no unsaved section changes are lost when any save button is clicked.
      */
@@ -407,6 +412,8 @@ class AdminProductEdit extends Component
             'title' => 'required|string|max:255',
             'meta_title' => 'required|string|max:255',
             'short_description' => 'nullable|string',
+            'search_results_description' => 'nullable|string',
+            'quick_shop_description' => 'nullable|string',
             'long_description' => 'nullable|string',
             'bullet_point_1' => 'nullable|string|max:255',
             'bullet_point_2' => 'nullable|string|max:255',
@@ -434,6 +441,8 @@ class AdminProductEdit extends Component
             'custom_amount_options' => 'nullable|string|max:500',
             'inventory_alert_id' => 'nullable|integer|exists:product_inventory_alerts,id',
             'show_variant_selector_thumbnail' => 'nullable|boolean',
+            'quick_shop_active' => 'boolean',
+            'quick_shop_label' => 'nullable|string|max:255',
         ]);
 
         // Validate preset options format when custom amount entry is disabled
@@ -457,6 +466,8 @@ class AdminProductEdit extends Component
             // Details
             'title' => $this->title,
             'short_description' => $this->short_description,
+            'search_results_description' => $this->search_results_description ?: null,
+            'quick_shop_description' => $this->quick_shop_description ?: null,
             'long_description' => $this->long_description,
             'bullet_point_1' => trim($this->bullet_point_1) ?: null,
             'bullet_point_2' => trim($this->bullet_point_2) ?: null,
@@ -492,6 +503,8 @@ class AdminProductEdit extends Component
             'custom_amount_options' => trim($this->custom_amount_options) ?: null,
             'inventory_alert_id' => $this->inventory_alert_id ?: null,
             'show_variant_selector_thumbnail' => (int) $this->show_variant_selector_thumbnail,
+            'quick_shop_active' => (bool) $this->quick_shop_active,
+            'quick_shop_label' => trim($this->quick_shop_label) ?: null,
         ]);
 
         $this->product->categories()->sync($this->selectedCategories);
@@ -2703,6 +2716,8 @@ class AdminProductEdit extends Component
 
         $this->trans_title             = $trans?->title ?? '';
         $this->trans_short_description = $trans?->short_description ?? '';
+        $this->trans_search_results_description = $trans?->search_results_description ?? '';
+        $this->trans_quick_shop_description = $trans?->quick_shop_description ?? '';
         $this->trans_long_description  = $trans?->long_description ?? '';
         $this->trans_meta_title        = $trans?->meta_title ?? '';
         $this->trans_meta_description  = $trans?->meta_description ?? '';
@@ -2717,13 +2732,15 @@ class AdminProductEdit extends Component
         \App\Models\ProductTranslation::updateOrCreate(
             ['product_id' => $this->productId, 'language_id' => $this->activeLangId],
             [
-                'title'             => $this->trans_title ?: null,
-                'short_description' => $this->trans_short_description ?: null,
-                'long_description'  => $this->trans_long_description ?: null,
-                'meta_title'        => $this->trans_meta_title ?: null,
-                'meta_description'  => $this->trans_meta_description ?: null,
-                'translation_status'=> 'reviewed',
-                'translated_at'     => now(),
+                'title'                      => $this->trans_title ?: null,
+                'short_description'          => $this->trans_short_description ?: null,
+                'search_results_description' => $this->trans_search_results_description ?: null,
+                'quick_shop_description'     => $this->trans_quick_shop_description ?: null,
+                'long_description'           => $this->trans_long_description ?: null,
+                'meta_title'                 => $this->trans_meta_title ?: null,
+                'meta_description'           => $this->trans_meta_description ?: null,
+                'translation_status'         => 'reviewed',
+                'translated_at'              => now(),
             ]
         );
 
@@ -2768,6 +2785,12 @@ class AdminProductEdit extends Component
             }
             if (!empty($product->short_description)) {
                 $this->trans_short_description = $svc->translateText($product->short_description, $langName, 'product short description');
+            }
+            if (!empty($product->search_results_description)) {
+                $this->trans_search_results_description = $svc->translateText($product->search_results_description, $langName, 'search results short description HTML — preserve HTML tags');
+            }
+            if (!empty($product->quick_shop_description)) {
+                $this->trans_quick_shop_description = $svc->translateText($product->quick_shop_description, $langName, 'quick shop short description HTML — preserve HTML tags');
             }
             if (!empty($product->long_description)) {
                 $this->trans_long_description = $svc->translateText($product->long_description, $langName, 'product long description HTML — preserve HTML tags');

@@ -102,7 +102,11 @@ class AdminSiteLabels extends Component
                 $sub->where('label_key', 'like', $term)
                     ->orWhere('label_description', 'like', $term)
                     ->orWhere('label_default', 'like', $term)
-                    ->orWhere('file_name', 'like', $term);
+                    ->orWhere('label_custom', 'like', $term)
+                    ->orWhere('file_name', 'like', $term)
+                    ->orWhereHas('translations', function ($tq) use ($term) {
+                        $tq->where('label_value', 'like', $term);
+                    });
             });
         }
 

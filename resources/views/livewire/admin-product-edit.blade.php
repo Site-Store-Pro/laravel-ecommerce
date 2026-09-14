@@ -155,7 +155,7 @@
                 <!-- Product Details Edit Panel -->
                 <div id="section-product-details" class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-6">
                     <h3 class="text-lg font-bold text-slate-900 pb-3 border-b border-slate-100">Product Details</h3>
-                    <form wire:submit.prevent="updateProduct" @submit="if (typeof tinymce !== 'undefined') { let ed = tinymce.get('long_description_editor'); if (ed) $wire.set('long_description', ed.getContent(), false); }" class="space-y-4">
+                    <form wire:submit.prevent="updateProduct" @submit="if (typeof tinymce !== 'undefined') { ['short_description_editor', 'search_results_description_editor', 'quick_shop_description_editor', 'long_description_editor'].forEach(id => { let ed = tinymce.get(id); if (ed) { let prop = id.replace('_editor', ''); $wire.set(prop, ed.getContent(), false); } }); }" class="space-y-4">
                         {{-- Active Status Card --}}
                         <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                             <label class="flex items-start gap-3 cursor-pointer">
@@ -184,9 +184,354 @@
                             </div>
                         </div>
 
-                        <div>
-                            <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Short Description</label>
-                            <input type="text" wire:model="short_description" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500">
+                        {{-- Short Description with TinyMCE --}}
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Short Description (Standard Item View)</label>
+                            <div wire:ignore 
+                                 x-data="{
+                                     short_description: @entangle('short_description'),
+                                     initTiny() {
+                                         let attempts = 0;
+                                         const tryInit = () => {
+                                             if (typeof tinymce === 'undefined') {
+                                                 if (attempts++ < 40) setTimeout(tryInit, 100);
+                                                 return;
+                                             }
+                                             if (tinymce.get('short_description_editor')) {
+                                                 tinymce.get('short_description_editor').remove();
+                                             }
+                                             tinymce.init({
+                                                 selector: '#short_description_editor',
+                                                 license_key: 'gpl',
+                                                 promotion: false,
+                                                 base_url: '/build/node_modules/tinymce',
+                                                 suffix: '.min',
+                                                 height: 320,
+                                                 menubar: 'insert format tools table',
+                                                 font_size_formats: '12px 13px 14px 16px 18px 24px 30px 32px 34px 36px 1rem 1.125rem 1.25rem 1.375rem 1.5rem 1.75rem 1.875rem 2rem 2.25rem 2.5rem 3rem 1em 1.125em 1.25em 1.375em 1.5em 1.75em 1.875em 2em 2.25em 2.5em 3em 1vh 1.5vh 2vh 2.5vh 3vh 4vh 5vh 6vh 1vw 1.5vw 2vw 2.5vw 3vw 4vw 5vw 6vw',
+                                                 content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } .btn-theme-primary { background-color: #4f46e5 !important; color: #ffffff !important; border-radius: 0.75rem !important; border: none !important; padding: 10px 20px !important; font-weight: 700 !important; font-family: inherit !important; cursor: pointer !important; display: inline-block !important; text-align: center !important; text-decoration: none !important; transition: background-color 0.2s !important; } .btn-theme-primary:hover { background-color: #4338ca !important; }',
+                                                 content_css: [
+                                                     'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
+                                                     '/css/prose.css'
+                                                 ],
+                                                 convert_urls: false,
+                                                 remove_script_host: false,
+                                                 images_upload_handler: window.cmsTinyMCEImageUploadHandler,
+                                                 plugins: 'advlist autolink lists link image charmap preview anchor searchreplace wordcount visualblocks supercode fullscreen insertdatetime media table help emoticons pagebreak directionality',
+                                                 toolbar: [
+                                                     'supercode fullscreen | undo redo | styles blocks | bold italic underline strikethrough | forecolor backcolor',
+                                                     'fontfamily fontsize lineheight | alignleft aligncenter alignright alignjustify | outdent indent | removeformat | numlist bullist | pagebreak | charmap emoticons | link image media anchor | ltr rtl | preview'
+                                                 ],
+                                                 toolbar_mode: 'wrap',
+                                                 cache_suffix: '?v=' + new Date().getTime(),
+                                                 protect: [
+                                                     /\{\{[\s\S]*?\}\}/g,
+                                                     /\{!![\s\S]*?!!\}/g,
+                                                     /@\w+(\([^)]*\))?/g
+                                                 ],
+                                                 branding: false,
+                                                 contextmenu: 'link image imagetools',
+                                                 style_formats: [
+                                                     { title: 'Callout (Yellow/Warning)', block: 'div', classes: 'p-4 bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 text-amber-900 dark:text-amber-200 rounded-r-lg my-4', wrapper: true },
+                                                     { title: 'Callout (Blue/Info)', block: 'div', classes: 'p-4 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 text-blue-900 dark:text-blue-200 rounded-r-lg my-4', wrapper: true },
+                                                     { title: 'Callout (Green/Success)', block: 'div', classes: 'p-4 bg-emerald-50 dark:bg-emerald-950/20 border-l-4 border-emerald-500 text-emerald-900 dark:text-emerald-200 rounded-r-lg my-4', wrapper: true },
+                                                     { title: 'Callout (Red/Danger)', block: 'div', classes: 'p-4 bg-rose-50 dark:bg-rose-950/20 border-l-4 border-rose-500 text-rose-900 dark:text-rose-200 rounded-r-lg my-4', wrapper: true },
+                                                     { title: 'Feature Card', block: 'div', classes: 'p-6 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl shadow-sm my-6', wrapper: true },
+                                                     { title: 'Premium Button (Primary)', selector: 'a', classes: 'inline-block px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors no-underline' },
+                                                     { title: 'Premium Button (Outline)', selector: 'a', classes: 'inline-block px-5 py-2.5 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium rounded-xl transition-colors no-underline' },
+                                                     { title: 'Badge Primary', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full' },
+                                                     { title: 'Badge Success', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full' },
+                                                     { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
+                                                     { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
+                                                 ],
+                                                 extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*]',
+                                                 supercode: {
+                                                     theme: 'monokai',
+                                                     fontSize: 14,
+                                                     autocomplete: true,
+                                                     dark: true
+                                                 },
+                                                 setup: (editor) => {
+                                                     editor.on('focus', () => {
+                                                         window.lastActiveEditor = editor;
+                                                     });
+                                                     editor.on('init', () => {
+                                                         let initialHtml = (typeof this.short_description !== 'undefined' && this.short_description !== null && this.short_description !== '') 
+                                                             ? this.short_description 
+                                                             : (@js($short_description) || '');
+                                                         let ensureWrapper = (typeof window.ensureProseWrapper === 'function')
+                                                             ? window.ensureProseWrapper
+                                                             : (raw) => (raw && raw.trim() ? raw : '<p>&nbsp;</p>');
+                                                         let formatted = ensureWrapper(initialHtml);
+                                                         editor.setContent(formatted);
+                                                         this.short_description = editor.getContent();
+                                                         
+                                                         editor.getBody().querySelectorAll('.prose').forEach(el => {
+                                                             el.style.setProperty('max-width', 'none', 'important');
+                                                             el.style.setProperty('width', '100%');
+                                                         });
+                                                     });
+                                                     editor.on('change blur keyup NodeChange SetContent Undo Redo input', () => {
+                                                         let content = editor.getContent();
+                                                         this.short_description = content;
+                                                         $wire.set('short_description', content, false);
+                                                     });
+                                                 }
+                                             });
+                                         };
+                                         tryInit();
+                                     },
+                                     destroy() {
+                                         if (typeof tinymce !== 'undefined' && tinymce.get('short_description_editor')) {
+                                             tinymce.get('short_description_editor').remove();
+                                         }
+                                     }
+                                 }"
+                                 x-init="initTiny()">
+                                <textarea id="short_description_editor" class="w-full"></textarea>
+                            </div>
+                            @error('short_description') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Short Description Overrides Section -->
+                        <div class="space-y-5 p-5 bg-slate-50/60 border border-slate-200/80 rounded-2xl">
+                            <div class="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
+                                <div>
+                                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        Optional Short Description Overrides
+                                    </h4>
+                                    <p class="text-[11px] text-slate-500 mt-0.5">Customize alternative short descriptions for search catalog listings and the Quick Shop modal. If left blank, each view falls back to the default Short Description above.</p>
+                                </div>
+                            </div>
+
+                            <!-- 1. Search Results Description -->
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                                        <span>Search Results Description</span>
+                                        <span class="text-[10px] font-semibold text-slate-400 normal-case">(Overrides on Catalog results, Featured Items plugin & Cross-Selling listings)</span>
+                                    </label>
+                                </div>
+                                <div wire:ignore 
+                                     x-data="{
+                                         search_results_description: @entangle('search_results_description'),
+                                         initTiny() {
+                                             let attempts = 0;
+                                             const tryInit = () => {
+                                                 if (typeof tinymce === 'undefined') {
+                                                     if (attempts++ < 40) setTimeout(tryInit, 100);
+                                                     return;
+                                                 }
+                                                 if (tinymce.get('search_results_description_editor')) {
+                                                     tinymce.get('search_results_description_editor').remove();
+                                                 }
+                                                 tinymce.init({
+                                                     selector: '#search_results_description_editor',
+                                                     license_key: 'gpl',
+                                                     promotion: false,
+                                                     base_url: '/build/node_modules/tinymce',
+                                                     suffix: '.min',
+                                                     height: 320,
+                                                     menubar: 'insert format tools table',
+                                                     font_size_formats: '12px 13px 14px 16px 18px 24px 30px 32px 34px 36px 1rem 1.125rem 1.25rem 1.375rem 1.5rem 1.75rem 1.875rem 2rem 2.25rem 2.5rem 3rem 1em 1.125em 1.25em 1.375em 1.5em 1.75em 1.875em 2em 2.25em 2.5em 3em 1vh 1.5vh 2vh 2.5vh 3vh 4vh 5vh 6vh 1vw 1.5vw 2vw 2.5vw 3vw 4vw 5vw 6vw',
+                                                     content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } .btn-theme-primary { background-color: #4f46e5 !important; color: #ffffff !important; border-radius: 0.75rem !important; border: none !important; padding: 10px 20px !important; font-weight: 700 !important; font-family: inherit !important; cursor: pointer !important; display: inline-block !important; text-align: center !important; text-decoration: none !important; transition: background-color 0.2s !important; } .btn-theme-primary:hover { background-color: #4338ca !important; }',
+                                                     content_css: [
+                                                         'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
+                                                         '/css/prose.css'
+                                                     ],
+                                                     convert_urls: false,
+                                                     remove_script_host: false,
+                                                     images_upload_handler: window.cmsTinyMCEImageUploadHandler,
+                                                     plugins: 'advlist autolink lists link image charmap preview anchor searchreplace wordcount visualblocks supercode fullscreen insertdatetime media table help emoticons pagebreak directionality',
+                                                     toolbar: [
+                                                         'supercode fullscreen | undo redo | styles blocks | bold italic underline strikethrough | forecolor backcolor',
+                                                         'fontfamily fontsize lineheight | alignleft aligncenter alignright alignjustify | outdent indent | removeformat | numlist bullist | pagebreak | charmap emoticons | link image media anchor | ltr rtl | preview'
+                                                     ],
+                                                     toolbar_mode: 'wrap',
+                                                     cache_suffix: '?v=' + new Date().getTime(),
+                                                     protect: [
+                                                         /\{\{[\s\S]*?\}\}/g,
+                                                         /\{!![\s\S]*?!!\}/g,
+                                                         /@\w+(\([^)]*\))?/g
+                                                     ],
+                                                     branding: false,
+                                                     contextmenu: 'link image imagetools',
+                                                     style_formats: [
+                                                         { title: 'Callout (Yellow/Warning)', block: 'div', classes: 'p-4 bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 text-amber-900 dark:text-amber-200 rounded-r-lg my-4', wrapper: true },
+                                                         { title: 'Callout (Blue/Info)', block: 'div', classes: 'p-4 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 text-blue-900 dark:text-blue-200 rounded-r-lg my-4', wrapper: true },
+                                                         { title: 'Callout (Green/Success)', block: 'div', classes: 'p-4 bg-emerald-50 dark:bg-emerald-950/20 border-l-4 border-emerald-500 text-emerald-900 dark:text-emerald-200 rounded-r-lg my-4', wrapper: true },
+                                                         { title: 'Callout (Red/Danger)', block: 'div', classes: 'p-4 bg-rose-50 dark:bg-rose-950/20 border-l-4 border-rose-500 text-rose-900 dark:text-rose-200 rounded-r-lg my-4', wrapper: true },
+                                                         { title: 'Feature Card', block: 'div', classes: 'p-6 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl shadow-sm my-6', wrapper: true },
+                                                         { title: 'Premium Button (Primary)', selector: 'a', classes: 'inline-block px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors no-underline' },
+                                                         { title: 'Premium Button (Outline)', selector: 'a', classes: 'inline-block px-5 py-2.5 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium rounded-xl transition-colors no-underline' },
+                                                         { title: 'Badge Primary', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full' },
+                                                         { title: 'Badge Success', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full' },
+                                                         { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
+                                                         { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
+                                                     ],
+                                                     extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*]',
+                                                     supercode: {
+                                                         theme: 'monokai',
+                                                         fontSize: 14,
+                                                         autocomplete: true,
+                                                         dark: true
+                                                     },
+                                                     setup: (editor) => {
+                                                         editor.on('focus', () => {
+                                                             window.lastActiveEditor = editor;
+                                                         });
+                                                         editor.on('init', () => {
+                                                             let initialHtml = (typeof this.search_results_description !== 'undefined' && this.search_results_description !== null && this.search_results_description !== '') 
+                                                                 ? this.search_results_description 
+                                                                 : (@js($search_results_description) || '');
+                                                             let ensureWrapper = (typeof window.ensureProseWrapper === 'function')
+                                                                 ? window.ensureProseWrapper
+                                                                 : (raw) => (raw && raw.trim() ? raw : '<p>&nbsp;</p>');
+                                                             let formatted = ensureWrapper(initialHtml);
+                                                             editor.setContent(formatted);
+                                                             this.search_results_description = editor.getContent();
+                                                             
+                                                             editor.getBody().querySelectorAll('.prose').forEach(el => {
+                                                                 el.style.setProperty('max-width', 'none', 'important');
+                                                                 el.style.setProperty('width', '100%');
+                                                             });
+                                                         });
+                                                         editor.on('change blur keyup NodeChange SetContent Undo Redo input', () => {
+                                                             let content = editor.getContent();
+                                                             this.search_results_description = content;
+                                                             $wire.set('search_results_description', content, false);
+                                                         });
+                                                     }
+                                                 });
+                                             };
+                                             tryInit();
+                                         },
+                                         destroy() {
+                                             if (typeof tinymce !== 'undefined' && tinymce.get('search_results_description_editor')) {
+                                                 tinymce.get('search_results_description_editor').remove();
+                                             }
+                                         }
+                                     }"
+                                     x-init="initTiny()">
+                                    <textarea id="search_results_description_editor" class="w-full"></textarea>
+                                </div>
+                                @error('search_results_description') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                            </div>
+
+                            <!-- 2. Quick Shop Modal Short Description -->
+                            <div class="space-y-2 pt-2 border-t border-slate-200/50">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                                        <span>Quick Shop Modal Short Description</span>
+                                        <span class="text-[10px] font-semibold text-slate-400 normal-case">(Overrides ONLY on the Quick Shop modal popup)</span>
+                                    </label>
+                                </div>
+                                <div wire:ignore 
+                                     x-data="{
+                                         quick_shop_description: @entangle('quick_shop_description'),
+                                         initTiny() {
+                                             let attempts = 0;
+                                             const tryInit = () => {
+                                                 if (typeof tinymce === 'undefined') {
+                                                     if (attempts++ < 40) setTimeout(tryInit, 100);
+                                                     return;
+                                                 }
+                                                 if (tinymce.get('quick_shop_description_editor')) {
+                                                     tinymce.get('quick_shop_description_editor').remove();
+                                                 }
+                                                 tinymce.init({
+                                                     selector: '#quick_shop_description_editor',
+                                                     license_key: 'gpl',
+                                                     promotion: false,
+                                                     base_url: '/build/node_modules/tinymce',
+                                                     suffix: '.min',
+                                                     height: 320,
+                                                     menubar: 'insert format tools table',
+                                                     font_size_formats: '12px 13px 14px 16px 18px 24px 30px 32px 34px 36px 1rem 1.125rem 1.25rem 1.375rem 1.5rem 1.75rem 1.875rem 2rem 2.25rem 2.5rem 3rem 1em 1.125em 1.25em 1.375em 1.5em 1.75em 1.875em 2em 2.25em 2.5em 3em 1vh 1.5vh 2vh 2.5vh 3vh 4vh 5vh 6vh 1vw 1.5vw 2vw 2.5vw 3vw 4vw 5vw 6vw',
+                                                     content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } .btn-theme-primary { background-color: #4f46e5 !important; color: #ffffff !important; border-radius: 0.75rem !important; border: none !important; padding: 10px 20px !important; font-weight: 700 !important; font-family: inherit !important; cursor: pointer !important; display: inline-block !important; text-align: center !important; text-decoration: none !important; transition: background-color 0.2s !important; } .btn-theme-primary:hover { background-color: #4338ca !important; }',
+                                                     content_css: [
+                                                         'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
+                                                         '/css/prose.css'
+                                                     ],
+                                                     convert_urls: false,
+                                                     remove_script_host: false,
+                                                     images_upload_handler: window.cmsTinyMCEImageUploadHandler,
+                                                     plugins: 'advlist autolink lists link image charmap preview anchor searchreplace wordcount visualblocks supercode fullscreen insertdatetime media table help emoticons pagebreak directionality',
+                                                     toolbar: [
+                                                         'supercode fullscreen | undo redo | styles blocks | bold italic underline strikethrough | forecolor backcolor',
+                                                         'fontfamily fontsize lineheight | alignleft aligncenter alignright alignjustify | outdent indent | removeformat | numlist bullist | pagebreak | charmap emoticons | link image media anchor | ltr rtl | preview'
+                                                     ],
+                                                     toolbar_mode: 'wrap',
+                                                     cache_suffix: '?v=' + new Date().getTime(),
+                                                     protect: [
+                                                         /\{\{[\s\S]*?\}\}/g,
+                                                         /\{!![\s\S]*?!!\}/g,
+                                                         /@\w+(\([^)]*\))?/g
+                                                     ],
+                                                     branding: false,
+                                                     contextmenu: 'link image imagetools',
+                                                     style_formats: [
+                                                         { title: 'Callout (Yellow/Warning)', block: 'div', classes: 'p-4 bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-500 text-amber-900 dark:text-amber-200 rounded-r-lg my-4', wrapper: true },
+                                                         { title: 'Callout (Blue/Info)', block: 'div', classes: 'p-4 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 text-blue-900 dark:text-blue-200 rounded-r-lg my-4', wrapper: true },
+                                                         { title: 'Callout (Green/Success)', block: 'div', classes: 'p-4 bg-emerald-50 dark:bg-emerald-950/20 border-l-4 border-emerald-500 text-emerald-900 dark:text-emerald-200 rounded-r-lg my-4', wrapper: true },
+                                                         { title: 'Callout (Red/Danger)', block: 'div', classes: 'p-4 bg-rose-50 dark:bg-rose-950/20 border-l-4 border-rose-500 text-rose-900 dark:text-rose-200 rounded-r-lg my-4', wrapper: true },
+                                                         { title: 'Feature Card', block: 'div', classes: 'p-6 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl shadow-sm my-6', wrapper: true },
+                                                         { title: 'Premium Button (Primary)', selector: 'a', classes: 'inline-block px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition-colors no-underline' },
+                                                         { title: 'Premium Button (Outline)', selector: 'a', classes: 'inline-block px-5 py-2.5 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium rounded-xl transition-colors no-underline' },
+                                                         { title: 'Badge Primary', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-800 rounded-full' },
+                                                         { title: 'Badge Success', inline: 'span', classes: 'inline-block px-2.5 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full' },
+                                                         { title: 'Lead Paragraph', block: 'p', classes: 'text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed' },
+                                                         { title: 'Highlight Text', inline: 'span', styles: { color: '#ff0000', textDecoration: 'underline' } }
+                                                     ],
+                                                     extended_valid_elements: '*[class|style|id|name|open],svg[*],path[*],circle[*],rect[*],g[*],line[*],polyline[*],polygon[*]',
+                                                     supercode: {
+                                                         theme: 'monokai',
+                                                         fontSize: 14,
+                                                         autocomplete: true,
+                                                         dark: true
+                                                     },
+                                                     setup: (editor) => {
+                                                         editor.on('focus', () => {
+                                                             window.lastActiveEditor = editor;
+                                                         });
+                                                         editor.on('init', () => {
+                                                             let initialHtml = (typeof this.quick_shop_description !== 'undefined' && this.quick_shop_description !== null && this.quick_shop_description !== '') 
+                                                                 ? this.quick_shop_description 
+                                                                 : (@js($quick_shop_description) || '');
+                                                             let ensureWrapper = (typeof window.ensureProseWrapper === 'function')
+                                                                 ? window.ensureProseWrapper
+                                                                 : (raw) => (raw && raw.trim() ? raw : '<p>&nbsp;</p>');
+                                                             let formatted = ensureWrapper(initialHtml);
+                                                             editor.setContent(formatted);
+                                                             this.quick_shop_description = editor.getContent();
+                                                             
+                                                             editor.getBody().querySelectorAll('.prose').forEach(el => {
+                                                                 el.style.setProperty('max-width', 'none', 'important');
+                                                                 el.style.setProperty('width', '100%');
+                                                             });
+                                                         });
+                                                         editor.on('change blur keyup NodeChange SetContent Undo Redo input', () => {
+                                                             let content = editor.getContent();
+                                                             this.quick_shop_description = content;
+                                                             $wire.set('quick_shop_description', content, false);
+                                                         });
+                                                     }
+                                                 });
+                                             };
+                                             tryInit();
+                                         },
+                                         destroy() {
+                                             if (typeof tinymce !== 'undefined' && tinymce.get('quick_shop_description_editor')) {
+                                                 tinymce.get('quick_shop_description_editor').remove();
+                                             }
+                                         }
+                                     }"
+                                     x-init="initTiny()">
+                                    <textarea id="quick_shop_description_editor" class="w-full"></textarea>
+                                </div>
+                                @error('quick_shop_description') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                            </div>
                         </div>
 
                         <!-- Bullet Points -->
@@ -295,6 +640,7 @@
                                                  suffix: '.min',
                                                  height: 850,
                                                  menubar: 'insert format tools table',
+                                                  font_size_formats: '12px 13px 14px 16px 18px 24px 30px 32px 34px 36px 1rem 1.125rem 1.25rem 1.375rem 1.5rem 1.75rem 1.875rem 2rem 2.25rem 2.5rem 3rem 1em 1.125em 1.25em 1.375em 1.5em 1.75em 1.875em 2em 2.25em 2.5em 3em 1vh 1.5vh 2vh 2.5vh 3vh 4vh 5vh 6vh 1vw 1.5vw 2vw 2.5vw 3vw 4vw 5vw 6vw',
                                                  content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; padding: 1rem; } .btn-theme-primary { background-color: #4f46e5 !important; color: #ffffff !important; border-radius: 0.75rem !important; border: none !important; padding: 10px 20px !important; font-weight: 700 !important; font-family: inherit !important; cursor: pointer !important; display: inline-block !important; text-align: center !important; text-decoration: none !important; transition: background-color 0.2s !important; } .btn-theme-primary:hover { background-color: #4338ca !important; }',
                                                  content_css: [
                                                      'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
@@ -338,6 +684,9 @@
                                                      dark: true
                                                  },
                                                  setup: (editor) => {
+                                                     editor.on('focus', () => {
+                                                         window.lastActiveEditor = editor;
+                                                     });
                                                      editor.on('init', () => {
                                                          let initialHtml = (typeof this.long_description !== 'undefined' && this.long_description !== null && this.long_description !== '') 
                                                              ? this.long_description 
@@ -404,49 +753,56 @@
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">Meta Description (SEO)</label>
-                                <textarea wire:model="meta_description" rows="3" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 h-24 resize-none"></textarea>
+                                <textarea wire:model="meta_description" rows="2" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm shadow-sm" placeholder="Leave blank to automatically fallback to short description..."></textarea>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                            <div>
-                                <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider font-sans">Assign Categories</label>
-                                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 h-40 overflow-y-auto space-y-1">
-                                    @if($categoryTree->isEmpty())
-                                        <span class="text-xs text-slate-400">No categories available.</span>
-                                    @else
-                                        @foreach($categoryTree as $node)
-                                            @include('livewire.category-checkbox-node', ['node' => $node, 'depth' => 0])
-                                        @endforeach
-                                    @endif
+                        {{-- Search Keywords Index Settings --}}
+                        <div class="p-5 bg-slate-50/70 border border-slate-200/80 rounded-2xl space-y-4">
+                            <div class="flex items-center justify-between border-b border-slate-200/60 pb-3">
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                        Search Index Keywords
+                                    </h4>
+                                    <p class="text-[11px] text-slate-500 mt-0.5">Used by the catalog live search and search bar queries to match this product.</p>
                                 </div>
+                                <label class="inline-flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+                                    <input type="checkbox" wire:model.live="product_search_index_locked" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                                    <span class="text-xs font-bold text-slate-700">Lock Custom Keywords</span>
+                                </label>
                             </div>
-
                             <div>
-                                <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider font-sans">Assign Brand</label>
-                                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 h-40 overflow-y-auto space-y-2">
-                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
-                                        <input type="radio" wire:model="brand_id" value="" class="rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white">
-                                        <span class="text-slate-400 font-normal">None (No Brand)</span>
-                                    </label>
-                                    @if($brands->isEmpty())
-                                        <span class="text-xs text-slate-400">No brands available.</span>
-                                    @else
-                                        @foreach($brands as $brand)
-                                            <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
-                                                <input type="radio" wire:model="brand_id" value="{{ $brand->id }}" class="rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white">
-                                                <span>{{ $brand->name }}</span>
-                                            </label>
-                                        @endforeach
-                                    @endif
-                                </div>
-                                @error('brand_id') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                <textarea wire:model="product_search_index" rows="3" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-xs font-mono shadow-sm" placeholder="Keywords automatically compiled from title, descriptions, category, and brand..."></textarea>
+                                <p class="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    When unlocked, keywords automatically recompile on product save. When locked, custom keywords here are preserved.
+                                </p>
+                            </div>
                         </div>
 
+                        <!-- Brand Assignment -->
+                        <div class="border-t border-slate-100 pt-4">
+                            <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider">Product Brand</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                <label class="flex items-center gap-2 text-xs font-medium text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200 cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-200 transition">
+                                    <input type="radio" wire:model="brand_id" value="" class="rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white">
+                                    <span class="font-semibold text-slate-400">None</span>
+                                </label>
+                                @if(isset($brands))
+                                    @foreach($brands as $brand)
+                                        <label class="flex items-center gap-2 text-xs font-medium text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200 cursor-pointer hover:bg-indigo-50/50 hover:border-indigo-200 transition">
+                                            <input type="radio" wire:model="brand_id" value="{{ $brand->id }}" class="rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white">
+                                            <span>{{ $brand->name }}</span>
+                                        </label>
+                                    @endforeach
+                                @endif
+                            </div>
+                            @error('brand_id') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                         </div>
 
                         <div class="pt-6">
-                            <button type="submit" @click="if (typeof tinymce !== 'undefined' && tinymce.get('long_description_editor')) { $wire.set('long_description', tinymce.get('long_description_editor').getContent(), false); }" wire:loading.attr="disabled" wire:target="updateProduct" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-2xl shadow-md hover:opacity-90 flex items-center justify-center gap-2">
+                            <button type="submit" @click="if (typeof tinymce !== 'undefined') { ['short_description_editor', 'search_results_description_editor', 'quick_shop_description_editor', 'long_description_editor'].forEach(id => { let ed = tinymce.get(id); if (ed) { let prop = id.replace('_editor', ''); $wire.set(prop, ed.getContent(), false); } }); }" wire:loading.attr="disabled" wire:target="updateProduct" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-2xl shadow-md hover:opacity-90 flex items-center justify-center gap-2">
                                 <svg wire:loading wire:target="updateProduct" class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -626,6 +982,48 @@
                                     <span class="text-xs text-slate-400">Mark this product as a featured item. Featured products appear in <strong class="text-slate-600">[plugin:featured-items]</strong> shortcode sections on your CMS pages.</span>
                                 </div>
                             </label>
+
+                            {{-- Quick Shop Modal Toggle & Label --}}
+                            <div class="pt-4 border-t border-slate-100 space-y-3">
+                                <label class="flex items-start gap-3 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="quick_shop_active" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold {{ $quick_shop_active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700' }} transition-colors">
+                                            Enable "Quick Shop" Modal Button
+                                            @if($quick_shop_active)
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700 ml-1">Active</span>
+                                            @endif
+                                        </span>
+                                        <span class="text-xs text-slate-400">When enabled, a "Quick Shop" button will appear for this product on catalog results (/shop/), featured items plugins, and cross-selling plugins. Customers can view options, images, and add the product directly to their cart in an instant popup modal without leaving the page.</span>
+                                    </div>
+                                </label>
+
+                                @if($quick_shop_active)
+                                    <div class="ml-7 flex flex-col gap-1.5 pt-1">
+                                        <label for="quick_shop_label" class="text-xs font-semibold text-slate-600">
+                                            Custom Button Label
+                                            <span class="ml-1 font-normal text-slate-400">(optional per-item override)</span>
+                                        </label>
+                                        <input type="text"
+                                               id="quick_shop_label"
+                                               wire:model="quick_shop_label"
+                                               placeholder="Quick Shop"
+                                               maxlength="255"
+                                               class="w-full sm:max-w-md px-3.5 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-xs transition">
+                                        @error('quick_shop_label') <span class="text-xs text-rose-500 font-semibold">{{ $message }}</span> @enderror
+                                        <p class="text-xs text-slate-400">
+                                            Leave blank to use the default dynamic label: <strong class="text-indigo-600">"@label('catalog.quick_shop', 'Quick Shop')"</strong> (supports global site label manager and multi-language translations).
+                                        </p>
+                                        <div class="flex items-center gap-2 pt-1">
+                                            <span class="text-xs text-slate-400">Preview:</span>
+                                            <span class="inline-flex items-center gap-1.5 bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xs">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                {{ trim($quick_shop_label) ?: siteLabel('catalog.quick_shop', 'Quick Shop') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
 
                             {{-- Show Item Total Toggle --}}
                             <label class="flex items-start gap-3 cursor-pointer">
@@ -1314,9 +1712,19 @@
                             <input type="text" wire:model="trans_title" placeholder="Translated product name..."
                                    class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400">
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Short Description</label>
+                                                <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Short Description (Standard Item View)</label>
                             <textarea wire:model="trans_short_description" rows="3" placeholder="Translated short description..."
+                                      class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Search Results Description (HTML)</label>
+                            <textarea wire:model="trans_search_results_description" rows="3" placeholder="Translated search results description..."
+                                      class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Quick Shop Modal Description (HTML)</label>
+                            <textarea wire:model="trans_quick_shop_description" rows="3" placeholder="Translated quick shop description..."
                                       class="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-400"></textarea>
                         </div>
                         <div>
@@ -1469,10 +1877,15 @@
             });
         };
 
+        window.lastActiveEditor = null;
+
         window.insertHtmlWidget = function(htmlString) {
-            let editor = tinymce.activeEditor;
-            if (!editor) {
-                editor = tinymce.get('long_description_editor');
+            let editor = window.lastActiveEditor || tinymce.activeEditor;
+            if (!editor || editor.isDestroyed) {
+                editor = tinymce.get('short_description_editor') 
+                      || tinymce.get('long_description_editor') 
+                      || tinymce.get('search_results_description_editor') 
+                      || tinymce.get('quick_shop_description_editor');
             }
             if (editor) {
                 editor.undoManager.transact(() => {
@@ -1531,9 +1944,12 @@
         };
 
         window.insertPluginShortcode = function(shortcodeString) {
-            let editor = tinymce.activeEditor;
-            if (!editor) {
-                editor = tinymce.get('long_description_editor');
+            let editor = window.lastActiveEditor || tinymce.activeEditor;
+            if (!editor || editor.isDestroyed) {
+                editor = tinymce.get('short_description_editor') 
+                      || tinymce.get('long_description_editor') 
+                      || tinymce.get('search_results_description_editor') 
+                      || tinymce.get('quick_shop_description_editor');
             }
             if (editor) {
                 editor.undoManager.transact(() => {
@@ -1563,7 +1979,7 @@
 
     <!-- Floating Save All Sections Button -->
     <div class="fixed bottom-8 right-8 z-40">
-        <button @click="if (typeof tinymce !== 'undefined') { let ed = tinymce.get('long_description_editor'); if (ed) $wire.set('long_description', ed.getContent(), false); } document.activeElement?.blur();"
+        <button @click="if (typeof tinymce !== 'undefined') { ['short_description_editor', 'search_results_description_editor', 'quick_shop_description_editor', 'long_description_editor'].forEach(id => { let ed = tinymce.get(id); if (ed) { let prop = id.replace('_editor', ''); $wire.set(prop, ed.getContent(), false); } }); } document.activeElement?.blur();"
                 wire:click="saveAllSections"
                 wire:loading.attr="disabled"
                 type="button"

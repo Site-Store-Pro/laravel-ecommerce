@@ -31,6 +31,14 @@ class AdminProductCreate extends Component
     public string $aiResponse = '';
     public bool $showAiButton = false;
 
+    // Drawers & Shortcodes
+    public string $searchProduct = '';
+    public string $searchBrand = '';
+    public string $searchCategory = '';
+    public string $searchPage = '';
+    public string $shortcodeSearchQuery = '';
+    public string $shortcodeSearchScope = 'all';
+
     public function mount(): void
     {
         abort_unless(auth()->check() && auth()->user()->isStaff(), 403, 'Unauthorized staff access.');
@@ -126,10 +134,128 @@ class AdminProductCreate extends Component
     {
         $categories = Category::all();
         $brands = Brand::orderBy('name')->get();
+        $displayPlugins = \App\Models\Plugin::active()->ofType('display')->orderBy('name', 'asc')->get();
+
+        // Link Generator Drawer searches
+        $searchedProducts = [];
+        if (strlen($this->searchProduct) >= 2) {
+            $searchedProducts = Product::where('title', 'like', '%' . $this->searchProduct . '%')
+                ->orWhere('seo_slug', 'like', '%' . $this->searchProduct . '%')
+                ->limit(25)->get();
+        }
+
+        $searchedBrands = [];
+        if (strlen($this->searchBrand) >= 2) {
+            $searchedBrands = \App\Models\Brand::where('name', 'like', '%' . $this->searchBrand . '%')
+                ->orWhere('slug', 'like', '%' . $this->searchBrand . '%')
+                ->limit(25)->get();
+        }
+
+        $searchedCategories = [];
+        if (strlen($this->searchCategory) >= 2) {
+            $searchedCategories = \App\Models\Category::where('name', 'like', '%' . $this->searchCategory . '%')
+                ->orWhere('slug', 'like', '%' . $this->searchCategory . '%')
+                ->limit(25)->get();
+        }
+
+        $searchedPages = [];
+        if (strlen($this->searchPage) >= 2) {
+            $searchedPages = \App\Models\CmsPage::where('title', 'like', '%' . $this->searchPage . '%')
+                ->orWhere('slug', 'like', '%' . $this->searchPage . '%')
+                ->limit(25)->get();
+        }
+
+        // Shortcode Generator Drawer search
+        $shortcodeSearchResults = [];
+        if (!empty($this->shortcodeSearchQuery)) {
+            $q = '%' . $this->shortcodeSearchQuery . '%';
+
+            $pagesLimit      = ($this->shortcodeSearchScope === 'all') ? 5 : 25;
+            $productsLimit   = ($this->shortcodeSearchScope === 'all') ? 10 : 25;
+            $categoriesLimit = ($this->shortcodeSearchScope === 'all') ? 5 : 25;
+            $brandsLimit     = ($this->shortcodeSearchScope === 'all') ? 5 : 25;
+            $downloadsLimit  = ($this->shortcodeSearchScope === 'all') ? 5 : 25;
+
+            if ($this->shortcodeSearchScope === 'all' || $this->shortcodeSearchScope === 'pages') {
+                $pages = \App\Models\CmsPage::where('title', 'like', $q)->limit($pagesLimit)->get();
+                foreach ($pages as $p) {
+                    $shortcodeSearchResults[] = [
+                        'type'       => 'Page',
+                        'id'         => $p->id,
+                        'title'      => $p->title,
+                        'badgeColor' => 'bg-indigo-100 text-indigo-800 border-indigo-200',
+                        'shortcode'  => '[page:' . $p->id . ' label="' . e($p->title) . '"]',
+                    ];
+                }
+            }
+
+            if ($this->shortcodeSearchScope === 'all' || $this->shortcodeSearchScope === 'products') {
+                $productsList = Product::where('title', 'like', $q)->limit($productsLimit)->get();
+                foreach ($productsList as $p) {
+                    $shortcodeSearchResults[] = [
+                        'type'       => 'Product',
+                        'id'         => $p->id,
+                        'title'      => $p->title,
+                        'badgeColor' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                        'shortcode'  => '[product:' . $p->id . ' label="' . e($p->title) . '"]',
+                    ];
+                }
+            }
+
+            if ($this->shortcodeSearchScope === 'all' || $this->shortcodeSearchScope === 'categories') {
+                $cats = \App\Models\Category::where('name', 'like', $q)->limit($categoriesLimit)->get();
+                foreach ($cats as $c) {
+                    $shortcodeSearchResults[] = [
+                        'type'       => 'Category',
+                        'id'         => $c->id,
+                        'title'      => $c->name,
+                        'badgeColor' => 'bg-amber-100 text-amber-800 border-amber-200',
+                        'shortcode'  => '[category:' . $c->id . ' label="' . e($c->name) . '"]',
+                    ];
+                }
+            }
+
+            if ($this->shortcodeSearchScope === 'all' || $this->shortcodeSearchScope === 'brands') {
+                $brnds = \App\Models\Brand::where('name', 'like', $q)->limit($brandsLimit)->get();
+                foreach ($brnds as $b) {
+                    $shortcodeSearchResults[] = [
+                        'type'       => 'Brand',
+                        'id'         => $b->id,
+                        'title'      => $b->name,
+                        'badgeColor' => 'bg-rose-100 text-rose-800 border-rose-200',
+                        'shortcode'  => '[brand:' . $b->id . ' label="' . e($b->name) . '"]',
+                    ];
+                }
+            }
+
+            if ($this->shortcodeSearchScope === 'all' || $this->shortcodeSearchScope === 'downloads') {
+                $downloads = \App\Models\Download::where('title', 'like', $q)->orWhere('filename', 'like', $q)->limit($downloadsLimit)->get();
+                foreach ($downloads as $d) {
+                    $label = !empty($d->title) ? $d->title : $d->filename;
+                    $shortcodeSearchResults[] = [
+                        'type'       => 'Download',
+                        'id'         => $d->id,
+                        'title'      => $label,
+                        'badgeColor' => 'bg-teal-100 text-teal-800 border-teal-200',
+                        'shortcode'  => '[download:' . $d->uuid . ' label="' . e($label) . '"]',
+                    ];
+                }
+            }
+
+            if (count($shortcodeSearchResults) > 25) {
+                $shortcodeSearchResults = array_slice($shortcodeSearchResults, 0, 25);
+            }
+        }
 
         return view('livewire.admin-product-create', [
-            'categories' => $categories,
-            'brands'     => $brands,
+            'categories'             => $categories,
+            'brands'                 => $brands,
+            'displayPlugins'         => $displayPlugins,
+            'searchedProducts'       => $searchedProducts,
+            'searchedBrands'         => $searchedBrands,
+            'searchedCategories'     => $searchedCategories,
+            'searchedPages'          => $searchedPages,
+            'shortcodeSearchResults' => $shortcodeSearchResults,
         ]);
     }
 }

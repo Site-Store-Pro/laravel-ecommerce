@@ -87,4 +87,38 @@ class AdminProductCreateTest extends TestCase
         $product->refresh();
         $this->assertEquals($updatedLongDescription, $product->long_description);
     }
+
+    public function test_admin_can_create_and_edit_product_with_rich_html_short_description(): void
+    {
+        $this->actingAs($this->admin);
+
+        $shortDescriptionHtml = '<p>Compact summary with a <a href="/special" class="btn-theme-primary">Buy Now</a> button and [plugin:featured_items].</p>';
+        $longDescriptionHtml = '<div class="prose"><p>Comprehensive specs and warranty details.</p></div>';
+
+        // 1. Create with rich short description
+        Livewire::test(\App\Livewire\AdminProductCreate::class)
+            ->set('title', 'Ultra Wireless Headphones')
+            ->set('seo_slug', 'ultra-wireless-headphones')
+            ->set('short_description', $shortDescriptionHtml)
+            ->set('long_description', $longDescriptionHtml)
+            ->call('saveProduct')
+            ->assertHasNoErrors()
+            ->assertRedirect();
+
+        $product = Product::where('title', 'Ultra Wireless Headphones')->first();
+        $this->assertNotNull($product);
+        $this->assertEquals($shortDescriptionHtml, $product->short_description);
+        $this->assertEquals($longDescriptionHtml, $product->long_description);
+
+        // 2. Edit with updated rich short description
+        $updatedShortHtml = '<p>Updated compact summary with <strong>enhanced noise cancellation</strong>.</p>';
+        Livewire::test(\App\Livewire\AdminProductEdit::class, ['id' => $product->id])
+            ->assertSet('short_description', $shortDescriptionHtml)
+            ->set('short_description', $updatedShortHtml)
+            ->call('updateProduct')
+            ->assertHasNoErrors();
+
+        $product->refresh();
+        $this->assertEquals($updatedShortHtml, $product->short_description);
+    }
 }

@@ -267,6 +267,10 @@ class AdminProducts extends Component
                 'custom_amount_options'           => $original->custom_amount_options,
                 'inventory_alert_id'              => $original->inventory_alert_id,
                 'show_variant_selector_thumbnail' => $original->show_variant_selector_thumbnail ?? false,
+                'quick_shop_active'               => $original->quick_shop_active ?? false,
+                'quick_shop_label'                => $original->quick_shop_label,
+                'search_results_description'      => $original->search_results_description,
+                'quick_shop_description'          => $original->quick_shop_description,
             ]);
 
             // 2. Sync Categories

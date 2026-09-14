@@ -19,7 +19,7 @@
     $objectClass    = $imgOrientation === '1:1' ? 'object-contain' : 'object-cover';
 @endphp
 
-<div class="cross-sell-list-plugin-section py-8">
+<div class="cross-sell-list-plugin-section py-8" x-data>
 
     {{-- Section Header --}}
     @if(!empty($header))
@@ -75,17 +75,17 @@
                         <h3 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2">
                             <a href="{{ route('shop.product', $product->seo_slug) }}" class="!no-underline no-underline text-inherit hover:text-indigo-600 dark:hover:text-indigo-400" style="text-decoration: none !important;">{{ $product->title }}</a>
                         </h3>
-                        @if($product->short_description)
+                        @if($product->catalog_short_description)
                             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">
-                                {{ strip_tags($product->short_description) }}
+                                {{ strip_tags($product->catalog_short_description) }}
                             </p>
                         @endif
                     </div>
                 </div>
 
                 {{-- Price + Button --}}
-                <div class="p-5 pt-4 border-t border-slate-100 dark:border-slate-700/80 mt-auto flex items-center justify-between gap-3 dark:pt-4">
-                    <div>
+                <div class="p-5 pt-4 border-t border-slate-100 dark:border-slate-700/80 mt-auto flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 dark:pt-4">
+                    <div class="min-w-0">
                         @if(!$product->is_donation_or_bill_pay && $defaultVariant)
                             @if($defaultVariant->hasStripeTrial() && $defaultVariant->hasTrialLabel())
                                 <span class="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">
@@ -110,32 +110,44 @@
                         @endif
                     </div>
 
-                    @if($product->requiresOptions())
-                        <a href="{{ route('shop.product', $product->seo_slug) }}"
-                           class="btn-primary inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">
-                            @label('plugin.view_options', 'View Options')
-                        </a>
-                    @else
-                        @php
-                            $v     = $product->variants->first();
-                            $avail = ($v->inventory
-                                ? $v->inventory->quantity_available - $v->inventory->reserved_stock
-                                : 999);
-                        @endphp
-                        @if(!$v->download_item && $avail <= 0)
-                            <button disabled class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 rounded-xl cursor-not-allowed whitespace-nowrap shrink-0">
-                                @label('plugin.out_of_stock', 'Out of Stock')
-                            </button>
-                        @else
-                            <button wire:click="buyNow({{ $v->id }})"
-                                    wire:loading.attr="disabled"
-                                    wire:target="buyNow({{ $v->id }})"
-                                    class="btn-primary inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">
-                                <span wire:loading.remove wire:target="buyNow({{ $v->id }})">@label('plugin.buy_now', 'Buy Now')</span>
-                                <span wire:loading wire:target="buyNow({{ $v->id }})">@label('plugin.adding', 'Adding...')</span>
+                    <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                        @if($product->quick_shop_active)
+                            <button type="button"
+                                    x-on:click.prevent="Livewire.dispatch('open-quick-shop', { productId: {{ $product->id }} })"
+                                    onclick="if(window.Livewire){ Livewire.dispatch('open-quick-shop', { productId: {{ $product->id }} }); return false; }"
+                                    class="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 rounded-xl text-xs font-bold transition-all shrink-0">
+                                <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                <span>{{ $product->quick_shop_button_label }}</span>
                             </button>
                         @endif
-                    @endif
+
+                        @if($product->requiresOptions())
+                            <a href="{{ route('shop.product', $product->seo_slug) }}"
+                               class="btn-primary inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">
+                                @label('plugin.view_options', 'View Options')
+                            </a>
+                        @else
+                            @php
+                                $v     = $product->variants->first();
+                                $avail = ($v->inventory
+                                    ? $v->inventory->quantity_available - $v->inventory->reserved_stock
+                                    : 999);
+                            @endphp
+                            @if(!$v->download_item && $avail <= 0)
+                                <button disabled class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 rounded-xl cursor-not-allowed whitespace-nowrap shrink-0">
+                                    @label('plugin.out_of_stock', 'Out of Stock')
+                                </button>
+                            @else
+                                <button wire:click="buyNow({{ $v->id }})"
+                                        wire:loading.attr="disabled"
+                                        wire:target="buyNow({{ $v->id }})"
+                                        class="btn-primary inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">
+                                    <span wire:loading.remove wire:target="buyNow({{ $v->id }})">@label('plugin.buy_now', 'Buy Now')</span>
+                                    <span wire:loading wire:target="buyNow({{ $v->id }})">@label('plugin.adding', 'Adding...')</span>
+                                </button>
+                            @endif
+                        @endif
+                    </div>
                 </div>
             </div>
         @endforeach

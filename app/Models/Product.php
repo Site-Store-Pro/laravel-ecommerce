@@ -55,15 +55,22 @@ class Product extends Model
         'custom_amount_options',
         'inventory_alert_id',
         'show_variant_selector_thumbnail',
+        'quick_shop_active',
+        'quick_shop_label',
+        'search_results_description',
+        'quick_shop_description',
     ];
 
     /** Fields automatically translated when translations relation is loaded. */
     protected array $translatable = [
         'title',
         'short_description',
+        'search_results_description',
+        'quick_shop_description',
         'long_description',
         'meta_title',
         'meta_description',
+        'quick_shop_label',
     ];
 
     protected $casts = [
@@ -89,7 +96,23 @@ class Product extends Model
         'custom_amount_options' => 'string',
         'show_variant_selector_thumbnail' => 'integer',
         'inventory_alert_id' => 'integer',
+        'quick_shop_active' => 'boolean',
+        'quick_shop_label' => 'string',
     ];
+
+    /**
+     * Get the display label for the Quick Shop button.
+     * Uses the per-product custom label (or translation) if set,
+     * otherwise falls back to the dynamic site label.
+     */
+    public function getQuickShopButtonLabelAttribute(): string
+    {
+        $custom = trim($this->getTranslated('quick_shop_label') ?: ($this->quick_shop_label ?? ''));
+        if ($custom !== '') {
+            return $custom;
+        }
+        return siteLabel('catalog.quick_shop', 'Quick Shop');
+    }
 
     /**
      * Scope a query to only include active products.
@@ -319,12 +342,54 @@ class Product extends Model
 
     public function getParsedShortDescriptionAttribute(): string
     {
-        return \App\Services\ContentParserService::parse($this->short_description);
+        return \App\Services\ContentParserService::parse($this->short_description ?? '');
+    }
+
+    /**
+     * Get the short description to display in catalog results and plugin widgets.
+     * If search_results_description is set (translated or native), it overrides the default short_description.
+     */
+    public function getCatalogShortDescriptionAttribute(): string
+    {
+        $translatedOverride = $this->getTranslated('search_results_description');
+        if (!empty(trim(strip_tags($translatedOverride)))) {
+            return $translatedOverride;
+        }
+        if (!empty(trim(strip_tags($this->search_results_description ?? '')))) {
+            return (string) $this->search_results_description;
+        }
+        return (string) ($this->getTranslated('short_description') ?: ($this->short_description ?? ''));
+    }
+
+    public function getParsedCatalogDescriptionAttribute(): string
+    {
+        return \App\Services\ContentParserService::parse($this->catalog_short_description);
+    }
+
+    /**
+     * Get the short description to display on the Quick Shop modal view.
+     * If quick_shop_description is set (translated or native), it overrides the default short_description ONLY on the modal.
+     */
+    public function getQuickShopShortDescriptionAttribute(): string
+    {
+        $translatedOverride = $this->getTranslated('quick_shop_description');
+        if (!empty(trim(strip_tags($translatedOverride)))) {
+            return $translatedOverride;
+        }
+        if (!empty(trim(strip_tags($this->quick_shop_description ?? '')))) {
+            return (string) $this->quick_shop_description;
+        }
+        return (string) ($this->getTranslated('short_description') ?: ($this->short_description ?? ''));
+    }
+
+    public function getParsedQuickShopDescriptionAttribute(): string
+    {
+        return \App\Services\ContentParserService::parse($this->quick_shop_short_description);
     }
 
     public function getParsedLongDescriptionAttribute(): string
     {
-        return \App\Services\ContentParserService::parse($this->long_description);
+        return \App\Services\ContentParserService::parse($this->long_description ?? '');
     }
 
     /**

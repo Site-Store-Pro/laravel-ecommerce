@@ -151,6 +151,7 @@
         @endif
 
         <livewire:slide-cart />
+        <livewire:quick-shop-modal />
         <x-cart-confirmation-modal />
         <x-toast-alert />
         <!-- Custom JS / Third-party scripts (DB-driven) -->

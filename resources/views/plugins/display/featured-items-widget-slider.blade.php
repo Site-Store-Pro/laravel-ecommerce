@@ -62,19 +62,34 @@
             }
             #{{ $instanceId }}_outer .fi-footer {
                 margin-top: auto; padding-top: 12px; border-top: 1px solid #f8fafc;
-                display: flex; align-items: center; justify-content: space-between; gap: 8px;
+                display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
             }
-            #{{ $instanceId }}_outer .fi-price { font-size: 15px; font-weight: 800; color: #0f172a; }
+            #{{ $instanceId }}_outer .fi-price { font-size: 15px; font-weight: 800; color: #0f172a; line-height: 1.2; }
             #{{ $instanceId }}_outer .fi-price-orig { font-size: 11px; color: #94a3b8; text-decoration: line-through; }
+            #{{ $instanceId }}_outer .fi-btn-group {
+                display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
+            }
             #{{ $instanceId }}_outer .fi-btn {
-                display: inline-flex; align-items: center; gap: 4px;
-                padding: 6px 14px; font-size: 11px; font-weight: 700;
-                border-radius: 12px; white-space: nowrap;
-                text-decoration: none; transition: background 0.15s, color 0.15s;
+                display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+                padding: 6px 12px; font-size: 11px; font-weight: 700;
+                border-radius: 12px; white-space: nowrap; line-height: 1.25;
+                text-decoration: none; transition: background 0.15s, color 0.15s, transform 0.15s, box-shadow 0.15s;
                 border: none; cursor: pointer; flex-shrink: 0;
             }
-            #{{ $instanceId }}_outer .fi-btn-primary { background: #4f46e5; color: #fff; }
-            #{{ $instanceId }}_outer .fi-btn-primary:hover { background: #4338ca; }
+            #{{ $instanceId }}_outer .fi-btn-primary {
+                background: #4f46e5; color: #fff;
+                box-shadow: 0 2px 6px rgba(79,70,229,0.25);
+            }
+            #{{ $instanceId }}_outer .fi-btn-primary:hover {
+                background: #4338ca; color: #fff;
+                transform: translateY(-1px);
+            }
+            #{{ $instanceId }}_outer .fi-btn-quickshop {
+                background: #f1f5f9; color: #334155;
+            }
+            #{{ $instanceId }}_outer .fi-btn-quickshop:hover {
+                background: #e2e8f0; color: #0f172a;
+            }
             #{{ $instanceId }}_outer .fi-btn-outline { background: #eef2ff; color: #4f46e5; }
             #{{ $instanceId }}_outer .fi-btn-outline:hover { background: #e0e7ff; }
             #{{ $instanceId }}_outer .fi-btn-disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
@@ -116,6 +131,8 @@
             .dark #{{ $instanceId }}_outer .fi-footer { border-top-color: rgba(51,65,85,0.6); }
             .dark #{{ $instanceId }}_outer .fi-price { color: #e2e8f0; }
             .dark #{{ $instanceId }}_outer .fi-price-orig { color: #475569; }
+            .dark #{{ $instanceId }}_outer .fi-btn-quickshop { background: #334155; color: #f1f5f9; }
+            .dark #{{ $instanceId }}_outer .fi-btn-quickshop:hover { background: #475569; color: #ffffff; }
             .dark #{{ $instanceId }}_outer .fi-btn-disabled { background: #334155; color: #64748b; }
             .dark #{{ $instanceId }}_outer .fi-btn-outline { background: rgba(79,70,229,0.15); color: #818cf8; }
             .dark #{{ $instanceId }}_outer .fi-btn-outline:hover { background: rgba(79,70,229,0.25); }
@@ -171,12 +188,12 @@
                                         {{ $product->title }}
                                     </a>
                                 </h3>
-                                @if($product->short_description)
-                                    <p class="fi-desc">{{ strip_tags($product->short_description) }}</p>
+                                @if($product->catalog_short_description)
+                                    <p class="fi-desc">{{ strip_tags($product->catalog_short_description) }}</p>
                                 @endif
 
                                 <div class="fi-footer">
-                                    <div>
+                                    <div class="min-w-0">
                                         @if(!$product->is_donation_or_bill_pay && $defaultVariant)
                                             @if($defaultVariant->hasStripeTrial() && $defaultVariant->hasTrialLabel())
                                                 <div class="fi-price" style="color: #6366f1;">{{ $defaultVariant->getTrialLabel() }}</div>
@@ -193,25 +210,37 @@
                                         @endif
                                     </div>
 
-                                    @if($product->requiresOptions())
-                                        <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-primary btn-primary" style="text-decoration:none;">
-                                            @label('plugin.view_options', 'View Options')
-                                        </a>
-                                    @else
-                                        @if(!$v->download_item && $avail <= 0)
-                                            <span class="fi-btn fi-btn-disabled">@label('plugin.out_of_stock', 'Out of Stock')</span>
-                                        @else
-                                            <button wire:click="buyNow({{ $v->id }})"
-                                                    wire:loading.attr="disabled"
-                                                    wire:target="buyNow({{ $v->id }})"
-                                                    class="fi-btn fi-btn-primary btn-primary">
-                                                <span wire:loading.remove wire:target="buyNow({{ $v->id }})">
-                                                    @label('plugin.buy_now', 'Buy Now')
-                                                </span>
-                                                <span wire:loading wire:target="buyNow({{ $v->id }})">@label('plugin.adding', 'Adding...')</span>
+                                    <div class="fi-btn-group flex items-center gap-1.5 flex-wrap justify-end">
+                                        @if($product->quick_shop_active)
+                                            <button type="button"
+                                                    x-on:click.prevent="Livewire.dispatch('open-quick-shop', { productId: {{ $product->id }} })"
+                                                    onclick="if(window.Livewire){ Livewire.dispatch('open-quick-shop', { productId: {{ $product->id }} }); return false; }"
+                                                    class="fi-btn fi-btn-quickshop">
+                                                <svg class="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                <span>{{ $product->quick_shop_button_label }}</span>
                                             </button>
                                         @endif
-                                    @endif
+
+                                        @if($product->requiresOptions())
+                                            <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-btn fi-btn-primary btn-primary" style="text-decoration:none;">
+                                                @label('plugin.view_options', 'View Options')
+                                            </a>
+                                        @else
+                                            @if(!$v->download_item && $avail <= 0)
+                                                <span class="fi-btn fi-btn-disabled">@label('plugin.out_of_stock', 'Out of Stock')</span>
+                                            @else
+                                                <button wire:click="buyNow({{ $v->id }})"
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="buyNow({{ $v->id }})"
+                                                        class="fi-btn fi-btn-primary btn-primary">
+                                                    <span wire:loading.remove wire:target="buyNow({{ $v->id }})">
+                                                        @label('plugin.buy_now', 'Buy Now')
+                                                    </span>
+                                                    <span wire:loading wire:target="buyNow({{ $v->id }})">@label('plugin.adding', 'Adding...')</span>
+                                                </button>
+                                            @endif
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </div>

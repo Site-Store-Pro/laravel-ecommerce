@@ -1,7 +1,13 @@
 <div>
-@php $outOfStockMessage = $outOfStockMessage ?? null; @endphp
+@php
+    $outOfStockMessage = $outOfStockMessage ?? null;
+    $isQuickShop = $isQuickShop ?? false;
+    $shortDesc = $isQuickShop ? $product->parsed_quick_shop_description : $product->parsed_short_description;
+@endphp
     <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">{{ $product->title }}</h1>
-    <p class="mt-4 text-slate-500 leading-relaxed">{!! $product->parsed_short_description !!}</p>
+    @if(!empty(trim(strip_tags($shortDesc))))
+        <div class="mt-4 text-slate-500 leading-relaxed prose prose-slate max-w-none">{!! $shortDesc !!}</div>
+    @endif
 
     @if(!empty($product->bullet_point_1) || !empty($product->bullet_point_2) || !empty($product->bullet_point_3) || !empty($product->bullet_point_4))
         <ul class="mt-4 space-y-1.5 text-sm text-slate-700 dark:text-slate-300 list-disc list-inside font-medium bg-slate-50/70 border border-slate-200/60 rounded-2xl p-4">

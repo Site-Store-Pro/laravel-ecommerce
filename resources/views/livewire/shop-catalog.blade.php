@@ -449,13 +449,13 @@
                                         <a href="{{ route('shop.product', $product->seo_slug) }}"
                                            x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }">{{ $product->title }}</a>
                                     </h3>
-                                    @if($product->short_description)
-                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">{{ strip_tags($product->short_description) }}</p>
+                                    @if($product->catalog_short_description)
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">{{ strip_tags($product->catalog_short_description) }}</p>
                                     @endif
                                 </div>
                             </div>
-                            <div class="p-5 pt-4 border-t border-slate-100 dark:border-slate-700/80 mt-auto flex items-center justify-between gap-3 dark:pt-4">
-                                <div>
+                            <div class="p-5 pt-4 border-t border-slate-100 dark:border-slate-700/80 mt-auto flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 dark:pt-4">
+                                <div class="min-w-0">
                                     @if(!$product->is_donation_or_bill_pay && $firstVariant)
                                         @php
                                             $price = $userType == 2 ? $firstVariant->wholesale_price : $firstVariant->public_price;
@@ -480,15 +480,26 @@
                                         @endif
                                     @endif
                                 </div>
-                                @if($product->requiresOptions())
-                                    <a href="{{ route('shop.product', $product->seo_slug) }}"
-                                       x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }"
-                                       class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">@label('catalog.view_options', 'View Options')</a>
-                                @elseif($firstVariant && $inStock)
-                                    <button wire:click="buyNow({{ $firstVariant->id }})" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">@label('catalog.buy_now', 'Buy Now')</button>
-                                @else
-                                    <span class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">@label('catalog.out_of_stock', 'Out of Stock')</span>
-                                @endif
+                                <div class="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                                    @if($product->quick_shop_active)
+                                        <button type="button"
+                                                x-on:click.prevent="Livewire.dispatch('open-quick-shop', { productId: {{ $product->id }} })"
+                                                onclick="if(window.Livewire){ Livewire.dispatch('open-quick-shop', { productId: {{ $product->id }} }); return false; }"
+                                                class="inline-flex items-center justify-center gap-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 rounded-xl text-xs font-bold transition-all shrink-0">
+                                            <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            <span>{{ $product->quick_shop_button_label }}</span>
+                                        </button>
+                                    @endif
+                                    @if($product->requiresOptions())
+                                        <a href="{{ route('shop.product', $product->seo_slug) }}"
+                                           x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }"
+                                           class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all no-underline shrink-0">@label('catalog.view_options', 'View Options')</a>
+                                    @elseif($firstVariant && $inStock)
+                                        <button wire:click="buyNow({{ $firstVariant->id }})" class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 hover:scale-105 transition-all shrink-0">@label('catalog.buy_now', 'Buy Now')</button>
+                                    @else
+                                        <span class="text-xs font-bold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2.5 py-1 rounded-lg">@label('catalog.out_of_stock', 'Out of Stock')</span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     @endforeach
@@ -505,12 +516,12 @@
                         <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-150 dark:border-slate-700/60 p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-6 hover:shadow-lg transition">
                             <a href="{{ route('shop.product', $product->seo_slug) }}"
                                x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }"
-                               class="shrink-0 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 {{ $listSizeClass }}">
+                                class="shrink-0 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 {{ $listSizeClass }}">
                                 @if($thumbUrl)
                                     <img src="{{ $thumbUrl }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-600">
-                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2-2v12a2 2 0 002 2z"/></svg>
+                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                     </div>
                                 @endif
                             </a>
@@ -522,11 +533,11 @@
                                     <a href="{{ route('shop.product', $product->seo_slug) }}"
                                        x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }">{{ $product->title }}</a>
                                 </h3>
-                                @if($product->short_description)
-                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{{ strip_tags($product->short_description) }}</p>
+                                @if($product->catalog_short_description)
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{{ strip_tags($product->catalog_short_description) }}</p>
                                 @endif
                             </div>
-                            <div class="flex items-center gap-4 shrink-0">
+                            <div class="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap justify-end">
                                 @if(!$product->is_donation_or_bill_pay)
                                     <div class="text-right">
                                         @if($firstVariant)
@@ -551,6 +562,15 @@
                                             @endif
                                         @endif
                                     </div>
+                                @endif
+                                @if($product->quick_shop_active)
+                                    <button type="button"
+                                            x-on:click.prevent="Livewire.dispatch('open-quick-shop', { productId: {{ $product->id }} })"
+                                            onclick="if(window.Livewire){ Livewire.dispatch('open-quick-shop', { productId: {{ $product->id }} }); return false; }"
+                                            class="inline-flex items-center justify-center gap-1 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 rounded-xl text-xs font-bold transition-all shrink-0">
+                                        <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        <span>{{ $product->quick_shop_button_label }}</span>
+                                    </button>
                                 @endif
                                 @if($product->requiresOptions())
                                     <a href="{{ route('shop.product', $product->seo_slug) }}"
