@@ -61,8 +61,22 @@ class SiteLabelService
         return $fallback;
     }
 
+    private array $ensuredKeys = [];
+
     protected function ensureLabelExists(string $key, string $fallback): void
     {
+        if (isset($this->ensuredKeys[$key])) {
+            return;
+        }
+        $this->ensuredKeys[$key] = true;
+
+        // Immediately update in-memory maps so subsequent calls in the same request never hit DB
+        foreach ($this->runtime as $cKey => $map) {
+            if (!isset($this->runtime[$cKey][$key])) {
+                $this->runtime[$cKey][$key] = ['default' => $fallback, 'custom' => null];
+            }
+        }
+
         try {
             $sectionSlug = explode('.', $key)[0] ?? 'general';
             $section = \App\Models\SiteLabelSection::where('slug', $sectionSlug)->first();
@@ -71,7 +85,7 @@ class SiteLabelService
             }
             $sectionId = $section ? $section->id : 1;
 
-            $created = SiteLabel::firstOrCreate(
+            SiteLabel::firstOrCreate(
                 ['label_key' => $key],
                 [
                     'section_id'        => $sectionId,
@@ -80,10 +94,6 @@ class SiteLabelService
                     'label_default'     => $fallback,
                 ]
             );
-
-            if ($created->wasRecentlyCreated) {
-                $this->clearCache(0);
-            }
         } catch (\Throwable $e) {
             // Ignore DB errors
         }

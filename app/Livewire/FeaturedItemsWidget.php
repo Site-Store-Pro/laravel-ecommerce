@@ -134,9 +134,6 @@ class FeaturedItemsWidget extends Component
             }
         }
 
-        // IMPORTANT: must also filter by item_name (which encodes the SKU) so we only
-        // match THIS product's cart row — not any other simple product whose item_attributes
-        // is also an empty string ''.
         $cartItem = ShoppingCartLog::where(function ($q) use ($sessionId, $userId) {
             if ($userId > 0) {
                 $q->where('user_id', $userId);
@@ -144,7 +141,7 @@ class FeaturedItemsWidget extends Component
                 $q->where('cart_log_session', $sessionId)->where('user_id', 0);
             }
         })
-            ->where('item_name', 'like', '%(' . $variant->sku . ')')
+            ->where('variant_id', $variant->id)
             ->where('item_attributes', $variant->attributes)
             ->where('order_id', 0)
             ->first();
@@ -157,13 +154,15 @@ class FeaturedItemsWidget extends Component
             return;
         }
 
+        $formattedItemName = \App\Services\CartSessionService::formatCartItemName($product, $variant);
+
         if ($cartItem) {
             $cartItem->item_qty += 1;
             $cartItem->save();
         } else {
             ShoppingCartLog::create([
                 'cart_log_session'    => $sessionId,
-                'item_name'           => $product->title . ' (' . $variant->sku . ')',
+                'item_name'           => $formattedItemName,
                 'item_qty'            => 1,
                 'item_price'          => $price,
                 'item_discount_price' => $discountPrice,
@@ -172,6 +171,7 @@ class FeaturedItemsWidget extends Component
                 'item_weight'         => $variant->weight ?? 0,
                 'item_taxable'        => $this->resolveItemTaxable($variant, $product),
                 'item_downloadable'   => $variant->download_item,
+                'variant_id'          => $variant->id,
                 'order_id'            => 0,
                 'user_id'             => $userId,
             ]);
@@ -187,7 +187,7 @@ class FeaturedItemsWidget extends Component
 
         // Fire browser event — the global modal in public.blade.php handles display.
         $this->dispatch('show-cart-modal',
-            itemName: $product->title . ' (' . $variant->sku . ')',
+            itemName: $formattedItemName,
             qty: 1,
         );
     }

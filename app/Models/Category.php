@@ -124,4 +124,39 @@ class Category extends Model
 
         return false;
     }
+
+    /**
+     * Fast in-memory resolution of all descendant IDs (including self) without CTE recursive queries.
+     *
+     * @param int|array $categoryIds
+     * @return array<int>
+     */
+    public static function getDescendantIdsFor(int|array $categoryIds): array
+    {
+        static $cachedParents = null;
+        if ($cachedParents === null) {
+            $cachedParents = static::all(['id', 'parent_id'])->groupBy('parent_id');
+        }
+
+        $input = is_array($categoryIds) ? array_map('intval', $categoryIds) : [(int)$categoryIds];
+        $result = $input;
+        $queue = $input;
+
+        while (!empty($queue)) {
+            $nextQueue = [];
+            foreach ($queue as $pId) {
+                if (isset($cachedParents[$pId])) {
+                    foreach ($cachedParents[$pId] as $child) {
+                        if (!in_array($child->id, $result, true)) {
+                            $result[] = $child->id;
+                            $nextQueue[] = $child->id;
+                        }
+                    }
+                }
+            }
+            $queue = $nextQueue;
+        }
+
+        return $result;
+    }
 }

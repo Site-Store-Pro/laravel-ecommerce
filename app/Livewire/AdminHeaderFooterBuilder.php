@@ -98,9 +98,9 @@ class AdminHeaderFooterBuilder extends Component
     {
         if (\Illuminate\Support\Facades\Schema::hasTable('cms_builder_blocks')) {
             CmsBuilderBlock::firstOrCreate(
-                ['target_element' => 'site_header_container', 'section_type' => 'header'],
+                ['target_element' => 'top_sharing_container', 'section_type' => 'header'],
                 [
-                    'title'             => 'Main Site Header Bar',
+                    'title'             => 'Top Sharing / Announcement Bar',
                     'type'              => 1,
                     'is_placeholder'    => false,
                     'sort_desktop'      => 1,
@@ -113,19 +113,20 @@ class AdminHeaderFooterBuilder extends Component
             );
 
             CmsBuilderBlock::firstOrCreate(
-                ['target_element' => 'header_top_bar', 'section_type' => 'header'],
+                ['target_element' => 'site_header_container', 'section_type' => 'header'],
                 [
-                    'title'             => 'Header Top Bar Columns Row',
+                    'title'             => 'Main Site Header Bar',
                     'type'              => 1,
                     'is_placeholder'    => false,
-                    'sort_desktop'      => 0,
-                    'sort_tablet'       => 0,
-                    'sort_mobile'       => 0,
+                    'sort_desktop'      => 2,
+                    'sort_tablet'       => 2,
+                    'sort_mobile'       => 2,
                     'is_active_desktop' => true,
                     'is_active_tablet'  => true,
                     'is_active_mobile'  => true,
                 ]
             );
+
 
             CmsBuilderBlock::firstOrCreate(
                 ['target_element' => 'header_col1', 'section_type' => 'header'],
@@ -956,6 +957,18 @@ class AdminHeaderFooterBuilder extends Component
         }
     }
 
+    public function buildStaticCache(): void
+    {
+        $res = \App\Services\HeaderFooterCacheService::buildCache();
+        session()->flash('message', "⚡ Static Cache successfully built ({$res['total_templates']} templates across {$res['languages_count']} languages in {$res['elapsed_ms']}ms). Storefront header & footer will load in < 0.2ms with 0 database queries!");
+    }
+
+    public function clearStaticCache(): void
+    {
+        \App\Services\HeaderFooterCacheService::clearCache();
+        session()->flash('message', 'Static cache cleared. Storefront will now render dynamically on the fly.');
+    }
+
     public function render()
     {
         $sortCol = match ($this->deviceView) {
@@ -1067,6 +1080,7 @@ class AdminHeaderFooterBuilder extends Component
             $navPlacement = $navInside ? 'main_header' : 'standalone';
         }
         $featuresPlacement = \App\Models\CmsSetting::get('features_placement', 'main_header');
+        $cacheMetadata = \App\Services\HeaderFooterCacheService::getCacheMetadata();
 
         return view('livewire.admin-header-footer-builder', [
             'headerBlocks'           => $headerBlocks,
@@ -1081,6 +1095,7 @@ class AdminHeaderFooterBuilder extends Component
             'activeNavItems'         => $activeNavItems,
             'navPlacement'           => $navPlacement,
             'featuresPlacement'      => $featuresPlacement,
+            'cacheMetadata'          => $cacheMetadata,
         ])->layout('layouts.app');
     }
 }

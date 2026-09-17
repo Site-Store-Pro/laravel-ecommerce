@@ -33,6 +33,22 @@ class AdminDashboardHome extends Component
         $this->dispatch('toast', message: 'All demo store content has been permanently deleted.', type: 'success');
     }
 
+    public function buildStaticCache(): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->role_id == 3), 403);
+
+        $res = \App\Services\HeaderFooterCacheService::buildCache();
+        $this->dispatch('toast', message: "⚡ Static Storefront Cache rebuilt ({$res['total_templates']} templates across {$res['languages_count']} languages in {$res['elapsed_ms']}ms). Header & Footer now serve in < 0.2ms with 0 DB queries!", type: 'success');
+    }
+
+    public function clearStaticCache(): void
+    {
+        abort_unless(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->role_id == 3), 403);
+
+        \App\Services\HeaderFooterCacheService::clearCache();
+        $this->dispatch('toast', message: 'Static cache cleared. Storefront will now render dynamically on the fly.', type: 'info');
+    }
+
     public function render(): View
     {
         // Calculate high-level summary metrics
@@ -63,12 +79,15 @@ class AdminDashboardHome extends Component
             ->take(10)
             ->get();
 
+        $cacheMetadata = \App\Services\HeaderFooterCacheService::getCacheMetadata();
+
         return view('livewire.admin-dashboard-home', [
             'totalSales' => $totalSales,
             'totalOrdersCount' => $totalOrdersCount,
             'pendingOrdersCount' => $pendingOrdersCount,
             'customersCount' => $customersCount,
             'recentOrders' => $recentOrders,
+            'cacheMetadata' => $cacheMetadata,
         ]);
     }
 }

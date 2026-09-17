@@ -2,6 +2,17 @@
      x-init="@if(!empty($gaEcommerceData)) if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('view_item', {{ json_encode($gaEcommerceData) }}); } @endif" 
      class="pt-4 pb-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        @if(!empty($returnToSearchResultsUrl))
+            <div class="mb-4">
+                <a href="{{ $returnToSearchResultsUrl }}" wire:navigate class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    @label('catalog.return_to_search_results', 'Return to search results')
+                </a>
+            </div>
+        @endif
+
         <!-- Breadcrumbs -->
         @if(\App\Models\CmsSetting::isEnabled('show_product_details_breadcrumbs', true))
             <div class="mb-8 flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-100 px-4 py-2.5 rounded-2xl shadow-sm">

@@ -182,6 +182,7 @@ class AdminSettings extends Component
     public string $product_image_orientation = '16:9'; // 16:9 | 1:1
     public bool   $disable_shop_landing = false;
     public bool   $enable_advanced_shop_search = false;
+    public bool   $enable_advanced_shop_search_attributes = true;
     public bool   $enable_abandoned_cart_reminder_1 = true;
     public bool   $enable_abandoned_cart_reminder_2 = true;
 
@@ -207,6 +208,10 @@ class AdminSettings extends Component
     public bool   $shop_disable_default_product_listing = false;
     public bool   $shop_hide_filters_until_applied = false;
     public string $shop_header_custom_html = '';
+
+    // Cart & Order Details Item Title Display Options
+    public bool   $cart_show_sku = true;
+    public bool   $cart_show_variant_name = false;
 
     // Admin Area Button Colours — isolated from frontend theme
     public ?string $admin_btn_primary_bg       = '#4f46e5';
@@ -313,6 +318,7 @@ class AdminSettings extends Component
         $this->product_image_orientation            = $settings['product_image_orientation'] ?? '16:9';
         $this->disable_shop_landing                 = (bool) ($settings['disable_shop_landing'] ?? false);
         $this->enable_advanced_shop_search          = (bool) ($settings['enable_advanced_shop_search'] ?? false);
+        $this->enable_advanced_shop_search_attributes = (bool) ($settings['enable_advanced_shop_search_attributes'] ?? true);
         $this->enable_abandoned_cart_reminder_1     = (bool) ($settings['enable_abandoned_cart_reminder_1'] ?? true);
         $this->enable_abandoned_cart_reminder_2     = (bool) ($settings['enable_abandoned_cart_reminder_2'] ?? true);
         $this->show_product_details_breadcrumbs      = (bool) ($settings['show_product_details_breadcrumbs'] ?? true);
@@ -320,6 +326,8 @@ class AdminSettings extends Component
         $this->shop_disable_default_product_listing  = (bool) ($settings['shop_disable_default_product_listing'] ?? false);
         $this->shop_hide_filters_until_applied       = (bool) ($settings['shop_hide_filters_until_applied'] ?? false);
         $this->shop_header_custom_html               = (string) ($settings['shop_header_custom_html'] ?? '');
+        $this->cart_show_sku                         = (bool) ($settings['cart_show_sku'] ?? true);
+        $this->cart_show_variant_name                = (bool) ($settings['cart_show_variant_name'] ?? false);
 
         // Account Dashboard Tab Visibility
         $this->disable_account_downloads_tab = (bool) ($settings['disable_account_downloads_tab'] ?? false);
@@ -496,8 +504,15 @@ class AdminSettings extends Component
             'product_image_orientation' => 'required|string|in:16:9,1:1',
             'disable_shop_landing' => 'boolean',
             'enable_advanced_shop_search' => 'boolean',
+            'enable_advanced_shop_search_attributes' => 'boolean',
             'enable_abandoned_cart_reminder_1' => 'boolean',
             'enable_abandoned_cart_reminder_2' => 'boolean',
+            'show_product_details_breadcrumbs' => 'boolean',
+            'show_shop_breadcrumbs' => 'boolean',
+            'shop_disable_default_product_listing' => 'boolean',
+            'shop_hide_filters_until_applied' => 'boolean',
+            'cart_show_sku' => 'boolean',
+            'cart_show_variant_name' => 'boolean',
             'show_frontend_dark_mode_switcher' => 'boolean',
             'show_admin_dark_mode_switcher'    => 'boolean',
             'admin_btn_primary_bg'       => 'nullable|string|max:100',
@@ -665,6 +680,7 @@ class AdminSettings extends Component
             'product_image_orientation' => $this->product_image_orientation,
             'disable_shop_landing'      => $this->disable_shop_landing ? '1' : '0',
             'enable_advanced_shop_search' => $this->enable_advanced_shop_search ? '1' : '0',
+            'enable_advanced_shop_search_attributes' => $this->enable_advanced_shop_search_attributes ? '1' : '0',
             'enable_abandoned_cart_reminder_1' => $this->enable_abandoned_cart_reminder_1 ? '1' : '0',
             'enable_abandoned_cart_reminder_2' => $this->enable_abandoned_cart_reminder_2 ? '1' : '0',
             'show_product_details_breadcrumbs'     => $this->show_product_details_breadcrumbs ? '1' : '0',
@@ -672,6 +688,8 @@ class AdminSettings extends Component
             'shop_disable_default_product_listing'  => $this->shop_disable_default_product_listing ? '1' : '0',
             'shop_hide_filters_until_applied'      => $this->shop_hide_filters_until_applied ? '1' : '0',
             'shop_header_custom_html'              => $this->shop_header_custom_html ?? '',
+            'cart_show_sku'                        => $this->cart_show_sku ? '1' : '0',
+            'cart_show_variant_name'               => $this->cart_show_variant_name ? '1' : '0',
             // Account Dashboard Tab Visibility
             'disable_account_downloads_tab' => $this->disable_account_downloads_tab ? '1' : '0',
             'disable_account_tickets_tab'   => $this->disable_account_tickets_tab   ? '1' : '0',

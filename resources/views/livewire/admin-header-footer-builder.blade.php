@@ -140,6 +140,64 @@
         </div>
     </div>
 
+    {{-- Static Cache Performance Banner --}}
+    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl shadow-md border border-indigo-500/20 p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div class="flex items-start sm:items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center shrink-0 text-xl">
+                ⚡
+            </div>
+            <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h2 class="font-bold text-base text-white">Header &amp; Footer Static Cache</h2>
+                    @if($cacheMetadata['is_active'] ?? false)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Active
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                            Dynamic (On-The-Fly)
+                        </span>
+                    @endif
+                </div>
+                <p class="text-xs text-indigo-200/80 mt-1">
+                    @if($cacheMetadata['is_active'] ?? false)
+                        Cached across <strong class="text-white">{{ $cacheMetadata['lang_count'] ?? 1 }} language(s)</strong> &bull; Built on: <span class="text-white font-mono">{{ $cacheMetadata['built_at'] ?? 'Recently' }}</span>
+                    @else
+                        Pre-compile all header/footer variations across languages and viewports to serve static HTML instantly.
+                    @endif
+                    <span class="block text-[11px] text-indigo-300/70 mt-0.5 italic">Note: Using the static cache is optional and not required. The storefront renders dynamically on-the-fly if cache is not built.</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto self-end lg:self-auto justify-end">
+            <button type="button"
+                    wire:click="buildStaticCache"
+                    wire:loading.attr="disabled"
+                    class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                <span wire:loading.remove wire:target="buildStaticCache">⚡ Rebuild Static Cache</span>
+                <span wire:loading wire:target="buildStaticCache" class="flex items-center gap-2">
+                    <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                    Building Cache...
+                </span>
+            </button>
+
+            @if($cacheMetadata['is_active'] ?? false)
+                <button type="button"
+                        wire:click="clearStaticCache"
+                        wire:loading.attr="disabled"
+                        onclick="confirm('Clear static header and footer cache? The storefront will revert to dynamic on-the-fly rendering.') || event.stopImmediatePropagation()"
+                        class="px-3.5 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 rounded-xl transition cursor-pointer disabled:opacity-50"
+                        title="Clear Static Cache">
+                    🗑️ Clear Cache
+                </button>
+            @endif
+        </div>
+    </div>
+
+
     {{-- Viewport Device Switcher & Control Buttons --}}
     @if($activeTab === 'header' || $activeTab === 'footer')
         <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">

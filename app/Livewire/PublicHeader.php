@@ -6,8 +6,10 @@ use App\Models\CmsBuilderBlock;
 use App\Models\NavItem;
 use App\Models\NavMenu;
 use App\Models\ShoppingCartLog;
+use App\Services\HeaderFooterCacheService;
 use App\Services\HeaderFooterCssManager;
 use App\Services\HeaderFooterParserService;
+use App\Services\LanguageService;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -52,7 +54,9 @@ class PublicHeader extends Component
     {
         $this->detectDeviceFromUserAgent();
         $this->loadCartCount();
-        $this->loadDynamicNav();
+        if (!HeaderFooterCacheService::isCacheActive()) {
+            $this->loadDynamicNav();
+        }
         \App\Services\AbandonedCartService::checkWebTriggeredReminders();
     }
 
@@ -101,10 +105,31 @@ class PublicHeader extends Component
 
     public function render()
     {
-        // Load active header blocks
-        $hasBlocksTable = Schema::hasTable('cms_builder_blocks');
         $singleHeader   = (\App\Models\CmsSetting::get('single_header_config', '0') === '1');
         $device         = $singleHeader ? 'desktop' : (in_array($this->deviceView, ['desktop', 'tablet', 'mobile']) ? $this->deviceView : 'desktop');
+        $stickySetting = \App\Models\CmsSetting::get('top_nav_sticky', '1');
+        $isSticky      = in_array($stickySetting, ['1', 1, true, 'true'], true);
+
+        // Check if static pre-rendered cache is active
+        if (HeaderFooterCacheService::isCacheActive()) {
+            $langId = app(LanguageService::class)->currentId();
+            $cachedHtml = HeaderFooterCacheService::getHeaderHtml($device, $langId);
+            if ($cachedHtml !== null) {
+                return view('livewire.public-header', [
+                    'cachedHtml'   => $cachedHtml,
+                    'isSticky'     => $isSticky,
+                    'useFallback'  => false,
+                    'headerBlocks' => collect(),
+                    'parsedBlocks' => [],
+                    'navMenu'      => null,
+                    'navItems'     => null,
+                    'cssVars'      => [],
+                ]);
+            }
+        }
+
+        // Dynamic render fallback
+        $hasBlocksTable = Schema::hasTable('cms_builder_blocks');
         $headerBlocks   = $hasBlocksTable ? CmsBuilderBlock::header()->withCurrentTranslations()->where(function($q) use ($singleHeader) {
             if ($singleHeader) {
                 $q->where('is_active_desktop', true);
@@ -115,10 +140,8 @@ class PublicHeader extends Component
             }
         })->sortForDevice($device)->get() : collect();
 
-        // Check if fallback to default navigation is needed
         $useFallback = !$hasBlocksTable || $headerBlocks->isEmpty();
 
-        // Parse content for each block
         $parsedBlocks = [];
         foreach ($headerBlocks as $block) {
             $parsedBlocks[$block->target_element ?? $block->id] = [
@@ -127,12 +150,14 @@ class PublicHeader extends Component
             ];
         }
 
-        // Check if sticky navigation is enabled for full header
-        $stickySetting = \App\Models\CmsSetting::get('top_nav_sticky', '1');
-        $isSticky      = in_array($stickySetting, ['1', 1, true, 'true'], true);
-        $cssVars       = HeaderFooterCssManager::getActiveVariables();
+        if ($this->navMenu === null) {
+            $this->loadDynamicNav();
+        }
+
+        $cssVars = HeaderFooterCssManager::getActiveVariables();
 
         return view('livewire.public-header', [
+            'cachedHtml'   => null,
             'headerBlocks' => $headerBlocks,
             'parsedBlocks' => $parsedBlocks,
             'useFallback'  => $useFallback,
@@ -143,3 +168,4 @@ class PublicHeader extends Component
         ]);
     }
 }
+

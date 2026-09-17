@@ -11,14 +11,26 @@ class CmsSetting extends Model
 
     protected $fillable = ['key', 'value', 'label', 'type', 'group', 'sort_order'];
 
+    private static ?array $runtimeCache = null;
+
     /**
      * Get all settings as a key=>value array, cached for 60 minutes.
      */
     public static function allCached(): array
     {
-        return Cache::remember('cms_settings_all', 60, function () {
+        if (self::$runtimeCache !== null && !app()->runningUnitTests()) {
+            return self::$runtimeCache;
+        }
+
+        $result = Cache::remember('cms_settings_all', 3600, function () {
             return static::pluck('value', 'key')->toArray();
         });
+
+        if (!app()->runningUnitTests()) {
+            self::$runtimeCache = $result;
+        }
+
+        return $result;
     }
 
     /**
@@ -39,6 +51,26 @@ class CmsSetting extends Model
             ['key' => $key],
             ['value' => (string) $value, 'label' => $key]
         );
+        self::$runtimeCache = null;
+        Cache::forget('cms_settings_all');
+        Cache::flush();
+    }
+
+    /**
+     * Alias for set().
+     */
+    public static function put(string $key, mixed $value): void
+    {
+        static::set($key, $value);
+    }
+
+    /**
+     * Delete a setting key from database and clear the cache.
+     */
+    public static function forget(string $key): void
+    {
+        static::where('key', $key)->delete();
+        self::$runtimeCache = null;
         Cache::forget('cms_settings_all');
         Cache::flush();
     }
@@ -54,8 +86,15 @@ class CmsSetting extends Model
                 ['value' => (string) $value, 'label' => $key]
             );
         }
+        self::$runtimeCache = null;
         Cache::forget('cms_settings_all');
         Cache::flush();
+    }
+
+    public static function flushCache(): void
+    {
+        self::$runtimeCache = null;
+        Cache::forget('cms_settings_all');
     }
 
     /**
@@ -75,7 +114,15 @@ class CmsSetting extends Model
      */
     public static function isAdvancedSearchEnabled(): bool
     {
-        return static::isEnabled('enable_advanced_shop_search');
+        return static::isEnabled('enable_advanced_shop_search', false);
+    }
+
+    /**
+     * Check if Variant & Option Attribute Filters on Advanced Search are enabled.
+     */
+    public static function isAdvancedSearchAttributesEnabled(): bool
+    {
+        return static::isEnabled('enable_advanced_shop_search_attributes', true);
     }
 
     /**

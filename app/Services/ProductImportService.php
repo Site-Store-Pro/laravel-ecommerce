@@ -252,7 +252,7 @@ class ProductImportService
                         'short_description' => $group['short_description'] ?: $existingProduct->short_description,
                         'long_description'  => $group['long_description'] ?: $existingProduct->long_description,
                         'brand_id'          => $brandId ?: $existingProduct->brand_id,
-                        'variant_label'     => $group['variant_label'] ?: $existingProduct->variant_label,
+                        'variant_label'     => Str::limit($group['variant_label'] ?: $existingProduct->variant_label, 250, ''),
                         'meta_title'        => $group['meta_title'] ?: $existingProduct->meta_title,
                         'meta_description'  => $group['meta_description'] ?: $existingProduct->meta_description,
                     ]);
@@ -267,7 +267,7 @@ class ProductImportService
                         'brand_id'          => $brandId,
                         'download_item'     => 0,
                         'shipping'          => 1,
-                        'variant_label'     => $group['variant_label'] ?: 'Select Option:',
+                        'variant_label'     => Str::limit($group['variant_label'] ?: 'Select Option:', 250, ''),
                         'meta_title'        => $group['meta_title'] ?: null,
                         'meta_description'  => $group['meta_description'] ?: null,
                     ]);
@@ -465,9 +465,17 @@ class ProductImportService
 
                 $catObj = $query->first();
                 if (!$catObj) {
+                    $baseSlug = Str::slug($partName) ?: 'cat';
+                    $slug = $baseSlug;
+                    $c = 1;
+                    while (Category::where('slug', $slug)->exists()) {
+                        $c++;
+                        $slug = "{$baseSlug}-{$c}";
+                    }
+
                     $catObj = Category::create([
                         'name'               => $partName,
-                        'slug'               => Str::slug($partName),
+                        'slug'               => $slug,
                         'parent_id'          => $parentId,
                         'is_visible_in_menu' => true,
                     ]);

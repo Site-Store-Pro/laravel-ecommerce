@@ -31,11 +31,9 @@
                 class="dyn-nav-link flex items-center gap-1.5 px-3 py-2 focus:outline-none"
                 {{ $item->aria_label ? 'aria-label="'.e($item->aria_label).'"' : '' }}>
             {!! $resolved['label'] !!}
-            @if(($cartCount ?? 0) > 0)
-                <span class="nav-cart-badge inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold rounded-full leading-none">
-                    {{ $cartCount }}
-                </span>
-            @endif
+            <span class="nav-cart-badge inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold rounded-full leading-none {{ ($cartCount ?? 0) > 0 ? '' : 'hidden' }}" style="{{ ($cartCount ?? 0) > 0 ? '' : 'display:none;' }}">
+                {{ $cartCount ?? 0 }}
+            </span>
         </button>
     </li>
 @elseif($item->item_type === 'login_logout')

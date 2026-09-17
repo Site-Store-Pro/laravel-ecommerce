@@ -1025,6 +1025,55 @@
                                 @endif
                             </div>
 
+                            {{-- Cart & Order Details Item Title Display Overrides --}}
+                            <div class="pt-4 border-t border-slate-100 space-y-4">
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Cart &amp; Order Details Item Title Display</h4>
+                                    <p class="text-xs text-slate-400 mt-0.5">Optionally override the global store settings for how this specific product title is formatted in the shopping cart, checkout, invoices, and order details.</p>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {{-- Show SKU Override --}}
+                                    <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
+                                        <label for="show_sku_in_cart" class="block text-xs font-bold text-slate-700">
+                                             Show SKU After Item Name
+                                        </label>
+                                        <select id="show_sku_in_cart" wire:model="show_sku_in_cart" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <option value="">Default (Inherit Store Setting - {{ \App\Models\CmsSetting::isEnabled('cart_show_sku', true) ? 'Show' : 'Hide' }})</option>
+                                            <option value="1">Show SKU (e.g. Name (SKU))</option>
+                                            <option value="0">Hide SKU</option>
+                                        </select>
+                                        <p class="text-[11px] text-slate-400">Controls whether variant SKU is appended to this item in cart and orders.</p>
+                                    </div>
+
+                                    {{-- Show Model / Part No Override --}}
+                                    <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
+                                        <label for="show_part_number_in_cart" class="block text-xs font-bold text-slate-700">
+                                             Show Model / Part No After Item Name
+                                        </label>
+                                        <select id="show_part_number_in_cart" wire:model="show_part_number_in_cart" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <option value="">Default (Show if Set on Variant)</option>
+                                            <option value="1">Always Show (e.g. Name (Part No))</option>
+                                            <option value="0">Hide Model / Part No</option>
+                                        </select>
+                                        <p class="text-[11px] text-slate-400">Controls whether variant Model / Part No is appended to this item in cart and orders.</p>
+                                    </div>
+
+                                    {{-- Show Variant(s) Name Override --}}
+                                    <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2">
+                                        <label for="show_variant_in_cart" class="block text-xs font-bold text-slate-700">
+                                             Show Variant(s) Name After Item Name
+                                        </label>
+                                        <select id="show_variant_in_cart" wire:model="show_variant_in_cart" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <option value="">Default (Inherit Store Setting - {{ \App\Models\CmsSetting::isEnabled('cart_show_variant_name', false) ? 'Show' : 'Hide' }})</option>
+                                            <option value="1">Show Variant(s) (e.g. Name (Variant))</option>
+                                            <option value="0">Hide Variant(s)</option>
+                                        </select>
+                                        <p class="text-[11px] text-slate-400">Controls whether variant options (e.g. XL &gt; Blue) are appended to this item.</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- Show Item Total Toggle --}}
                             <label class="flex items-start gap-3 cursor-pointer">
                                 <input type="checkbox" wire:model="show_item_total" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">

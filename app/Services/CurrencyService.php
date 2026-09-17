@@ -32,11 +32,17 @@ class CurrencyService
         'AE', 'SA', 'QA', 'KW', 'BH', 'OM',
     ];
 
+    private static ?object $runtimeConfig = null;
+
     /**
      * Load and cache the full config row.
      */
     private static function config(): object
     {
+        if (self::$runtimeConfig !== null && !app()->runningUnitTests()) {
+            return self::$runtimeConfig;
+        }
+
         $data = Cache::remember(self::CACHE_KEY, self::CACHE_TTL * 60, function () {
             $row = DB::table('shipping_configurations')->where('id', 1)->first();
             if (!$row) {
@@ -52,7 +58,12 @@ class CurrencyService
             return (array) $row;
         });
 
-        return (object) $data;
+        $obj = (object) $data;
+        if (!app()->runningUnitTests()) {
+            self::$runtimeConfig = $obj;
+        }
+
+        return $obj;
     }
 
     /**
@@ -60,6 +71,7 @@ class CurrencyService
      */
     public static function flushCache(): void
     {
+        self::$runtimeConfig = null;
         Cache::forget(self::CACHE_KEY);
     }
 

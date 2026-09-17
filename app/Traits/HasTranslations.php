@@ -77,6 +77,17 @@ trait HasTranslations
     }
 
     /**
+     * Eager-load translations for a specific language ID + default language.
+     */
+    public function scopeWithTranslationsForLanguage($query, ?int $languageId = null)
+    {
+        $langService = app(LanguageService::class);
+        $languageId ??= $langService->currentId();
+        $ids = array_unique([$languageId, $langService->defaultId()]);
+        return $query->with(['translations' => fn ($q) => $q->whereIn('language_id', $ids)]);
+    }
+
+    /**
      * Automatically return translated field values when the 'translations'
      * relation is already eager-loaded and a non-default language is active.
      *

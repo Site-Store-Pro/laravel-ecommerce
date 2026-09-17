@@ -59,6 +59,9 @@ class Product extends Model
         'quick_shop_label',
         'search_results_description',
         'quick_shop_description',
+        'show_sku_in_cart',
+        'show_variant_in_cart',
+        'show_part_number_in_cart',
     ];
 
     /** Fields automatically translated when translations relation is loaded. */
@@ -98,6 +101,9 @@ class Product extends Model
         'inventory_alert_id' => 'integer',
         'quick_shop_active' => 'boolean',
         'quick_shop_label' => 'string',
+        'show_sku_in_cart' => 'integer',
+        'show_variant_in_cart' => 'integer',
+        'show_part_number_in_cart' => 'integer',
     ];
 
     /**

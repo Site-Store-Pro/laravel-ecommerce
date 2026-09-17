@@ -6,8 +6,8 @@
     use App\Services\DiscountService;
     $user = auth()->user();
     $imgOrientation = \App\Models\CmsSetting::get('product_image_orientation', '16:9');
-    $objectClass    = $imgOrientation === '1:1' ? 'object-contain' : 'object-cover';
-    $listSizeClass  = $imgOrientation === '1:1' ? 'w-24 h-24' : 'w-28 h-24';
+    $objectClass    = 'object-contain';
+    $listSizeClass  = $imgOrientation === '1:1' ? 'w-24 sm:w-28 aspect-square' : 'w-32 sm:w-36 aspect-video';
 @endphp
 
 <div class="featured-items-plugin-section py-8">

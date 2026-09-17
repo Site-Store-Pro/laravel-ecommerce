@@ -23,14 +23,20 @@ class CategoryMenuWidget extends Component
         $categories = Category::whereNull('parent_id')
             ->where('is_visible_in_menu', true)
             ->withCurrentTranslations()
+            ->withExists(['products' => fn($q) => $q->active()->showInResults()])
             ->with([
-                'products',
                 'children' => function ($query) {
-                    $query->withCurrentTranslations()->where('is_visible_in_menu', true)->orderBy('sort_order');
+                    $query->withCurrentTranslations()
+                        ->where('is_visible_in_menu', true)
+                        ->withExists(['products' => fn($q) => $q->active()->showInResults()])
+                        ->orderBy('sort_order');
                 },
-                'children.products',
-                'children.children',
-                'children.children.products'
+                'children.children' => function ($query) {
+                    $query->withCurrentTranslations()
+                        ->where('is_visible_in_menu', true)
+                        ->withExists(['products' => fn($q) => $q->active()->showInResults()])
+                        ->orderBy('sort_order');
+                }
             ])
             ->orderBy('sort_order')
             ->get();
@@ -41,7 +47,7 @@ class CategoryMenuWidget extends Component
                 if ($category->children->isNotEmpty()) {
                     $category->setRelation('children', $filterTree($category->children));
                 }
-                return $category->products->isNotEmpty() || $category->children->isNotEmpty();
+                return (bool) $category->products_exists || $category->children->isNotEmpty();
             });
         };
 

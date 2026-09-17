@@ -896,9 +896,17 @@ class OrderReview extends Component
 
         // Create Order Details and deduct inventory
         foreach ($items as $item) {
-            preg_match('/\(([^)]+)\)$/', $item->item_name, $matches);
-            $sku = $matches[1] ?? '';
-            $variant = ProductVariant::where('sku', $sku)->first();
+            $variant = null;
+            if (!empty($item->variant_id)) {
+                $variant = ProductVariant::find($item->variant_id);
+            }
+            if (!$variant) {
+                preg_match('/\(([^)]+)\)$/', $item->item_name, $matches);
+                $sku = $matches[1] ?? '';
+                if ($sku) {
+                    $variant = ProductVariant::where('sku', $sku)->first();
+                }
+            }
 
             $attrs = json_decode($item->item_attributes, true) ?: [];
             $customizations = $attrs['customizations'] ?? [];

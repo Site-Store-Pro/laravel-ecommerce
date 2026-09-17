@@ -2,9 +2,10 @@
     $imgOrientation = \App\Models\CmsSetting::get('product_image_orientation', '16:9');
     $aspectClass    = $imgOrientation === '1:1' ? 'aspect-square' : 'aspect-video';
     $objectClass    = $imgOrientation === '1:1' ? 'object-contain' : 'object-cover';
-    $listSizeClass  = $imgOrientation === '1:1' ? 'w-24 h-24' : 'w-28 h-24';
+    $listSizeClass  = $imgOrientation === '1:1' ? 'w-24 sm:w-28 aspect-square' : 'w-32 sm:w-36 aspect-video';
 @endphp
-<div x-data="{ slideoutOpen: @entangle('slideoutOpen') }" 
+<div wire:init="loadProducts"
+     x-data="{ slideoutOpen: @entangle('slideoutOpen') }" 
      x-init="@if(!empty($gaEcommerceData)) if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('view_item_list', {{ json_encode($gaEcommerceData) }}); } @endif"
      class="pt-4 pb-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -172,65 +173,69 @@
                 <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">@label('catalog.active_filters', 'Active Filters:')</span>
                     
-                    @if($activeCategory && !in_array((string)$activeCategory->id, array_map('strval', $selectedCategories), true))
+                    @if($activeCategory)
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 text-xs font-bold text-indigo-700 dark:text-indigo-300">
                             @label('catalog.filter_category', 'Category:') {{ $activeCategory->name }}
-                            <button wire:click="clearCategory" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none" title="Remove filter">&times;</button>
+                            <button wire:click="clearCategory" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none cursor-pointer" title="Remove filter">&times;</button>
                         </span>
                     @endif
 
-                    @if($activeBrand && !in_array((string)$activeBrand->id, array_map('strval', $selectedBrands), true))
+                    @if($activeBrand)
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-950/80 border border-violet-200 dark:border-violet-800 text-xs font-bold text-violet-700 dark:text-violet-300">
                             @label('catalog.filter_brand', 'Brand:') {{ $activeBrand->name }}
-                            <button wire:click="clearBrand" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none" title="Remove filter">&times;</button>
+                            <button wire:click="clearBrand" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none cursor-pointer" title="Remove filter">&times;</button>
                         </span>
                     @endif
 
                     @if(!empty(trim($search)))
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 border border-amber-200 dark:border-amber-800 text-xs font-bold text-amber-800 dark:text-amber-200">
                             @label('catalog.filter_keyword', 'Keyword:') &ldquo;{{ $search }}&rdquo;
-                            <button wire:click="clearSearch" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none" title="Remove filter">&times;</button>
+                            <button wire:click="clearSearch" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none cursor-pointer" title="Remove filter">&times;</button>
                         </span>
                     @endif
 
                     @if($minPriceFilter !== null || $maxPriceFilter !== null)
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-emerald-800 dark:text-emerald-200">
                             @label('catalog.filter_price', 'Price:') {{ $currencySymbol }}{{ number_format($minPriceFilter ?? 0, 2) }} – {{ $currencySymbol }}{{ number_format($maxPriceFilter ?? $catalogMaxPrice, 2) }}
-                            <button wire:click="clearPriceFilter" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none" title="Remove filter">&times;</button>
+                            <button wire:click="clearPriceFilter" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none cursor-pointer" title="Remove filter">&times;</button>
                         </span>
                     @endif
 
                     @if(!empty($selectedCategories))
                         @foreach($selectedCategories as $scId)
-                            @php $sc = $selectedCategoryModels->get((int)$scId) ?? $selectedCategoryModels->get((string)$scId); @endphp
-                            @if($sc)
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 text-xs font-bold text-indigo-800 dark:text-indigo-200">
-                                    @label('catalog.filter_category', 'Category:') {{ $sc->name }}
-                                    <button wire:click="removeSelectedCategory({{ $sc->id }})" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none" title="Remove filter">&times;</button>
-                                </span>
+                            @if(!$activeCategory || (string)$activeCategory->id !== (string)$scId)
+                                @php $sc = $selectedCategoryModels->get((int)$scId) ?? $selectedCategoryModels->get((string)$scId); @endphp
+                                @if($sc)
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 text-xs font-bold text-indigo-800 dark:text-indigo-200">
+                                        @label('catalog.filter_category', 'Category:') {{ $sc->name }}
+                                        <button wire:click="removeSelectedCategory({{ $sc->id }})" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none cursor-pointer" title="Remove filter">&times;</button>
+                                    </span>
+                                @endif
                             @endif
                         @endforeach
                     @endif
 
                     @if(!empty($selectedBrands))
                         @foreach($selectedBrands as $sbId)
-                            @php $sb = $allAvailableBrands->firstWhere('id', (int)$sbId); @endphp
-                            @if($sb)
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-100 dark:bg-sky-950/80 border border-sky-200 dark:border-sky-800 text-xs font-bold text-sky-800 dark:text-sky-200">
-                                    @label('catalog.filter_brand', 'Brand:') {{ $sb->name }}
-                                    <button wire:click="removeSelectedBrand({{ $sb->id }})" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none" title="Remove filter">&times;</button>
-                                </span>
+                            @if(!$activeBrand || (string)$activeBrand->id !== (string)$sbId)
+                                @php $sb = $allAvailableBrands->firstWhere('id', (int)$sbId); @endphp
+                                @if($sb)
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-100 dark:bg-sky-950/80 border border-sky-200 dark:border-sky-800 text-xs font-bold text-sky-800 dark:text-sky-200">
+                                        @label('catalog.filter_brand', 'Brand:') {{ $sb->name }}
+                                        <button wire:click="removeSelectedBrand({{ $sb->id }})" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none cursor-pointer" title="Remove filter">&times;</button>
+                                    </span>
+                                @endif
                             @endif
                         @endforeach
                     @endif
 
-                    @if(!empty($selectedAttributes))
+                    @if($advancedSearchAttributesEnabled && !empty($selectedAttributes))
                         @foreach($selectedAttributes as $attrKey => $attrVals)
                             @if(is_array($attrVals))
                                 @foreach($attrVals as $attrVal)
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-950/80 border border-purple-200 dark:border-purple-800 text-xs font-bold text-purple-800 dark:text-purple-200">
                                         {{ $attrKey }}: {{ $attrVal }}
-                                        <button wire:click="removeSelectedAttribute('{{ addslashes($attrKey) }}', '{{ addslashes($attrVal) }}')" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none" title="Remove filter">&times;</button>
+                                        <button wire:click="removeSelectedAttribute('{{ addslashes($attrKey) }}', '{{ addslashes($attrVal) }}')" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none cursor-pointer" title="Remove filter">&times;</button>
                                     </span>
                                 @endforeach
                             @endif
@@ -238,7 +243,7 @@
                     @endif
                 </div>
 
-                <button wire:click="resetAllAdvancedFilters" type="button" class="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline">
+                <button wire:click="resetAllAdvancedFilters" type="button" class="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer">
                     @label('catalog.clear_all', 'Clear All')
                 </button>
             </div>
@@ -279,18 +284,6 @@
                                                     </svg>
                                                     {{ $child->name }}
                                                 </a>
-                                                @if($child->children->isNotEmpty())
-                                                    <div class="flex flex-wrap gap-1 pl-3 border-l border-slate-200 dark:border-slate-700">
-                                                        @foreach($child->children as $grandchild)
-                                                            <a href="{{ route('shop.index', array_filter(['category' => $grandchild->slug, 'brand' => $brand])) }}"
-                                                               wire:navigate
-                                                               class="shop-subcat-pill inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-md transition duration-150">
-                                                                <span class="text-slate-300 dark:text-slate-600">↳</span>
-                                                                {{ $grandchild->name }}
-                                                            </a>
-                                                        @endforeach
-                                                    </div>
-                                                @endif
                                             </div>
                                         @endforeach
                                     </div>
@@ -343,12 +336,18 @@
         @endphp
 
         @if(!$suppressResultsArea)
-        {{-- RESULTS TOOLBAR --}}
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-            <p class="text-sm text-slate-500 dark:text-slate-400">
-                @if($products->total() > 0 && $products->total() >= 6)
-                    @label('catalog.showing', 'Showing')
-                    <span class="font-semibold text-slate-800 dark:text-slate-200">{{ $products->firstItem() }}</span>–<span class="font-semibold text-slate-800 dark:text-slate-200">{{ $products->lastItem() }}</span>
+        <!-- Sorting & Layout Toolbar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2">
+                <span wire:loading.delay wire:target="sort, perPage, category, brand, search, selectedBrands, selectedCategories, selectedAttributes, minPriceFilter, maxPriceFilter, setViewMode"
+                      class="inline-block">
+                    <svg class="animate-spin h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </span>
+                @if($products->total() > 0)
+                    @label('catalog.showing', 'Showing') <span class="font-semibold text-slate-800 dark:text-slate-200">{{ $products->firstItem() }}</span>–<span class="font-semibold text-slate-800 dark:text-slate-200">{{ $products->lastItem() }}</span>
                     @label('catalog.of', 'of') <span class="font-semibold text-slate-800 dark:text-slate-200">{{ $products->total() }}</span> @label('catalog.products', 'products')
                 @elseif($products->total() === 0)
                     @label('catalog.no_products_found', 'No products found')
@@ -382,13 +381,13 @@
                 @endif
 
                 <div class="flex items-center gap-1.5">
-                    <button wire:click="$set('viewMode', 'grid')"
-                            class="btn-view-mode !p-2 !rounded-xl text-xs font-bold transition {{ $viewMode === 'grid' ? 'active' : '' }}"
+                    <button type="button" wire:click="setViewMode('grid')"
+                            class="btn-view-mode !p-2 !rounded-xl text-xs font-bold transition cursor-pointer {{ $viewMode === 'grid' ? 'active' : '' }}"
                             title="Grid View">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                     </button>
-                    <button wire:click="$set('viewMode', 'list')"
-                            class="btn-view-mode !p-2 !rounded-xl text-xs font-bold transition {{ $viewMode === 'list' ? 'active' : '' }}"
+                    <button type="button" wire:click="setViewMode('list')"
+                            class="btn-view-mode !p-2 !rounded-xl text-xs font-bold transition cursor-pointer {{ $viewMode === 'list' ? 'active' : '' }}"
                             title="List View">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
@@ -397,7 +396,15 @@
         </div>
 
         {{-- PRODUCTS CATALOG DISPLAY --}}
-        @if($products->isEmpty())
+        @if(!$readyToLoad)
+            {{-- Clean Central Loading Spinner on Initial Deferred Load --}}
+            <div class="flex items-center justify-center py-28">
+                <svg class="animate-spin h-10 w-10 text-indigo-600 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        @elseif($products->isEmpty())
             <div class="text-center py-24 bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700/60 shadow-sm px-4">
                 <div class="w-16 h-16 bg-indigo-50 dark:bg-indigo-950/50 rounded-2xl flex items-center justify-center mx-auto text-indigo-500 mb-4">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -417,6 +424,19 @@
                 </div>
             </div>
         @else
+            <div class="relative min-h-[300px]">
+                {{-- Livewire Loading Overlay when filtering/sorting/paginating --}}
+                <div wire:loading.flex
+                     class="absolute inset-0 z-20 bg-white/75 dark:bg-slate-900/75 backdrop-blur-[2px] rounded-3xl flex-col items-center justify-center transition-opacity"
+                     style="display: none;">
+                    <div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center">
+                        <svg class="animate-spin h-6 w-6 text-indigo-600 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </div>
+
             @if($viewMode === 'grid')
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     @foreach($products as $product)
@@ -516,9 +536,9 @@
                         <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-150 dark:border-slate-700/60 p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-6 hover:shadow-lg transition">
                             <a href="{{ route('shop.product', $product->seo_slug) }}"
                                x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }"
-                                class="shrink-0 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900 {{ $listSizeClass }}">
+                                class="shrink-0 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900/50 {{ $listSizeClass }} flex items-center justify-center p-1">
                                 @if($thumbUrl)
-                                    <img src="{{ $thumbUrl }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+                                    <img src="{{ $thumbUrl }}" alt="{{ $product->title }}" class="w-full h-full object-contain">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-600">
                                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -586,6 +606,7 @@
                     @endforeach
                 </div>
             @endif
+            </div>
 
             <div class="mt-8">
                 {{ $products->links() }}
@@ -715,7 +736,7 @@
 
                 <!-- 3. Brands Checkbox Group -->
                 @if($allAvailableBrands->isNotEmpty())
-                    <div x-data="{ open: true }" class="border border-slate-200 dark:border-slate-700/60 rounded-2xl p-4 bg-white dark:bg-slate-800">
+                    <div x-data="{ open: true, brandSearch: '' }" class="border border-slate-200 dark:border-slate-700/60 rounded-2xl p-4 bg-white dark:bg-slate-800">
                         <button @click="open = !open" type="button" class="w-full flex items-center justify-between text-left">
                             <span class="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
@@ -723,11 +744,16 @@
                             </span>
                             <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="open" x-collapse class="mt-3 space-y-2 max-h-48 overflow-y-auto pr-1">
+                        @if($allAvailableBrands->count() > 10)
+                            <div x-show="open" class="mt-2.5 mb-1">
+                                <input x-model="brandSearch" type="text" placeholder="Filter brands..." class="w-full text-xs px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-1 focus:ring-indigo-500">
+                            </div>
+                        @endif
+                        <div x-show="open" x-collapse class="mt-2.5 space-y-2 max-h-48 overflow-y-auto pr-1">
                             @foreach($allAvailableBrands as $b)
-                                <label class="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:text-indigo-600 transition">
+                                <label x-show="!brandSearch || '{{ strtolower(addslashes($b->name)) }}'.includes(brandSearch.toLowerCase())" class="flex items-center gap-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:text-indigo-600 transition">
                                     <input type="checkbox" value="{{ $b->id }}" wire:model.live="selectedBrands" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4">
-                                    <span>{{ $b->name }}</span>
+                                    <span class="truncate">{{ $b->name }}</span>
                                 </label>
                             @endforeach
                         </div>
@@ -735,9 +761,9 @@
                 @endif
 
                 <!-- 3. Dynamic Variant JSON Attributes Checkbox Groups -->
-                @if(!empty($availableVariantAttributes))
+                @if($advancedSearchAttributesEnabled && !empty($availableVariantAttributes))
                     @foreach($availableVariantAttributes as $attrKey => $attrValues)
-                        <div x-data="{ open: true }" class="border border-slate-200 dark:border-slate-700/60 rounded-2xl p-4 bg-white dark:bg-slate-800">
+                        <div x-data="{ open: true, search: '' }" class="border border-slate-200 dark:border-slate-700/60 rounded-2xl p-4 bg-white dark:bg-slate-800">
                             <button @click="open = !open" type="button" class="w-full flex items-center justify-between text-left">
                                 <span class="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                     <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10M7 12h10m-7 5h7"/></svg>
@@ -745,11 +771,16 @@
                                 </span>
                                 <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </button>
-                            <div x-show="open" x-collapse class="mt-3 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                            @if(count($attrValues) > 10)
+                                <div x-show="open" class="mt-2.5 mb-1">
+                                    <input x-model="search" type="text" placeholder="Filter {{ strtolower($attrKey) }}..." class="w-full text-xs px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:ring-1 focus:ring-indigo-500">
+                                </div>
+                            @endif
+                            <div x-show="open" x-collapse class="mt-2.5 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
                                 @foreach($attrValues as $val)
-                                    <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:text-indigo-600 transition">
+                                    <label x-show="!search || '{{ strtolower(addslashes($val)) }}'.includes(search.toLowerCase())" class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:text-indigo-600 transition">
                                         <input type="checkbox" value="{{ $val }}" wire:model.live="selectedAttributes.{{ $attrKey }}" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4">
-                                        <span>{{ $val }}</span>
+                                        <span class="truncate">{{ $val }}</span>
                                     </label>
                                 @endforeach
                             </div>

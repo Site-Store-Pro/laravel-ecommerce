@@ -88,11 +88,19 @@ class HeaderFooterParserService
                     </button>
                 </div>';
             }
+            $cartCount = 0;
+            if (\Illuminate\Support\Facades\Schema::hasTable('shopping_cart_log')) {
+                $cartCount = (int) \App\Services\CartSessionService::getCartCount();
+            }
+            $badgeDisplay = $cartCount > 0 ? '' : 'style="display:none;"';
+            $badgeClass   = $cartCount > 0 ? '' : 'hidden';
+
             $featuresHtml = '
             <div id="header_features_icons" class="flex items-center gap-3">
                 ' . $switcherHtml . '
                 <button type="button" onclick="Livewire.dispatch(\'open-cart\')" class="relative p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors focus:outline-none" aria-label="Shopping Cart">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                    <span class="header-cart-badge absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm ' . $badgeClass . '" ' . $badgeDisplay . ' data-cart-count="' . $cartCount . '">' . $cartCount . '</span>
                 </button>
                 <a href="' . e(auth()->check() ? route('dashboard') : route('login')) . '" class="p-2 text-slate-700 dark:text-slate-200 hover:text-indigo-600 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>

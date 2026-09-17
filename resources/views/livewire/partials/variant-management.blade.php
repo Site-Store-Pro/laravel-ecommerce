@@ -7,11 +7,16 @@
                             <button wire:click="cancelEditVariant" class="text-slate-400 hover:text-slate-600 font-bold text-sm">Cancel</button>
                         </div>
                         <form wire:submit.prevent="updateVariant" class="space-y-4">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">SKU <span class="text-red-500">*</span></label>
                                     <input type="text" wire:model.blur="sku" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-semibold text-sm">
                                     @error('sku') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">Model | Part No</label>
+                                    <input type="text" wire:model.blur="part_number" placeholder="e.g. MPN-1234" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-semibold text-sm">
+                                    @error('part_number') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="bg-indigo-50/80 border-2 border-indigo-300/80 rounded-2xl p-3 shadow-sm relative">
                                     <div class="flex items-center justify-between mb-1">
@@ -1212,7 +1217,7 @@
                             <button wire:click="cancelCreateVariant" class="text-slate-400 hover:text-slate-600 font-bold text-sm">Cancel</button>
                         </div>
                         <form wire:submit.prevent="saveVariant" class="space-y-4">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                                 <div>
                                     <div class="flex items-center justify-between mb-1">
                                         <label class="text-xs font-bold text-slate-600 uppercase tracking-wider">
@@ -1239,7 +1244,18 @@
                                             {{ $message }}
                                         </span>
                                     @else
-                                        <span class="text-[10px] text-slate-400 mt-0.5 block">Auto-generated from product title — edit freely.</span>
+                                        <span class="text-[10px] text-slate-400 mt-0.5 block">Auto-generated from title.</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-600 block mb-1 uppercase tracking-wider">Model | Part No</label>
+                                    <input type="text" wire:model.blur="part_number"
+                                           class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500 text-slate-800 text-sm font-semibold"
+                                           placeholder="e.g. MPN-1234">
+                                    @error('part_number')
+                                        <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span>
+                                    @else
+                                        <span class="text-[10px] text-slate-400 mt-0.5 block">Optional model / part number.</span>
                                     @enderror
                                 </div>
                                 <div class="bg-indigo-50/80 border-2 border-indigo-300/80 rounded-2xl p-3 shadow-sm relative">
@@ -2385,8 +2401,13 @@
                                                 </div>
                                             </td>
 
-                                            {{-- SKU --}}
-                                            <td class="px-4 py-3.5 font-semibold text-slate-800 whitespace-nowrap">{{ $variant->sku }}</td>
+                                            {{-- SKU / Part No --}}
+                                            <td class="px-4 py-3.5 whitespace-nowrap">
+                                                <div class="font-semibold text-slate-800">{{ $variant->sku }}</div>
+                                                @if($variant->part_number)
+                                                    <div class="text-[11px] text-slate-400 font-medium">MPN: {{ $variant->part_number }}</div>
+                                                @endif
+                                            </td>
 
                                             {{-- Attributes --}}
                                             <td class="px-4 py-3.5 text-xs">

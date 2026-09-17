@@ -85,4 +85,82 @@ class CartSessionService
     {
         return (float) self::getCartQuery($sessionId)->sum('item_qty');
     }
+
+    /**
+     * Format cart/order item title according to global and per-product SKU & Variant display settings.
+     * Combinations:
+     * - Both ON: Name (SKU) (Variants)
+     * - Only SKU ON: Name (SKU)
+     * - Only Variant ON: Name (Variants)
+     * - Both OFF: Name
+     */
+    public static function formatCartItemName(\App\Models\Product $product, \App\Models\ProductVariant $variant): string
+    {
+        // 1. Resolve Show SKU setting (per-product override takes precedence, fallback to global setting)
+        $showSku = ($product->show_sku_in_cart !== null)
+            ? (bool) $product->show_sku_in_cart
+            : (bool) \App\Models\CmsSetting::isEnabled('cart_show_sku', true);
+
+        // 2. Resolve Show Part Number setting (per-product override, defaults to true)
+        $showPartNumber = ($product->show_part_number_in_cart !== null)
+            ? (bool) $product->show_part_number_in_cart
+            : true;
+
+        // 3. Resolve Show Variant setting (per-product override takes precedence, fallback to global setting)
+        $showVariant = ($product->show_variant_in_cart !== null)
+            ? (bool) $product->show_variant_in_cart
+            : (bool) \App\Models\CmsSetting::isEnabled('cart_show_variant_name', false);
+
+        $name = trim($product->title);
+
+        $skuPart = '';
+        if ($showSku && !empty(trim((string)$variant->sku))) {
+            $skuPart = ' (' . trim((string)$variant->sku) . ')';
+        }
+
+        $partNumberPart = '';
+        if ($showPartNumber && !empty(trim((string)$variant->part_number))) {
+            $partNumberPart = ' (' . trim((string)$variant->part_number) . ')';
+        }
+
+        $variantPart = '';
+        $rawAttributes = $variant->getAttribute('attributes') ?: $variant->getAttribute('variant_attributes');
+        if ($showVariant && !empty($rawAttributes)) {
+            $attrValues = [];
+            $raw = $rawAttributes;
+            $decoded = is_string($raw) ? json_decode($raw, true) : $raw;
+
+            if (is_array($decoded)) {
+                foreach ($decoded as $k => $v) {
+                    if (is_array($v)) {
+                        foreach ($v as $subV) {
+                            $subV = trim((string)$subV);
+                            if ($subV !== '') $attrValues[] = $subV;
+                        }
+                    } else {
+                        $v = trim((string)$v);
+                        if ($v !== '' && !in_array(strtolower((string)$k), ['customizations', 'is_donation_or_bill_pay', 'custom_amount', 'sku', 'price', 'weight', 'inventory'])) {
+                            $attrValues[] = $v;
+                        }
+                    }
+                }
+            } elseif (is_string($raw)) {
+                $pairs = explode(',', $raw);
+                foreach ($pairs as $pair) {
+                    if (str_contains($pair, ':')) {
+                        [, $val] = explode(':', $pair, 2);
+                        $val = trim($val);
+                        if ($val !== '') $attrValues[] = $val;
+                    }
+                }
+            }
+
+            if (!empty($attrValues)) {
+                $variantStr = implode(' > ', $attrValues);
+                $variantPart = ' (' . $variantStr . ')';
+            }
+        }
+
+        return $name . $skuPart . $partNumberPart . $variantPart;
+    }
 }

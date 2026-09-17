@@ -788,7 +788,7 @@ class QuickShopModal extends Component
         }
 
         $cartItem = \App\Services\CartSessionService::getCartQuery($sessionId)
-            ->where('item_name', 'like', '%(' . $variant->sku . ')')
+            ->where('variant_id', $variant->id)
             ->where('item_attributes', $attributesJson)
             ->first();
 
@@ -804,13 +804,15 @@ class QuickShopModal extends Component
             return;
         }
 
+        $formattedItemName = \App\Services\CartSessionService::formatCartItemName($this->product, $variant);
+
         if ($cartItem) {
             $cartItem->item_qty += $qtyToAdd;
             $cartItem->save();
         } else {
             ShoppingCartLog::create([
                 'cart_log_session' => $sessionId,
-                'item_name'        => $this->product->title . ' (' . $variant->sku . ')',
+                'item_name'        => $formattedItemName,
                 'item_qty'         => $qtyToAdd,
                 'item_price'       => $price,
                 'item_discount_price' => $discountPrice,
@@ -855,7 +857,7 @@ class QuickShopModal extends Component
         }
 
         $this->dispatch('show-cart-modal',
-            itemName: $this->product->title . ' (' . $variant->sku . ')',
+            itemName: $formattedItemName,
             qty: $qtyToAdd,
         );
     }

@@ -23,6 +23,7 @@ class ProductDetails extends Component
     public string $personalization_text = '';
     public string $cartError = ''; // inline error shown next to Add to Cart button
     public string $custom_amount = ''; // Customer entered or selected donation/bill pay amount
+    public ?string $returnToSearchResultsUrl = null;
 
 
     public function getParsedCustomAmountOptionsProperty(): array
@@ -80,6 +81,11 @@ class ProductDetails extends Component
             if (!empty($options)) {
                 $this->custom_amount = (string) $options[0];
             }
+        }
+
+        $lastCatalogUrl = session('last_catalog_url');
+        if ($lastCatalogUrl && (str_starts_with($lastCatalogUrl, url('/shop')) || str_starts_with($lastCatalogUrl, '/shop'))) {
+            $this->returnToSearchResultsUrl = $lastCatalogUrl;
         }
     }
 
@@ -652,11 +658,8 @@ class ProductDetails extends Component
         }
 
         // Check if THIS specific item is already in cart.
-        // IMPORTANT: must also filter by item_name (which encodes the SKU) so we only
-        // match THIS product's cart row — not any other simple product whose item_attributes
-        // is also an empty string ''.
         $cartItem = \App\Services\CartSessionService::getCartQuery($sessionId)
-            ->where('item_name', 'like', '%(' . $variant->sku . ')')
+            ->where('variant_id', $variant->id)
             ->where('item_attributes', $attributesJson)
             ->first();
 
@@ -671,13 +674,15 @@ class ProductDetails extends Component
             return;
         }
 
+        $formattedItemName = \App\Services\CartSessionService::formatCartItemName($this->product, $variant);
+
         if ($cartItem) {
             $cartItem->item_qty += $qtyToAdd;
             $cartItem->save();
         } else {
             ShoppingCartLog::create([
                 'cart_log_session' => $sessionId,
-                'item_name'        => $this->product->title . ' (' . $variant->sku . ')',
+                'item_name'        => $formattedItemName,
                 'item_qty'         => $qtyToAdd,
                 'item_price'       => $price,
                 'item_discount_price' => $discountPrice,
@@ -692,7 +697,7 @@ class ProductDetails extends Component
             ]);
         }
 
-        $this->addedItemName = $this->product->title . ' (' . $variant->sku . ')';
+        $this->addedItemName = $formattedItemName;
         $this->addedQty = $qtyToAdd;
 
         if (\App\Services\GoogleAnalyticsService::isEnabled()) {
@@ -724,7 +729,7 @@ class ProductDetails extends Component
 
         // Fire browser event — the global modal in public.blade.php handles display.
         $this->dispatch('show-cart-modal',
-            itemName: $this->product->title . ' (' . $variant->sku . ')',
+            itemName: $formattedItemName,
             qty: $qtyToAdd,
         );
     }
@@ -800,7 +805,10 @@ class ProductDetails extends Component
                     \App\Services\GoogleAnalyticsService::formatItem($this->product, $selectedVariant, $this->quantity ?: 1)
                 ]
             ] : null,
-        ])->layout('layouts.public', ['metaTitle' => $metaTitle]);
+        ])->layout('layouts.public', [
+            'metaTitle'    => $metaTitle,
+            'canonicalUrl' => url('/items/' . $this->product->seo_slug),
+        ]);
     }
 
     /**

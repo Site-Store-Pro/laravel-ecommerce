@@ -37,6 +37,11 @@
         @if(isset($metaDescription))
             <meta name="description" content="{{ $metaDescription }}">
         @endif
+        @if(!empty($canonicalUrl))
+            <link rel="canonical" href="{{ $canonicalUrl }}" />
+        @elseif(\Illuminate\Support\Facades\View::hasSection('canonical'))
+            <link rel="canonical" href="@yield('canonical')" />
+        @endif
         @stack('meta')
 
         <!-- Favicon (DB-driven) -->

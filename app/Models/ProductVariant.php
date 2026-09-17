@@ -30,6 +30,7 @@ class ProductVariant extends Model
     protected $fillable = [
         'product_id',
         'sku',
+        'part_number',
         'public_price',
         'wholesale_price',
         'on_sale',
@@ -292,7 +293,10 @@ class ProductVariant extends Model
             return 999999;
         }
 
-        $inventories = $this->inventories()->get();
+        $inventories = $this->relationLoaded('inventories')
+            ? $this->inventories
+            : ($this->relationLoaded('inventory') && $this->inventory ? collect([$this->inventory]) : $this->inventories()->get());
+
         if ($inventories->isEmpty()) {
             return 0;
         }
