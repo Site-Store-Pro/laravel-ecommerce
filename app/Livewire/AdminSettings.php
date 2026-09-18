@@ -213,6 +213,10 @@ class AdminSettings extends Component
     public bool   $cart_show_sku = true;
     public bool   $cart_show_variant_name = false;
 
+    // Pricing & Variant Display Options
+    public bool   $hide_zero_price_variants = false;
+    public bool   $display_stock_25_plus = false;
+
     // Admin Area Button Colours — isolated from frontend theme
     public ?string $admin_btn_primary_bg       = '#4f46e5';
     public ?string $admin_btn_primary_text      = '#ffffff';
@@ -328,6 +332,8 @@ class AdminSettings extends Component
         $this->shop_header_custom_html               = (string) ($settings['shop_header_custom_html'] ?? '');
         $this->cart_show_sku                         = (bool) ($settings['cart_show_sku'] ?? true);
         $this->cart_show_variant_name                = (bool) ($settings['cart_show_variant_name'] ?? false);
+        $this->hide_zero_price_variants              = (bool) ($settings['hide_zero_price_variants'] ?? false);
+        $this->display_stock_25_plus                 = (bool) ($settings['display_stock_25_plus'] ?? false);
 
         // Account Dashboard Tab Visibility
         $this->disable_account_downloads_tab = (bool) ($settings['disable_account_downloads_tab'] ?? false);
@@ -511,6 +517,8 @@ class AdminSettings extends Component
             'show_shop_breadcrumbs' => 'boolean',
             'shop_disable_default_product_listing' => 'boolean',
             'shop_hide_filters_until_applied' => 'boolean',
+            'hide_zero_price_variants' => 'boolean',
+            'display_stock_25_plus' => 'boolean',
             'cart_show_sku' => 'boolean',
             'cart_show_variant_name' => 'boolean',
             'show_frontend_dark_mode_switcher' => 'boolean',
@@ -687,6 +695,8 @@ class AdminSettings extends Component
             'show_shop_breadcrumbs'                => $this->show_shop_breadcrumbs ? '1' : '0',
             'shop_disable_default_product_listing'  => $this->shop_disable_default_product_listing ? '1' : '0',
             'shop_hide_filters_until_applied'      => $this->shop_hide_filters_until_applied ? '1' : '0',
+            'hide_zero_price_variants'             => $this->hide_zero_price_variants ? '1' : '0',
+            'display_stock_25_plus'                => $this->display_stock_25_plus ? '1' : '0',
             'shop_header_custom_html'              => $this->shop_header_custom_html ?? '',
             'cart_show_sku'                        => $this->cart_show_sku ? '1' : '0',
             'cart_show_variant_name'               => $this->cart_show_variant_name ? '1' : '0',

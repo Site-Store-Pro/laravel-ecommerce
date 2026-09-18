@@ -88,12 +88,15 @@ class AdminLanguageTranslations extends Component
 
         // Variant attribute and personalization translations use the dedicated job.
         if ($type === 'variant_attributes' || $type === 'variant_personalization') {
-            $variantIds = \App\Models\ProductVariant::pluck('id');
-            foreach ($variantIds as $id) {
-                \App\Jobs\TranslateVariantJob::dispatch($id, $this->languageId);
-            }
+            $count = 0;
+            \App\Models\ProductVariant::chunkById(500, function ($variants) use (&$count) {
+                foreach ($variants as $variant) {
+                    \App\Jobs\TranslateVariantJob::dispatch($variant->id, $this->languageId);
+                    $count++;
+                }
+            });
             $this->dispatch('toast',
-                message: count($variantIds) . ' variant translation jobs queued.',
+                message: $count . ' variant translation jobs queued.',
                 type: 'success'
             );
             $this->loadStats();
@@ -128,13 +131,16 @@ class AdminLanguageTranslations extends Component
         $modelClass = $map[$type] ?? null;
         if (!$modelClass) return;
 
-        $ids = $modelClass::pluck('id');
-        foreach ($ids as $id) {
-            \App\Jobs\TranslateContentJob::dispatch($modelClass, $id, $this->languageId);
-        }
+        $count = 0;
+        $modelClass::chunkById(500, function ($records) use ($modelClass, &$count) {
+            foreach ($records as $record) {
+                \App\Jobs\TranslateContentJob::dispatch($modelClass, $record->id, $this->languageId);
+                $count++;
+            }
+        });
 
         $this->dispatch('toast',
-            message: count($ids) . ' ' . str_replace('_', ' ', $type) . ' translation jobs queued.',
+            message: $count . ' ' . str_replace('_', ' ', $type) . ' translation jobs queued.',
             type: 'success'
         );
         $this->loadStats();
@@ -224,12 +230,14 @@ class AdminLanguageTranslations extends Component
 
         if ($isVariantType) {
             // For variant types, show variants that have not yet been translated.
-            $translatedVariantIds = \App\Models\ProductVariantTranslation::where('language_id', $this->languageId)
-                ->when($this->activeType === 'variant_attributes', fn($q) => $q->whereNotNull('attributes_translated'))
-                ->when($this->activeType === 'variant_personalization', fn($q) => $q->whereNotNull('personalization_label')->where('personalization_label', '!=', ''))
-                ->pluck('product_variant_id');
-
-            $query = \App\Models\ProductVariant::whereNotIn('id', $translatedVariantIds);
+            $query = \App\Models\ProductVariant::whereDoesntHave('translations', function ($q) {
+                $q->where('language_id', $this->languageId);
+                if ($this->activeType === 'variant_attributes') {
+                    $q->whereNotNull('attributes_translated');
+                } elseif ($this->activeType === 'variant_personalization') {
+                    $q->whereNotNull('personalization_label')->where('personalization_label', '!=', '');
+                }
+            });
 
             if ($this->activeType === 'variant_personalization') {
                 // Only show variants that have personalization enabled.

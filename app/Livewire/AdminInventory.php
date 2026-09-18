@@ -29,6 +29,7 @@ class AdminInventory extends Component
     public ?string $csvTempPath = null;
     public float $markupPercentage = 0.0;
     public string $inventoryMode = 'replace'; // 'replace' | 'add'
+    public bool $autoShowInResults = false;
     public int $importStep = 1; // 1: upload & settings, 2: column mapping, 3: summary results
     public array $csvHeaders = [];
     public array $csvPreviewRows = [];
@@ -47,6 +48,7 @@ class AdminInventory extends Component
     public string $ftpRemotePath = '';
     public float $ftpMarkupPercentage = 0.0;
     public string $ftpInventoryMode = 'replace';
+    public bool $ftpAutoShowInResults = false;
     public int $ftpStep = 1; // 1: connection config, 2: column mapping, 3: summary results
     public array $ftpHeaders = [];
     public array $ftpPreviewRows = [];
@@ -69,9 +71,11 @@ class AdminInventory extends Component
     public string $marketplaceSkuColumn = '';
     public array $marketplaceResults = [];
 
-    // --- Tab 5: Reset All Inventory to Zero ---
+    // --- Tab 5: Reset All Inventory to Zero & Bulk Visibility Tools ---
     public string $resetConfirmationText = '';
     public bool $resetConfirmed = false;
+    public string $hideZeroConfirmationText = '';
+    public bool $hideZeroConfirmed = false;
 
     public function setTab(string $tab): void
     {
@@ -88,14 +92,15 @@ class AdminInventory extends Component
         abort_unless(auth()->check() && auth()->user()->isEcommerceAdmin(), 403, 'Unauthorized e-commerce admin access.');
 
         // Load saved FTP / SFTP configuration from settings
-        $this->ftpProtocol         = \App\Models\CmsSetting::get('ftp_protocol', 'ftp') ?: 'ftp';
-        $this->ftpHost             = \App\Models\CmsSetting::get('ftp_host', '') ?: '';
-        $this->ftpPort             = (int)(\App\Models\CmsSetting::get('ftp_port', 21) ?: 21);
-        $this->ftpUsername         = \App\Models\CmsSetting::get('ftp_username', '') ?: '';
-        $this->ftpPassword         = \App\Models\CmsSetting::get('ftp_password', '') ?: '';
-        $this->ftpRemotePath       = \App\Models\CmsSetting::get('ftp_remote_path', '') ?: '';
-        $this->ftpMarkupPercentage = (float)(\App\Models\CmsSetting::get('ftp_markup_percentage', 0.0) ?: 0.0);
-        $this->ftpInventoryMode    = \App\Models\CmsSetting::get('ftp_inventory_mode', 'replace') ?: 'replace';
+        $this->ftpProtocol            = \App\Models\CmsSetting::get('ftp_protocol', 'ftp') ?: 'ftp';
+        $this->ftpHost                = \App\Models\CmsSetting::get('ftp_host', '') ?: '';
+        $this->ftpPort                = (int)(\App\Models\CmsSetting::get('ftp_port', 21) ?: 21);
+        $this->ftpUsername            = \App\Models\CmsSetting::get('ftp_username', '') ?: '';
+        $this->ftpPassword            = \App\Models\CmsSetting::get('ftp_password', '') ?: '';
+        $this->ftpRemotePath          = \App\Models\CmsSetting::get('ftp_remote_path', '') ?: '';
+        $this->ftpMarkupPercentage    = (float)(\App\Models\CmsSetting::get('ftp_markup_percentage', 0.0) ?: 0.0);
+        $this->ftpInventoryMode       = \App\Models\CmsSetting::get('ftp_inventory_mode', 'replace') ?: 'replace';
+        $this->ftpAutoShowInResults   = \App\Models\CmsSetting::isEnabled('ftp_auto_show_in_results');
     }
 
     public function saveStock(int $inventoryId): void
@@ -119,8 +124,14 @@ class AdminInventory extends Component
 
     public function uploadCsv(InventoryImportService $service): void
     {
+        @set_time_limit(300);
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+        \Illuminate\Support\Facades\DB::flushQueryLog();
+
         $this->validate([
-            'csvFile' => 'required|file|max:10240',
+            'csvFile' => 'required|file|max:204800',
         ]);
 
         $path = $this->csvFile->getRealPath();
@@ -199,6 +210,12 @@ class AdminInventory extends Component
 
     public function uploadAndPreviewCsv(InventoryImportService $service): void
     {
+        @set_time_limit(300);
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+        \Illuminate\Support\Facades\DB::flushQueryLog();
+
         $this->validate([
             'csvFile'          => 'required|file|max:204800', // 200MB max
             'markupPercentage' => 'nullable|numeric|min:0|max:1000',
@@ -232,6 +249,9 @@ class AdminInventory extends Component
     {
         @set_time_limit(300);
         @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+        \Illuminate\Support\Facades\DB::flushQueryLog();
 
         $this->validate([
             'skuColumn' => 'required|string',
@@ -249,7 +269,8 @@ class AdminInventory extends Component
             $source,
             $mapping,
             (float)$this->markupPercentage,
-            $this->inventoryMode
+            $this->inventoryMode,
+            $this->autoShowInResults
         );
 
         $this->importResults = $results;
@@ -275,6 +296,7 @@ class AdminInventory extends Component
             'csvTempPath',
             'markupPercentage',
             'inventoryMode',
+            'autoShowInResults',
             'importStep',
             'csvHeaders',
             'csvPreviewRows',
@@ -286,6 +308,7 @@ class AdminInventory extends Component
         ]);
         $this->inventoryMode = 'replace';
         $this->markupPercentage = 0.0;
+        $this->autoShowInResults = false;
         $this->importStep = 1;
     }
 
@@ -309,6 +332,9 @@ class AdminInventory extends Component
     {
         @set_time_limit(300);
         @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+        \Illuminate\Support\Facades\DB::flushQueryLog();
 
         $this->validate([
             'ftpProtocol'        => 'required|in:ftp,ftps,sftp',
@@ -319,18 +345,20 @@ class AdminInventory extends Component
             'ftpRemotePath'      => 'required|string|max:500',
             'ftpMarkupPercentage'=> 'nullable|numeric|min:0|max:1000',
             'ftpInventoryMode'   => 'required|in:replace,add',
+            'ftpAutoShowInResults' => 'boolean',
         ]);
 
         // Persist configured credentials into cms_settings so user doesn't need to re-enter them
         \App\Models\CmsSetting::setMany([
-            'ftp_protocol'         => $this->ftpProtocol,
-            'ftp_host'             => $this->ftpHost,
-            'ftp_port'             => (string)$this->ftpPort,
-            'ftp_username'         => $this->ftpUsername,
-            'ftp_password'         => $this->ftpPassword,
-            'ftp_remote_path'      => $this->ftpRemotePath,
-            'ftp_markup_percentage'=> (string)$this->ftpMarkupPercentage,
-            'ftp_inventory_mode'   => $this->ftpInventoryMode,
+            'ftp_protocol'              => $this->ftpProtocol,
+            'ftp_host'                  => $this->ftpHost,
+            'ftp_port'                  => (string)$this->ftpPort,
+            'ftp_username'              => $this->ftpUsername,
+            'ftp_password'              => $this->ftpPassword,
+            'ftp_remote_path'           => $this->ftpRemotePath,
+            'ftp_markup_percentage'     => (string)$this->ftpMarkupPercentage,
+            'ftp_inventory_mode'        => $this->ftpInventoryMode,
+            'ftp_auto_show_in_results'  => $this->ftpAutoShowInResults ? '1' : '0',
         ]);
 
         $download = $service->downloadRemoteFile([
@@ -377,17 +405,19 @@ class AdminInventory extends Component
             'ftpRemotePath'       => 'required|string|max:500',
             'ftpMarkupPercentage' => 'nullable|numeric|min:0|max:1000',
             'ftpInventoryMode'    => 'required|in:replace,add',
+            'ftpAutoShowInResults'=> 'boolean',
         ]);
 
         \App\Models\CmsSetting::setMany([
-            'ftp_protocol'         => $this->ftpProtocol,
-            'ftp_host'             => $this->ftpHost,
-            'ftp_port'             => (string)$this->ftpPort,
-            'ftp_username'         => $this->ftpUsername,
-            'ftp_password'         => $this->ftpPassword,
-            'ftp_remote_path'      => $this->ftpRemotePath,
-            'ftp_markup_percentage'=> (string)$this->ftpMarkupPercentage,
-            'ftp_inventory_mode'   => $this->ftpInventoryMode,
+            'ftp_protocol'              => $this->ftpProtocol,
+            'ftp_host'                  => $this->ftpHost,
+            'ftp_port'                  => (string)$this->ftpPort,
+            'ftp_username'              => $this->ftpUsername,
+            'ftp_password'              => $this->ftpPassword,
+            'ftp_remote_path'           => $this->ftpRemotePath,
+            'ftp_markup_percentage'     => (string)$this->ftpMarkupPercentage,
+            'ftp_inventory_mode'        => $this->ftpInventoryMode,
+            'ftp_auto_show_in_results'  => $this->ftpAutoShowInResults ? '1' : '0',
         ]);
 
         session()->flash('status', 'FTP / SFTP connection credentials saved to settings.');
@@ -397,6 +427,9 @@ class AdminInventory extends Component
     {
         @set_time_limit(300);
         @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+        \Illuminate\Support\Facades\DB::flushQueryLog();
 
         $this->validate([
             'ftpSkuColumn' => 'required|string',
@@ -414,7 +447,8 @@ class AdminInventory extends Component
             $source,
             $mapping,
             (float)$this->ftpMarkupPercentage,
-            $this->ftpInventoryMode
+            $this->ftpInventoryMode,
+            $this->ftpAutoShowInResults
         );
 
         $this->ftpResults = $results;
@@ -449,20 +483,27 @@ class AdminInventory extends Component
         $this->ftpStep = 1;
 
         // Keep saved credentials intact from settings
-        $this->ftpProtocol         = \App\Models\CmsSetting::get('ftp_protocol', 'ftp') ?: 'ftp';
-        $this->ftpHost             = \App\Models\CmsSetting::get('ftp_host', '') ?: '';
-        $this->ftpPort             = (int)(\App\Models\CmsSetting::get('ftp_port', 21) ?: 21);
-        $this->ftpUsername         = \App\Models\CmsSetting::get('ftp_username', '') ?: '';
-        $this->ftpPassword         = \App\Models\CmsSetting::get('ftp_password', '') ?: '';
-        $this->ftpRemotePath       = \App\Models\CmsSetting::get('ftp_remote_path', '') ?: '';
-        $this->ftpMarkupPercentage = (float)(\App\Models\CmsSetting::get('ftp_markup_percentage', 0.0) ?: 0.0);
-        $this->ftpInventoryMode    = \App\Models\CmsSetting::get('ftp_inventory_mode', 'replace') ?: 'replace';
+        $this->ftpProtocol            = \App\Models\CmsSetting::get('ftp_protocol', 'ftp') ?: 'ftp';
+        $this->ftpHost                = \App\Models\CmsSetting::get('ftp_host', '') ?: '';
+        $this->ftpPort                = (int)(\App\Models\CmsSetting::get('ftp_port', 21) ?: 21);
+        $this->ftpUsername            = \App\Models\CmsSetting::get('ftp_username', '') ?: '';
+        $this->ftpPassword            = \App\Models\CmsSetting::get('ftp_password', '') ?: '';
+        $this->ftpRemotePath          = \App\Models\CmsSetting::get('ftp_remote_path', '') ?: '';
+        $this->ftpMarkupPercentage    = (float)(\App\Models\CmsSetting::get('ftp_markup_percentage', 0.0) ?: 0.0);
+        $this->ftpInventoryMode       = \App\Models\CmsSetting::get('ftp_inventory_mode', 'replace') ?: 'replace';
+        $this->ftpAutoShowInResults   = \App\Models\CmsSetting::isEnabled('ftp_auto_show_in_results');
     }
 
     // --- Amazon / eBay Marketplace Pricing Actions ---
 
     public function uploadAndPreviewMarketplaceCsv(InventoryImportService $service): void
     {
+        @set_time_limit(300);
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+        \Illuminate\Support\Facades\DB::flushQueryLog();
+
         $this->validate([
             'marketplaceCsvFile' => 'required|file|max:204800', // 200MB max
             'targetMarketplace'  => 'required|in:amazon,ebay,both',
@@ -493,6 +534,9 @@ class AdminInventory extends Component
     {
         @set_time_limit(300);
         @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+        \Illuminate\Support\Facades\DB::disableQueryLog();
+        \Illuminate\Support\Facades\DB::flushQueryLog();
 
         $this->validate([
             'marketplaceSkuColumn' => 'required|string',
@@ -541,7 +585,7 @@ class AdminInventory extends Component
         $this->marketplaceMarkup = 15.0;
     }
 
-    // --- Reset All Inventory to Zero Actions ---
+    // --- Reset All Inventory to Zero & Bulk Visibility Tools Actions ---
 
     public function executeZeroInventoryReset(InventoryImportService $service): void
     {
@@ -559,7 +603,26 @@ class AdminInventory extends Component
         $this->resetPage();
 
         session()->flash('status', "Inventory Reset Successful: All {$updatedCount} inventory item records have been set to 0 available stock.");
-        $this->activeTab = 'stock';
+        $this->activeTab = 'reset';
+    }
+
+    public function executeHideZeroPriceProducts(InventoryImportService $service): void
+    {
+        if (trim(strtoupper($this->hideZeroConfirmationText)) !== 'HIDE' || !$this->hideZeroConfirmed) {
+            $this->addError('hideZeroConfirmationText', 'Please check the confirmation box and type "HIDE" to confirm.');
+            return;
+        }
+
+        $updatedCount = $service->hideZeroPriceProductsFromResults();
+
+        $this->reset([
+            'hideZeroConfirmationText',
+            'hideZeroConfirmed',
+        ]);
+        $this->resetPage();
+
+        session()->flash('status', "Product Visibility Updated: {$updatedCount} products with no priced variants have been set to not show in search results.");
+        $this->activeTab = 'reset';
     }
 
     // --- Helper to guess candidate column from list of headers ---

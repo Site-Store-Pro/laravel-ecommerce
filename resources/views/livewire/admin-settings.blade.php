@@ -2138,6 +2138,34 @@
                     </label>
                 </div>
 
+                {{-- Hide Variants with 0.00 Pricing Toggle --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Hide Variants with 0.00 Pricing</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, all pricing displays (catalog, featured items, cross-selling items, and product item views) will not show or include variants in price ranges if the variant price is $0.00. Also excludes $0.00 variants from Amazon and eBay product exports.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="hide_zero_price_variants" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                {{-- Display Stock Levels Over 25 as 25+ Toggle --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Display Stock Levels Over 25 as "25+"</label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, if an item or variant has more than 25 units in stock, the storefront item view and quick shop modals will display "25+ in stock" instead of the exact number (e.g. 150 becomes 25+). If stock is 25 or lower (e.g. 13), the exact number is displayed.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="display_stock_25_plus" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
                 {{-- Enable Advanced Search Filtering Panel Toggle --}}
                 <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
                     <div>

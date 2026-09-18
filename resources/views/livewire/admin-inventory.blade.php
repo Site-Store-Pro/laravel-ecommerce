@@ -99,7 +99,7 @@
 
                         <button type="button" wire:click="setTab('reset')" class="px-4 py-2.5 rounded-2xl font-bold text-xs uppercase tracking-wider transition duration-150 inline-flex items-center gap-2 {{ $activeTab === 'reset' ? 'bg-rose-600 text-white shadow-md' : 'text-rose-600 hover:bg-rose-50' }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            Zero Stock Reset
+                            Bulk Tools & Reset
                         </button>
                     </div>
                 </div>
@@ -329,6 +329,16 @@
                                     </div>
                                 </div>
 
+                                <div class="pt-2">
+                                    <label class="flex items-start gap-3 p-4 rounded-2xl border {{ $autoShowInResults ? 'border-indigo-500 bg-indigo-50/30' : 'border-slate-200 hover:bg-slate-50' }} cursor-pointer transition">
+                                        <input type="checkbox" wire:model.live="autoShowInResults" class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                                        <div>
+                                            <span class="block text-xs font-bold text-slate-900">Auto-Enable Search Visibility on Matched Items</span>
+                                            <span class="block text-[11px] text-slate-500 mt-0.5">When enabled, any catalog product matched in this sync will have its visibility set to show in search results (<code class="font-mono text-indigo-600">show_in_results = 1</code>).</span>
+                                        </div>
+                                    </label>
+                                </div>
+
                                 <div class="flex justify-end pt-4 border-t border-slate-100">
                                     <button type="submit" wire:loading.attr="disabled" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150 shadow-md inline-flex items-center gap-2 cursor-pointer">
                                         <span wire:loading.remove wire:target="uploadAndPreviewCsv, csvFile" class="inline-flex items-center gap-2">
@@ -368,6 +378,7 @@
                                                 <option value="{{ $header }}">{{ $header }}</option>
                                             @endforeach
                                         </select>
+                                        @error('skuColumn') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div class="space-y-1.5">
@@ -375,7 +386,7 @@
                                             Unit Cost Column
                                         </label>
                                         <select wire:model="costColumn" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl text-xs font-semibold focus:border-indigo-500 focus:outline-none">
-                                            <option value="">-- (Optional) No Cost Column --</option>
+                                            <option value="">-- Do Not Import Cost --</option>
                                             @foreach($csvHeaders as $header)
                                                 <option value="{{ $header }}">{{ $header }}</option>
                                             @endforeach
@@ -384,10 +395,10 @@
 
                                     <div class="space-y-1.5">
                                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                            Stock Quantity Column
+                                            Stock Level / Quantity Column
                                         </label>
                                         <select wire:model="stockColumn" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl text-xs font-semibold focus:border-indigo-500 focus:outline-none">
-                                            <option value="">-- (Optional) No Stock Column --</option>
+                                            <option value="">-- Do Not Import Stock --</option>
                                             @foreach($csvHeaders as $header)
                                                 <option value="{{ $header }}">{{ $header }}</option>
                                             @endforeach
@@ -395,23 +406,30 @@
                                     </div>
                                 </div>
 
-                                <!-- CSV Rows Preview Table -->
+                                <!-- Preview Table -->
                                 <div class="space-y-2">
-                                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Sample Preview (First 5 Rows)</h4>
+                                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Sample Data Preview (First 5 Rows)</h4>
                                     <div class="overflow-x-auto rounded-2xl border border-slate-100">
                                         <table class="w-full text-left text-xs text-slate-600">
                                             <thead class="text-3xs font-extrabold text-slate-400 uppercase bg-slate-50 border-b border-slate-100">
                                                 <tr>
-                                                    @foreach($csvHeaders as $h)
-                                                        <th class="px-3 py-2">{{ $h }}</th>
+                                                    @foreach($csvHeaders as $header)
+                                                        <th class="px-4 py-3 {{ in_array($header, [$skuColumn, $costColumn, $stockColumn]) ? 'bg-indigo-50 text-indigo-700' : '' }}">
+                                                            {{ $header }}
+                                                            @if($header === $skuColumn) <span class="block text-3xs font-bold text-indigo-500">[SKU]</span> @endif
+                                                            @if($header === $costColumn) <span class="block text-3xs font-bold text-indigo-500">[Cost]</span> @endif
+                                                            @if($header === $stockColumn) <span class="block text-3xs font-bold text-indigo-500">[Stock]</span> @endif
+                                                        </th>
                                                     @endforeach
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-slate-100">
-                                                @foreach($csvPreviewRows as $row)
+                                                @foreach($csvPreviewRows as $pRow)
                                                     <tr class="hover:bg-slate-50">
-                                                        @foreach($csvHeaders as $h)
-                                                            <td class="px-3 py-2 font-mono text-[11px]">{{ $row[$h] ?? '' }}</td>
+                                                        @foreach($csvHeaders as $header)
+                                                            <td class="px-4 py-2.5 font-mono text-[11px] {{ in_array($header, [$skuColumn, $costColumn, $stockColumn]) ? 'bg-indigo-50/30 font-bold text-indigo-900' : '' }}">
+                                                                {{ $pRow[$header] ?? '' }}
+                                                            </td>
                                                         @endforeach
                                                     </tr>
                                                 @endforeach
@@ -420,18 +438,18 @@
                                     </div>
                                 </div>
 
-                                <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-                                    <button type="button" wire:click="resetImportWizard" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition">
+                                <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+                                    <button type="button" wire:click="resetImportWizard" class="text-xs font-bold text-slate-500 hover:text-slate-800">
                                         Cancel
                                     </button>
                                     <button type="button" wire:click="executeStockAndCostImport" wire:loading.attr="disabled" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150 shadow-md inline-flex items-center gap-2 cursor-pointer">
                                         <span wire:loading.remove wire:target="executeStockAndCostImport" class="inline-flex items-center gap-2">
-                                            <span>Execute Import ({{ number_format($csvTotalRows) }} Rows)</span>
+                                            <span>Execute Stock & Cost Import</span>
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                         </span>
                                         <span wire:loading wire:target="executeStockAndCostImport" class="inline-flex items-center gap-2">
                                             <svg class="animate-spin -ml-1 mr-1 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                            <span>Processing Import...</span>
+                                            <span>Importing Data in Batches...</span>
                                         </span>
                                     </button>
                                 </div>
@@ -442,7 +460,7 @@
                         @if($importStep === 3)
                             <div class="space-y-6">
                                 <!-- Stats Cards Grid -->
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                     <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl text-center">
                                         <span class="block text-2xl font-black text-slate-800">{{ number_format($importResults['stats']['total_rows'] ?? 0) }}</span>
                                         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Rows Processed</span>
@@ -454,6 +472,10 @@
                                     <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl text-center">
                                         <span class="block text-2xl font-black text-amber-700">{{ number_format($importResults['stats']['skipped_count'] ?? 0) }}</span>
                                         <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">Rows Skipped</span>
+                                    </div>
+                                    <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl text-center">
+                                        <span class="block text-2xl font-black text-indigo-700">{{ number_format($importResults['stats']['auto_shown_count'] ?? 0) }}</span>
+                                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Products Made Visible</span>
                                     </div>
                                 </div>
 
@@ -615,6 +637,16 @@
                                     </div>
                                 </div>
 
+                                <div class="pt-2">
+                                    <label class="flex items-start gap-3 p-4 rounded-2xl border {{ $ftpAutoShowInResults ? 'border-indigo-500 bg-indigo-50/30' : 'border-slate-200 hover:bg-slate-50' }} cursor-pointer transition">
+                                        <input type="checkbox" wire:model.live="ftpAutoShowInResults" class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                                        <div>
+                                            <span class="block text-xs font-bold text-slate-900">Auto-Enable Search Visibility on Matched Items</span>
+                                            <span class="block text-[11px] text-slate-500 mt-0.5">When enabled, any catalog product matched during this FTP sync will have its visibility set to show in search results (<code class="font-mono text-indigo-600">show_in_results = 1</code>).</span>
+                                        </div>
+                                    </label>
+                                </div>
+
                                 <div class="flex items-center justify-between pt-4 border-t border-slate-100">
                                     <button type="button" wire:click="saveFtpSettings" wire:loading.attr="disabled" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition inline-flex items-center gap-1.5 cursor-pointer">
                                         <svg wire:loading.remove wire:target="saveFtpSettings" class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
@@ -659,6 +691,7 @@
                                                 <option value="{{ $header }}">{{ $header }}</option>
                                             @endforeach
                                         </select>
+                                        @error('ftpSkuColumn') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
                                     </div>
 
                                     <div class="space-y-1.5">
@@ -666,7 +699,7 @@
                                             Unit Cost Column
                                         </label>
                                         <select wire:model="ftpCostColumn" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl text-xs font-semibold focus:border-indigo-500 focus:outline-none">
-                                            <option value="">-- (Optional) No Cost Column --</option>
+                                            <option value="">-- Do Not Import Cost --</option>
                                             @foreach($ftpHeaders as $header)
                                                 <option value="{{ $header }}">{{ $header }}</option>
                                             @endforeach
@@ -675,10 +708,10 @@
 
                                     <div class="space-y-1.5">
                                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                            Stock Quantity Column
+                                            Stock Level / Quantity Column
                                         </label>
                                         <select wire:model="ftpStockColumn" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl text-xs font-semibold focus:border-indigo-500 focus:outline-none">
-                                            <option value="">-- (Optional) No Stock Column --</option>
+                                            <option value="">-- Do Not Import Stock --</option>
                                             @foreach($ftpHeaders as $header)
                                                 <option value="{{ $header }}">{{ $header }}</option>
                                             @endforeach
@@ -686,18 +719,50 @@
                                     </div>
                                 </div>
 
-                                <div class="flex items-center justify-between pt-4 border-t border-slate-100">
-                                    <button type="button" wire:click="resetFtpWizard" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition">
+                                <!-- Preview Table -->
+                                <div class="space-y-2">
+                                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Sample Remote Data Preview (First 5 Rows)</h4>
+                                    <div class="overflow-x-auto rounded-2xl border border-slate-100">
+                                        <table class="w-full text-left text-xs text-slate-600">
+                                            <thead class="text-3xs font-extrabold text-slate-400 uppercase bg-slate-50 border-b border-slate-100">
+                                                <tr>
+                                                    @foreach($ftpHeaders as $header)
+                                                        <th class="px-4 py-3 {{ in_array($header, [$ftpSkuColumn, $ftpCostColumn, $ftpStockColumn]) ? 'bg-indigo-50 text-indigo-700' : '' }}">
+                                                            {{ $header }}
+                                                            @if($header === $ftpSkuColumn) <span class="block text-3xs font-bold text-indigo-500">[SKU]</span> @endif
+                                                            @if($header === $ftpCostColumn) <span class="block text-3xs font-bold text-indigo-500">[Cost]</span> @endif
+                                                            @if($header === $ftpStockColumn) <span class="block text-3xs font-bold text-indigo-500">[Stock]</span> @endif
+                                                        </th>
+                                                    @endforeach
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100">
+                                                @foreach($ftpPreviewRows as $pRow)
+                                                    <tr class="hover:bg-slate-50">
+                                                        @foreach($ftpHeaders as $header)
+                                                            <td class="px-4 py-2.5 font-mono text-[11px] {{ in_array($header, [$ftpSkuColumn, $ftpCostColumn, $ftpStockColumn]) ? 'bg-indigo-50/30 font-bold text-indigo-900' : '' }}">
+                                                                {{ $pRow[$header] ?? '' }}
+                                                            </td>
+                                                        @endforeach
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+                                    <button type="button" wire:click="resetFtpWizard" class="text-xs font-bold text-slate-500 hover:text-slate-800">
                                         Cancel
                                     </button>
                                     <button type="button" wire:click="executeFtpStockAndCostImport" wire:loading.attr="disabled" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150 shadow-md inline-flex items-center gap-2 cursor-pointer">
                                         <span wire:loading.remove wire:target="executeFtpStockAndCostImport" class="inline-flex items-center gap-2">
-                                            <span>Execute Sync ({{ number_format($ftpTotalRows) }} Rows)</span>
+                                            <span>Execute Remote Feed Import</span>
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                         </span>
                                         <span wire:loading wire:target="executeFtpStockAndCostImport" class="inline-flex items-center gap-2">
                                             <svg class="animate-spin -ml-1 mr-1 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                            <span>Syncing Remote Feed...</span>
+                                            <span>Importing Feed in Batches...</span>
                                         </span>
                                     </button>
                                 </div>
@@ -707,7 +772,7 @@
                         <!-- Step 3: FTP Results -->
                         @if($ftpStep === 3)
                             <div class="space-y-6">
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                     <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl text-center">
                                         <span class="block text-2xl font-black text-slate-800">{{ number_format($ftpResults['stats']['total_rows'] ?? 0) }}</span>
                                         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Remote Rows Processed</span>
@@ -719,6 +784,10 @@
                                     <div class="bg-amber-50 border border-amber-100 p-4 rounded-2xl text-center">
                                         <span class="block text-2xl font-black text-amber-700">{{ number_format($ftpResults['stats']['skipped_count'] ?? 0) }}</span>
                                         <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">Rows Skipped</span>
+                                    </div>
+                                    <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl text-center">
+                                        <span class="block text-2xl font-black text-indigo-700">{{ number_format($ftpResults['stats']['auto_shown_count'] ?? 0) }}</span>
+                                        <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider">Products Made Visible</span>
                                     </div>
                                 </div>
 
@@ -897,44 +966,89 @@
                     </div>
                 @endif
 
-                <!-- TAB 5: Reset All Inventory to Zero -->
+                <!-- TAB 5: Bulk Tools & Reset -->
                 @if($activeTab === 'reset')
-                    <div class="bg-white border border-rose-100 rounded-3xl p-6 shadow-sm space-y-6">
-                        <div class="border-b border-rose-100 pb-4">
-                            <div class="flex items-center gap-2 text-rose-600">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                <h3 class="text-lg font-black text-rose-700 uppercase tracking-wider font-sans">Danger Zone: Zero Inventory Reset</h3>
+                    <div class="space-y-6">
+                        <!-- Card 1: Bulk Visibility Tool - Hide Zero Price Products -->
+                        <div class="bg-white border border-amber-100 rounded-3xl p-6 shadow-sm space-y-6">
+                            <div class="border-b border-amber-100 pb-4">
+                                <div class="flex items-center gap-2 text-amber-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                    <h3 class="text-lg font-black text-amber-800 uppercase tracking-wider font-sans">Bulk Visibility: Hide Zero-Price Products</h3>
+                                </div>
+                                <p class="text-xs text-amber-600 mt-1">Batch update catalog visibility so products with no priced variants ($0.00 pricing) do not show in search or category listings.</p>
                             </div>
-                            <p class="text-xs text-rose-500 mt-1">This operation instantly resets all product variant stock levels across shelf and warehouse facilities to zero.</p>
-                        </div>
 
-                        <div class="p-4 bg-rose-50 rounded-2xl border border-rose-200 text-xs text-rose-800 space-y-2">
-                            <p class="font-bold">What will happen:</p>
-                            <ul class="list-disc list-inside space-y-1 text-rose-700">
-                                <li>All records in <code class="font-mono font-bold">products_inventory</code> will have <code class="font-mono">quantity_available</code> set to <strong>0</strong>.</li>
-                                <li>All records in <code class="font-mono font-bold">product_inventory_warehouses</code> will have <code class="font-mono">stock_level</code> set to <strong>0</strong>.</li>
-                                <li>Product catalog records, variant costs, and retail prices will remain untouched.</li>
-                            </ul>
-                        </div>
+                            <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-2">
+                                <p class="font-bold">What will happen:</p>
+                                <ul class="list-disc list-inside space-y-1 text-amber-800">
+                                    <li>All products that do <strong>not</strong> have any variant with a positive price (<code class="font-mono">public_price &gt; 0</code>, <code class="font-mono">sale_price &gt; 0</code> when on sale, or <code class="font-mono">wholesale_price &gt; 0</code>) will be updated with <code class="font-mono font-bold">show_in_results = 0</code>.</li>
+                                    <li>Products that have at least one variant with a price greater than $0.00 will remain untouched.</li>
+                                    <li>When you later sync stock &amp; pricing via CSV or FTP with the auto-enable toggle checked, matched products will automatically be restored to <code class="font-mono font-bold">show_in_results = 1</code>.</li>
+                                </ul>
+                            </div>
 
-                        <div class="space-y-4 max-w-lg">
-                            <label class="flex items-start gap-3 cursor-pointer">
-                                <input type="checkbox" wire:model.live="resetConfirmed" class="mt-1 rounded text-rose-600 focus:ring-rose-500">
-                                <span class="text-xs font-bold text-slate-800">I understand that this action is irreversible and will zero out all warehouse and shelf stock levels.</span>
-                            </label>
-
-                            <div class="space-y-1.5">
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                    Type <span class="text-rose-600 font-mono">RESET</span> to confirm:
+                            <div class="space-y-4 max-w-lg">
+                                <label class="flex items-start gap-3 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="hideZeroConfirmed" class="mt-1 rounded text-amber-600 focus:ring-amber-500">
+                                    <span class="text-xs font-bold text-slate-800">I understand that this will set search results visibility to OFF (<code class="font-mono text-amber-700">show_in_results = 0</code>) for all products with $0.00 priced variants.</span>
                                 </label>
-                                <input type="text" wire:model.live="resetConfirmationText" placeholder="RESET" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl text-xs font-mono font-bold uppercase tracking-widest focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500">
+
+                                <div class="space-y-1.5">
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                        Type <span class="text-amber-600 font-mono">HIDE</span> to confirm:
+                                    </label>
+                                    <input type="text" wire:model.live="hideZeroConfirmationText" placeholder="HIDE" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl text-xs font-mono font-bold uppercase tracking-widest focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                                    @error('hideZeroConfirmationText') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
+                                </div>
+
+                                <button type="button" wire:click="executeHideZeroPriceProducts" wire:loading.attr="disabled" @disabled(!$hideZeroConfirmed || strtoupper(trim($hideZeroConfirmationText)) !== 'HIDE') class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150 shadow-md inline-flex items-center gap-2 cursor-pointer">
+                                    <svg wire:loading.remove wire:target="executeHideZeroPriceProducts" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                    <svg wire:loading wire:target="executeHideZeroPriceProducts" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <span>Hide Unpriced / $0.00 Products From Results</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Danger Zone - Zero Inventory Reset -->
+                        <div class="bg-white border border-rose-100 rounded-3xl p-6 shadow-sm space-y-6">
+                            <div class="border-b border-rose-100 pb-4">
+                                <div class="flex items-center gap-2 text-rose-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    <h3 class="text-lg font-black text-rose-700 uppercase tracking-wider font-sans">Danger Zone: Zero Inventory Reset</h3>
+                                </div>
+                                <p class="text-xs text-rose-500 mt-1">This operation instantly resets all product variant stock levels across shelf and warehouse facilities to zero.</p>
                             </div>
 
-                            <button type="button" wire:click="executeZeroInventoryReset" wire:loading.attr="disabled" @disabled(!$resetConfirmed || strtoupper(trim($resetConfirmationText)) !== 'RESET') class="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150 shadow-md inline-flex items-center gap-2 cursor-pointer">
-                                <svg wire:loading.remove wire:target="executeZeroInventoryReset" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                <svg wire:loading wire:target="executeZeroInventoryReset" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                <span>Zero Out All Inventory</span>
-                            </button>
+                            <div class="p-4 bg-rose-50 rounded-2xl border border-rose-200 text-xs text-rose-800 space-y-2">
+                                <p class="font-bold">What will happen:</p>
+                                <ul class="list-disc list-inside space-y-1 text-rose-700">
+                                    <li>All records in <code class="font-mono font-bold">products_inventory</code> will have <code class="font-mono">quantity_available</code> set to <strong>0</strong>.</li>
+                                    <li>All records in <code class="font-mono font-bold">product_inventory_warehouses</code> will have <code class="font-mono">stock_level</code> set to <strong>0</strong>.</li>
+                                    <li>Product catalog records, variant costs, and retail prices will remain untouched.</li>
+                                </ul>
+                            </div>
+
+                            <div class="space-y-4 max-w-lg">
+                                <label class="flex items-start gap-3 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="resetConfirmed" class="mt-1 rounded text-rose-600 focus:ring-rose-500">
+                                    <span class="text-xs font-bold text-slate-800">I understand that this action is irreversible and will zero out all warehouse and shelf stock levels.</span>
+                                </label>
+
+                                <div class="space-y-1.5">
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                        Type <span class="text-rose-600 font-mono">RESET</span> to confirm:
+                                    </label>
+                                    <input type="text" wire:model.live="resetConfirmationText" placeholder="RESET" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl text-xs font-mono font-bold uppercase tracking-widest focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500">
+                                    @error('resetConfirmationText') <span class="text-xs text-red-500 font-medium">{{ $message }}</span> @enderror
+                                </div>
+
+                                <button type="button" wire:click="executeZeroInventoryReset" wire:loading.attr="disabled" @disabled(!$resetConfirmed || strtoupper(trim($resetConfirmationText)) !== 'RESET') class="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150 shadow-md inline-flex items-center gap-2 cursor-pointer">
+                                    <svg wire:loading.remove wire:target="executeZeroInventoryReset" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    <svg wire:loading wire:target="executeZeroInventoryReset" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <span>Zero Out All Inventory</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 @endif

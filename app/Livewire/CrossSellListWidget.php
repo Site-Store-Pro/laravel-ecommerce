@@ -188,14 +188,27 @@ class CrossSellListWidget extends Component
     public function render(): View
     {
         if ($this->productId > 0) {
+            $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
             $query = ProductCrossSell::with([
                 'crossSellProduct' => fn ($q) => $q->where('active', 1)->where('show_in_results', 1)->withCurrentTranslations(),
+                'crossSellProduct.variants' => function ($q) use ($hideZero) {
+                    if ($hideZero) {
+                        $q->where(fn($sq) => $sq->where('public_price', '>', 0)->orWhere(fn($sq2) => $sq2->where('on_sale', 1)->where('sale_price', '>', 0)));
+                    }
+                },
                 'crossSellProduct.variants.inventory',
                 'crossSellProduct.variants.images',
             ])
                 ->where('product_id', $this->productId)
                 ->where('display_on_item_view', true)
-                ->whereHas('crossSellProduct', fn ($q) => $q->where('active', 1)->where('show_in_results', 1));
+                ->whereHas('crossSellProduct', function ($q) use ($hideZero) {
+                    $q->where('active', 1)->where('show_in_results', 1);
+                    if ($hideZero) {
+                        $q->whereHas('variants', function ($vq) {
+                            $vq->where(fn($sq) => $sq->where('public_price', '>', 0)->orWhere(fn($sq2) => $sq2->where('on_sale', 1)->where('sale_price', '>', 0)));
+                        });
+                    }
+                });
 
             if ($this->sort === 'name') {
                 $query->join('products', 'products.id', '=', 'product_cross_selling.cross_sell_product_id')

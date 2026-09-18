@@ -1,4 +1,6 @@
 @php
+    $selectedVariant = $this->selectedVariant;
+
     /*
      * Build a FLAT list of every active image across ALL variants.
      * Each entry carries its variantId so clicking a thumbnail can
@@ -62,9 +64,9 @@
 <div
     x-data="{
         images: {{ $alpineImages }},
-        current: {{ $initialIndex }},
-        activeVariantId: {{ $selectedVariant ? $selectedVariant->id : 0 }},
-        activeColor: '{{ $selectedVariant ? $this->getVariantColor($selectedVariant) : '' }}',
+        current: {{ (int)$initialIndex }},
+        activeVariantId: {{ $selectedVariant ? (int)$selectedVariant->id : 0 }},
+        activeColor: {{ json_encode($selectedVariant ? $this->getVariantColor($selectedVariant) : '', JSON_HEX_APOS | JSON_HEX_QUOT) }},
         zooming: false,
         zoomLocked: false,
         zoomX: '50%',

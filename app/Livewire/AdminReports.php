@@ -308,6 +308,8 @@ class AdminReports extends Component
 
     public function exportAmazonProducts(): StreamedResponse
     {
+        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+
         $variants = \App\Models\ProductVariant::with('product')
             ->where('amazon_product', true)
             ->get();
@@ -331,6 +333,10 @@ class AdminReports extends Component
             $price = ($variant->amazon_price !== null && (float)$variant->amazon_price > 0)
                 ? (float)$variant->amazon_price
                 : (float)$variant->public_price;
+
+            if ($hideZero && $price <= 0) {
+                continue;
+            }
 
             $rows[] = [
                 $variant->sku ?: '',
@@ -357,6 +363,8 @@ class AdminReports extends Component
 
     public function exportEbayProducts(): StreamedResponse
     {
+        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+
         $variants = \App\Models\ProductVariant::with('product')
             ->where('ebay_product', true)
             ->get();
@@ -381,6 +389,10 @@ class AdminReports extends Component
             $price = ($variant->ebay_price !== null && (float)$variant->ebay_price > 0)
                 ? (float)$variant->ebay_price
                 : (float)$variant->public_price;
+
+            if ($hideZero && $price <= 0) {
+                continue;
+            }
 
             $rows[] = [
                 $variant->sku ?: '',

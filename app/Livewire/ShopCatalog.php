@@ -751,12 +751,19 @@ class ShopCatalog extends Component
             });
 
         // ── Paginated product list with dynamic sorting ─────────────────────
-        $sortPriceSubquery = '(SELECT MIN(CASE WHEN on_sale = 1 AND sale_price > 0 THEN sale_price ELSE public_price END) FROM product_variants WHERE product_variants.product_id = products.id)';
+        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+        $variantPriceCondition = $hideZero ? ' AND (public_price > 0 OR (on_sale = 1 AND sale_price > 0))' : '';
+        $sortPriceSubquery = "(SELECT MIN(CASE WHEN on_sale = 1 AND sale_price > 0 THEN sale_price ELSE public_price END) FROM product_variants WHERE product_variants.product_id = products.id{$variantPriceCondition})";
         $sortRatingSubquery = 'COALESCE((SELECT AVG(rating) FROM product_reviews WHERE product_reviews.product_id = products.id AND approved = 1), products.reviews_rating, 0)';
 
         $productsQuery = (clone $baseQuery)->with([
             'brand',
             'categories.translations',
+            'variants' => function ($q) use ($hideZero) {
+                if ($hideZero) {
+                    $q->where(fn($sq) => $sq->where('public_price', '>', 0)->orWhere(fn($sq2) => $sq2->where('on_sale', 1)->where('sale_price', '>', 0)));
+                }
+            },
             'variants.inventory',
             'variants.images',
             'fields',

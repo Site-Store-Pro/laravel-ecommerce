@@ -12,7 +12,7 @@ class ThemePreferenceService
      * Order of precedence:
      * 1. Authenticated user preference (users.theme_preference)
      * 2. Session preference ('frontend_theme')
-     * 3. Visitor cookie ('frontend_theme' / 'theme_mode' / 'visperity_theme' / 'theme')
+     * 3. Visitor cookie ('frontend_theme' / 'theme_mode' / 'sspro_store_theme' / 'theme')
      * 4. Store default setting (CmsSetting::isEnabled('frontend_dark_mode'))
      */
     public static function isFrontendDarkMode(): bool
@@ -37,9 +37,9 @@ class ThemePreferenceService
 
         $cookie = request()->cookie('frontend_theme')
             ?? request()->cookie('theme_mode')
-            ?? request()->cookie('visperity_theme')
+            ?? request()->cookie('sspro_store_theme')
             ?? request()->cookie('theme')
-            ?? ($_COOKIE['frontend_theme'] ?? $_COOKIE['theme_mode'] ?? $_COOKIE['visperity_theme'] ?? $_COOKIE['theme'] ?? null);
+            ?? ($_COOKIE['frontend_theme'] ?? $_COOKIE['theme_mode'] ?? $_COOKIE['sspro_store_theme'] ?? $_COOKIE['theme'] ?? null);
 
         if ($cookie === 'dark') {
             return true;
@@ -59,7 +59,7 @@ class ThemePreferenceService
      * Set the theme preference for the current visitor/user.
      * - Authenticated users save to their account record (users.theme_preference);
      * - Session stores the preference;
-     * - All visitors get 1-year cookies queued (frontend_theme, theme_mode, visperity_theme, theme);
+     * - All visitors get 1-year cookies queued (frontend_theme, theme_mode, sspro_store_theme, theme);
      * - Global CmsSetting is NOT modified.
      */
     public static function setFrontendTheme(?string $theme = null): string
@@ -77,7 +77,7 @@ class ThemePreferenceService
         // Queue unencrypted cookies for 1 year (525600 mins) across all standard cookie names
         Cookie::queue(Cookie::make('frontend_theme', $theme, 525600, '/', null, false, false));
         Cookie::queue(Cookie::make('theme_mode', $theme, 525600, '/', null, false, false));
-        Cookie::queue(Cookie::make('visperity_theme', $theme, 525600, '/', null, false, false));
+        Cookie::queue(Cookie::make('sspro_store_theme', $theme, 525600, '/', null, false, false));
         Cookie::queue(Cookie::make('theme', $theme, 525600, '/', null, false, false));
 
         return $theme;

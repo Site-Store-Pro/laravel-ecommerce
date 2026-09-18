@@ -45,6 +45,49 @@ class QuickShopModal extends Component
         $this->loadProduct((int) $id);
     }
 
+    public function hydrate(): void
+    {
+        $this->filterStorefrontVariants();
+    }
+
+    public function filterStorefrontVariants(): void
+    {
+        if (!isset($this->product) || !$this->product) {
+            return;
+        }
+
+        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+        if (!$hideZero) {
+            return;
+        }
+
+        $isWholesale = auth()->check() && auth()->user()->isWholesale();
+        $langService = app(\App\Services\LanguageService::class);
+        $langIds = array_unique([$langService->currentId(), $langService->defaultId()]);
+
+        $this->product->load([
+            'variants' => function ($q) use ($isWholesale) {
+                $q->where(function ($sq) use ($isWholesale) {
+                    $sq->where('public_price', '>', 0)
+                       ->orWhere(fn($sq2) => $sq2->where('on_sale', 1)->where('sale_price', '>', 0));
+                    if ($isWholesale) {
+                        $sq->orWhere('wholesale_price', '>', 0);
+                    }
+                });
+            },
+            'variants.inventory.warehouseInventories',
+            'variants.images',
+            'variants.translations' => fn ($q) => $q->whereIn('language_id', $langIds),
+        ]);
+
+        if ($this->selectedVariantId > 0 && !$this->product->variants->contains('id', $this->selectedVariantId)) {
+            $first = $this->product->variants->first();
+            $this->selectedVariantId = $first ? $first->id : 0;
+            $this->initializeSelectedImageSet();
+            $this->initializeSelectedAttributes();
+        }
+    }
+
     public function loadProduct(int $productId): void
     {
         $this->resetErrorBag();
@@ -59,10 +102,24 @@ class QuickShopModal extends Component
         $langService = app(\App\Services\LanguageService::class);
         $langIds = array_unique([$langService->currentId(), $langService->defaultId()]);
 
+        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+        $isWholesale = auth()->check() && auth()->user()->isWholesale();
+
         $this->product = Product::where('id', $productId)
             ->where('active', 1)
             ->withCurrentTranslations()
             ->with([
+                'variants'                           => function ($q) use ($hideZero, $isWholesale) {
+                    if ($hideZero) {
+                        $q->where(function ($sq) use ($isWholesale) {
+                            $sq->where('public_price', '>', 0)
+                               ->orWhere(fn($sq2) => $sq2->where('on_sale', 1)->where('sale_price', '>', 0));
+                            if ($isWholesale) {
+                                $sq->orWhere('wholesale_price', '>', 0);
+                            }
+                        });
+                    }
+                },
                 'variants.inventory.warehouseInventories',
                 'variants.images',
                 'variants.translations'              => fn ($q) => $q->whereIn('language_id', $langIds),
@@ -84,6 +141,8 @@ class QuickShopModal extends Component
             $this->selectedVariantId = $this->product->variants->first()->id;
             $this->initializeSelectedImageSet();
             $this->initializeSelectedAttributes();
+        } else {
+            $this->selectedVariantId = 0;
         }
 
         if ($this->product->is_donation_or_bill_pay && !$this->product->allow_custom_amount) {
@@ -526,6 +585,18 @@ class QuickShopModal extends Component
 
         $variant = ProductVariant::with(['inventory', 'product'])->findOrFail($this->selectedVariantId);
         $product = $variant->product;
+
+        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+        $isWholesale = auth()->check() && auth()->user()->isWholesale();
+        $basePrice = $isWholesale ? (float)$variant->wholesale_price : (float)$variant->public_price;
+        if ($variant->on_sale && (float)$variant->sale_price > 0) {
+            $basePrice = (float)$variant->sale_price;
+        }
+        if ($hideZero && $basePrice <= 0 && !$product->is_donation_or_bill_pay) {
+            $this->cartError = 'This item is currently unavailable.';
+            return;
+        }
+
         $sessionId = \App\Services\CartSessionService::getCartSessionId();
         $userId = auth()->id() ?? 0;
 
@@ -952,6 +1023,11 @@ class QuickShopModal extends Component
 
     public function render(): View
     {
+        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+        if ($hideZero) {
+            $this->filterStorefrontVariants();
+        }
+
         $selectedVariant = $this->selectedVariant;
         $selectedImageSet = null;
 

@@ -1,23 +1,7 @@
 @php
     $metaTitle = $page?->meta_title ?: ($page?->alternate_page_title ?: $page?->title);
     $metaDescription = $page?->meta_description;
-    $sessionTheme = session('frontend_theme') ?: session('theme_mode');
-    $cookieTheme = request()->cookie('frontend_theme')
-        ?: ($_COOKIE['frontend_theme'] ?? (request()->cookie('theme_mode') ?: ($_COOKIE['theme_mode'] ?? null)));
-
-    if (auth()->check() && !empty(auth()->user()->theme_preference)) {
-        $frontendDark = auth()->user()->theme_preference === 'dark';
-    } elseif (!empty($sessionTheme)) {
-        $frontendDark = $sessionTheme === 'dark';
-    } elseif (!empty($cookieTheme)) {
-        $frontendDark = $cookieTheme === 'dark';
-    } else {
-        try {
-            $frontendDark = \App\Models\CmsSetting::isEnabled('frontend_dark_mode');
-        } catch (\Throwable $e) {
-            $frontendDark = false;
-        }
-    }
+    $frontendDark = \App\Services\ThemePreferenceService::isFrontendDarkMode();
 
     $alignment = $page?->page_title_alignment ?: 'middle-center';
     $alignMap = [
@@ -42,21 +26,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         {{-- Instant client-side theme gating to prevent FOUC / theme flash --}}
-        <script>
-            (function() {
-                var cookieMatch = document.cookie.match(/(?:^|;\s*)(?:frontend_theme|theme_mode)=([^;]+)/);
-                var storedCookie = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
-                var storedLocal = null;
-                try { storedLocal = localStorage.getItem('frontend_theme'); } catch (e) {}
-                var theme = storedCookie || storedLocal;
-                var isDark = theme ? (theme === 'dark') : {{ $frontendDark ? 'true' : 'false' }};
-                if (isDark) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-            })();
-        </script>
+        <script>(function(){var m=document.cookie.match(/(?:^|;\s*)(?:frontend_theme|theme_mode|sspro_store_theme|theme)=([^;]+)/),c=m?decodeURIComponent(m[1]):null,l=null;try{l=localStorage.getItem('frontend_theme')||localStorage.getItem('theme_mode')}catch(e){}var t=l||c,d=t?(t==='dark'):{{ $frontendDark ? 'true' : 'false' }};d?document.documentElement.classList.add('dark'):document.documentElement.classList.remove('dark')})();</script>
         <title>{{ $metaTitle }}</title>
         @if($metaDescription)
             <meta name="description" content="{{ $metaDescription }}">

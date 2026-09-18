@@ -196,12 +196,26 @@ class FeaturedItemsWidget extends Component
 
     public function render(): View
     {
-        $query = Product::with(['variants.inventory', 'variants.images'])
+        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+
+        $query = Product::with([
+            'variants' => function ($q) use ($hideZero) {
+                if ($hideZero) {
+                    $q->where(fn($sq) => $sq->where('public_price', '>', 0)->orWhere(fn($sq2) => $sq2->where('on_sale', 1)->where('sale_price', '>', 0)));
+                }
+            },
+            'variants.inventory',
+            'variants.images'
+        ])
             ->withCurrentTranslations()
             ->where('active', 1)
             ->where('show_in_results', 1)
             ->where('featured_item', 1)
-            ->whereHas('variants');
+            ->whereHas('variants', function ($q) use ($hideZero) {
+                if ($hideZero) {
+                    $q->where(fn($sq) => $sq->where('public_price', '>', 0)->orWhere(fn($sq2) => $sq2->where('on_sale', 1)->where('sale_price', '>', 0)));
+                }
+            });
 
         match ($this->sort) {
             'name'   => $query->orderBy('title'),

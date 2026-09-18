@@ -30,6 +30,8 @@ class FrontendDarkModePreferenceTest extends TestCase
 
         $this->assertNotNull(Cookie::queued('frontend_theme'));
         $this->assertEquals('dark', Cookie::queued('frontend_theme')->getValue());
+        $this->assertNotNull(Cookie::queued('sspro_store_theme'));
+        $this->assertEquals('dark', Cookie::queued('sspro_store_theme')->getValue());
 
         // Verify CmsSetting was NOT modified
         $this->assertFalse(CmsSetting::isEnabled('frontend_dark_mode'));
@@ -50,6 +52,8 @@ class FrontendDarkModePreferenceTest extends TestCase
 
         $this->assertNotNull(Cookie::queued('frontend_theme'));
         $this->assertEquals('dark', Cookie::queued('frontend_theme')->getValue());
+        $this->assertNotNull(Cookie::queued('sspro_store_theme'));
+        $this->assertEquals('dark', Cookie::queued('sspro_store_theme')->getValue());
 
         $this->assertEquals('dark', $user->fresh()->theme_preference);
         $this->assertFalse(CmsSetting::isEnabled('frontend_dark_mode'));
@@ -71,11 +75,11 @@ class FrontendDarkModePreferenceTest extends TestCase
     {
         CmsSetting::set('frontend_dark_mode', '0');
 
-        $responseHome = $this->withUnencryptedCookie('frontend_theme', 'dark')->get('/');
+        $responseHome = $this->withUnencryptedCookie('sspro_store_theme', 'dark')->get('/');
         $responseHome->assertStatus(200);
         $responseHome->assertSee('class="scroll-smooth dark"', false);
 
-        $responseShop = $this->withUnencryptedCookie('frontend_theme', 'dark')->get('/shop');
+        $responseShop = $this->withUnencryptedCookie('sspro_store_theme', 'dark')->get('/shop');
         $responseShop->assertStatus(200);
         $responseShop->assertSee('class="overflow-x-hidden max-w-full dark"', false);
 
@@ -88,12 +92,12 @@ class FrontendDarkModePreferenceTest extends TestCase
             'page_type' => 1,
             'layout_type' => 1,
         ]);
-        $responseCms = $this->withUnencryptedCookie('frontend_theme', 'dark')->get('/pages/' . $cmsPage->slug);
+        $responseCms = $this->withUnencryptedCookie('sspro_store_theme', 'dark')->get('/pages/' . $cmsPage->slug);
         if ($responseCms->status() === 200) {
             $responseCms->assertSee('class="scroll-smooth dark"', false);
         }
 
-        $responseLight = $this->withUnencryptedCookie('frontend_theme', 'light')->get('/shop');
+        $responseLight = $this->withUnencryptedCookie('sspro_store_theme', 'light')->get('/shop');
         $responseLight->assertStatus(200);
         $responseLight->assertSee('class="overflow-x-hidden max-w-full "', false);
         $responseLight->assertDontSee('class="overflow-x-hidden max-w-full dark"', false);

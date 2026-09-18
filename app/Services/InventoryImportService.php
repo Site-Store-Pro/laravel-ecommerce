@@ -138,22 +138,29 @@ class InventoryImportService
         array|string $source,
         array $mapping,
         float $markupPercentage = 0.0,
-        string $inventoryMode = 'replace'
+        string $inventoryMode = 'replace',
+        bool $autoShowInResults = false
     ): array {
         @set_time_limit(300);
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+        DB::disableQueryLog();
+        DB::flushQueryLog();
 
         $skuCol   = $mapping['sku'] ?? 'SKU';
         $costCol  = $mapping['cost'] ?? null;
         $stockCol = $mapping['stock'] ?? null;
 
         $stats = [
-            'total_rows'      => 0,
-            'matched_count'   => 0,
-            'updated_count'   => 0,
-            'skipped_count'   => 0,
-            'error_count'     => 0,
-            'markup_applied'  => $markupPercentage,
-            'inventory_mode'  => $inventoryMode,
+            'total_rows'           => 0,
+            'matched_count'        => 0,
+            'updated_count'        => 0,
+            'skipped_count'        => 0,
+            'error_count'          => 0,
+            'markup_applied'       => $markupPercentage,
+            'inventory_mode'       => $inventoryMode,
+            'auto_show_in_results' => $autoShowInResults,
+            'auto_shown_count'     => 0,
         ];
 
         $updatedItems = [];
@@ -161,52 +168,50 @@ class InventoryImportService
         $log = [];
 
         $chunkSize = 1000;
-        $longSkuVariantsCache = null;
+        $variantIndex = $this->buildVariantLookupIndex();
 
         $processChunk = function (array $rowsChunk) use (
-            $skuCol, $costCol, $stockCol, $markupPercentage, $inventoryMode,
-            &$stats, &$updatedItems, &$skippedItems, &$log, &$longSkuVariantsCache
+            $skuCol, $costCol, $stockCol, $markupPercentage, $inventoryMode, $autoShowInResults,
+            &$stats, &$updatedItems, &$skippedItems, &$log, &$variantIndex
         ) {
             if (empty($rowsChunk)) {
                 return;
             }
 
-            // Extract all distinct non-empty SKUs in this chunk
-            $skusToFetch = [];
+            // Step 1: Resolve all variant IDs for this chunk in O(1) constant time
+            $rowVariantMap = [];
+            $variantIdsToFetch = [];
+
             foreach ($rowsChunk as $item) {
-                $sku = trim((string)($item['row'][$skuCol] ?? ''));
-                if ($sku !== '') {
-                    $skusToFetch[$sku] = true;
-                    $trimmed = ltrim($sku, '0');
-                    if ($trimmed !== '') {
-                        $skusToFetch[$trimmed] = true;
-                        if (strlen($trimmed) <= 14) {
-                            $skusToFetch[str_pad($trimmed, 12, '0', STR_PAD_LEFT)] = true;
-                            $skusToFetch[str_pad($trimmed, 13, '0', STR_PAD_LEFT)] = true;
-                            $skusToFetch[str_pad($trimmed, 14, '0', STR_PAD_LEFT)] = true;
-                        }
+                $rawSku = trim((string)($item['row'][$skuCol] ?? ''));
+                if ($rawSku !== '') {
+                    $vId = $this->resolveVariantId($rawSku, $variantIndex);
+                    if ($vId) {
+                        $rowVariantMap[$item['index']] = $vId;
+                        $variantIdsToFetch[$vId] = true;
                     }
                 }
             }
 
-            // Batch query variants with product and inventory relations in a single SQL query
-            $variantsBySku = [];
-            if (!empty($skusToFetch)) {
-                $variantsBySku = ProductVariant::with(['product', 'inventory'])
-                    ->whereIn('sku', array_keys($skusToFetch))
+            // Step 2: Batch query only the matched variants with product & inventory in 1 SQL query
+            $variantsById = [];
+            if (!empty($variantIdsToFetch)) {
+                $variantsById = ProductVariant::with(['product', 'inventory'])
+                    ->whereIn('id', array_keys($variantIdsToFetch))
                     ->get()
-                    ->keyBy('sku');
+                    ->keyBy('id');
             }
 
             $variantUpdates = [];
             $invUpdates = [];
+            $matchedProductIds = [];
 
             foreach ($rowsChunk as $item) {
-                $index = $item['index'];
-                $row   = $item['row'];
+                $index  = $item['index'];
+                $row    = $item['row'];
+                $rawSku = trim((string)($row[$skuCol] ?? ''));
 
                 $stats['total_rows']++;
-                $rawSku = trim((string)($row[$skuCol] ?? ''));
 
                 if ($rawSku === '') {
                     $stats['skipped_count']++;
@@ -221,7 +226,8 @@ class InventoryImportService
                     continue;
                 }
 
-                $variant = $this->matchVariantForSku($rawSku, $variantsBySku, $longSkuVariantsCache, true);
+                $variantId = $rowVariantMap[$index] ?? null;
+                $variant   = $variantId ? $variantsById->get($variantId) : null;
 
                 if (!$variant) {
                     $stats['skipped_count']++;
@@ -237,6 +243,9 @@ class InventoryImportService
                 }
 
                 $stats['matched_count']++;
+                if ($autoShowInResults && $variant->product_id) {
+                    $matchedProductIds[$variant->product_id] = true;
+                }
 
                 $oldCost   = $variant->item_cost !== null ? (float)$variant->item_cost : null;
                 $oldPrice  = (float)($variant->public_price ?? 0.00);
@@ -331,8 +340,8 @@ class InventoryImportService
             }
 
             // Direct DB execution inside a single transaction per chunk
-            if (!empty($variantUpdates) || !empty($invUpdates)) {
-                DB::transaction(function () use ($variantUpdates, $invUpdates) {
+            if (!empty($variantUpdates) || !empty($invUpdates) || (!empty($matchedProductIds) && $autoShowInResults)) {
+                DB::transaction(function () use ($variantUpdates, $invUpdates, $matchedProductIds, $autoShowInResults, &$stats) {
                     foreach ($variantUpdates as $vId => $vData) {
                         DB::table('product_variants')->where('id', $vId)->update($vData);
                     }
@@ -352,6 +361,16 @@ class InventoryImportService
                                 ]
                             );
                         }
+                    }
+                    if ($autoShowInResults && !empty($matchedProductIds)) {
+                        $shownCount = DB::table('products')
+                            ->whereIn('id', array_keys($matchedProductIds))
+                            ->where('show_in_results', 0)
+                            ->update([
+                                'show_in_results' => 1,
+                                'updated_at'      => now(),
+                            ]);
+                        $stats['auto_shown_count'] += $shownCount;
                     }
                 });
             }
@@ -450,6 +469,10 @@ class InventoryImportService
         float $markupPercentage
     ): array {
         @set_time_limit(300);
+        @ini_set('max_execution_time', '300');
+        @ini_set('memory_limit', '512M');
+        DB::disableQueryLog();
+        DB::flushQueryLog();
 
         $stats = [
             'total_rows'      => 0,
@@ -465,40 +488,38 @@ class InventoryImportService
         $log = [];
 
         $chunkSize = 1000;
-        $longSkuVariantsCache = null;
+        $variantIndex = $this->buildVariantLookupIndex();
 
         $processChunk = function (array $rowsChunk) use (
             $skuCol, $marketplace, $markupPercentage,
-            &$stats, &$updatedItems, &$skippedItems, &$log, &$longSkuVariantsCache
+            &$stats, &$updatedItems, &$skippedItems, &$log, &$variantIndex
         ) {
             if (empty($rowsChunk)) {
                 return;
             }
 
-            // Extract all distinct non-empty SKUs in this chunk
-            $skusToFetch = [];
+            // Step 1: Resolve all variant IDs for this chunk in O(1) constant time
+            $rowVariantMap = [];
+            $variantIdsToFetch = [];
+
             foreach ($rowsChunk as $item) {
-                $sku = trim((string)($item['row'][$skuCol] ?? ''));
-                if ($sku !== '') {
-                    $skusToFetch[$sku] = true;
-                    $trimmed = ltrim($sku, '0');
-                    if ($trimmed !== '') {
-                        $skusToFetch[$trimmed] = true;
-                        if (strlen($trimmed) <= 14) {
-                            $skusToFetch[str_pad($trimmed, 12, '0', STR_PAD_LEFT)] = true;
-                            $skusToFetch[str_pad($trimmed, 13, '0', STR_PAD_LEFT)] = true;
-                            $skusToFetch[str_pad($trimmed, 14, '0', STR_PAD_LEFT)] = true;
-                        }
+                $rawSku = trim((string)($item['row'][$skuCol] ?? ''));
+                if ($rawSku !== '') {
+                    $vId = $this->resolveVariantId($rawSku, $variantIndex);
+                    if ($vId) {
+                        $rowVariantMap[$item['index']] = $vId;
+                        $variantIdsToFetch[$vId] = true;
                     }
                 }
             }
 
-            $variantsBySku = [];
-            if (!empty($skusToFetch)) {
-                $variantsBySku = ProductVariant::with('product')
-                    ->whereIn('sku', array_keys($skusToFetch))
+            // Step 2: Batch query only the matched variants with product relation in 1 SQL query
+            $variantsById = [];
+            if (!empty($variantIdsToFetch)) {
+                $variantsById = ProductVariant::with('product')
+                    ->whereIn('id', array_keys($variantIdsToFetch))
                     ->get()
-                    ->keyBy('sku');
+                    ->keyBy('id');
             }
 
             $variantUpdates = [];
@@ -527,7 +548,8 @@ class InventoryImportService
                     continue;
                 }
 
-                $variant = $this->matchVariantForSku($rawSku, $variantsBySku, $longSkuVariantsCache, false);
+                $variantId = $rowVariantMap[$index] ?? null;
+                $variant   = $variantId ? $variantsById->get($variantId) : null;
 
                 if (!$variant) {
                     $stats['skipped_count']++;
@@ -693,13 +715,151 @@ class InventoryImportService
     }
 
     /**
-     * Match a variant from a raw SKU string:
-     * 1. Exact match in batch-loaded variantsBySku.
-     * 2. UPC/EAN leading-zero normalization (e.g. 11-digit UPC in file matching 12-digit in DB, or vice-versa).
-     * 3. Substring match: if the system variant SKU has >= 11 characters (e.g. UPC/EAN barcode codes),
-     *    check if the system SKU contains the file SKU or if the file SKU contains the system SKU.
+     * Build an in-memory O(1) hash map index of catalog variants for instant SKU/UPC matching.
+     * Indexes:
+     * - Exact SKUs
+     * - Unpadded SKUs (trimmed leading zeros)
+     * - Padded 12, 13, 14 digit variations (UPC-A, EAN-13, GTIN-14)
+     * - Embedded 11-14 numeric digit sequences (for barcodes with prefix/suffix)
+     *
+     * @return array
      */
-    protected function matchVariantForSku(
+    public function buildVariantLookupIndex(): array
+    {
+        $exactMap     = [];
+        $unpaddedMap  = [];
+        $digitsMap    = [];
+        $nonDigitLong = [];
+
+        $variants = DB::table('product_variants')
+            ->select('id', 'sku')
+            ->whereNotNull('sku')
+            ->where('sku', '!=', '')
+            ->get();
+
+        foreach ($variants as $v) {
+            $id  = (int)$v->id;
+            $sku = trim((string)$v->sku);
+            if ($sku === '') {
+                continue;
+            }
+
+            // 1. Exact SKU
+            $exactMap[$sku] = $id;
+
+            // 2. Unpadded (trimmed leading zeros) and standard barcode pads
+            $unpadded = ltrim($sku, '0');
+            if ($unpadded !== '') {
+                $unpaddedMap[$unpadded] = $id;
+                if (strlen($unpadded) <= 14) {
+                    $exactMap[str_pad($unpadded, 12, '0', STR_PAD_LEFT)] = $id;
+                    $exactMap[str_pad($unpadded, 13, '0', STR_PAD_LEFT)] = $id;
+                    $exactMap[str_pad($unpadded, 14, '0', STR_PAD_LEFT)] = $id;
+                }
+            }
+
+            // 3. Extract 11-14 digit sequence if present
+            if (preg_match('/\d{11,14}/', $sku, $m)) {
+                $digits = $m[0];
+                $digitsMap[$digits] = $id;
+                $digitsUnpadded = ltrim($digits, '0');
+                if ($digitsUnpadded !== '') {
+                    $digitsMap[$digitsUnpadded] = $id;
+                    $unpaddedMap[$digitsUnpadded] = $id;
+                }
+            } elseif (strlen($sku) >= 11) {
+                $nonDigitLong[] = ['id' => $id, 'sku' => $sku];
+            }
+        }
+
+        return [
+            'exact'          => $exactMap,
+            'unpadded'       => $unpaddedMap,
+            'digits'         => $digitsMap,
+            'non_digit_long' => $nonDigitLong,
+            'failed_cache'   => [],
+        ];
+    }
+
+    /**
+     * Resolve a variant ID from a raw SKU string in O(1) time using the pre-built index.
+     */
+    public function resolveVariantId(string $rawSku, array &$index): ?int
+    {
+        $rawSku = trim($rawSku);
+        if ($rawSku === '') {
+            return null;
+        }
+
+        // 1. Check exact map
+        if (isset($index['exact'][$rawSku])) {
+            return $index['exact'][$rawSku];
+        }
+
+        // 2. Check unpadded / padded variations
+        $unpadded = ltrim($rawSku, '0');
+        if ($unpadded !== '') {
+            if (isset($index['exact'][$unpadded])) {
+                return $index['exact'][$unpadded];
+            }
+            if (isset($index['unpadded'][$unpadded])) {
+                return $index['unpadded'][$unpadded];
+            }
+            if (isset($index['exact'][str_pad($unpadded, 12, '0', STR_PAD_LEFT)])) {
+                return $index['exact'][str_pad($unpadded, 12, '0', STR_PAD_LEFT)];
+            }
+            if (isset($index['exact'][str_pad($unpadded, 13, '0', STR_PAD_LEFT)])) {
+                return $index['exact'][str_pad($unpadded, 13, '0', STR_PAD_LEFT)];
+            }
+            if (isset($index['exact'][str_pad($unpadded, 14, '0', STR_PAD_LEFT)])) {
+                return $index['exact'][str_pad($unpadded, 14, '0', STR_PAD_LEFT)];
+            }
+        }
+
+        // 3. Digits extraction for UPC / barcode sequences (>= 11 digits)
+        if (preg_match('/\d{11,14}/', $rawSku, $m)) {
+            $digits = $m[0];
+            if (isset($index['digits'][$digits])) {
+                return $index['digits'][$digits];
+            }
+            $digUnpadded = ltrim($digits, '0');
+            if ($digUnpadded !== '') {
+                if (isset($index['digits'][$digUnpadded])) {
+                    return $index['digits'][$digUnpadded];
+                }
+                if (isset($index['unpadded'][$digUnpadded])) {
+                    return $index['unpadded'][$digUnpadded];
+                }
+            }
+        }
+
+        // 4. Check failed SKUs cache to avoid re-checking non-matching strings
+        if (isset($index['failed_cache'][$rawSku])) {
+            return null;
+        }
+
+        // 5. Fallback for non-digit long SKUs (>= 11 characters)
+        $rawLen = strlen($rawSku);
+        if ($rawLen >= 11 && !empty($index['non_digit_long'])) {
+            foreach ($index['non_digit_long'] as $cand) {
+                $candSku = $cand['sku'];
+                if (str_contains($candSku, $rawSku) || str_contains($rawSku, $candSku)) {
+                    return $cand['id'];
+                }
+            }
+        }
+
+        $index['failed_cache'][$rawSku] = true;
+        return null;
+    }
+
+    /**
+     * Match a variant from a raw SKU string:
+     * 1. Exact match in batch-loaded index.
+     * 2. UPC/EAN leading-zero normalization (e.g. 11-digit UPC in file matching 12-digit in DB, or vice-versa).
+     * 3. Substring match: if the system variant SKU has >= 11 characters (e.g. UPC/EAN barcode codes).
+     */
+    public function matchVariantForSku(
         string $rawSku,
         $variantsBySku,
         &$longSkuVariantsCache,
@@ -709,76 +869,19 @@ class InventoryImportService
             return null;
         }
 
-        // 1. Direct exact match
-        $variant = $variantsBySku->get($rawSku);
-        if ($variant) {
-            return $variant;
+        if ($longSkuVariantsCache === null || !is_array($longSkuVariantsCache) || !isset($longSkuVariantsCache['exact'])) {
+            $longSkuVariantsCache = $this->buildVariantLookupIndex();
         }
 
-        // 2. Normalized leading-zero variations in batch lookup
-        $trimmedSku = ltrim($rawSku, '0');
-        if ($trimmedSku !== '') {
-            $candidateSkus = [
-                $trimmedSku,
-                str_pad($trimmedSku, 12, '0', STR_PAD_LEFT), // UPC-A (12 digits)
-                str_pad($trimmedSku, 13, '0', STR_PAD_LEFT), // EAN-13 (13 digits)
-                str_pad($trimmedSku, 14, '0', STR_PAD_LEFT), // GTIN-14 (14 digits)
-            ];
-
-            foreach ($candidateSkus as $c) {
-                if ($c !== $rawSku && ($v = $variantsBySku->get($c))) {
-                    return $v;
-                }
-            }
-        }
-
-        // 3. Fallback: Substring/containing matching where system variant SKU length >= 11
-        if ($longSkuVariantsCache === null) {
-            $query = ProductVariant::query()->whereRaw('LENGTH(sku) >= 11');
+        $id = $this->resolveVariantId($rawSku, $longSkuVariantsCache);
+        if ($id) {
+            $query = ProductVariant::query()->where('id', $id);
             if ($withInventory) {
                 $query->with(['product', 'inventory']);
             } else {
                 $query->with('product');
             }
-            $longSkuVariantsCache = $query->get();
-        }
-
-        $rawTrimmed = ltrim($rawSku, '0');
-        $rawLen = strlen($rawSku);
-
-        foreach ($longSkuVariantsCache as $candidate) {
-            $candSku = (string)$candidate->sku;
-            $candLen = strlen($candSku);
-
-            if ($candLen < 11) {
-                continue;
-            }
-
-            // Case A: system variant SKU contains the file SKU (e.g. UPC-012345678905 contains 012345678905 or 12345678905)
-            if (str_contains($candSku, $rawSku)) {
-                return $candidate;
-            }
-
-            // Case B: file SKU contains the system variant SKU (e.g. VENDOR_012345678905_ITEM contains 012345678905)
-            if ($rawLen >= 11 && str_contains($rawSku, $candSku)) {
-                return $candidate;
-            }
-
-            // Case C: normalized leading zeros match (e.g. 012345678905 vs 12345678905)
-            if ($rawTrimmed !== '' && ltrim($candSku, '0') === $rawTrimmed) {
-                return $candidate;
-            }
-
-            // Case D: system variant trimmed SKU is contained in file SKU (or vice versa)
-            $candTrimmed = ltrim($candSku, '0');
-            if ($candTrimmed !== '' && $rawTrimmed !== '') {
-                if (strlen($candTrimmed) >= 10 && str_contains($rawTrimmed, $candTrimmed)) {
-                    return $candidate;
-                }
-                if (strlen($candTrimmed) >= 10 && str_contains($candTrimmed, $rawTrimmed)) {
-                    return $candidate;
-                }
-            }
+            return $query->first();
         }
 
         return null;
@@ -1148,5 +1251,31 @@ class InventoryImportService
 
             return $count;
         });
+    }
+
+    /**
+     * Mark all products that have no variants with positive price values (public_price, on_sale sale_price, or wholesale_price)
+     * to not show in search results (show_in_results = 0).
+     *
+     * @return int Number of products updated
+     */
+    public function hideZeroPriceProductsFromResults(): int
+    {
+        $pricedProductIds = DB::table('product_variants')
+            ->where(function ($q) {
+                $q->where('public_price', '>', 0)
+                  ->orWhere(fn($sq) => $sq->where('on_sale', 1)->where('sale_price', '>', 0))
+                  ->orWhere('wholesale_price', '>', 0);
+            })
+            ->distinct()
+            ->pluck('product_id');
+
+        return DB::table('products')
+            ->where('show_in_results', 1)
+            ->whereNotIn('id', $pricedProductIds)
+            ->update([
+                'show_in_results' => 0,
+                'updated_at'      => now(),
+            ]);
     }
 }

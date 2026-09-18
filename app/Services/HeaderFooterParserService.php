@@ -59,8 +59,8 @@ class HeaderFooterParserService
                 <div x-data="{
                     isDark: document.documentElement.classList.contains(\'dark\'),
                     init() {
-                        var cookieMatch = document.cookie.match(/(?:^|;\s*)frontend_theme=([^;]+)/);
-                        var stored = cookieMatch ? decodeURIComponent(cookieMatch[1]) : (localStorage.getItem(\'frontend_theme\') || \'\');
+                        var cookieMatch = document.cookie.match(/(?:^|;\s*)(?:frontend_theme|theme_mode|sspro_store_theme|theme)=([^;]+)/);
+                        var stored = cookieMatch ? decodeURIComponent(cookieMatch[1]) : (localStorage.getItem(\'frontend_theme\') || localStorage.getItem(\'theme_mode\') || \'\');
                         if (stored === \'dark\') {
                             this.isDark = true;
                             document.documentElement.classList.add(\'dark\');
@@ -75,8 +75,11 @@ class HeaderFooterParserService
                         this.isDark = !this.isDark;
                         document.documentElement.classList.toggle(\'dark\', this.isDark);
                         var val = this.isDark ? \'dark\' : \'light\';
-                        try { localStorage.setItem(\'frontend_theme\', val); } catch (e) {}
+                        try { localStorage.setItem(\'frontend_theme\', val); localStorage.setItem(\'theme_mode\', val); } catch (e) {}
                         document.cookie = \'frontend_theme=\' + val + \'; path=/; max-age=31536000; SameSite=Lax\';
+                        document.cookie = \'theme_mode=\' + val + \'; path=/; max-age=31536000; SameSite=Lax\';
+                        document.cookie = \'sspro_store_theme=\' + val + \'; path=/; max-age=31536000; SameSite=Lax\';
+                        document.cookie = \'theme=\' + val + \'; path=/; max-age=31536000; SameSite=Lax\';
                         if (window.Livewire) {
                             Livewire.dispatch(\'toggle-frontend-dark-mode\', { theme: val });
                         }

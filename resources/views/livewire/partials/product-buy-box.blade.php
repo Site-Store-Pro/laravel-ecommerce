@@ -93,47 +93,52 @@
                         $displayRegPrice  = $vatInclusive && $merchantVatRate > 0
                             ? $this->regularPrice * (1 + $merchantVatRate / 100)
                             : $this->regularPrice;
+                        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
                     @endphp
-                    <div class="flex items-center gap-2 mt-1 flex-wrap">
-                        @if($selectedVariant->hasStripeTrial())
-                            @if($selectedVariant->hasTrialLabel())
-                                <span class="text-3xl font-extrabold text-slate-900">{{ $selectedVariant->getTrialLabel() }}</span>
-                                <span class="text-xs text-slate-500 font-semibold">
-                                    ({{ $selectedVariant->stripe_trial_days }} @label('product.days', 'Days') &bull; @label('product.then_recurring', 'then') {{ $currencySymbol }}{{ number_format($displayRegPrice, 2) }}/{{ $selectedVariant->stripe_billing_interval ?: 'month' }})
+                    @if($hideZero && $displayCalcPrice <= 0)
+                        <span class="text-sm text-slate-500 font-bold mt-1 block">N/A</span>
+                    @else
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                            @if($selectedVariant->hasStripeTrial())
+                                @if($selectedVariant->hasTrialLabel())
+                                    <span class="text-3xl font-extrabold text-slate-900">{{ $selectedVariant->getTrialLabel() }}</span>
+                                    <span class="text-xs text-slate-500 font-semibold">
+                                        ({{ $selectedVariant->stripe_trial_days }} @label('product.days', 'Days') &bull; @label('product.then_recurring', 'then') {{ $currencySymbol }}{{ number_format($displayRegPrice, 2) }}/{{ $selectedVariant->stripe_billing_interval ?: 'month' }})
+                                    </span>
+                                @else
+                                    <span class="text-3xl font-extrabold text-slate-900">{{ $currencySymbol }}{{ number_format($displayCalcPrice, 2) }}</span>
+                                    <span class="text-xs text-slate-500 font-semibold">
+                                        ({{ $selectedVariant->stripe_trial_days }} @label('product.trial_days', 'Day Trial') &bull; @label('product.then_recurring', 'then') {{ $currencySymbol }}{{ number_format($displayRegPrice, 2) }}/{{ $selectedVariant->stripe_billing_interval ?: 'month' }})
+                                    </span>
+                                @endif
+                            @elseif($displayCalcPrice < $displayRegPrice)
+                                <span class="text-3xl font-extrabold text-slate-900">{{ $currencySymbol }}{{ number_format($displayCalcPrice, 2) }}</span>
+                                @if($this->hasQtyDiscount)
+                                    <span class="text-sm font-semibold text-slate-500">@label('product.each', '/each')</span>
+                                @endif
+                                <span class="text-lg text-slate-400 line-through font-medium">{{ $currencySymbol }}{{ number_format($displayRegPrice, 2) }}</span>
+                                <span class="text-xs font-bold text-red-500 bg-red-50 border border-red-100 rounded-lg px-2 py-0.5 whitespace-nowrap">
+                                    @label('product.save', 'Save') {{ $currencySymbol }}{{ number_format($displayRegPrice - $displayCalcPrice, 2) }}!
                                 </span>
                             @else
                                 <span class="text-3xl font-extrabold text-slate-900">{{ $currencySymbol }}{{ number_format($displayCalcPrice, 2) }}</span>
-                                <span class="text-xs text-slate-500 font-semibold">
-                                    ({{ $selectedVariant->stripe_trial_days }} @label('product.trial_days', 'Day Trial') &bull; @label('product.then_recurring', 'then') {{ $currencySymbol }}{{ number_format($displayRegPrice, 2) }}/{{ $selectedVariant->stripe_billing_interval ?: 'month' }})
+                                @if($this->hasQtyDiscount)
+                                    <span class="text-sm font-semibold text-slate-500">@label('product.each', '/each')</span>
+                                @endif
+                            @endif
+                            @php
+                                $variantFee = $userType == 2 ? $selectedVariant->wholesale_variant_fee : $selectedVariant->variant_fee;
+                                $displayVarFee = $vatInclusive && $merchantVatRate > 0
+                                    ? $variantFee * (1 + $merchantVatRate / 100)
+                                    : $variantFee;
+                            @endphp
+                            @if($displayVarFee > 0)
+                                <span class="text-[10px] text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-0.5 font-bold whitespace-nowrap">
+                                    + {{ $currencySymbol }}{{ number_format($displayVarFee, 2) }} @label('product.selection_fee', 'selection fee included')
                                 </span>
                             @endif
-                        @elseif($displayCalcPrice < $displayRegPrice)
-                            <span class="text-3xl font-extrabold text-slate-900">{{ $currencySymbol }}{{ number_format($displayCalcPrice, 2) }}</span>
-                            @if($this->hasQtyDiscount)
-                                <span class="text-sm font-semibold text-slate-500">@label('product.each', '/each')</span>
-                            @endif
-                            <span class="text-lg text-slate-400 line-through font-medium">{{ $currencySymbol }}{{ number_format($displayRegPrice, 2) }}</span>
-                            <span class="text-xs font-bold text-red-500 bg-red-50 border border-red-100 rounded-lg px-2 py-0.5 whitespace-nowrap">
-                                @label('product.save', 'Save') {{ $currencySymbol }}{{ number_format($displayRegPrice - $displayCalcPrice, 2) }}!
-                            </span>
-                        @else
-                            <span class="text-3xl font-extrabold text-slate-900">{{ $currencySymbol }}{{ number_format($displayCalcPrice, 2) }}</span>
-                            @if($this->hasQtyDiscount)
-                                <span class="text-sm font-semibold text-slate-500">@label('product.each', '/each')</span>
-                            @endif
-                        @endif
-                        @php
-                            $variantFee = $userType == 2 ? $selectedVariant->wholesale_variant_fee : $selectedVariant->variant_fee;
-                            $displayVarFee = $vatInclusive && $merchantVatRate > 0
-                                ? $variantFee * (1 + $merchantVatRate / 100)
-                                : $variantFee;
-                        @endphp
-                        @if($displayVarFee > 0)
-                            <span class="text-[10px] text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-lg px-2 py-0.5 font-bold whitespace-nowrap">
-                                + {{ $currencySymbol }}{{ number_format($displayVarFee, 2) }} @label('product.selection_fee', 'selection fee included')
-                            </span>
-                        @endif
-                    </div>
+                        </div>
+                    @endif
                 @else
                     <span class="text-sm text-slate-500 font-bold mt-1 block">N/A</span>
                 @endif
@@ -218,7 +223,7 @@
                                             @endphp
                                             <button 
                                                 type="button"
-                                                wire:click="selectAttribute('{{ $key }}', '{{ $value }}')"
+                                                wire:click="selectAttribute('{{ addslashes($key) }}', '{{ addslashes($value) }}')"
                                                 @disabled(!$isSelectable)
                                                 class="px-4 py-2.5 text-xs font-bold border rounded-2xl transition duration-150 focus:outline-none 
                                                     {{ $isSelected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : '' }}
@@ -277,10 +282,15 @@
                                         if ($vatInclusive && $merchantVatRate > 0) {
                                             $varTotalPrice = $varTotalPrice * (1 + $merchantVatRate / 100);
                                         }
+                                        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
                                     @endphp
-                                    {{ $currencySymbol }}{{ number_format($varTotalPrice, 2) }}
-                                    @if($variant->variant_fee > 0)
-                                        <span class="text-[10px] font-bold text-indigo-500 block">+{{ $currencySymbol }}{{ number_format($variant->variant_fee * (1 + ($vatInclusive ? $merchantVatRate / 100 : 0)), 2) }} @label('product.selection_fee', 'selection fee')</span>
+                                    @if($hideZero && $varTotalPrice <= 0)
+                                        <span class="text-slate-400 font-medium">N/A</span>
+                                    @else
+                                        {{ $currencySymbol }}{{ number_format($varTotalPrice, 2) }}
+                                        @if($variant->variant_fee > 0)
+                                            <span class="text-[10px] font-bold text-indigo-500 block">+{{ $currencySymbol }}{{ number_format($variant->variant_fee * (1 + ($vatInclusive ? $merchantVatRate / 100 : 0)), 2) }} @label('product.selection_fee', 'selection fee')</span>
+                                        @endif
                                     @endif
                                 </span>
                             </label>
@@ -295,10 +305,11 @@
             <div class="mt-6 flex items-center gap-2">
                 @php
                     $stock = $selectedVariant->inventory ? $selectedVariant->inventory->available_stock : 0;
+                    $displayStock = (\App\Models\CmsSetting::isEnabled('display_stock_25_plus') && $stock > 25) ? '25+' : $stock;
                 @endphp
                 @if($stock > 0)
                     <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                    <span class="text-xs text-slate-500 font-semibold">{{ $stock }} @label('product.in_stock', 'in stock')</span>
+                    <span class="text-xs text-slate-500 font-semibold">{{ $displayStock }} @label('product.in_stock', 'in stock')</span>
                 @elseif(!$outOfStockMessage)
                     {{-- Only show the generic red OOS dot when no custom message is assigned --}}
                     <span class="h-2 w-2 rounded-full bg-red-500"></span>
@@ -495,18 +506,21 @@
                     ? $this->calculatedPrice * (1 + $merchantVatRate / 100)
                     : $this->calculatedPrice;
                 $itemTotal = $itemTotalUnit * $qty;
+                $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
             @endphp
-            <div class="flex items-center justify-between px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-2xl mt-1">
-                <span class="text-xs font-bold text-indigo-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M12 17h.01M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
-                    @label('product.item_total', 'Item Total')
-                </span>
-                <div class="flex items-center gap-1.5">
-                    <span class="text-xs text-indigo-400 font-medium">{{ $qty }} × {{ $currencySymbol }}{{ number_format($itemTotalUnit, 2) }}</span>
-                    <span class="text-slate-300">=</span>
-                    <span class="text-lg font-extrabold text-indigo-700">{{ $currencySymbol }}{{ number_format($itemTotal, 2) }}</span>
+            @if(!$hideZero || $itemTotalUnit > 0)
+                <div class="flex items-center justify-between px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-2xl mt-1">
+                    <span class="text-xs font-bold text-indigo-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M12 17h.01M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+                        @label('product.item_total', 'Item Total')
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs text-indigo-400 font-medium">{{ $qty }} × {{ $currencySymbol }}{{ number_format($itemTotalUnit, 2) }}</span>
+                        <span class="text-slate-300">=</span>
+                        <span class="text-lg font-extrabold text-indigo-700">{{ $currencySymbol }}{{ number_format($itemTotal, 2) }}</span>
+                    </div>
                 </div>
-            </div>
+            @endif
         @endif
     </div>
 @else

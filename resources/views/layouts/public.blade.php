@@ -16,21 +16,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         {{-- Instant client-side theme gating to prevent FOUC / theme flash --}}
-        <script>
-            (function() {
-                var cookieMatch = document.cookie.match(/(?:^|;\s*)(?:frontend_theme|theme_mode|visperity_theme|theme)=([^;]+)/);
-                var storedCookie = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
-                var storedLocal = null;
-                try { storedLocal = localStorage.getItem('frontend_theme') || localStorage.getItem('theme_mode'); } catch (e) {}
-                var theme = storedLocal || storedCookie;
-                var isDark = theme ? (theme === 'dark') : {{ $frontendDark ? 'true' : 'false' }};
-                if (isDark) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-            })();
-        </script>
+        <script>(function(){var m=document.cookie.match(/(?:^|;\s*)(?:frontend_theme|theme_mode|sspro_store_theme|theme)=([^;]+)/),c=m?decodeURIComponent(m[1]):null,l=null;try{l=localStorage.getItem('frontend_theme')||localStorage.getItem('theme_mode')}catch(e){}var t=l||c,d=t?(t==='dark'):{{ $frontendDark ? 'true' : 'false' }};d?document.documentElement.classList.add('dark'):document.documentElement.classList.remove('dark')})();</script>
 
         @php $__siteName = \App\Models\CmsSetting::getSiteName(); @endphp
         <title>@yield('title', $metaTitle ?? $pageTitle ?? $__siteName)</title>

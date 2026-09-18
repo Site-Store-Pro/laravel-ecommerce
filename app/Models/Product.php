@@ -413,7 +413,17 @@ class Product extends Model
 
     public function getPriceRangeAttribute(): string
     {
-        $prices = $this->variants->pluck('public_price')->filter()->unique();
+        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+        $variants = $this->variants;
+        if ($hideZero) {
+            $variants = $variants->filter(function ($v) {
+                return (float)$v->public_price > 0 || ($v->on_sale && (float)$v->sale_price > 0);
+            });
+            $prices = $variants->pluck('public_price')->filter(fn($p) => (float)$p > 0)->unique();
+        } else {
+            $prices = $variants->pluck('public_price')->filter(fn($p) => $p !== null && $p !== '')->unique();
+        }
+
         if ($prices->isEmpty()) {
             return 'N/A';
         }

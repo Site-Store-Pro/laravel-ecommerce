@@ -316,7 +316,7 @@
                                                     try { localStorage.setItem('frontend_theme', mode); localStorage.setItem('theme_mode', mode); } catch(e){}
                                                     document.cookie = 'frontend_theme=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
                                                     document.cookie = 'theme_mode=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
-                                                    document.cookie = 'visperity_theme=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
+                                                    document.cookie = 'sspro_store_theme=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
                                                     document.cookie = 'theme=' + mode + '; path=/; max-age=31536000; SameSite=Lax';
                                                     $wire.toggleFrontendDarkMode(mode);
                                                 "

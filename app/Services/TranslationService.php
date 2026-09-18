@@ -684,35 +684,24 @@ class TranslationService
      */
     public function variantTranslationStats(int $languageId): array
     {
-        // Variants that have at least one non-empty attribute token to translate.
-        // Must match the exact condition used in TranslateVariantJob::handle():
-        // json_decode returns a non-empty array AND at least one key or value is a non-empty string.
-        // We filter in PHP via a collection to avoid DB-specific JSON functions.
+        // Variants that have at least one attribute token to translate.
+        // Direct SQL counts avoid hydrating tens of thousands of variant Eloquent models into memory.
         $totalWithAttrs = \App\Models\ProductVariant::whereNotNull('attributes')
             ->where('attributes', '!=', '{}')
+            ->where('attributes', '!=', '[]')
             ->where('attributes', '!=', '')
-            ->get(['id', 'attributes'])
-            ->filter(function ($variant) {
-                $decoded = json_decode($variant->attributes ?? '{}', true);
-                if (!is_array($decoded) || empty($decoded)) {
-                    return false;
-                }
-                // At least one key or value must be a non-empty string (same as job's loop)
-                foreach ($decoded as $key => $val) {
-                    if (trim((string) $key) !== '' || trim((string) $val) !== '') {
-                        return true;
-                    }
-                }
-                return false;
-            })
             ->count();
 
         // Only count translation rows whose parent variant actually has translatable attributes.
         $translatedAttrs = \App\Models\ProductVariantTranslation::where('language_id', $languageId)
             ->whereNotNull('attributes_translated')
+            ->where('attributes_translated', '!=', '{}')
+            ->where('attributes_translated', '!=', '[]')
+            ->where('attributes_translated', '!=', '')
             ->whereHas('variant', fn ($q) => $q
                 ->whereNotNull('attributes')
                 ->where('attributes', '!=', '{}')
+                ->where('attributes', '!=', '[]')
                 ->where('attributes', '!=', ''))
             ->count();
 

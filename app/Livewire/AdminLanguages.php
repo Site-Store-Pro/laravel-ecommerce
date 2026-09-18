@@ -181,20 +181,22 @@ class AdminLanguages extends Component
         $count = 0;
 
         foreach ($models as $modelClass) {
-            $ids = $modelClass::pluck('id');
-            foreach ($ids as $modelId) {
-                \App\Jobs\TranslateContentJob::dispatch($modelClass, $modelId, $id);
-                $count++;
-            }
+            $modelClass::chunkById(500, function ($records) use ($modelClass, $id, &$count) {
+                foreach ($records as $record) {
+                    \App\Jobs\TranslateContentJob::dispatch($modelClass, $record->id, $id);
+                    $count++;
+                }
+            });
         }
 
         // Dispatch dedicated variant translation jobs for attribute labels
         // and personalization labels (handled by TranslateVariantJob, not the generic job).
-        $variantIds = \App\Models\ProductVariant::pluck('id');
-        foreach ($variantIds as $variantId) {
-            \App\Jobs\TranslateVariantJob::dispatch($variantId, $id);
-            $count++;
-        }
+        \App\Models\ProductVariant::chunkById(500, function ($variants) use ($id, &$count) {
+            foreach ($variants as $variant) {
+                \App\Jobs\TranslateVariantJob::dispatch($variant->id, $id);
+                $count++;
+            }
+        });
 
         // Dispatch plugin translation jobs
         $plugins = \App\Models\Plugin::all();
@@ -252,36 +254,31 @@ class AdminLanguages extends Component
 
             if (!class_exists($translationClass)) {
                 // No translation model — dispatch all (fallback)
-                $ids = $modelClass::pluck('id');
+                $modelClass::chunkById(500, function ($records) use ($modelClass, $id, &$count) {
+                    foreach ($records as $record) {
+                        \App\Jobs\TranslateContentJob::dispatch($modelClass, $record->id, $id);
+                        $count++;
+                    }
+                });
             } else {
-                // Resolve the actual FK column from the translation model's $fillable
-                // (by convention the FK is always the first fillable field)
-                $instance = new $translationClass;
-                $fillable  = $instance->getFillable();
-                $fkColumn  = !empty($fillable) ? $fillable[0] : 'translatable_id';
-
-                // Only dispatch for IDs that have no translation row yet for this language
-                $translatedIds = $translationClass::where('language_id', $id)
-                    ->pluck($fkColumn)
-                    ->toArray();
-                $ids = $modelClass::whereNotIn('id', $translatedIds)->pluck('id');
-            }
-
-            foreach ($ids as $modelId) {
-                \App\Jobs\TranslateContentJob::dispatch($modelClass, $modelId, $id);
-                $count++;
+                $modelClass::whereDoesntHave('translations', fn($q) => $q->where('language_id', $id))
+                    ->chunkById(500, function ($records) use ($modelClass, $id, &$count) {
+                        foreach ($records as $record) {
+                            \App\Jobs\TranslateContentJob::dispatch($modelClass, $record->id, $id);
+                            $count++;
+                        }
+                    });
             }
         }
 
         // Variants — only those without a translation row for this language
-        $translatedVariantIds = \App\Models\ProductVariantTranslation::where('language_id', $id)
-            ->pluck('product_variant_id')
-            ->toArray();
-        $variantIds = \App\Models\ProductVariant::whereNotIn('id', $translatedVariantIds)->pluck('id');
-        foreach ($variantIds as $variantId) {
-            \App\Jobs\TranslateVariantJob::dispatch($variantId, $id);
-            $count++;
-        }
+        \App\Models\ProductVariant::whereDoesntHave('translations', fn($q) => $q->where('language_id', $id))
+            ->chunkById(500, function ($variants) use ($id, &$count) {
+                foreach ($variants as $variant) {
+                    \App\Jobs\TranslateVariantJob::dispatch($variant->id, $id);
+                    $count++;
+                }
+            });
 
         // Plugins — only those with at least one missing field translation
         $plugins = \App\Models\Plugin::all();

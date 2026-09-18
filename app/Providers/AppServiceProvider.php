@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Services\LanguageService;
 use App\Services\SiteLabelService;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -40,6 +41,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // If APP_URL has a subfolder path (e.g., https://domain.com/sub/dir),
+        // force Laravel's URL generator to use APP_URL as root.
+        if ($appUrl = config('app.url')) {
+            if (parse_url($appUrl, PHP_URL_PATH)) {
+                URL::forceRootUrl($appUrl);
+            }
+            if (str_starts_with($appUrl, 'https://')) {
+                URL::forceScheme('https');
+            }
+        }
+
         // @label('key', 'fallback') — outputs HTML-escaped site label value.
         // Used in all public-facing blades to replace hardcoded English strings.
         Blade::directive('label', function (string $expression): string {
