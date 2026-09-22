@@ -25,9 +25,10 @@ class PublicHeader extends Component
     public $navItems = null;
 
     #[On('cart-updated')]
-    public function updateCartCount(): void
+    public function updateCartCount(): int
     {
         $this->loadCartCount();
+        return $this->cartCount;
     }
 
     public function toggleMobileMenu(): void

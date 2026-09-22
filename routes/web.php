@@ -189,10 +189,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('category/{slug}', [\App\Http\Controllers\CmsCategoryPageController::class, 'show'])->name('cms.category');
 Route::get('tag/{slug}', [\App\Http\Controllers\CmsTagPageController::class, 'show'])->name('cms.tag');
 
-// Language switch (handled by Livewire component action, but provide a fallback GET route)
+// Language switch route
 Route::get('/set-language/{code}', function (string $code) {
     app(\App\Services\LanguageService::class)->setLanguage($code);
-    return redirect()->back();
+    $referer = request()->headers->get('referer');
+    if ($referer && !str_contains($referer, '/set-language/')) {
+        return redirect()->to($referer);
+    }
+    return redirect()->to('/');
 })->name('language.switch');
 
 Route::middleware('guest')->group(function () {

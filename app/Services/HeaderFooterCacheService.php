@@ -111,7 +111,7 @@ class HeaderFooterCacheService
 
         $devices = ['desktop', 'tablet', 'mobile'];
         $langService = app(LanguageService::class);
-        $originalLangId = $langService->currentId();
+        $originalLang = $langService->current();
         $originalLocale = App::getLocale();
 
         $builtCount = 0;
@@ -120,8 +120,10 @@ class HeaderFooterCacheService
             $langId = (int) ($lang->id ?? 1);
             $langCode = strtolower((string) ($lang->code ?? 'en'));
 
-            // Temporarily switch locale for translation evaluation
+            // Switch active language in LanguageService, Laravel app locale, and container instance
+            $langService->setCurrentLanguage($lang);
             App::setLocale($langCode);
+            app()->instance('current.language', $lang);
 
             foreach ($devices as $device) {
                 // 1. Render Header
@@ -146,8 +148,10 @@ class HeaderFooterCacheService
             }
         }
 
-        // Restore original locale
+        // Restore original language and locale
+        $langService->setCurrentLanguage($originalLang);
         App::setLocale($originalLocale);
+        app()->instance('current.language', $originalLang);
 
         // Update cache metadata
         CmsSetting::put(self::SETTING_CACHE_ENABLED, '1');

@@ -369,8 +369,8 @@
                    style="color: var(--nav-mobile-text, #1e293b)"
                    {{ $item->open_in_new_tab ? 'target="_blank" rel="noopener"' : '' }}>
                     {!! $resolved['label'] !!}
-                    @if($item->item_type === 'cart' && ($cartCount ?? 0) > 0)
-                        <span class="nav-cart-badge px-1.5 py-0.5 text-xs font-bold rounded-full">{{ $cartCount }}</span>
+                    @if($item->item_type === 'cart')
+                        <span class="nav-cart-badge px-1.5 py-0.5 text-xs font-bold rounded-full {{ ($cartCount ?? 0) > 0 ? '' : 'hidden' }}" style="{{ ($cartCount ?? 0) > 0 ? '' : 'display:none;' }}">{{ $cartCount ?? 0 }}</span>
                     @endif
                 </a>
                 {{-- Mobile children (flat, indented) --}}

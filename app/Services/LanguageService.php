@@ -55,6 +55,11 @@ class LanguageService
         return (int) ($this->current()->id ?? 1);
     }
 
+    public function setCurrentLanguage(?Language $lang): void
+    {
+        $this->currentLanguage = $lang;
+    }
+
     // ── Default Language ─────────────────────────────────────────────────────
 
     public function getDefault(): Language
@@ -93,6 +98,8 @@ class LanguageService
         Session::put(self::SESSION_KEY, $code);
         Cookie::queue(Cookie::make(self::COOKIE_KEY, $code, 60 * 24 * 365, '/', null, false, false)); // 1 year unencrypted
         $this->currentLanguage = $lang;
+        app()->setLocale($code);
+        app()->instance('current.language', $lang);
         return true;
     }
 

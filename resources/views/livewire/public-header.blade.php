@@ -20,8 +20,15 @@
             });
         }
      }" 
-     x-init="checkDevice(); updateCartBadges({{ $cartCount ?? 0 }})" 
-     @cart-updated.window="$wire.updateCartCount().then(() => { updateCartBadges($wire.cartCount); })"
+     x-init="checkDevice(); updateCartBadges({{ (int) ($cartCount ?? 0) }})" 
+     @cart-updated.window="
+        if ($event.detail && typeof $event.detail.count !== 'undefined') {
+            updateCartBadges($event.detail.count);
+        }
+        $wire.updateCartCount().then(res => {
+            updateCartBadges(res ?? $wire.cartCount);
+        });
+     "
      @resize.window.debounce.150ms="checkDevice()" 
      class="w-full {{ $isSticky ? 'sticky top-0 z-[999] shadow-md' : 'relative z-40' }}">
     @if(!empty($cachedHtml))

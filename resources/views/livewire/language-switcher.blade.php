@@ -26,11 +26,10 @@
          class="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl z-50 overflow-hidden py-1"
          style="display:none;">
         @foreach($languages as $lang)
-            <button wire:click="switchLanguage('{{ $lang->code }}')"
-                    type="button"
-                    @click="open = false"
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors
-                           {{ $lang->id === $current->id ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/60 dark:bg-indigo-900/20' : 'text-slate-700 dark:text-slate-200' }}">
+            <a href="{{ route('language.switch', $lang->code) }}"
+               @click="open = false"
+               class="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors
+                      {{ $lang->id === $current->id ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/60 dark:bg-indigo-900/20' : 'text-slate-700 dark:text-slate-200' }}">
                 <span class="fi fi-{{ strtolower($lang->flag_emoji) }} rounded-sm text-base flex-shrink-0" style="width:1.25em;height:0.95em;"></span>
                 <span>{{ $lang->native_name }}</span>
                 @if($lang->id === $current->id)
@@ -38,7 +37,7 @@
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                     </svg>
                 @endif
-            </button>
+            </a>
         @endforeach
     </div>
 </div>
