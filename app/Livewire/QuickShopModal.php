@@ -23,6 +23,7 @@ class QuickShopModal extends Component
     public string $personalization_text = '';
     public string $cartError = ''; // inline error shown next to Add to Cart button
     public string $custom_amount = ''; // Customer entered or selected donation/bill pay amount
+    public array $multiVariantQuantities = [];
 
     #[On('open-quick-shop')]
     #[On('openQuickShop')]
@@ -573,6 +574,20 @@ class QuickShopModal extends Component
         }
     }
 
+    public function addVariantToCart(int $variantId, ?int $qty = null)
+    {
+        $this->selectedVariantId = $variantId;
+        if ($qty !== null) {
+            $this->quantity = max(1, $qty);
+        } elseif (isset($this->multiVariantQuantities[$variantId])) {
+            $this->quantity = max(1, (int) $this->multiVariantQuantities[$variantId]);
+        } else {
+            $this->quantity = 1;
+        }
+
+        return $this->addToCart();
+    }
+
     public function addToCart()
     {
         $this->cartError = ''; // reset any previous inline error
@@ -1060,6 +1075,12 @@ class QuickShopModal extends Component
             'currencySymbol'               => \App\Services\CurrencyService::symbol(),
             'vatInclusive'                 => \App\Services\CurrencyService::isVatInclusive(),
             'merchantVatRate'              => \App\Services\CurrencyService::merchantVatRate(),
+            'priceRange'                   => $this->product ? $this->product->getFormattedPriceRange(
+                $userType,
+                \App\Services\CurrencyService::isVatInclusive(),
+                \App\Services\CurrencyService::merchantVatRate(),
+                \App\Services\CurrencyService::symbol()
+            ) : null,
             'variantAttributeTranslations' => $this->buildVariantAttributeTranslations(),
             'isDefaultLanguage'            => app(\App\Services\LanguageService::class)->isDefault(),
             'outOfStockMessage'            => $this->outOfStockMessage,

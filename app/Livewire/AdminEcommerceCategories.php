@@ -30,6 +30,9 @@ class AdminEcommerceCategories extends Component
     public bool $display_label_in_plugins = true;
     public bool $display_image_in_plugins = true;
 
+    public ?string $amazon_category = null;
+    public ?string $ebay_category = null;
+
     // Image storage settings
     public int $category_image_s3 = 0;   // 0=Local, 1=Global S3, 2=Custom S3
     public string $category_image_cdn_url = '';
@@ -38,6 +41,17 @@ class AdminEcommerceCategories extends Component
     public string $category_image_access_key_id = '';
     public string $category_image_secret_access_key = '';
     public string $category_image_direct_url = '';  // Direct URL (highest priority)
+
+    // Header image state & storage settings
+    public string $header_image = '';
+    public $header_image_file = null;
+    public int $header_image_s3 = 0;   // 0=Local, 1=Global S3, 2=Custom S3
+    public string $header_image_cdn_url = '';
+    public string $header_image_region = '';
+    public string $header_image_bucket_name = '';
+    public string $header_image_access_key_id = '';
+    public string $header_image_secret_access_key = '';
+    public string $header_image_direct_url = '';  // Direct URL (highest priority)
 
     // Search / Filter
     public string $search = '';
@@ -103,6 +117,8 @@ class AdminEcommerceCategories extends Component
         $this->name = '';
         $this->slug = '';
         $this->description = '';
+        $this->amazon_category = null;
+        $this->ebay_category = null;
         $this->category_image = '';
         $this->category_image_file = null;
         $this->parent_id = null;
@@ -119,6 +135,16 @@ class AdminEcommerceCategories extends Component
         $this->category_image_access_key_id = '';
         $this->category_image_secret_access_key = '';
         $this->category_image_direct_url = '';
+
+        $this->header_image = '';
+        $this->header_image_file = null;
+        $this->header_image_s3 = 0;
+        $this->header_image_cdn_url = '';
+        $this->header_image_region = '';
+        $this->header_image_bucket_name = '';
+        $this->header_image_access_key_id = '';
+        $this->header_image_secret_access_key = '';
+        $this->header_image_direct_url = '';
         
         $this->selectedCategoryIdForProducts = null;
         $this->selectedCategoryName = '';
@@ -140,6 +166,8 @@ class AdminEcommerceCategories extends Component
         $this->name = $category->name;
         $this->slug = $category->slug;
         $this->description = $category->description ?? '';
+        $this->amazon_category = $category->amazon_category ?? '';
+        $this->ebay_category = $category->ebay_category ?? '';
         $this->category_image = $category->category_image ?? '';
         $this->parent_id = $category->parent_id;
         $this->sort_order = $category->sort_order;
@@ -153,6 +181,15 @@ class AdminEcommerceCategories extends Component
         $this->category_image_access_key_id = $category->category_image_access_key_id ?? '';
         $this->category_image_secret_access_key = $category->category_image_secret_access_key ?? '';
         $this->category_image_direct_url = $category->category_image_direct_url ?? '';
+
+        $this->header_image = $category->header_image ?? '';
+        $this->header_image_s3 = (int) ($category->header_image_s3 ?? 0);
+        $this->header_image_cdn_url = $category->header_image_cdn_url ?? '';
+        $this->header_image_region = $category->header_image_region ?? '';
+        $this->header_image_bucket_name = $category->header_image_bucket_name ?? '';
+        $this->header_image_access_key_id = $category->header_image_access_key_id ?? '';
+        $this->header_image_secret_access_key = $category->header_image_secret_access_key ?? '';
+        $this->header_image_direct_url = $category->header_image_direct_url ?? '';
         
         $this->isEditing = true;
         $this->loadTlFor($id);
@@ -207,22 +244,35 @@ class AdminEcommerceCategories extends Component
     public function saveCategory(): void
     {
         $rules = [
-            'name'                          => 'required|string|max:255',
-            'slug'                          => 'required|string|max:255|unique:product_categories,slug,' . ($this->categoryId ?? 'NULL') . ',id',
-            'category_image'                => 'nullable|string|max:2048',
-            'category_image_file'           => 'nullable|image|max:4096',
-            'parent_id'                     => 'nullable|integer|exists:product_categories,id',
-            'sort_order'                    => 'required|integer',
-            'is_visible_in_menu'            => 'required|boolean',
-            'display_label_in_plugins'      => 'required|boolean',
-            'display_image_in_plugins'      => 'required|boolean',
-            'category_image_s3'             => 'required|integer',
-            'category_image_cdn_url'        => 'nullable|url|max:500',
-            'category_image_direct_url'     => 'nullable|url|max:1000',
-            'category_image_region'         => 'nullable|string|max:100',
-            'category_image_bucket_name'    => 'nullable|string|max:255',
-            'category_image_access_key_id'  => 'nullable|string|max:255',
+            'name'                             => 'required|string|max:255',
+            'slug'                             => 'required|string|max:255|unique:product_categories,slug,' . ($this->categoryId ?? 'NULL') . ',id',
+            'description'                      => 'nullable|string',
+            'amazon_category'                  => 'nullable|string|max:500',
+            'ebay_category'                    => 'nullable|string|max:500',
+            'category_image'                   => 'nullable|string|max:2048',
+            'category_image_file'              => 'nullable|image|max:4096',
+            'parent_id'                        => 'nullable|integer|exists:product_categories,id',
+            'sort_order'                       => 'required|integer',
+            'is_visible_in_menu'               => 'required|boolean',
+            'display_label_in_plugins'         => 'required|boolean',
+            'display_image_in_plugins'         => 'required|boolean',
+            'category_image_s3'                => 'required|integer',
+            'category_image_cdn_url'           => 'nullable|url|max:500',
+            'category_image_direct_url'        => 'nullable|url|max:1000',
+            'category_image_region'            => 'nullable|string|max:100',
+            'category_image_bucket_name'       => 'nullable|string|max:255',
+            'category_image_access_key_id'     => 'nullable|string|max:255',
             'category_image_secret_access_key' => 'nullable|string|max:500',
+
+            'header_image'                     => 'nullable|string|max:2048',
+            'header_image_file'                => 'nullable|image|max:4096',
+            'header_image_s3'                  => 'required|integer',
+            'header_image_cdn_url'             => 'nullable|url|max:500',
+            'header_image_direct_url'          => 'nullable|url|max:1000',
+            'header_image_region'              => 'nullable|string|max:100',
+            'header_image_bucket_name'         => 'nullable|string|max:255',
+            'header_image_access_key_id'       => 'nullable|string|max:255',
+            'header_image_secret_access_key'   => 'nullable|string|max:500',
         ];
 
         // Prevent setting parent_id to itself
@@ -233,7 +283,7 @@ class AdminEcommerceCategories extends Component
 
         $this->validate($rules);
 
-        // ── Resolve final image path / URL ────────────────────────────────────
+        // ── Resolve final category image path / URL ───────────────────────────
         // Priority: direct URL > file upload > existing value
         $finalImagePath = $this->category_image ?: null;
 
@@ -272,10 +322,47 @@ class AdminEcommerceCategories extends Component
             }
         }
 
+        // ── Resolve final header image path / URL ─────────────────────────────
+        $finalHeaderImagePath = $this->header_image ?: null;
+
+        if (!empty($this->header_image_direct_url)) {
+            $finalHeaderImagePath = $this->header_image_direct_url;
+        } elseif ($this->header_image_file) {
+            if ($this->header_image_s3 == 2) {
+                $diskName = 'custom_s3_category_header_' . ($this->categoryId ?: 'new');
+                config([
+                    "filesystems.disks.{$diskName}" => [
+                        'driver' => 's3',
+                        'key'    => $this->header_image_access_key_id,
+                        'secret' => $this->header_image_secret_access_key,
+                        'region' => $this->header_image_region,
+                        'bucket' => $this->header_image_bucket_name,
+                        'use_path_style_endpoint' => false,
+                    ]
+                ]);
+            } elseif ($this->header_image_s3 == 1) {
+                $diskName = 's3';
+            } else {
+                $diskName = 'public';
+            }
+
+            $stored_path = $this->header_image_file->store('uploads/categories/headers', $diskName);
+
+            if (!empty($this->header_image_cdn_url)) {
+                $finalHeaderImagePath = rtrim($this->header_image_cdn_url, '/') . '/' . ltrim($stored_path, '/');
+            } elseif ($diskName === 'public') {
+                $finalHeaderImagePath = asset('storage/' . $stored_path);
+            } else {
+                $finalHeaderImagePath = $stored_path;
+            }
+        }
+
         $saveData = [
             'name'                             => $this->name,
             'slug'                             => $this->slug,
             'description'                      => $this->description ?: null,
+            'amazon_category'                  => $this->amazon_category ?: null,
+            'ebay_category'                    => $this->ebay_category ?: null,
             'category_image'                   => $finalImagePath,
             'parent_id'                        => $this->parent_id,
             'sort_order'                       => $this->sort_order,
@@ -289,6 +376,14 @@ class AdminEcommerceCategories extends Component
             'category_image_access_key_id'     => $this->category_image_access_key_id ?: null,
             'category_image_secret_access_key' => $this->category_image_secret_access_key ?: null,
             'category_image_direct_url'        => $this->category_image_direct_url ?: null,
+            'header_image'                     => $finalHeaderImagePath,
+            'header_image_s3'                  => $this->header_image_s3,
+            'header_image_cdn_url'             => $this->header_image_cdn_url ?: null,
+            'header_image_region'              => $this->header_image_region ?: null,
+            'header_image_bucket_name'         => $this->header_image_bucket_name ?: null,
+            'header_image_access_key_id'       => $this->header_image_access_key_id ?: null,
+            'header_image_secret_access_key'   => $this->header_image_secret_access_key ?: null,
+            'header_image_direct_url'          => $this->header_image_direct_url ?: null,
         ];
 
         if ($this->isEditing && $this->categoryId) {
@@ -315,38 +410,63 @@ class AdminEcommerceCategories extends Component
         $this->resetForm();
     }
 
+    /**
+     * Reorder categories via drag-and-drop.
+     * Sets sort_order spaced by 10 and updates parent_id if supplied.
+     */
+    public function reorderCategories(array $orderedIds, ?int $parentId = null): void
+    {
+        foreach ($orderedIds as $index => $id) {
+            Category::where('id', $id)->update([
+                'sort_order' => ($index + 1) * 10,
+                'parent_id'  => $parentId,
+            ]);
+        }
+        $this->dispatch('toast', message: 'Category order updated.', type: 'success');
+    }
+
     public function render(): View
     {
-        // Query visible / matching categories
+        // Precompute cascading product counts in 1 single query for all categories
+        $productCounts = Category::getCascadingProductCountsMap();
+
+        // Query flat categories (up to 500 per page)
         $categoriesQuery = Category::query();
         if ($this->search) {
             $categoriesQuery->where('name', 'like', '%' . $this->search . '%')
                            ->orWhere('slug', 'like', '%' . $this->search . '%');
         }
-
-        $categories = $categoriesQuery->orderBy('sort_order')->paginate(25);
+        $categories = $categoriesQuery->orderBy('sort_order')->orderBy('id')->paginate(500);
 
         // For parent categories dropdown (excluding current category in edit mode)
         $parentOptions = Category::query();
         if ($this->categoryId) {
             $parentOptions->where('id', '!=', $this->categoryId);
         }
-        $parentOptions = $parentOptions->orderBy('sort_order')->get();
+        $parentOptions = $parentOptions->orderBy('sort_order')->orderBy('name')->get();
 
-        // Get recursive tree view (top-level nodes)
-        $treeQuery = Category::whereNull('parent_id');
-        if ($this->search) {
-            $treeQuery->where(function($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('slug', 'like', '%' . $this->search . '%');
-            });
+        // Build recursive tree in 1 query with all nested children attached in memory (eliminates N+1 queries)
+        $allCategories = Category::orderBy('sort_order')->orderBy('id')->get();
+        $grouped = $allCategories->groupBy('parent_id');
+        foreach ($allCategories as $cat) {
+            $cat->setRelation('children', $grouped->get($cat->id, collect()));
         }
-        $categoryTree = $treeQuery->with('children')->orderBy('sort_order')->get();
+
+        if ($this->search) {
+            $searchLower = strtolower(trim($this->search));
+            $categoryTree = $allCategories->filter(function ($c) use ($searchLower) {
+                return str_contains(strtolower($c->name), $searchLower)
+                    || str_contains(strtolower($c->slug), $searchLower);
+            })->values();
+        } else {
+            $categoryTree = $grouped->get(null, collect());
+        }
 
         return view('livewire.admin-ecommerce-categories', [
-            'categories' => $categories,
-            'parentOptions' => $parentOptions,
-            'categoryTree' => $categoryTree,
+            'categories'      => $categories,
+            'parentOptions'   => $parentOptions,
+            'categoryTree'    => $categoryTree,
+            'productCounts'   => $productCounts,
             'activeLanguages' => Language::active()->where('is_default', false)->get(),
         ]);
     }

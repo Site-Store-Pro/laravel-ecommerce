@@ -21,11 +21,15 @@
         ]);
     });
 
-    // Deduplicate the images by color and their physical file/url.
-    $uniqueAlpineImages = $allAlpineImages->unique(function ($img) {
+    // Deduplicate the images by color and their physical file/url while tracking all matching variant IDs.
+    $uniqueAlpineImages = $allAlpineImages->groupBy(function ($img) {
         $colorKey = $img['color'] ? strtolower($img['color']) : 'no-color';
         $pathKey = $img['path'] ? strtolower($img['path']) : $img['id'];
         return $colorKey . '|' . $pathKey;
+    })->map(function ($group) {
+        $first = $group->first();
+        $first['variantIds'] = $group->pluck('variantId')->unique()->values()->all();
+        return $first;
     })->values();
 
     $totalImages  = $uniqueAlpineImages->count();
@@ -104,12 +108,12 @@
     }"
     @keydown.escape.window="lightbox = false"
     @gallery:variant-changed.window="
-        const varId = $event.detail.variantId;
-        if (varId === activeVariantId) return;
+        const varId = parseInt($event.detail.variantId);
+        if (varId === activeVariantId && !$event.detail.force) return;
         activeVariantId = varId;
         activeColor = $event.detail.color || '';
         
-        let idx = images.findIndex(i => i.variantId === varId);
+        let idx = images.findIndex(i => i.variantId === varId || (i.variantIds && i.variantIds.includes(varId)));
         if (idx === -1 && $event.detail.color) {
             idx = images.findIndex(i => i.color && i.color.toLowerCase() === $event.detail.color.toLowerCase());
         }
@@ -181,7 +185,8 @@
     </div>
 
     {{-- ── Thumbnail strip ───────────────────────────────── --}}
-    {{-- Hidden when the product has only one image total across all variants --}}
+    {{-- Hidden when product hide_gallery_thumbnails is enabled or when the product has only one image total across all variants --}}
+    @if(!$product->hide_gallery_thumbnails)
     <template x-if="images.length > 1">
         <div class="flex flex-wrap items-center justify-center gap-3 mt-4 py-1 px-0.5">
             <template x-for="(timg, idx) in images" :key="idx">
@@ -197,6 +202,7 @@
             </template>
         </div>
     </template>
+    @endif
 
     {{-- ── Lightbox modal ─────────────────────────────────────── --}}
     <template x-teleport="body">

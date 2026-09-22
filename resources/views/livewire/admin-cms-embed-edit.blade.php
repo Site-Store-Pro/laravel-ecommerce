@@ -161,28 +161,17 @@
                         </p>
 
                         {{-- Raw monospace textarea — NO TinyMCE --}}
-                        <div wire:ignore class="relative">
+                        <div class="relative">
                             <textarea
-                                wire:model="code_snippet"
+                                wire:model.live.debounce.250ms="code_snippet"
                                 id="embed_code_snippet"
                                 rows="16"
                                 spellcheck="false"
-                                placeholder="{{ $embed_type < 2 ? '<iframe src=\"https://...\" ...></iframe>' : '<!-- your HTML here -->' }}"
+                                placeholder="{{ $embed_type < 2 ? '<iframe src=&quot;https://...&quot; ...></iframe>' : '<!-- your HTML here -->' }}"
                                 class="w-full px-4 py-3 bg-slate-900 text-emerald-300 font-mono text-sm rounded-2xl
                                        border border-slate-700 focus:outline-none focus:border-indigo-500
                                        placeholder-slate-600 resize-y leading-relaxed">{{ $code_snippet }}</textarea>
                         </div>
-
-                        {{-- Keep textarea in sync with wire:model via JS --}}
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function () {
-                                const ta = document.getElementById('embed_code_snippet');
-                                if (!ta) return;
-                                ta.addEventListener('input', function () {
-                                    @this.set('code_snippet', ta.value);
-                                });
-                            });
-                        </script>
 
                         @error('code_snippet') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
                     </div>
@@ -193,11 +182,9 @@
                             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Live Preview</h3>
                             @if($embed_type == 0 || $embed_type == 1)
                                 <p class="text-xs text-slate-400">Shown below in the responsive 16:9 wrapper that will be applied on the frontend.</p>
-                                <div class="cms-embed-video-outer" style="max-width:100%;margin:0 auto;">
-                                    <div class="cms-embed-video-wrapper" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
-                                        <div style="position:absolute;top:0;left:0;width:100%;height:100%;">
-                                            {!! $code_snippet !!}
-                                        </div>
+                                <div class="cms-embed-video-outer w-full max-w-full mx-auto" style="width:100%;max-width:100%;margin:0 auto;display:block;">
+                                    <div class="cms-embed-video-wrapper relative w-full h-0 pb-[56.25%] overflow-hidden rounded-2xl bg-black shadow-sm" style="position:relative;width:100%;height:0;padding-bottom:56.25%;overflow:hidden;display:block;">
+                                        {!! \App\Plugins\Support\ShortcodeProcessor::makeVideoSnippetResponsive($code_snippet) !!}
                                     </div>
                                 </div>
                             @else

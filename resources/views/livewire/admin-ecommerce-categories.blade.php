@@ -1,4 +1,7 @@
 <div class="py-12">
+    {{-- SortableJS --}}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Wrapper Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -99,9 +102,27 @@
                                 No categories found.
                             </div>
                         @else
-                            <div class="divide-y divide-slate-150">
+                            {{-- Root-level Sortable container --}}
+                            <div id="category-sortable-root"
+                                 class="divide-y divide-slate-150"
+                                 x-data
+                                 x-init="
+                                    const initRootSort = () => {
+                                        if (typeof Sortable === 'undefined') return setTimeout(initRootSort, 50);
+                                        new Sortable($el, {
+                                            animation: 150,
+                                            handle: '.cat-drag-handle',
+                                            ghostClass: 'opacity-40',
+                                            onEnd: (e) => {
+                                                const ids = [...$el.children].filter(el => el.hasAttribute('data-cat-id')).map(el => parseInt(el.dataset.catId));
+                                                $wire.reorderCategories(ids, null);
+                                            }
+                                        });
+                                    };
+                                    initRootSort();
+                                 ">
                                 @foreach($categoryTree as $node)
-                                    @include('livewire.category-tree-node', ['node' => $node, 'depth' => 0])
+                                    @include('livewire.category-tree-node', ['node' => $node, 'depth' => 0, 'productCounts' => $productCounts])
                                 @endforeach
                             </div>
 
@@ -222,6 +243,83 @@
                                         <input type="file" wire:model="category_image_file" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700">
                                         @error('category_image') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
                                         @error('category_image_file') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+
+                                {{-- Category Header Image Section --}}
+                                <div class="pt-2 border-t border-slate-100">
+                                    <label class="text-xs font-bold text-slate-400 block mb-2 uppercase tracking-wider font-sans">Category Header Image <span class="normal-case text-slate-300 font-normal">(shown on catalog results when filtered by category only)</span></label>
+
+                                    {{-- Storage Mode --}}
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Storage Destination</label>
+                                        <select wire:model.live="header_image_s3" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500">
+                                            <option value="0">Local Public Storage</option>
+                                            <option value="1">Default S3 (.env credentials)</option>
+                                            <option value="2">Custom S3 (own credentials)</option>
+                                        </select>
+                                    </div>
+
+                                    {{-- CDN prefix — shown for S3 modes --}}
+                                    @if($header_image_s3 >= 1)
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">CDN / CloudFront URL Prefix <span class="font-normal text-slate-400">(optional)</span></label>
+                                        <input type="text" wire:model="header_image_cdn_url" placeholder="https://dxxxxxx.cloudfront.net" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-indigo-500 @error('header_image_cdn_url') border-rose-500 @enderror">
+                                        <p class="text-[10px] text-slate-400 mt-1">Prepended to the stored file path to build the public URL.</p>
+                                        @error('header_image_cdn_url') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+                                    @endif
+
+                                    {{-- Custom S3 credentials — shown for mode=2 --}}
+                                    @if($header_image_s3 == 2)
+                                    <div class="space-y-2 mb-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                                        <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Custom S3 Credentials</p>
+                                        <input type="text" wire:model="header_image_region" placeholder="Region (e.g. us-east-1)" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="text" wire:model="header_image_bucket_name" placeholder="Bucket Name" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="text" wire:model="header_image_access_key_id" placeholder="Access Key ID" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="password" wire:model="header_image_secret_access_key" placeholder="Secret Access Key" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                    </div>
+                                    @endif
+
+                                    {{-- Current header image preview --}}
+                                    @if($header_image || $header_image_direct_url)
+                                    <div class="mb-2 flex items-center gap-2 mt-1">
+                                        <img src="{{ $header_image_direct_url ?: $header_image }}" alt="Header Image Preview" class="w-24 h-12 object-cover rounded-lg border border-slate-200 shadow-sm">
+                                        <span class="text-2xs text-slate-400 truncate max-w-[200px]">{{ basename($header_image_direct_url ?: $header_image) }}</span>
+                                    </div>
+                                    @endif
+
+                                    {{-- Direct URL option --}}
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Direct Image URL <span class="font-normal text-slate-400">(bypasses file upload)</span></label>
+                                        <input type="text" wire:model="header_image_direct_url" placeholder="https://example.com/header-banner.jpg" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-indigo-500 @error('header_image_direct_url') border-rose-500 @enderror">
+                                        <p class="text-[10px] text-slate-400 mt-1">If set, used as the header image — no upload required.</p>
+                                        @error('header_image_direct_url') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    {{-- File upload --}}
+                                    <div class="space-y-1">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Upload Header File <span class="font-normal text-slate-400">(overrides direct URL if provided)</span></label>
+                                        <input type="file" wire:model="header_image_file" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700">
+                                        @error('header_image') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                        @error('header_image_file') <span class="text-xs text-red-500 font-semibold mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+
+                                {{-- Marketplace Integrations (Amazon & eBay) --}}
+                                <div class="pt-2 border-t border-slate-100 space-y-3">
+                                    <label class="text-xs font-bold text-slate-400 block uppercase tracking-wider font-sans">Marketplace Categories <span class="normal-case text-slate-300 font-normal">(backend &amp; export only)</span></label>
+                                    
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Amazon Category</label>
+                                        <input type="text" wire:model="amazon_category" placeholder="e.g. Sports & Outdoors > Camping & Hiking" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-indigo-500 @error('amazon_category') border-rose-500 @enderror">
+                                        @error('amazon_category') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">eBay Category</label>
+                                        <input type="text" wire:model="ebay_category" placeholder="e.g. Sporting Goods > Outdoor Sports > Camping & Hiking" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl focus:outline-none focus:border-indigo-500 @error('ebay_category') border-rose-500 @enderror">
+                                        @error('ebay_category') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
                                     </div>
                                 </div>
 

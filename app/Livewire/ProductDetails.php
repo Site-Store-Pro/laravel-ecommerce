@@ -23,6 +23,7 @@ class ProductDetails extends Component
     public string $personalization_text = '';
     public string $cartError = ''; // inline error shown next to Add to Cart button
     public string $custom_amount = ''; // Customer entered or selected donation/bill pay amount
+    public array $multiVariantQuantities = [];
     public ?string $returnToSearchResultsUrl = null;
 
 
@@ -116,6 +117,7 @@ class ProductDetails extends Component
                 'categories.parent.translations'                                => fn ($q) => $q->whereIn('language_id', $langIds),
                 'categories.parent.parent.translations'                         => fn ($q) => $q->whereIn('language_id', $langIds),
                 'categories.parent.parent.parent.translations'                  => fn ($q) => $q->whereIn('language_id', $langIds),
+                'brand',
                 'fields.options',
                 'fields.translations'                => fn ($q) => $q->whereIn('language_id', $langIds),
                 'fields.options.translations'        => fn ($q) => $q->whereIn('language_id', $langIds),
@@ -153,10 +155,45 @@ class ProductDetails extends Component
             }
         }
 
-        $lastCatalogUrl = session('last_catalog_url');
-        if ($lastCatalogUrl && (str_starts_with($lastCatalogUrl, url('/shop')) || str_starts_with($lastCatalogUrl, '/shop'))) {
+        $lastCatalogUrl = session('last_search_url') ?: session('last_catalog_url');
+        if ($lastCatalogUrl && $this->isValidStorefrontReturnUrl($lastCatalogUrl)) {
             $this->returnToSearchResultsUrl = $lastCatalogUrl;
         }
+    }
+
+    protected function isValidStorefrontReturnUrl(?string $url): bool
+    {
+        if (!$url || !is_string($url)) {
+            return false;
+        }
+
+        $cleanUrl = trim($url);
+        if ($cleanUrl === '' || str_contains($cleanUrl, 'livewire/update') || str_contains($cleanUrl, '/admin') || str_contains($cleanUrl, '/api')) {
+            return false;
+        }
+
+        $appHost = request()->getHost();
+        $parsed = parse_url($cleanUrl);
+        $host = $parsed['host'] ?? null;
+        $path = $parsed['path'] ?? '';
+
+        // If host is provided, ensure it matches current host
+        if ($host && strcasecmp($host, $appHost) !== 0) {
+            return false;
+        }
+
+        // Must match a valid storefront catalog/search/category/brand path or route
+        if (str_starts_with($path, '/shop') ||
+            str_starts_with($path, '/section') ||
+            str_starts_with($path, '/brands') ||
+            str_starts_with($path, '/search') ||
+            $path === '/shop' ||
+            $cleanUrl === url('/shop') ||
+            $cleanUrl === route('shop.index')) {
+            return true;
+        }
+
+        return false;
     }
 
     public function getSelectedVariantProperty(): ?ProductVariant
@@ -816,6 +853,20 @@ class ProductDetails extends Component
         );
     }
 
+    public function addVariantToCart(int $variantId, ?int $qty = null)
+    {
+        $this->selectedVariantId = $variantId;
+        if ($qty !== null) {
+            $this->quantity = max(1, $qty);
+        } elseif (isset($this->multiVariantQuantities[$variantId])) {
+            $this->quantity = max(1, (int) $this->multiVariantQuantities[$variantId]);
+        } else {
+            $this->quantity = 1;
+        }
+
+        return $this->addToCart();
+    }
+
     public function closeModal(): void
     {
         // kept for backwards compatibility — the global modal closes itself via Alpine
@@ -846,6 +897,31 @@ class ProductDetails extends Component
             }
         }
         $breadcrumbs = $bestChain;
+
+        // Determine active brand for breadcrumb trail
+        $activeBrand = null;
+        $lastUrl = $this->returnToSearchResultsUrl ?: (session('last_search_url') ?: session('last_catalog_url'));
+        if ($lastUrl) {
+            $parsed = parse_url($lastUrl);
+            $path = $parsed['path'] ?? '';
+            $query = [];
+            if (!empty($parsed['query'])) {
+                parse_str($parsed['query'], $query);
+            }
+
+            if (preg_match('~^/brands/([^/?#]+)~', $path, $matches)) {
+                $activeBrand = \App\Models\Brand::where('slug', $matches[1])->first();
+            } elseif (!empty($query['brand'])) {
+                $activeBrand = \App\Models\Brand::where('slug', $query['brand'])->first();
+            } elseif (!empty($query['selectedBrands'])) {
+                $brandIds = (array) $query['selectedBrands'];
+                $activeBrand = \App\Models\Brand::whereIn('id', array_map('intval', $brandIds))->first();
+            }
+        }
+
+        if (!$activeBrand && $this->product->brand_id) {
+            $activeBrand = $this->product->brand;
+        }
 
         // ── Related / recommended products — cross-sells with display_on_item_view ──
         $relatedProducts = collect();
@@ -878,10 +954,17 @@ class ProductDetails extends Component
             'selectedImageSet'             => $selectedImageSet,
             'userType'                     => $userType,
             'breadcrumbs'                  => $breadcrumbs,
+            'activeBrand'                  => $activeBrand,
             'relatedProducts'              => $relatedProducts,
             'currencySymbol'               => \App\Services\CurrencyService::symbol(),
             'vatInclusive'                 => \App\Services\CurrencyService::isVatInclusive(),
             'merchantVatRate'              => \App\Services\CurrencyService::merchantVatRate(),
+            'priceRange'                   => $this->product->getFormattedPriceRange(
+                $userType,
+                \App\Services\CurrencyService::isVatInclusive(),
+                \App\Services\CurrencyService::merchantVatRate(),
+                \App\Services\CurrencyService::symbol()
+            ),
             // Flat map of variantId => ['RawKey'=>'TranslatedKey', 'RawVal'=>'TranslatedVal', ...]
             // Used by product-buy-box to display translated attribute labels while keeping
             // raw canonical values in wire:click so selectAttribute() still works correctly.

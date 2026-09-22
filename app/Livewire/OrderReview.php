@@ -1070,7 +1070,7 @@ class OrderReview extends Component
             
             foreach ($order->details as $item) {
                 $itemProduct = $item->variant?->product ?? null;
-                $itemTitle   = ($itemProduct ? $itemProduct->getTranslated('title') : null) ?: $item->item_name;
+                $itemTitle   = $item->item_name ?: ($itemProduct ? $itemProduct->getTranslated('title') : 'Item');
 
                 $itemTypeBadge = $item->download_item 
                     ? '<span style="background-color: #f0fdf4; color: #15803d; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; border: 1px solid #bbf7d0; display: inline-block; margin-top: 4px;">' . e(siteLabel('email.digital_download', 'Digital Download')) . '</span>'

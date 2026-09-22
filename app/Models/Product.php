@@ -55,6 +55,8 @@ class Product extends Model
         'custom_amount_options',
         'inventory_alert_id',
         'show_variant_selector_thumbnail',
+        'hide_gallery_thumbnails',
+        'hide_product_price',
         'quick_shop_active',
         'quick_shop_label',
         'search_results_description',
@@ -62,6 +64,8 @@ class Product extends Model
         'show_sku_in_cart',
         'show_variant_in_cart',
         'show_part_number_in_cart',
+        'enable_multi_variant_add',
+        'multi_variant_layout',
     ];
 
     /** Fields automatically translated when translations relation is loaded. */
@@ -98,6 +102,10 @@ class Product extends Model
         'custom_amount_max' => 'float',
         'custom_amount_options' => 'string',
         'show_variant_selector_thumbnail' => 'integer',
+        'hide_gallery_thumbnails' => 'integer',
+        'hide_product_price' => 'integer',
+        'enable_multi_variant_add' => 'integer',
+        'multi_variant_layout' => 'string',
         'inventory_alert_id' => 'integer',
         'quick_shop_active' => 'boolean',
         'quick_shop_label' => 'string',
@@ -105,6 +113,56 @@ class Product extends Model
         'show_variant_in_cart' => 'integer',
         'show_part_number_in_cart' => 'integer',
     ];
+
+    /**
+     * Get product variants organized by Group Name (A-Z) and inner sort_order.
+     * Returns a Collection grouped by group name ('' representing ungrouped variants).
+     *
+     * @return \Illuminate\Support\Collection<string, \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProductVariant>>
+     */
+    public function groupedVariants(): \Illuminate\Support\Collection
+    {
+        $variants = $this->variants; // Ordered by sort_order ASC, id ASC
+        
+        $grouped = $variants->groupBy(function ($variant) {
+            return trim((string) ($variant->variant_group_name ?? ''));
+        });
+
+        $ungrouped = $grouped->pull('', null);
+        $sortedGroups = $grouped->sortKeys(SORT_NATURAL | SORT_FLAG_CASE);
+
+        if ($ungrouped && $ungrouped->isNotEmpty()) {
+            return collect(['' => $ungrouped])->merge($sortedGroups);
+        }
+
+        return $sortedGroups;
+    }
+
+    /**
+     * Determine if the variant selector label should be displayed.
+     * Returns false if variant_label is explicitly set to 'NONE' (case-insensitive) or empty.
+     */
+    public function showVariantLabel(): bool
+    {
+        $label = trim((string) ($this->variant_label ?? ''));
+        if ($label === '' || strcasecmp($label, 'NONE') === 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the resolved variant selector label, or null if hidden.
+     */
+    public function displayVariantLabel(string $default = 'Select Option:'): ?string
+    {
+        if (!$this->showVariantLabel()) {
+            return null;
+        }
+
+        return trim((string) $this->variant_label) ?: $default;
+    }
 
     /**
      * Get the display label for the Quick Shop button.
@@ -295,7 +353,7 @@ class Product extends Model
     }
     public function variants(): HasMany
     {
-        return $this->hasMany(ProductVariant::class, 'product_id');
+        return $this->hasMany(ProductVariant::class, 'product_id')->orderBy('sort_order', 'asc')->orderBy('id', 'asc');
     }
 
     public function primaryThumbnailUrl(): ?string
@@ -408,29 +466,87 @@ class Product extends Model
         if (empty($this->product_video_embed)) {
             return '';
         }
-        return \App\Services\ContentParserService::parse($this->product_video_embed);
+        $parsed = \App\Services\ContentParserService::parse($this->product_video_embed);
+
+        // If raw <iframe> was entered without shortcode, wrap it in responsive 16:9 container
+        if (str_contains($parsed, '<iframe') && !str_contains($parsed, 'cms-embed-video-wrapper')) {
+            $responsiveIframe = \App\Plugins\Support\ShortcodeProcessor::makeVideoSnippetResponsive($parsed);
+            return '<div class="cms-embed-video-outer" style="width:100%;max-width:100%;margin:0 auto;display:block;">'
+                .   '<div class="cms-embed-video-wrapper" style="position:relative;width:100%;height:0;padding-bottom:56.25%;overflow:hidden;display:block;">'
+                .     $responsiveIframe
+                .   '</div>'
+                . '</div>';
+        }
+
+        return $parsed;
+    }
+
+    public function getFormattedPriceRange(?int $userType = 1, bool $vatInclusive = false, float $merchantVatRate = 0.0, ?string $currencySymbol = null): array
+    {
+        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+        $variants = $this->relationLoaded('variants') ? $this->variants : $this->variants()->get();
+
+        $prices = collect();
+        $isWholesale = ($userType === 2);
+
+        foreach ($variants as $v) {
+            if ($isWholesale) {
+                $p = (float) ($v->wholesale_price > 0 ? $v->wholesale_price : $v->public_price);
+                $fee = (float) ($v->wholesale_variant_fee ?? 0);
+            } else {
+                $p = (float) ($v->on_sale && (float)$v->sale_price > 0 ? $v->sale_price : $v->public_price);
+                $fee = (float) ($v->variant_fee ?? 0);
+            }
+
+            $effectivePrice = $p + $fee;
+
+            if ($vatInclusive && $merchantVatRate > 0) {
+                $effectivePrice = $effectivePrice * (1 + $merchantVatRate / 100);
+            }
+
+            if ($hideZero && $effectivePrice <= 0) {
+                continue;
+            }
+
+            if ($effectivePrice > 0 || !$hideZero) {
+                $prices->push($effectivePrice);
+            }
+        }
+
+        $symbol = $currencySymbol ?? \App\Services\CurrencyService::symbol();
+
+        if ($prices->isEmpty()) {
+            return [
+                'has_range'   => false,
+                'min'         => 0.00,
+                'max'         => 0.00,
+                'display'     => 'N/A',
+                'is_na'       => true,
+            ];
+        }
+
+        $min = (float) $prices->min();
+        $max = (float) $prices->max();
+        $hasRange = ($min < $max);
+
+        if ($hasRange) {
+            $display = $symbol . number_format($min, 2) . ' - ' . $symbol . number_format($max, 2);
+        } else {
+            $display = $symbol . number_format($min, 2);
+        }
+
+        return [
+            'has_range' => $hasRange,
+            'min'       => $min,
+            'max'       => $max,
+            'display'   => $display,
+            'is_na'     => false,
+        ];
     }
 
     public function getPriceRangeAttribute(): string
     {
-        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
-        $variants = $this->variants;
-        if ($hideZero) {
-            $variants = $variants->filter(function ($v) {
-                return (float)$v->public_price > 0 || ($v->on_sale && (float)$v->sale_price > 0);
-            });
-            $prices = $variants->pluck('public_price')->filter(fn($p) => (float)$p > 0)->unique();
-        } else {
-            $prices = $variants->pluck('public_price')->filter(fn($p) => $p !== null && $p !== '')->unique();
-        }
-
-        if ($prices->isEmpty()) {
-            return 'N/A';
-        }
-        if ($prices->count() === 1) {
-            return '$' . number_format($prices->first(), 2);
-        }
-        return '$' . number_format($prices->min(), 2) . ' - $' . number_format($prices->max(), 2);
+        return $this->getFormattedPriceRange()['display'];
     }
 
     /**

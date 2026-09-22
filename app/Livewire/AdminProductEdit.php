@@ -56,10 +56,14 @@ class AdminProductEdit extends Component
     public int    $standalone_purchase  = 0;
     public int    $dependent_variants   = 0;
     public int    $hide_inventory_levels = 0;
+    public int    $enable_multi_variant_add = 0;
+    public string $multi_variant_layout     = 'list';
     public int    $layout_type          = 1;
     public int    $featured_item        = 0;
     public int    $show_item_total      = 0;  // Show live item total (price × qty) below Add to Cart
     public int    $show_variant_selector_thumbnail = 0;  // Show variant thumbnail image in flat selector rows
+    public int    $hide_gallery_thumbnails = 0; // Hide the thumbnails strip in gallery display (show large image only)
+    public int    $hide_product_price      = 0; // Hide main pricing field on product details & quick shop modal
     public string $variant_label        = 'Select Option:';  // Label above variant selector on storefront
     public string $product_video_embed  = '';               // Embed code/shortcode for layout types 3 & 5
     public bool   $is_donation_or_bill_pay = false;
@@ -119,6 +123,8 @@ class AdminProductEdit extends Component
     public int $selectedVariantId = 0;
     public string $sku = '';
     public string $part_number = '';
+    public string $variant_custom_name = '';
+    public string $variant_group_name = '';
     public float $public_price = 0.00;
     public float $wholesale_price = 0.00;
     public int $on_sale = 0;
@@ -365,7 +371,7 @@ class AdminProductEdit extends Component
         $this->bullet_point_2 = (string) ($this->product->bullet_point_2 ?? '');
         $this->bullet_point_3 = (string) ($this->product->bullet_point_3 ?? '');
         $this->bullet_point_4 = (string) ($this->product->bullet_point_4 ?? '');
-        $this->meta_title = $this->product->meta_title ?? '';
+        $this->meta_title = $this->product->meta_title ?: ($this->product->title ?? '');
         $this->meta_description = $this->product->meta_description ?? '';
         $this->seo_slug = $this->product->seo_slug ?? '';
         $this->selectedCategories = $this->product->categories->pluck('id')->toArray();
@@ -391,11 +397,36 @@ class AdminProductEdit extends Component
         $this->custom_amount_options = (string) ($this->product->custom_amount_options ?? '');
         $this->inventory_alert_id    = $this->product->inventory_alert_id ? (int) $this->product->inventory_alert_id : null;
         $this->show_variant_selector_thumbnail = (int) ($this->product->show_variant_selector_thumbnail ?? 0);
+        $this->hide_gallery_thumbnails = (int) ($this->product->hide_gallery_thumbnails ?? 0);
+        $this->hide_product_price = (int) ($this->product->hide_product_price ?? 0);
         $this->quick_shop_active = (bool) ($this->product->quick_shop_active ?? false);
         $this->quick_shop_label = (string) ($this->product->quick_shop_label ?? '');
         $this->show_sku_in_cart = $this->product->show_sku_in_cart !== null ? (string) $this->product->show_sku_in_cart : '';
         $this->show_variant_in_cart = $this->product->show_variant_in_cart !== null ? (string) $this->product->show_variant_in_cart : '';
         $this->show_part_number_in_cart = $this->product->show_part_number_in_cart !== null ? (string) $this->product->show_part_number_in_cart : '';
+        $this->enable_multi_variant_add = (int) ($this->product->enable_multi_variant_add ?? 0);
+        $this->multi_variant_layout = (string) ($this->product->multi_variant_layout ?: 'list');
+    }
+
+    /**
+     * Get distinct variant group names for this specific product only (for autocomplete / datalist).
+     *
+     * @return array<string>
+     */
+    public function getExistingGroupNamesProperty(): array
+    {
+        if (!$this->productId) {
+            return [];
+        }
+
+        return ProductVariant::where('product_id', $this->productId)
+            ->whereNotNull('variant_group_name')
+            ->where('variant_group_name', '!=', '')
+            ->distinct()
+            ->pluck('variant_group_name')
+            ->sort(SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->toArray();
     }
 
     public function updatedTitle(string $value): void
@@ -415,9 +446,13 @@ class AdminProductEdit extends Component
      */
     private function saveCoreProductSections(bool $saveVariantIfOpen = true): bool
     {
+        if (empty(trim($this->meta_title))) {
+            $this->meta_title = $this->title;
+        }
+
         $this->validate([
             'title' => 'required|string|max:255',
-            'meta_title' => 'required|string|max:255',
+            'meta_title' => 'nullable|string|max:255',
             'short_description' => 'nullable|string',
             'search_results_description' => 'nullable|string',
             'quick_shop_description' => 'nullable|string',
@@ -438,6 +473,8 @@ class AdminProductEdit extends Component
             'standalone_purchase' => 'nullable|boolean',
             'dependent_variants' => 'nullable|boolean',
             'hide_inventory_levels' => 'nullable|boolean',
+            'enable_multi_variant_add' => 'nullable|boolean',
+            'multi_variant_layout' => 'nullable|string|in:list,grid',
             'reviews_enabled' => 'boolean',
             'featured_item' => 'nullable|boolean',
             'show_item_total' => 'nullable|boolean',
@@ -448,8 +485,13 @@ class AdminProductEdit extends Component
             'custom_amount_options' => 'nullable|string|max:500',
             'inventory_alert_id' => 'nullable|integer|exists:product_inventory_alerts,id',
             'show_variant_selector_thumbnail' => 'nullable|boolean',
+            'hide_gallery_thumbnails' => 'nullable|boolean',
+            'hide_product_price' => 'nullable|boolean',
             'quick_shop_active' => 'boolean',
             'quick_shop_label' => 'nullable|string|max:255',
+            'show_sku_in_cart' => 'nullable|in:,0,1',
+            'show_variant_in_cart' => 'nullable|in:,0,1',
+            'show_part_number_in_cart' => 'nullable|in:,0,1',
         ]);
 
         // Validate preset options format when custom amount entry is disabled
@@ -510,11 +552,15 @@ class AdminProductEdit extends Component
             'custom_amount_options' => trim($this->custom_amount_options) ?: null,
             'inventory_alert_id' => $this->inventory_alert_id ?: null,
             'show_variant_selector_thumbnail' => (int) $this->show_variant_selector_thumbnail,
+            'hide_gallery_thumbnails' => (int) $this->hide_gallery_thumbnails,
+            'hide_product_price' => (int) $this->hide_product_price,
             'quick_shop_active' => (bool) $this->quick_shop_active,
             'quick_shop_label' => trim($this->quick_shop_label) ?: null,
             'show_sku_in_cart' => $this->show_sku_in_cart !== '' && $this->show_sku_in_cart !== null ? (int) $this->show_sku_in_cart : null,
             'show_variant_in_cart' => $this->show_variant_in_cart !== '' && $this->show_variant_in_cart !== null ? (int) $this->show_variant_in_cart : null,
             'show_part_number_in_cart' => $this->show_part_number_in_cart !== '' && $this->show_part_number_in_cart !== null ? (int) $this->show_part_number_in_cart : null,
+            'enable_multi_variant_add' => (int) $this->enable_multi_variant_add,
+            'multi_variant_layout' => $this->multi_variant_layout ?: 'list',
         ]);
 
         $this->product->categories()->sync($this->selectedCategories);
@@ -682,6 +728,8 @@ class AdminProductEdit extends Component
     {
         $this->sku = '';
         $this->part_number = '';
+        $this->variant_custom_name = '';
+        $this->variant_group_name = '';
         $this->public_price = 0.00;
         $this->wholesale_price = 0.00;
         $this->on_sale = 0;
@@ -815,6 +863,9 @@ class AdminProductEdit extends Component
             'product_id' => $original->product_id,
             'sku' => $newSku,
             'part_number' => $original->part_number,
+            'variant_custom_name' => $original->variant_custom_name,
+            'variant_group_name' => $original->variant_group_name,
+            'sort_order' => (int) (ProductVariant::where('product_id', $original->product_id)->max('sort_order') ?? 0) + 1,
             'public_price' => $original->public_price,
             'wholesale_price' => $original->wholesale_price,
             'on_sale' => $original->on_sale,
@@ -952,6 +1003,8 @@ class AdminProductEdit extends Component
         $this->validate([
             'sku' => 'required|string|max:255|unique:product_variants,sku',
             'part_number' => 'nullable|string|max:255',
+            'variant_custom_name' => 'nullable|string|max:255',
+            'variant_group_name' => 'nullable|string|max:255',
             'public_price' => 'required|numeric|min:0',
             'wholesale_price' => 'nullable|numeric|min:0',
             'variant_fee' => 'nullable|numeric|min:0',
@@ -1028,6 +1081,9 @@ class AdminProductEdit extends Component
             'product_id' => $this->productId,
             'sku' => $this->sku,
             'part_number' => trim($this->part_number) ?: null,
+            'variant_custom_name' => trim($this->variant_custom_name) ?: null,
+            'variant_group_name' => trim($this->variant_group_name) ?: null,
+            'sort_order' => (int) (ProductVariant::where('product_id', $this->productId)->max('sort_order') ?? 0) + 1,
             'public_price' => $this->public_price,
             'wholesale_price' => $this->wholesale_price,
             'on_sale' => $this->on_sale,
@@ -1173,6 +1229,8 @@ class AdminProductEdit extends Component
         $this->selectedVariantId = $variant->id;
         $this->sku = $variant->sku ?? '';
         $this->part_number = $variant->part_number ?? '';
+        $this->variant_custom_name = $variant->variant_custom_name ?? '';
+        $this->variant_group_name = $variant->variant_group_name ?? '';
         $this->public_price = (float) ($variant->public_price ?? 0.00);
         $this->wholesale_price = (float) ($variant->wholesale_price ?? 0.00);
         $this->on_sale = (int) ($variant->on_sale ?? 0);
@@ -1412,6 +1470,8 @@ class AdminProductEdit extends Component
         $this->validate([
             'sku' => 'required|string|max:255|unique:product_variants,sku,' . $this->selectedVariantId,
             'part_number' => 'nullable|string|max:255',
+            'variant_custom_name' => 'nullable|string|max:255',
+            'variant_group_name' => 'nullable|string|max:255',
             'public_price' => 'required|numeric|min:0',
             'wholesale_price' => 'nullable|numeric|min:0',
             'variant_fee' => 'nullable|numeric|min:0',
@@ -1483,6 +1543,8 @@ class AdminProductEdit extends Component
         $variant->update([
             'sku' => $this->sku,
             'part_number' => trim($this->part_number) ?: null,
+            'variant_custom_name' => trim($this->variant_custom_name) ?: null,
+            'variant_group_name' => trim($this->variant_group_name) ?: null,
             'public_price' => $this->public_price,
             'wholesale_price' => $this->wholesale_price,
             'on_sale' => $this->on_sale,
@@ -2143,6 +2205,17 @@ class AdminProductEdit extends Component
         $variant = ProductVariant::findOrFail($variantId);
         $variant->delete();
         session()->flash('status', 'Variant deleted successfully.');
+        $this->loadProduct();
+    }
+
+    public function updateVariantOrder(array $order): void
+    {
+        foreach ($order as $position => $variantId) {
+            ProductVariant::where('id', (int) $variantId)
+                ->where('product_id', $this->productId)
+                ->update(['sort_order' => $position + 1]);
+        }
+        $this->dispatch('toast', type: 'success', message: 'Variant display order saved.');
         $this->loadProduct();
     }
     public function addFieldOptionRow(): void

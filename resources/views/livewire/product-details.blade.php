@@ -2,7 +2,7 @@
      x-init="@if(!empty($gaEcommerceData)) if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('view_item', {{ json_encode($gaEcommerceData) }}); } @endif" 
      class="pt-4 pb-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        @if(!empty($returnToSearchResultsUrl))
+        @if(\App\Models\CmsSetting::isEnabled('show_return_to_search_results', true) && !empty($returnToSearchResultsUrl))
             <div class="mb-4">
                 <a href="{{ $returnToSearchResultsUrl }}" wire:navigate class="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,10 +27,18 @@
                         <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
                         </svg>
-                        <a href="{{ route('shop.category', ['category_slug' => $bc->slug]) }}" wire:navigate class="text-slate-500 hover:text-indigo-600 transition-colors">
+                        <a href="{{ route('shop.category', array_filter(['category_slug' => $bc->slug, 'brand' => $activeBrand?->slug])) }}" wire:navigate class="text-slate-500 hover:text-indigo-600 transition-colors">
                             {{ $bc->name }}
                         </a>
                     @endforeach
+                    @if($activeBrand)
+                        <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                        </svg>
+                        <a href="{{ route('shop.brand', ['brand_slug' => $activeBrand->slug]) }}" wire:navigate class="text-slate-500 hover:text-indigo-600 transition-colors">
+                            {{ $activeBrand->name }}
+                        </a>
+                    @endif
                     <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
                     </svg>
@@ -74,9 +82,9 @@
             @case(2)
                 {{-- Left Side Images, description full-width below --}}
                 <div class="space-y-8">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm items-start">
                         <!-- Left Side: Visual / Gallery -->
-                        <div class="lg:col-span-7 flex flex-col">
+                        <div class="lg:col-span-7 flex flex-col lg:sticky lg:top-24">
                             @include('livewire.partials.product-gallery')
                             @include('livewire.partials.product-video-player')
                         </div>
@@ -95,13 +103,13 @@
             @case(3)
                 {{-- Right Side Images With Large Video Player Space Below, description full-width below --}}
                 <div class="space-y-8">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm items-start">
                         <!-- Left Side: Configuration & Buy -->
                         <div class="lg:col-span-5 flex flex-col justify-start order-2 lg:order-1">
                             @include('livewire.partials.product-buy-box')
                         </div>
                         <!-- Right Side: Visual / Info -->
-                        <div class="lg:col-span-7 flex flex-col order-1 lg:order-2">
+                        <div class="lg:col-span-7 flex flex-col order-1 lg:order-2 lg:sticky lg:top-24">
                             @include('livewire.partials.product-gallery')
                         </div>
                     </div>
@@ -197,13 +205,13 @@
             @default
                 {{-- Right Side Images (Default) — description full-width below --}}
                 <div class="space-y-8">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm items-start">
                         <!-- Left Side: Configuration & Buy -->
                         <div class="lg:col-span-5 flex flex-col justify-start order-2 lg:order-1">
                             @include('livewire.partials.product-buy-box')
                         </div>
                         <!-- Right Side: Visual / Info -->
-                        <div class="lg:col-span-7 flex flex-col order-1 lg:order-2">
+                        <div class="lg:col-span-7 flex flex-col order-1 lg:order-2 lg:sticky lg:top-24">
                             @include('livewire.partials.product-gallery')
                             @include('livewire.partials.product-video-player')
                         </div>
@@ -224,16 +232,15 @@
                 $rv       = $rp->variants->first();
                 $img      = $rv ? $rv->images->first() : null;
                 $thumbUrl = $img ? $img->thumbnailUrl() : null;
-                $price    = 0;
-                if ($rv) {
-                    $base  = $userType == 2 ? $rv->wholesale_price : $rv->public_price;
-                    $price = ($rv->on_sale && $rv->sale_price > 0 && $userType != 2) ? $rv->sale_price : $base;
-                }
+                $priceRange = $rp->getFormattedPriceRange($userType);
+                $price = $priceRange['display'];
                 return [
+                    'brand_name'  => ($rp->brand && !\App\Models\CmsSetting::isEnabled('hide_catalog_brand_name')) ? $rp->brand->name : null,
+                    'brand_url'   => ($rp->brand && !\App\Models\CmsSetting::isEnabled('hide_catalog_brand_name')) ? route('shop.brand', $rp->brand->slug) : null,
                     'title'       => $rp->title,
                     'desc'        => $rp->parsed_short_description,
                     'thumb'       => $thumbUrl,
-                    'price'       => number_format($price, 2),
+                    'price'       => $price,
                     'url'         => route('shop.product', $rp->seo_slug),
                     'digital'     => $rv ? (bool) $rv->download_item : false,
                     'is_donation' => (bool) $rp->is_donation_or_bill_pay,
@@ -332,11 +339,14 @@
 
                         {{-- Info --}}
                         <div class="p-4 flex flex-col flex-1">
+                            <template x-if="card.brand_name">
+                                <a :href="card.brand_url" class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 hover:underline mb-1 block" x-text="card.brand_name"></a>
+                            </template>
                             <h3 class="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug" x-text="card.title"></h3>
                             <p class="text-xs text-slate-400 mt-1.5 line-clamp-2 flex-1" x-text="card.desc"></p>
                             <div class="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
                                 <template x-if="!card.is_donation">
-                                    <span class="text-sm font-extrabold text-slate-900" x-text="'$' + card.price"></span>
+                                    <span class="text-sm font-extrabold text-slate-900" x-text="card.price"></span>
                                 </template>
                                 <span class="text-[11px] font-bold text-indigo-600 group-hover:text-indigo-700 flex items-center gap-0.5 ml-auto">
                                     @label('product.view', 'View')

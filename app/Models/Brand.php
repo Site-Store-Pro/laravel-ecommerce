@@ -19,6 +19,7 @@ class Brand extends Model
         'sort_order',
         'is_visible_in_menu',
         'brand_icon',
+        'header_image',
         'brand_url',
         'brand_logo_s3',
         'brand_logo_cdn_url',
@@ -27,6 +28,13 @@ class Brand extends Model
         'brand_logo_access_key_id',
         'brand_logo_secret_access_key',
         'brand_icon_direct_url',
+        'header_image_s3',
+        'header_image_cdn_url',
+        'header_image_region',
+        'header_image_bucket_name',
+        'header_image_access_key_id',
+        'header_image_secret_access_key',
+        'header_image_direct_url',
         'show_image',
     ];
 
@@ -35,6 +43,7 @@ class Brand extends Model
         'show_image'         => 'boolean',
         'sort_order'         => 'integer',
         'brand_logo_s3'      => 'integer',
+        'header_image_s3'    => 'integer',
     ];
 
     /**
@@ -51,5 +60,33 @@ class Brand extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'brand_id');
+    }
+
+    /**
+     * Get the resolved public URL for the brand header image.
+     */
+    public function getHeaderImageUrl(): ?string
+    {
+        if (!empty($this->header_image_direct_url)) {
+            return $this->header_image_direct_url;
+        }
+
+        if (empty($this->header_image)) {
+            return null;
+        }
+
+        if (str_starts_with($this->header_image, 'http://') || str_starts_with($this->header_image, 'https://') || str_starts_with($this->header_image, '/')) {
+            return $this->header_image;
+        }
+
+        if (!empty($this->header_image_cdn_url)) {
+            return rtrim($this->header_image_cdn_url, '/') . '/' . ltrim($this->header_image, '/');
+        }
+
+        if ($this->header_image_s3 == 1) {
+            return \Illuminate\Support\Facades\Storage::disk('s3')->url($this->header_image);
+        }
+
+        return asset('storage/' . ltrim($this->header_image, '/'));
     }
 }

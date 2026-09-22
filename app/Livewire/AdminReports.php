@@ -310,7 +310,7 @@ class AdminReports extends Component
     {
         $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
 
-        $variants = \App\Models\ProductVariant::with('product')
+        $variants = \App\Models\ProductVariant::with(['product.categories'])
             ->where('amazon_product', true)
             ->get();
 
@@ -324,6 +324,7 @@ class AdminReports extends Component
             'amazon_bullet_points',
             'amazon_item_type',
             'amazon_condition',
+            'amazon_category',
         ];
 
         foreach ($variants as $variant) {
@@ -338,6 +339,8 @@ class AdminReports extends Component
                 continue;
             }
 
+            $amazonCategory = $product->categories->pluck('amazon_category')->filter()->implode(', ');
+
             $rows[] = [
                 $variant->sku ?: '',
                 $product->title ?: '',
@@ -347,6 +350,7 @@ class AdminReports extends Component
                 $variant->amazon_bullet_points ?: '',
                 $variant->amazon_item_type ?: '',
                 $variant->amazon_condition ?: 'New',
+                $amazonCategory ?: '',
             ];
         }
 
@@ -365,7 +369,7 @@ class AdminReports extends Component
     {
         $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
 
-        $variants = \App\Models\ProductVariant::with('product')
+        $variants = \App\Models\ProductVariant::with(['product.categories'])
             ->where('ebay_product', true)
             ->get();
 
@@ -380,6 +384,7 @@ class AdminReports extends Component
             'ebay_options',
             'ebay_shipping_profile_id',
             'ebay_return_policy_id',
+            'ebay_category',
         ];
 
         foreach ($variants as $variant) {
@@ -394,6 +399,8 @@ class AdminReports extends Component
                 continue;
             }
 
+            $ebayCategory = $product->categories->pluck('ebay_category')->filter()->implode(', ');
+
             $rows[] = [
                 $variant->sku ?: '',
                 $product->title ?: '',
@@ -404,6 +411,7 @@ class AdminReports extends Component
                 $variant->ebay_options ?: '',
                 $variant->ebay_shipping_profile_id ?: '',
                 $variant->ebay_return_policy_id ?: '',
+                $ebayCategory ?: '',
             ];
         }
 

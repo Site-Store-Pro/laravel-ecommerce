@@ -125,6 +125,13 @@
             $hideFiltersNow = $hideFiltersUntilApplied && !$this->hasActiveFilters;
         @endphp
 
+        {{-- Exclusive Category / Brand Header Image Banner --}}
+        @if(!empty($headerImageUrl))
+            <div class="mb-6 overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm bg-slate-100 dark:bg-slate-800">
+                <img src="{{ $headerImageUrl }}" alt="{{ $headerImageAlt ?? 'Header Banner' }}" class="w-full h-auto max-h-72 object-cover">
+            </div>
+        @endif
+
         <!-- Header Section -->
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
             <div>
@@ -179,7 +186,20 @@
                 <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">@label('catalog.active_filters', 'Active Filters:')</span>
                     
-                    @if($activeCategory)
+                    @if(!empty($breadcrumbChain))
+                        @foreach($breadcrumbChain as $index => $chainCat)
+                            @if($index > 0)
+                                <span class="text-slate-400 dark:text-slate-500 font-bold text-xs select-none">&rsaquo;</span>
+                            @endif
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                                @if($index === 0)
+                                    @label('catalog.filter_category', 'Category:')
+                                @endif
+                                {{ $chainCat->name }}
+                                <button wire:click="removeCategoryPill({{ $chainCat->id }})" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none cursor-pointer" title="Remove filter">&times;</button>
+                            </span>
+                        @endforeach
+                    @elseif($activeCategory)
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 text-xs font-bold text-indigo-700 dark:text-indigo-300">
                             @label('catalog.filter_category', 'Category:') {{ $activeCategory->name }}
                             <button wire:click="clearCategory" type="button" class="hover:text-rose-600 dark:hover:text-rose-400 font-black text-sm ml-1 focus:outline-none cursor-pointer" title="Remove filter">&times;</button>
@@ -208,8 +228,11 @@
                     @endif
 
                     @if(!empty($selectedCategories))
+                        @php
+                            $activeChainIds = !empty($breadcrumbChain) ? array_map(fn($c) => (string)$c->id, $breadcrumbChain) : ($activeCategory ? [(string)$activeCategory->id] : []);
+                        @endphp
                         @foreach($selectedCategories as $scId)
-                            @if(!$activeCategory || (string)$activeCategory->id !== (string)$scId)
+                            @if(!in_array((string)$scId, $activeChainIds, true))
                                 @php $sc = $selectedCategoryModels->get((int)$scId) ?? $selectedCategoryModels->get((string)$scId); @endphp
                                 @if($sc)
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800 text-xs font-bold text-indigo-800 dark:text-indigo-200">
@@ -364,7 +387,7 @@
                 <div class="flex items-center gap-1.5">
                     <label class="text-xs font-semibold text-slate-400 whitespace-nowrap">@label('catalog.sort', 'Sort')</label>
                     <select wire:model.live="sort"
-                            class="py-1 px-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-sm transition duration-150">
+                            class="py-1 pl-2.5 pr-7 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-sm transition duration-150 cursor-pointer">
                         <option value="price_asc">@label('catalog.sort_price_low', 'Price Low-High')</option>
                         <option value="price_desc">@label('catalog.sort_price_high', 'Price High-Low')</option>
                         <option value="title_asc">@label('catalog.sort_title_asc', 'Title A-Z (ASC)')</option>
@@ -378,7 +401,7 @@
                     <div class="flex items-center gap-1.5">
                         <label class="text-xs font-semibold text-slate-400 whitespace-nowrap">@label('catalog.show', 'Show')</label>
                         <select wire:model.live="perPage"
-                                class="py-1 px-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-sm transition duration-150">
+                                class="py-1 pl-2.5 pr-7 min-w-[3.75rem] bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-sm transition duration-150 cursor-pointer">
                             @foreach([4, 8, 16, 20, 24, 30, 48, 64, 96] as $num)
                                 <option value="{{ $num }}">{{ $num }}</option>
                             @endforeach
@@ -468,7 +491,7 @@
                                     @endif
                                 </a>
                                 <div class="p-5 pb-4">
-                                    @if($product->brand)
+                                    @if($product->brand && !\App\Models\CmsSetting::isEnabled('hide_catalog_brand_name'))
                                         <a href="{{ route('shop.brand', $product->brand->slug) }}" class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 hover:underline mb-1 block">{{ $product->brand->name }}</a>
                                     @endif
                                     <h3 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2">
@@ -484,11 +507,14 @@
                                 <div class="min-w-0">
                                     @if(!$product->is_donation_or_bill_pay && $firstVariant)
                                         @php
+                                            $priceRange = $product->getFormattedPriceRange($userType, $vatInclusive, $merchantVatRate, $currencySymbol);
                                             $price = $userType == 2 ? $firstVariant->wholesale_price : $firstVariant->public_price;
                                             $onSale = $userType == 1 && $firstVariant->on_sale && $firstVariant->sale_price > 0;
                                             $hasTrial = $firstVariant->hasStripeTrial();
                                         @endphp
-                                        @if($hasTrial)
+                                        @if($priceRange['has_range'])
+                                            <span class="text-lg font-extrabold text-slate-900 dark:text-slate-200">{{ $priceRange['display'] }}</span>
+                                        @elseif($hasTrial)
                                             <div class="flex items-baseline gap-1.5 flex-wrap">
                                                 @if($firstVariant->hasTrialLabel())
                                                     <span class="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">{{ $firstVariant->getTrialLabel() }}</span>
@@ -552,7 +578,7 @@
                                 @endif
                             </a>
                             <div class="flex-1 min-w-0 text-center sm:text-left">
-                                @if($product->brand)
+                                @if($product->brand && !\App\Models\CmsSetting::isEnabled('hide_catalog_brand_name'))
                                     <a href="{{ route('shop.brand', $product->brand->slug) }}" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline uppercase tracking-wider block mb-1">{{ $product->brand->name }}</a>
                                 @endif
                                 <h3 class="text-lg font-bold text-slate-900 dark:text-white hover:text-indigo-600 transition truncate">
@@ -568,11 +594,14 @@
                                     <div class="text-right">
                                         @if($firstVariant)
                                             @php
+                                                $priceRange = $product->getFormattedPriceRange($userType, $vatInclusive, $merchantVatRate, $currencySymbol);
                                                 $price = $userType == 2 ? $firstVariant->wholesale_price : $firstVariant->public_price;
                                                 $onSale = $userType == 1 && $firstVariant->on_sale && $firstVariant->sale_price > 0;
                                                 $hasTrial = $firstVariant->hasStripeTrial();
                                             @endphp
-                                            @if($hasTrial)
+                                            @if($priceRange['has_range'])
+                                                <span class="block text-lg font-extrabold text-slate-900 dark:text-slate-200">{{ $priceRange['display'] }}</span>
+                                            @elseif($hasTrial)
                                                 <div class="flex items-baseline justify-end gap-1.5 flex-wrap">
                                                     @if($firstVariant->hasTrialLabel())
                                                         <span class="block text-lg font-extrabold text-indigo-600 dark:text-indigo-400">{{ $firstVariant->getTrialLabel() }}</span>

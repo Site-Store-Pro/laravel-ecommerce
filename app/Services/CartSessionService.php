@@ -96,6 +96,11 @@ class CartSessionService
      */
     public static function formatCartItemName(\App\Models\Product $product, \App\Models\ProductVariant $variant): string
     {
+        // 0. Variant Custom Name takes absolute precedence over product title, SKU, part number, and variant attributes
+        if (!empty(trim((string) ($variant->variant_custom_name ?? '')))) {
+            return trim((string) $variant->variant_custom_name);
+        }
+
         // 1. Resolve Show SKU setting (per-product override takes precedence, fallback to global setting)
         $showSku = ($product->show_sku_in_cart !== null)
             ? (bool) $product->show_sku_in_cart

@@ -1,4 +1,79 @@
 <div class="py-12" x-data="{ sidebarOpen: false, showWidgetLibrary: false, showPluginsPanel: false, showLinkGenerator: false, showShortcodeGenerator: false }" x-on:scroll-to-variant-form.window="document.getElementById('section-variants')?.scrollIntoView({ behavior: 'smooth', block: 'start' })">
+    {{-- Floating Error Message Overlay (Sticky / always visible regardless of scroll position) --}}
+    @if ($errors->any())
+        <div wire:key="admin-product-edit-errors-{{ md5(implode(',', $errors->all())) }}"
+             x-data="{ 
+                 dismissed: false,
+                 scrollToFirstError() {
+                     const errorEl = document.querySelector('.text-rose-500, .border-rose-500, .border-rose-300, [aria-invalid=\'true\']');
+                     if (errorEl) {
+                         errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                         if (errorEl.tagName === 'INPUT' || errorEl.tagName === 'SELECT' || errorEl.tagName === 'TEXTAREA') {
+                             errorEl.focus();
+                         }
+                     }
+                 }
+             }"
+             x-show="!dismissed"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:translate-x-4 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 sm:translate-x-0 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="fixed bottom-6 right-6 sm:top-20 sm:bottom-auto sm:right-8 z-[9999] max-w-md w-full bg-white dark:bg-slate-900 border-2 border-rose-500 rounded-3xl shadow-2xl overflow-hidden pointer-events-auto ring-4 ring-rose-500/10"
+             role="alert"
+             aria-live="assertive">
+            <div class="p-4 bg-gradient-to-br from-rose-50 via-rose-50/50 to-white dark:from-rose-950/60 dark:via-slate-900 dark:to-slate-900 border-b border-rose-100 dark:border-rose-900/60">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-600/30">
+                            <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-extrabold text-rose-900 dark:text-rose-200 tracking-tight">
+                                Save Error — {{ count($errors->all()) }} Issue{{ count($errors->all()) > 1 ? 's' : '' }} Found
+                            </h3>
+                            <p class="text-xs text-rose-700 dark:text-rose-400 mt-0.5 font-medium">
+                                Unable to save product. Please correct the highlighted field{{ count($errors->all()) > 1 ? 's' : '' }}:
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" @click="dismissed = true" class="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Dismiss">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-4 bg-white dark:bg-slate-900 max-h-60 overflow-y-auto space-y-2 text-xs">
+                <ul class="space-y-2 list-none">
+                    @foreach ($errors->all() as $error)
+                        <li class="flex items-start gap-2.5 text-slate-700 dark:text-slate-200">
+                            <span class="text-rose-500 font-black shrink-0 mt-0.5 text-sm leading-none">•</span>
+                            <span class="font-semibold leading-relaxed">{{ $error }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+
+            <div class="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                <button type="button" @click="scrollToFirstError()" class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 hover:underline">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                    </svg>
+                    Jump to first error
+                </button>
+                <button type="button" @click="dismissed = true" class="px-3 py-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition">
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    @endif
+
     <div class="max-w-[1800px] w-full mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
@@ -952,6 +1027,63 @@
                                 </div>
                             </label>
                             @endif
+
+                            {{-- Hide Gallery Thumbnails Strip Toggle --}}
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model="hide_gallery_thumbnails" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold {{ $hide_gallery_thumbnails ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700' }} transition-colors">
+                                        Hide Thumbnails in Gallery Display
+                                        @if($hide_gallery_thumbnails)
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700 ml-1">Active</span>
+                                        @endif
+                                    </span>
+                                    <span class="text-xs text-slate-400">When enabled, the thumbnail strip below the main image gallery is hidden on storefront views, displaying only the large image with hover and click-to-enlarge zoom.</span>
+                                </div>
+                            </label>
+
+                            {{-- Hide Product Price Toggle --}}
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model="hide_product_price" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold {{ $hide_product_price ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700' }} transition-colors">
+                                        Hide Price Display on Product Details & Quick Shop
+                                        @if($hide_product_price)
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700 ml-1">Active</span>
+                                        @endif
+                                    </span>
+                                    <span class="text-xs text-slate-400">When enabled, the main top price block is hidden on the item view and quick shop modal. Useful when using the Direct Order Matrix or custom option pricing where the top price is redundant or inaccurate.</span>
+                                </div>
+                            </label>
+
+                            {{-- Multiple Add Variant(s) per Page --}}
+                            <div class="pt-3 pb-2 border-y border-slate-100 space-y-3">
+                                <label class="flex items-start gap-3 cursor-pointer">
+                                    <input type="checkbox" wire:model.live="enable_multi_variant_add" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold {{ $enable_multi_variant_add ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700' }} transition-colors">
+                                            Enable Multiple Add Variant(s) per Page (Direct Order Matrix)
+                                            @if($enable_multi_variant_add)
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700 ml-1">Active</span>
+                                            @endif
+                                        </span>
+                                        <span class="text-xs text-slate-400">When enabled, each variant is rendered as its own line item/card with its own thumbnail image, title/SKU, pricing, stock level, quantity selector, and direct "Add to Cart" button. Users can order multiple different variants directly from the product page. Organized by variant group name (A-Z) and drag sort order.</span>
+                                    </div>
+                                </label>
+
+                                @if($enable_multi_variant_add)
+                                    <div class="ml-7 flex flex-col sm:flex-row sm:items-center gap-3 pt-1">
+                                        <label for="multi_variant_layout" class="text-xs font-semibold text-slate-700 whitespace-nowrap">
+                                            Display Layout:
+                                        </label>
+                                        <select id="multi_variant_layout" wire:model="multi_variant_layout" class="w-full sm:w-64 px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                            <option value="list">Line Items (Table Format)</option>
+                                            <option value="grid">Card Grid (Card per Variant)</option>
+                                        </select>
+                                        <span class="text-[11px] text-slate-400">Choose between a structured table matrix or a responsive card grid.</span>
+                                    </div>
+                                @endif
+                            </div>
 
                             <label class="flex items-start gap-3 cursor-pointer">
                                 <input type="checkbox" wire:model="hide_inventory_levels" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">

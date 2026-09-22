@@ -37,6 +37,28 @@
                                 </div>
                             </div>
 
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">
+                                        Variant Custom Name <span class="text-[10px] text-slate-400 font-normal lowercase">(optional - overrides title, SKU & variants in cart/orders)</span>
+                                    </label>
+                                    <input type="text" wire:model.blur="variant_custom_name" placeholder="e.g. Special Edition Model X" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-semibold text-sm">
+                                    @error('variant_custom_name') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 block mb-1.5 uppercase tracking-wider">
+                                        Variant Group Name <span class="text-[10px] text-slate-400 font-normal lowercase">(optional - categorizes variant on item page)</span>
+                                    </label>
+                                    <input type="text" list="product-variant-group-list" wire:model.blur="variant_group_name" placeholder="e.g. Mens, Womens, 128GB" class="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 font-semibold text-sm">
+                                    <datalist id="product-variant-group-list">
+                                        @foreach($this->existingGroupNames as $groupOption)
+                                            <option value="{{ $groupOption }}"></option>
+                                        @endforeach
+                                    </datalist>
+                                    @error('variant_group_name') <span class="text-xs text-red-500 font-semibold">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">On Sale</label>
@@ -1277,6 +1299,40 @@
                                 </div>
                             </div>
 
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-600 block mb-1 uppercase tracking-wider">
+                                        Variant Custom Name <span class="text-[10px] text-slate-400 font-normal lowercase">(optional - overrides title, SKU & variants in cart/orders)</span>
+                                    </label>
+                                    <input type="text" wire:model.blur="variant_custom_name"
+                                           class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500 text-slate-800 text-sm font-semibold"
+                                           placeholder="e.g. Special Edition Model X">
+                                    @error('variant_custom_name')
+                                        <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span>
+                                    @else
+                                        <span class="text-[10px] text-slate-400 mt-0.5 block">Custom name to override title, SKU, part number & variants.</span>
+                                    @enderror
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-600 block mb-1 uppercase tracking-wider">
+                                        Variant Group Name <span class="text-[10px] text-slate-400 font-normal lowercase">(optional - categorizes variant on item page)</span>
+                                    </label>
+                                    <input type="text" list="product-variant-group-list-create" wire:model.blur="variant_group_name"
+                                           class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500 text-slate-800 text-sm font-semibold"
+                                           placeholder="e.g. Mens, Womens, 128GB">
+                                    <datalist id="product-variant-group-list-create">
+                                        @foreach($this->existingGroupNames as $groupOption)
+                                            <option value="{{ $groupOption }}"></option>
+                                        @endforeach
+                                    </datalist>
+                                    @error('variant_group_name')
+                                        <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span>
+                                    @else
+                                        <span class="text-[10px] text-slate-400 mt-0.5 block">Group variants together into organized sections.</span>
+                                    @enderror
+                                </div>
+                            </div>
+
                              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label class="text-xs font-bold text-slate-400 block mb-1 uppercase tracking-wider">On Sale</label>
@@ -2307,16 +2363,19 @@
                         <div class="flex-1">
                             <label for="variant_label_input" class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
                                 Variant Selector Label
-                                <span class="ml-1.5 text-[10px] font-normal text-slate-400 normal-case tracking-normal">Shown above the variant options on the product page (only when 2+ variants exist)</span>
+                                <span class="ml-1.5 text-[10px] font-normal text-slate-400 normal-case tracking-normal">Shown above the variant options on the product page (only when 2+ variants exist). Enter <strong>NONE</strong> to disable.</span>
                             </label>
                             <input
                                 id="variant_label_input"
                                 type="text"
                                 wire:model="variant_label"
-                                placeholder="Select Option:"
+                                placeholder="Select Option: (or NONE to hide)"
                                 maxlength="255"
                                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:outline-none focus:border-indigo-500 text-sm font-medium transition"
                             >
+                            <p class="text-[11px] text-slate-400 mt-1">
+                                Tip: Enter <span class="font-bold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">NONE</span> (not case-sensitive) to hide this label display on the product page and quick shop modal.
+                            </p>
                             @error('variant_label')
                                 <span class="text-xs text-rose-500 font-semibold mt-1 block">{{ $message }}</span>
                             @enderror
@@ -2345,6 +2404,7 @@
                             <table class="w-full text-left text-sm text-slate-500">
                                 <thead class="text-xs text-slate-400 uppercase bg-slate-50 rounded-xl">
                                     <tr>
+                                        <th class="w-8 px-2 py-3 text-center" title="Drag to reorder"></th>
                                         <th class="px-4 py-3">Actions</th>
                                         <th class="px-4 py-3">Thumb</th>
                                         <th class="px-4 py-3">SKU</th>
@@ -2357,57 +2417,115 @@
                                         <th class="px-4 py-3 text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-100">
-                                    @foreach($product->variants as $variant)
-                                        @php
-                                            $qty = $variant->inventory ? $variant->inventory->quantity_available : 0;
-                                            $res = $variant->inventory ? $variant->inventory->reserved_stock : 0;
-                                            $net = $qty - $res;
-                                            $thumbUrl = $variant->thumbnailImageUrl();
-                                        @endphp
-                                        <tr class="hover:bg-slate-50/50">
+                                <tbody class="divide-y divide-slate-100"
+                                       id="variant-sortable-list"
+                                       x-data="{
+                                           sortableInstance: null,
+                                           init() {
+                                               if (typeof Sortable === 'undefined') {
+                                                   const s = document.createElement('script');
+                                                   s.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js';
+                                                   s.onload = () => this.initSortable();
+                                                   document.head.appendChild(s);
+                                               } else {
+                                                   this.initSortable();
+                                               }
+                                           },
+                                           initSortable() {
+                                               if (this.sortableInstance) {
+                                                   this.sortableInstance.destroy();
+                                               }
+                                               this.sortableInstance = Sortable.create(this.$el, {
+                                                   animation: 200,
+                                                   handle: '.variant-drag-handle',
+                                                   ghostClass: 'bg-indigo-50/70',
+                                                   onEnd: () => {
+                                                       const order = [...this.$el.querySelectorAll('[data-variant-id]')]
+                                                           .map(el => parseInt(el.dataset.variantId));
+                                                       $wire.updateVariantOrder(order);
+                                                   }
+                                               });
+                                           }
+                                       }"
+                                >
+                                    @foreach($product->groupedVariants() as $groupKey => $groupVariants)
+                                        @if($groupKey !== '')
+                                            <tr class="bg-slate-100/80 border-y border-slate-200">
+                                                <td colspan="9" class="px-4 py-2">
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 text-xs font-bold shadow-2xs">
+                                                        <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                                        Group: {{ $groupKey }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                        @foreach($groupVariants as $variant)
+                                            @php
+                                                $qty = $variant->inventory ? $variant->inventory->quantity_available : 0;
+                                                $res = $variant->inventory ? $variant->inventory->reserved_stock : 0;
+                                                $net = $qty - $res;
+                                                $thumbUrl = $variant->thumbnailImageUrl();
+                                            @endphp
+                                            <tr data-variant-id="{{ $variant->id }}"
+                                                wire:key="variant-row-{{ $variant->id }}"
+                                                class="hover:bg-slate-50/50 transition">
 
-                                            {{-- Actions (front) --}}
-                                            <td class="px-3 py-3.5">
-                                                <div class="flex flex-col items-start gap-1.5">
-                                                    <button type="button" wire:click="startEditVariant({{ $variant->id }})" @click="document.getElementById('section-variants')?.scrollIntoView({ behavior: 'smooth', block: 'start' })" class="w-full text-center px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-bold rounded-lg transition duration-150 whitespace-nowrap block cursor-pointer">Edit &amp; Inventory</button>
-                                                    <button wire:click="duplicateVariant({{ $variant->id }})" class="w-full px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-bold rounded-lg transition duration-150">Duplicate</button>
-                                                    <button onclick="confirm('Are you sure you want to delete this variant?') || event.stopImmediatePropagation()" wire:click="deleteVariant({{ $variant->id }})" class="w-full px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-bold rounded-lg transition duration-150">Delete</button>
-                                                </div>
-                                            </td>
+                                                {{-- Drag Handle --}}
+                                                <td class="px-2 py-3.5 text-center">
+                                                    <div class="variant-drag-handle cursor-grab active:cursor-grabbing text-slate-300 hover:text-indigo-600 inline-flex items-center justify-center p-1.5 rounded-lg hover:bg-indigo-50 transition duration-150" title="Drag to reorder variant">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                                                        </svg>
+                                                    </div>
+                                                </td>
 
-                                            {{-- Thumbnail --}}
-                                            <td class="px-3 py-3.5">
-                                                <div class="flex flex-col gap-2 min-w-[140px]">
-                                                    @forelse($variant->images as $img)
-                                                        <div class="flex items-center gap-2">
-                                                            <img src="{{ $img->thumbnailUrl() }}" alt="Variant image" class="w-10 h-10 object-cover rounded-lg border border-slate-200 shadow-sm">
-                                                            <div class="flex flex-col gap-0.5 text-[9px] font-bold">
-                                                                @if($img->search_image == 1)
-                                                                    <span class="px-1 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-200 whitespace-nowrap">🔍 Search Image</span>
-                                                                @endif
-                                                                @if($img->active == 1)
-                                                                    <span class="px-1 py-0.5 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 whitespace-nowrap">👁️ Active</span>
-                                                                @else
-                                                                    <span class="px-1 py-0.5 bg-slate-50 text-slate-400 rounded border border-slate-200 whitespace-nowrap">🚫 Inactive</span>
-                                                                @endif
+                                                {{-- Actions (front) --}}
+                                                <td class="px-3 py-3.5">
+                                                    <div class="flex flex-col items-start gap-1.5">
+                                                        <button type="button" wire:click="startEditVariant({{ $variant->id }})" @click="document.getElementById('section-variants')?.scrollIntoView({ behavior: 'smooth', block: 'start' })" class="w-full text-center px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 text-xs font-bold rounded-lg transition duration-150 whitespace-nowrap block cursor-pointer">Edit &amp; Inventory</button>
+                                                        <button wire:click="duplicateVariant({{ $variant->id }})" class="w-full px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-bold rounded-lg transition duration-150">Duplicate</button>
+                                                        <button onclick="confirm('Are you sure you want to delete this variant?') || event.stopImmediatePropagation()" wire:click="deleteVariant({{ $variant->id }})" class="w-full px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-bold rounded-lg transition duration-150">Delete</button>
+                                                    </div>
+                                                </td>
+
+                                                {{-- Thumbnail --}}
+                                                <td class="px-3 py-3.5">
+                                                    <div class="flex flex-col gap-2 min-w-[140px]">
+                                                        @forelse($variant->images as $img)
+                                                            <div class="flex items-center gap-2">
+                                                                <img src="{{ $img->thumbnailUrl() }}" alt="Variant image" class="w-10 h-10 object-cover rounded-lg border border-slate-200 shadow-sm">
+                                                                <div class="flex flex-col gap-0.5 text-[9px] font-bold">
+                                                                    @if($img->search_image == 1)
+                                                                        <span class="px-1 py-0.5 bg-indigo-50 text-indigo-700 rounded border border-indigo-200 whitespace-nowrap">🔍 Search Image</span>
+                                                                    @endif
+                                                                    @if($img->active == 1)
+                                                                        <span class="px-1 py-0.5 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 whitespace-nowrap">👁️ Active</span>
+                                                                    @else
+                                                                        <span class="px-1 py-0.5 bg-slate-50 text-slate-400 rounded border border-slate-200 whitespace-nowrap">🚫 Inactive</span>
+                                                                    @endif
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    @empty
-                                                        <div class="w-10 h-10 rounded-xl border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center">
-                                                            <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                        </div>
-                                                    @endforelse
-                                                </div>
-                                            </td>
+                                                        @empty
+                                                            <div class="w-10 h-10 rounded-xl border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center">
+                                                                <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                            </div>
+                                                        @endforelse
+                                                    </div>
+                                                </td>
 
-                                            {{-- SKU / Part No --}}
-                                            <td class="px-4 py-3.5 whitespace-nowrap">
-                                                <div class="font-semibold text-slate-800">{{ $variant->sku }}</div>
-                                                @if($variant->part_number)
-                                                    <div class="text-[11px] text-slate-400 font-medium">MPN: {{ $variant->part_number }}</div>
-                                                @endif
-                                            </td>
+                                                {{-- SKU / Part No / Custom Name / Group --}}
+                                                <td class="px-4 py-3.5 whitespace-nowrap">
+                                                    <div class="font-semibold text-slate-800">{{ $variant->sku }}</div>
+                                                    @if($variant->part_number)
+                                                        <div class="text-[11px] text-slate-400 font-medium">MPN: {{ $variant->part_number }}</div>
+                                                    @endif
+                                                    @if($variant->variant_custom_name)
+                                                        <div class="text-[11px] text-indigo-600 font-semibold truncate max-w-xs mt-0.5" title="{{ $variant->variant_custom_name }}">Custom: {{ $variant->variant_custom_name }}</div>
+                                                    @endif
+                                                    @if($variant->variant_group_name)
+                                                        <div class="text-[11px] text-purple-600 font-semibold truncate max-w-xs mt-0.5" title="{{ $variant->variant_group_name }}">Group: {{ $variant->variant_group_name }}</div>
+                                                    @endif
+                                                </td>
 
                                             {{-- Attributes --}}
                                             <td class="px-4 py-3.5 text-xs">
@@ -2547,6 +2665,7 @@
                                                 </div>
                                             </td>
                                         </tr>
+                                        @endforeach
                                     @endforeach
                                 </tbody>
                             </table>

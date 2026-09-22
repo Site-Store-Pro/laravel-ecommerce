@@ -36,6 +36,7 @@
             $hasImages = $product->variants->flatMap(fn($v) => $v->images->where('active', 1))->isNotEmpty();
             $hasVideo = !empty($product->product_video_embed) || ($selectedVariant && !empty($selectedVariant->video_preview));
             $hasVisuals = $hasImages || $hasVideo;
+            $stickyGalleryClass = $product->enable_multi_variant_add ? 'admin:sticky admin:top-0 min-[1025px]:sticky min-[1025px]:top-0' : '';
         @endphp
         <div class="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl max-w-5xl w-full max-h-[85vh] sm:max-h-[88vh] my-auto flex flex-col z-10 overflow-hidden"
              x-transition:enter="transition ease-out duration-200"
@@ -65,9 +66,9 @@
                     @case(2)
                         {{-- Layout 2: Left Side Images, Buy Box on Right --}}
                         @if($hasVisuals)
-                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
                                 <!-- Left Side: Visual / Gallery -->
-                                <div class="lg:col-span-6 flex flex-col">
+                                <div class="lg:col-span-6 flex flex-col {{ $stickyGalleryClass }}">
                                     @include('livewire.partials.product-gallery')
                                     @include('livewire.partials.product-video-player')
                                 </div>
@@ -87,13 +88,13 @@
                         {{-- Layout 3: Right Side Images With Video Space Below --}}
                         @if($hasVisuals)
                             <div class="space-y-8">
-                                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+                                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
                                     <!-- Left Side: Configuration & Buy -->
                                     <div class="lg:col-span-6 flex flex-col justify-start order-2 lg:order-1">
                                         @include('livewire.partials.product-buy-box', ['isQuickShop' => true])
                                     </div>
                                     <!-- Right Side: Visual / Info -->
-                                    <div class="lg:col-span-6 flex flex-col order-1 lg:order-2">
+                                    <div class="lg:col-span-6 flex flex-col order-1 lg:order-2 {{ $stickyGalleryClass }}">
                                         @include('livewire.partials.product-gallery')
                                     </div>
                                 </div>
@@ -176,13 +177,13 @@
                     @default
                         {{-- Default (Layout 1): Right Side Images --}}
                         @if($hasVisuals)
-                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+                            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
                                 <!-- Left Side: Configuration & Buy -->
                                 <div class="lg:col-span-6 flex flex-col justify-start order-2 lg:order-1">
                                     @include('livewire.partials.product-buy-box', ['isQuickShop' => true])
                                 </div>
                                 <!-- Right Side: Visual / Info -->
-                                <div class="lg:col-span-6 flex flex-col order-1 lg:order-2">
+                                <div class="lg:col-span-6 flex flex-col order-1 lg:order-2 {{ $stickyGalleryClass }}">
                                     @include('livewire.partials.product-gallery')
                                     @include('livewire.partials.product-video-player')
                                 </div>

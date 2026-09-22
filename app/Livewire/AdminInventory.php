@@ -218,7 +218,7 @@ class AdminInventory extends Component
 
         $this->validate([
             'csvFile'          => 'required|file|max:204800', // 200MB max
-            'markupPercentage' => 'nullable|numeric|min:0|max:1000',
+            'markupPercentage' => 'nullable|numeric|min:-99.99|max:1000',
             'inventoryMode'    => 'required|in:replace,add',
         ]);
 
@@ -343,7 +343,7 @@ class AdminInventory extends Component
             'ftpUsername'        => 'required|string|max:255',
             'ftpPassword'        => 'nullable|string|max:255',
             'ftpRemotePath'      => 'required|string|max:500',
-            'ftpMarkupPercentage'=> 'nullable|numeric|min:0|max:1000',
+            'ftpMarkupPercentage'=> 'nullable|numeric|min:-99.99|max:1000',
             'ftpInventoryMode'   => 'required|in:replace,add',
             'ftpAutoShowInResults' => 'boolean',
         ]);
@@ -403,7 +403,7 @@ class AdminInventory extends Component
             'ftpUsername'         => 'required|string|max:255',
             'ftpPassword'         => 'nullable|string|max:255',
             'ftpRemotePath'       => 'required|string|max:500',
-            'ftpMarkupPercentage' => 'nullable|numeric|min:0|max:1000',
+            'ftpMarkupPercentage' => 'nullable|numeric|min:-99.99|max:1000',
             'ftpInventoryMode'    => 'required|in:replace,add',
             'ftpAutoShowInResults'=> 'boolean',
         ]);

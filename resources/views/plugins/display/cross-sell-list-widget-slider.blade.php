@@ -174,8 +174,7 @@
                             $originalPrice = $defaultVariant->public_price ?? 0;
                             $priceToShow   = DiscountService::getDiscountedPriceForVariant($defaultVariant, $user, 1);
                         }
-                        $isFromPrice = $product->variants->count() > 1
-                            && $product->variants->pluck('public_price')->unique()->count() > 1;
+                        $priceRange = $product->getFormattedPriceRange($user ? ($user->user_type ?? 1) : 1);
                         $v     = $defaultVariant;
                         $avail = ($v && $v->inventory)
                             ? $v->inventory->quantity_available - $v->inventory->reserved_stock
@@ -202,6 +201,9 @@
 
                             {{-- Body --}}
                             <div class="fi-body">
+                                @if($product->brand && !\App\Models\CmsSetting::isEnabled('hide_catalog_brand_name'))
+                                    <a href="{{ route('shop.brand', $product->brand->slug) }}" class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 hover:underline mb-1 block !no-underline" style="font-size: 11px; text-decoration: none !important;">{{ $product->brand->name }}</a>
+                                @endif
                                 <h3 style="margin:0;padding:0;">
                                     <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-title !no-underline" style="text-decoration:none !important;">
                                         {{ $product->title }}
@@ -214,12 +216,14 @@
                                 <div class="fi-footer">
                                     <div class="min-w-0">
                                         @if(!$product->is_donation_or_bill_pay && $defaultVariant)
-                                            @if($defaultVariant->hasStripeTrial() && $defaultVariant->hasTrialLabel())
+                                            @if($priceRange['has_range'])
+                                                <div class="fi-price">{{ $priceRange['display'] }}</div>
+                                            @elseif($defaultVariant->hasStripeTrial() && $defaultVariant->hasTrialLabel())
                                                 <div class="fi-price" style="color: #6366f1;">{{ $defaultVariant->getTrialLabel() }}</div>
                                             @elseif($defaultVariant->hasStripeTrial())
                                                 <div class="fi-price">${{ number_format($priceToShow, 2) }}</div>
                                             @else
-                                                <div class="fi-price">@if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}</div>
+                                                <div class="fi-price">${{ number_format($priceToShow, 2) }}</div>
                                                 @if($priceToShow < $originalPrice)
                                                     <div class="fi-price-orig">${{ number_format($originalPrice, 2) }}</div>
                                                 @endif

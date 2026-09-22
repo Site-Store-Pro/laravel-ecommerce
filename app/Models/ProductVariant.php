@@ -31,6 +31,9 @@ class ProductVariant extends Model
         'product_id',
         'sku',
         'part_number',
+        'variant_custom_name',
+        'variant_group_name',
+        'sort_order',
         'public_price',
         'wholesale_price',
         'on_sale',
@@ -127,6 +130,7 @@ class ProductVariant extends Model
     ];
 
     protected $casts = [
+        'sort_order'                => 'integer',
         'public_price'              => 'decimal:2',
         'wholesale_price'           => 'decimal:2',
         'sale_price'                => 'decimal:2',
@@ -486,6 +490,11 @@ class ProductVariant extends Model
         return is_array($trans->attributes_translated)
             ? $trans->attributes_translated
             : (json_decode($trans->attributes_translated, true) ?: []);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order', 'asc')->orderBy('id', 'asc');
     }
 }
 

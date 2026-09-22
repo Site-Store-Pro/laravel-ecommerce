@@ -294,6 +294,67 @@
                                     </div>
                                 </div>
 
+                                {{-- Brand Header Image Section --}}
+                                <div class="pt-2 border-t border-slate-100">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Brand Header Image <span class="normal-case text-slate-400 font-normal text-[11px]">(shown on catalog results when filtered by brand only)</span></label>
+
+                                    {{-- Storage Mode --}}
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Storage Destination</label>
+                                        <select wire:model.live="header_image_s3" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500">
+                                            <option value="0">Local Public Storage</option>
+                                            <option value="1">Default S3 (.env credentials)</option>
+                                            <option value="2">Custom S3 (own credentials)</option>
+                                        </select>
+                                    </div>
+
+                                    {{-- CDN prefix — shown for S3 modes --}}
+                                    @if($header_image_s3 >= 1)
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">CDN / CloudFront URL Prefix <span class="font-normal text-slate-400">(optional)</span></label>
+                                        <input type="text" wire:model="header_image_cdn_url" placeholder="https://dxxxxxx.cloudfront.net" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500 @error('header_image_cdn_url') border-rose-500 @enderror">
+                                        <p class="text-[10px] text-slate-400 mt-1">Prepended to the stored file path to build the public URL.</p>
+                                        @error('header_image_cdn_url') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+                                    @endif
+
+                                    {{-- Custom S3 credentials — shown for mode=2 --}}
+                                    @if($header_image_s3 == 2)
+                                    <div class="space-y-2 mb-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                                        <p class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Custom S3 Credentials</p>
+                                        <input type="text" wire:model="header_image_region" placeholder="Region (e.g. us-east-1)" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="text" wire:model="header_image_bucket_name" placeholder="Bucket Name" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="text" wire:model="header_image_access_key_id" placeholder="Access Key ID" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                        <input type="password" wire:model="header_image_secret_access_key" placeholder="Secret Access Key" class="w-full px-3 py-2 bg-white border border-slate-200 text-slate-800 text-xs rounded-lg focus:outline-none focus:border-indigo-500">
+                                    </div>
+                                    @endif
+
+                                    {{-- Current header image preview --}}
+                                    @if($header_image || $header_image_direct_url)
+                                    <div class="mb-2 flex items-center gap-3 p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                                        <img src="{{ $header_image_direct_url ?: $header_image }}" class="w-24 h-12 object-cover bg-white border border-slate-150 rounded-lg p-0.5" alt="Current Header Image">
+                                        <div class="text-[10px] text-slate-400 font-mono truncate max-w-[200px]">{{ basename($header_image_direct_url ?: $header_image) }}</div>
+                                    </div>
+                                    @endif
+
+                                    {{-- Direct URL option --}}
+                                    <div class="mb-3">
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Direct Image URL <span class="font-normal text-slate-400">(bypasses file upload)</span></label>
+                                        <input type="text" wire:model="header_image_direct_url" placeholder="https://example.com/brand-header.jpg" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500 @error('header_image_direct_url') border-rose-500 @enderror">
+                                        <p class="text-[10px] text-slate-400 mt-1">If set, this URL is used as the header image — no upload required.</p>
+                                        @error('header_image_direct_url') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    {{-- File upload --}}
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Upload Header File <span class="font-normal text-slate-400">(overrides direct URL if provided)</span></label>
+                                        <input type="file" wire:model="headerImageFile" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500">
+                                        <p class="text-[10px] text-slate-400 mt-1 font-medium">PNG or JPG, max 4 MB. Leave blank to keep existing header image.</p>
+                                        @error('headerImageFile') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                        @error('header_image') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+
                                 <div>
                                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Brand Website URL</label>
                                     <input type="text" wire:model="brand_url" placeholder="e.g. https://antigravitygear.local" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:outline-none focus:border-indigo-500 @error('brand_url') border-rose-500 @enderror">

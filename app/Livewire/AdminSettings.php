@@ -204,10 +204,12 @@ class AdminSettings extends Component
 
     // Breadcrumbs & Shop Customization
     public bool   $show_product_details_breadcrumbs = true;
+    public bool   $show_return_to_search_results = true;
     public bool   $show_shop_breadcrumbs = true;
     public bool   $shop_disable_default_product_listing = false;
     public bool   $shop_hide_filters_until_applied = false;
     public string $shop_header_custom_html = '';
+    public bool   $hide_catalog_brand_name = false;
 
     // Cart & Order Details Item Title Display Options
     public bool   $cart_show_sku = true;
@@ -326,10 +328,12 @@ class AdminSettings extends Component
         $this->enable_abandoned_cart_reminder_1     = (bool) ($settings['enable_abandoned_cart_reminder_1'] ?? true);
         $this->enable_abandoned_cart_reminder_2     = (bool) ($settings['enable_abandoned_cart_reminder_2'] ?? true);
         $this->show_product_details_breadcrumbs      = (bool) ($settings['show_product_details_breadcrumbs'] ?? true);
+        $this->show_return_to_search_results         = (bool) ($settings['show_return_to_search_results'] ?? true);
         $this->show_shop_breadcrumbs                 = (bool) ($settings['show_shop_breadcrumbs'] ?? true);
         $this->shop_disable_default_product_listing  = (bool) ($settings['shop_disable_default_product_listing'] ?? false);
         $this->shop_hide_filters_until_applied       = (bool) ($settings['shop_hide_filters_until_applied'] ?? false);
         $this->shop_header_custom_html               = (string) ($settings['shop_header_custom_html'] ?? '');
+        $this->hide_catalog_brand_name               = (bool) ($settings['hide_catalog_brand_name'] ?? false);
         $this->cart_show_sku                         = (bool) ($settings['cart_show_sku'] ?? true);
         $this->cart_show_variant_name                = (bool) ($settings['cart_show_variant_name'] ?? false);
         $this->hide_zero_price_variants              = (bool) ($settings['hide_zero_price_variants'] ?? false);
@@ -514,9 +518,11 @@ class AdminSettings extends Component
             'enable_abandoned_cart_reminder_1' => 'boolean',
             'enable_abandoned_cart_reminder_2' => 'boolean',
             'show_product_details_breadcrumbs' => 'boolean',
+            'show_return_to_search_results' => 'boolean',
             'show_shop_breadcrumbs' => 'boolean',
             'shop_disable_default_product_listing' => 'boolean',
             'shop_hide_filters_until_applied' => 'boolean',
+            'hide_catalog_brand_name' => 'boolean',
             'hide_zero_price_variants' => 'boolean',
             'display_stock_25_plus' => 'boolean',
             'cart_show_sku' => 'boolean',
@@ -692,9 +698,11 @@ class AdminSettings extends Component
             'enable_abandoned_cart_reminder_1' => $this->enable_abandoned_cart_reminder_1 ? '1' : '0',
             'enable_abandoned_cart_reminder_2' => $this->enable_abandoned_cart_reminder_2 ? '1' : '0',
             'show_product_details_breadcrumbs'     => $this->show_product_details_breadcrumbs ? '1' : '0',
+            'show_return_to_search_results'         => $this->show_return_to_search_results ? '1' : '0',
             'show_shop_breadcrumbs'                => $this->show_shop_breadcrumbs ? '1' : '0',
             'shop_disable_default_product_listing'  => $this->shop_disable_default_product_listing ? '1' : '0',
             'shop_hide_filters_until_applied'      => $this->shop_hide_filters_until_applied ? '1' : '0',
+            'hide_catalog_brand_name'              => $this->hide_catalog_brand_name ? '1' : '0',
             'hide_zero_price_variants'             => $this->hide_zero_price_variants ? '1' : '0',
             'display_stock_25_plus'                => $this->display_stock_25_plus ? '1' : '0',
             'shop_header_custom_html'              => $this->shop_header_custom_html ?? '',

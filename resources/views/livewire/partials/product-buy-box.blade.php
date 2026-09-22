@@ -81,11 +81,16 @@
             @endif
         </div>
     @else
+        @if(!$product->hide_product_price)
         <!-- Price -->
         <div class="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
             <div>
                 <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">@label('product.price', 'Price')</span>
-                @if($selectedVariant)
+                @if($product->enable_multi_variant_add && isset($priceRange) && $priceRange['has_range'])
+                    <div class="flex items-center gap-2 mt-1 flex-wrap">
+                        <span class="text-3xl font-extrabold text-slate-900">{{ $priceRange['display'] }}</span>
+                    </div>
+                @elseif($selectedVariant)
                     @php
                         $displayCalcPrice = $vatInclusive && $merchantVatRate > 0
                             ? $this->calculatedPrice * (1 + $merchantVatRate / 100)
@@ -139,6 +144,10 @@
                             @endif
                         </div>
                     @endif
+                @elseif(isset($priceRange) && !$priceRange['is_na'])
+                    <div class="flex items-center gap-2 mt-1 flex-wrap">
+                        <span class="text-3xl font-extrabold text-slate-900">{{ $priceRange['display'] }}</span>
+                    </div>
                 @else
                     <span class="text-sm text-slate-500 font-bold mt-1 block">N/A</span>
                 @endif
@@ -148,9 +157,254 @@
                 <span class="px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-full border border-emerald-100">@label('product.wholesale_rate', 'Wholesale Rate')</span>
             @endif
         </div>
+        @endif
 
         <!-- Variant Selection -->
-        @if($product->variants->count() > 1)
+        @if($product->enable_multi_variant_add)
+            {{-- MULTI-VARIANT DIRECT ORDER (Line Items Table or Card Grid) --}}
+            <div class="mt-8 space-y-6">
+                @if($product->showVariantLabel())
+                    <div class="border-b border-slate-200 pb-3">
+                        <h3 class="text-base font-extrabold text-slate-900">{{ $product->displayVariantLabel('Available Options & Pricing') }}</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">@label('product.select_quantities_direct_order', 'Select quantities and add items directly to your cart.')</p>
+                    </div>
+                @endif
+
+                @foreach($product->groupedVariants() as $groupKey => $groupVariants)
+                    <div class="space-y-3">
+                        @if($groupKey !== '')
+                            <div class="flex items-center gap-2 pt-2">
+                                <span class="inline-flex items-center px-3 py-1 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold uppercase tracking-wider">
+                                    {{ $groupKey }}
+                                </span>
+                            </div>
+                        @endif
+
+                        @if($product->multi_variant_layout === 'grid')
+                            {{-- Card Grid Layout --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                @foreach($groupVariants as $v)
+                                    @php
+                                        $vAttrs = json_decode($v->attributes, true) ?: [];
+                                        $vFlatTransMap = $variantAttributeTranslations[$v->id] ?? [];
+                                        $vAttrStr = collect($vAttrs)->map(function($val, $k) use ($vFlatTransMap) {
+                                            $displayKey = ($vFlatTransMap[$k] ?? '') ?: $k;
+                                            $displayVal = ($vFlatTransMap[$val] ?? '') ?: $val;
+                                            return "$displayKey: $displayVal";
+                                        })->implode(' · ');
+
+                                        $vBasePrice = $userType == 2 ? $v->wholesale_price : ($v->on_sale && $v->sale_price > 0 ? $v->sale_price : $v->public_price);
+                                        $vTotalPrice = $vBasePrice + $v->variant_fee;
+                                        if ($vatInclusive && $merchantVatRate > 0) {
+                                            $vTotalPrice = $vTotalPrice * (1 + $merchantVatRate / 100);
+                                        }
+                                        $vStock = $v->inventory ? $v->inventory->available_stock : 0;
+                                        $vDisplayStock = (\App\Models\CmsSetting::isEnabled('display_stock_25_plus') && $vStock > 25) ? '25+' : $vStock;
+                                        $vIsOos = !$v->download_item && $vStock <= 0;
+                                        $vThumb = $v->thumbnailImageUrl();
+                                    @endphp
+                                    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-indigo-300 transition">
+                                        <div class="flex items-start gap-3 mb-3">
+                                            <button type="button"
+                                                    @click="$dispatch('gallery:variant-changed', { variantId: {{ $v->id }}, color: '{{ addslashes(method_exists($this, 'getVariantColor') ? ($this->getVariantColor($v) ?? '') : '') }}', force: true }); $wire.set('selectedVariantId', {{ $v->id }}, false)"
+                                                    class="group/thumb relative shrink-0 text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl cursor-pointer"
+                                                    title="View in main gallery">
+                                                @if($vThumb)
+                                                    <img src="{{ $vThumb }}" alt="{{ $v->sku }}" class="w-14 h-14 rounded-xl object-cover border border-slate-100 shadow-2xs group-hover/thumb:border-indigo-400 group-hover/thumb:shadow-md transition">
+                                                    <div class="absolute inset-0 bg-indigo-900/15 rounded-xl opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center pointer-events-none">
+                                                        <svg class="w-4 h-4 text-white drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    </div>
+                                                @else
+                                                    <div class="w-14 h-14 rounded-xl bg-slate-100 shrink-0 flex items-center justify-center border border-slate-200/60 group-hover/thumb:border-indigo-300 transition">
+                                                        <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                    </div>
+                                                @endif
+                                            </button>
+                                            <div class="flex-1 min-w-0">
+                                                <h4 class="font-bold text-slate-900 text-sm leading-snug break-words">
+                                                    {{ $v->variant_custom_name ?: $v->sku }}
+                                                </h4>
+                                                @if($v->variant_custom_name && $v->sku)
+                                                    <div class="text-[11px] text-slate-400 font-medium break-words">SKU: {{ $v->sku }}</div>
+                                                @endif
+                                                @if($v->part_number)
+                                                    <div class="text-[11px] text-slate-400 font-medium break-words">MPN: {{ $v->part_number }}</div>
+                                                @endif
+                                                @if($vAttrStr)
+                                                    <div class="text-[11px] text-indigo-600 font-medium mt-0.5 break-words leading-relaxed">{{ $vAttrStr }}</div>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between mt-auto">
+                                            <div>
+                                                <div class="font-extrabold text-slate-900 text-base">
+                                                    {{ $currencySymbol }}{{ number_format($vTotalPrice, 2) }}
+                                                </div>
+                                                @if(!$product->hide_inventory_levels)
+                                                    @if($v->download_item)
+                                                        <span class="text-[10px] text-indigo-600 font-bold block">Instant Download</span>
+                                                    @elseif($vStock > 0)
+                                                        <span class="text-[10px] text-emerald-600 font-bold block">{{ $vDisplayStock }} in stock</span>
+                                                    @else
+                                                        <span class="text-[10px] text-rose-500 font-bold block">Out of stock</span>
+                                                    @endif
+                                                @endif
+                                            </div>
+
+                                            @if($vIsOos)
+                                                <button disabled class="px-3 py-2 bg-slate-100 text-slate-400 font-bold text-xs rounded-xl cursor-not-allowed">
+                                                    Unavailable
+                                                </button>
+                                            @else
+                                                <div class="flex items-center gap-2">
+                                                    @if($product->max_qty != 1 && !$product->is_donation_or_bill_pay)
+                                                        <input type="number" min="1" step="1"
+                                                               wire:model="multiVariantQuantities.{{ $v->id }}"
+                                                               placeholder="1"
+                                                               class="w-14 text-center py-2 px-1 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+                                                    @endif
+                                                    <button type="button"
+                                                            wire:click="addVariantToCart({{ $v->id }})"
+                                                            wire:loading.attr="disabled"
+                                                            wire:target="addVariantToCart({{ $v->id }})"
+                                                            class="py-2 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-xs hover:scale-[1.02] transition duration-150 flex items-center gap-1.5 cursor-pointer">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                                        Add
+                                                    </button>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            {{-- Line Items Table Layout --}}
+                            <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-xs">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                            <th class="py-2.5 px-2.5 w-14">@label('product.item', 'Item')</th>
+                                            <th class="py-2.5 px-2.5">@label('product.options_details', 'Option / Details')</th>
+                                            <th class="py-2.5 px-2.5">@label('product.price', 'Price')</th>
+                                            @if(!$product->hide_inventory_levels)
+                                                <th class="py-2.5 px-2.5">@label('product.stock', 'Stock')</th>
+                                            @endif
+                                            <th class="py-2.5 px-2.5 text-right">@label('product.order', 'Order')</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-xs">
+                                        @foreach($groupVariants as $v)
+                                            @php
+                                                $vAttrs = json_decode($v->attributes, true) ?: [];
+                                                $vFlatTransMap = $variantAttributeTranslations[$v->id] ?? [];
+                                                $vAttrStr = collect($vAttrs)->map(function($val, $k) use ($vFlatTransMap) {
+                                                    $displayKey = ($vFlatTransMap[$k] ?? '') ?: $k;
+                                                    $displayVal = ($vFlatTransMap[$val] ?? '') ?: $val;
+                                                    return "$displayKey: $displayVal";
+                                                })->implode(' · ');
+
+                                                $vBasePrice = $userType == 2 ? $v->wholesale_price : ($v->on_sale && $v->sale_price > 0 ? $v->sale_price : $v->public_price);
+                                                $vTotalPrice = $vBasePrice + $v->variant_fee;
+                                                if ($vatInclusive && $merchantVatRate > 0) {
+                                                    $vTotalPrice = $vTotalPrice * (1 + $merchantVatRate / 100);
+                                                }
+                                                $vStock = $v->inventory ? $v->inventory->available_stock : 0;
+                                                $vDisplayStock = (\App\Models\CmsSetting::isEnabled('display_stock_25_plus') && $vStock > 25) ? '25+' : $vStock;
+                                                $vIsOos = !$v->download_item && $vStock <= 0;
+                                                $vThumb = $v->thumbnailImageUrl();
+                                            @endphp
+                                            <tr class="hover:bg-slate-50/60 transition">
+                                                <td class="py-2.5 px-2.5 w-14 align-top">
+                                                    <button type="button"
+                                                            @click="$dispatch('gallery:variant-changed', { variantId: {{ $v->id }}, color: '{{ addslashes(method_exists($this, 'getVariantColor') ? ($this->getVariantColor($v) ?? '') : '') }}', force: true }); $wire.set('selectedVariantId', {{ $v->id }}, false)"
+                                                            class="group/thumb relative shrink-0 text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl block cursor-pointer"
+                                                            title="View in main gallery">
+                                                        @if($vThumb)
+                                                            <img src="{{ $vThumb }}" alt="{{ $v->sku }}" class="w-12 h-12 rounded-xl object-cover border border-slate-100 shadow-2xs group-hover/thumb:border-indigo-400 group-hover/thumb:shadow-md transition">
+                                                            <div class="absolute inset-0 bg-indigo-900/15 rounded-xl opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center pointer-events-none">
+                                                                <svg class="w-3.5 h-3.5 text-white drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                            </div>
+                                                        @else
+                                                            <div class="w-12 h-12 rounded-xl bg-slate-100 shrink-0 flex items-center justify-center border border-slate-200/60 group-hover/thumb:border-indigo-300 transition">
+                                                                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                            </div>
+                                                        @endif
+                                                    </button>
+                                                </td>
+                                                <td class="py-2.5 px-2.5 align-top">
+                                                    <div class="font-bold text-slate-900 text-sm leading-snug break-words">
+                                                        {{ $v->variant_custom_name ?: $v->sku }}
+                                                    </div>
+                                                    @if($v->variant_custom_name && $v->sku)
+                                                        <div class="text-[11px] text-slate-400 font-medium break-words">SKU: {{ $v->sku }}</div>
+                                                    @endif
+                                                    @if($v->part_number)
+                                                        <div class="text-[11px] text-slate-400 font-medium break-words">MPN: {{ $v->part_number }}</div>
+                                                    @endif
+                                                    @if($vAttrStr)
+                                                        <div class="text-[11px] text-indigo-600 font-medium mt-0.5 break-words leading-relaxed">{{ $vAttrStr }}</div>
+                                                    @endif
+                                                </td>
+                                                <td class="py-2.5 px-2.5 whitespace-nowrap align-top">
+                                                    <div class="font-extrabold text-slate-900 text-sm">
+                                                        {{ $currencySymbol }}{{ number_format($vTotalPrice, 2) }}
+                                                    </div>
+                                                    @if($v->on_sale && $v->sale_price > 0)
+                                                        <span class="text-[10px] text-red-500 font-bold bg-red-50 px-1.5 py-0.5 rounded border border-red-100">Sale</span>
+                                                    @endif
+                                                </td>
+                                                @if(!$product->hide_inventory_levels)
+                                                    <td class="py-2.5 px-2.5 whitespace-nowrap align-top">
+                                                        @if($v->download_item)
+                                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                                                                <span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Digital
+                                                            </span>
+                                                        @elseif($vStock > 0)
+                                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> {{ $vDisplayStock }} in stock
+                                                            </span>
+                                                        @else
+                                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                                                                <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Out of stock
+                                                            </span>
+                                                        @endif
+                                                    </td>
+                                                @endif
+                                                <td class="py-2.5 px-2.5 text-right align-top">
+                                                    @if($vIsOos)
+                                                        <button disabled class="px-2.5 py-1.5 bg-slate-100 text-slate-400 font-bold text-xs rounded-xl cursor-not-allowed whitespace-nowrap">
+                                                            Out of Stock
+                                                        </button>
+                                                    @else
+                                                        <div class="flex flex-col items-end gap-1.5">
+                                                            @if($product->max_qty != 1 && !$product->is_donation_or_bill_pay)
+                                                                <input type="number" min="1" step="1"
+                                                                       wire:model="multiVariantQuantities.{{ $v->id }}"
+                                                                       placeholder="1"
+                                                                       class="w-14 text-center py-1.5 px-1 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
+                                                            @endif
+                                                            <button type="button"
+                                                                    wire:click="addVariantToCart({{ $v->id }})"
+                                                                    wire:loading.attr="disabled"
+                                                                    wire:target="addVariantToCart({{ $v->id }})"
+                                                                    class="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-xs hover:scale-[1.02] transition duration-150 flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap">
+                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                                                                Add
+                                                            </button>
+                                                        </div>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @elseif($product->variants->count() > 1)
             @if($product->dependent_variants == 1)
                 {{-- Dynamic Drill-Down & Dependent Selectors --}}
                 @php
@@ -166,8 +420,6 @@
                     }
 
                     // Build a merged flat translation map across all variants.
-                    // Keys are raw strings, values are translated strings.
-                    // Merging all variants gives us a complete token pool for this product.
                     $attrTransMap = [];
                     if (!($isDefaultLanguage ?? true) && !empty($variantAttributeTranslations)) {
                         foreach ($variantAttributeTranslations as $transMap) {
@@ -182,7 +434,9 @@
 
                 @if(!empty($groupedAttributes))
                     <div class="mt-8 space-y-6 bg-slate-50/50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 rounded-3xl p-6">
-                        <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider border-b border-slate-200/60 dark:border-slate-700/60 pb-2">{{ $product->variant_label ?: 'Select Option:' }}</h3>
+                        @if($product->showVariantLabel())
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider border-b border-slate-200/60 dark:border-slate-700/60 pb-2">{{ $product->displayVariantLabel('Select Option:') }}</h3>
+                        @endif
                         
                         <div class="space-y-5">
                             @foreach($groupedAttributes as $key => $values)
@@ -217,8 +471,6 @@
                                                     }
                                                 }
                                                 $isSelected = isset($selectedAttributes[$key]) && $selectedAttributes[$key] === $value;
-                                                // Display label (translated if available) — the raw $value is always
-                                                // what wire:click sends so selectAttribute() can match it against JSON.
                                                 $displayValue = $attrTransMap[$value] ?? $value;
                                             @endphp
                                             <button 
@@ -240,60 +492,73 @@
                     </div>
                 @endif
             @else
-                {{-- Flat options list showing each price / SKU --}}
+                {{-- Flat options list showing each price / SKU (Grouped by Group Name) --}}
                 <div class="mt-8">
-                    <label class="text-sm font-bold text-slate-900 block mb-3">{{ $product->variant_label ?: 'Select Option:' }}</label>
-                    <div class="space-y-3">
-                        @foreach($product->variants as $variant)
-                            @php
-                                $attrs = json_decode($variant->attributes, true) ?: [];
-                                // Build display string using translated labels where available.
-                                $flatTransMap = $variantAttributeTranslations[$variant->id] ?? [];
-                                $attrStr = collect($attrs)->map(function($v, $k) use ($flatTransMap) {
-                                    $displayKey = ($flatTransMap[$k] ?? '') ?: $k;
-                                    $displayVal = ($flatTransMap[$v] ?? '') ?: $v;
-                                    return "$displayKey: $displayVal";
-                                })->implode(', ');
-                            @endphp
-                            <label class="flex items-center justify-between p-4 bg-white border {{ $selectedVariantId == $variant->id ? 'border-indigo-500 ring-2 ring-indigo-500/10 bg-indigo-50/10' : 'border-slate-200' }} rounded-2xl cursor-pointer hover:border-indigo-300 transition duration-150">
-                                <div class="flex items-center gap-3">
-                                    <input type="radio" wire:model.live="selectedVariantId" name="variant" value="{{ $variant->id }}" class="text-indigo-600 focus:ring-indigo-500 h-4 w-4 shrink-0">
-                                    @if($product->show_variant_selector_thumbnail)
-                                        @php $varThumbUrl = $variant->thumbnailImageUrl(); @endphp
-                                        @if($varThumbUrl)
-                                            <img src="{{ $varThumbUrl }}" alt="{{ $variant->sku }}" class="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-100 shadow-sm">
-                                        @else
-                                            <div class="w-12 h-12 rounded-xl bg-slate-100 shrink-0 flex items-center justify-center">
-                                                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                            </div>
-                                        @endif
-                                    @endif
-                                    <div>
-                                        <span class="text-sm font-bold text-slate-800">{{ $variant->sku }}</span>
-                                        @if($attrStr)
-                                            <span class="text-xs text-slate-400 block">{{ $attrStr }}</span>
-                                        @endif
-                                    </div>
+                    @if($product->showVariantLabel())
+                        <label class="text-sm font-bold text-slate-900 block mb-3">{{ $product->displayVariantLabel('Select Option:') }}</label>
+                    @endif
+                    <div class="space-y-4">
+                        @foreach($product->groupedVariants() as $groupKey => $groupVariants)
+                            @if($groupKey !== '')
+                                <div class="font-bold text-xs text-slate-600 uppercase tracking-wider pt-2 border-t border-slate-100">
+                                    {{ $groupKey }}
                                 </div>
-                                <span class="text-sm font-extrabold text-slate-900 text-right">
+                            @endif
+                            <div class="space-y-3">
+                                @foreach($groupVariants as $variant)
                                     @php
-                                        $varBasePrice = $userType == 2 ? $variant->wholesale_price : ($variant->on_sale && $variant->sale_price > 0 ? $variant->sale_price : $variant->public_price);
-                                        $varTotalPrice = $varBasePrice + $variant->variant_fee;
-                                        if ($vatInclusive && $merchantVatRate > 0) {
-                                            $varTotalPrice = $varTotalPrice * (1 + $merchantVatRate / 100);
-                                        }
-                                        $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+                                        $attrs = json_decode($variant->attributes, true) ?: [];
+                                        $flatTransMap = $variantAttributeTranslations[$variant->id] ?? [];
+                                        $attrStr = collect($attrs)->map(function($v, $k) use ($flatTransMap) {
+                                            $displayKey = ($flatTransMap[$k] ?? '') ?: $k;
+                                            $displayVal = ($flatTransMap[$v] ?? '') ?: $v;
+                                            return "$displayKey: $displayVal";
+                                        })->implode(', ');
                                     @endphp
-                                    @if($hideZero && $varTotalPrice <= 0)
-                                        <span class="text-slate-400 font-medium">N/A</span>
-                                    @else
-                                        {{ $currencySymbol }}{{ number_format($varTotalPrice, 2) }}
-                                        @if($variant->variant_fee > 0)
-                                            <span class="text-[10px] font-bold text-indigo-500 block">+{{ $currencySymbol }}{{ number_format($variant->variant_fee * (1 + ($vatInclusive ? $merchantVatRate / 100 : 0)), 2) }} @label('product.selection_fee', 'selection fee')</span>
-                                        @endif
-                                    @endif
-                                </span>
-                            </label>
+                                    <label class="flex items-center justify-between p-4 bg-white border {{ $selectedVariantId == $variant->id ? 'border-indigo-500 ring-2 ring-indigo-500/10 bg-indigo-50/10' : 'border-slate-200' }} rounded-2xl cursor-pointer hover:border-indigo-300 transition duration-150">
+                                        <div class="flex items-center gap-3">
+                                            <input type="radio" wire:model.live="selectedVariantId" name="variant" value="{{ $variant->id }}" class="text-indigo-600 focus:ring-indigo-500 h-4 w-4 shrink-0">
+                                            @if($product->show_variant_selector_thumbnail)
+                                                @php $varThumbUrl = $variant->thumbnailImageUrl(); @endphp
+                                                @if($varThumbUrl)
+                                                    <img src="{{ $varThumbUrl }}" alt="{{ $variant->sku }}" class="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-100 shadow-sm">
+                                                @else
+                                                    <div class="w-12 h-12 rounded-xl bg-slate-100 shrink-0 flex items-center justify-center">
+                                                        <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                    </div>
+                                                @endif
+                                            @endif
+                                            <div>
+                                                <span class="text-sm font-bold text-slate-800">{{ $variant->variant_custom_name ?: $variant->sku }}</span>
+                                                @if($variant->variant_custom_name && $variant->sku)
+                                                    <span class="text-xs text-slate-400 block">SKU: {{ $variant->sku }}</span>
+                                                @endif
+                                                @if($attrStr)
+                                                    <span class="text-xs text-slate-400 block">{{ $attrStr }}</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <span class="text-sm font-extrabold text-slate-900 text-right">
+                                            @php
+                                                $varBasePrice = $userType == 2 ? $variant->wholesale_price : ($variant->on_sale && $variant->sale_price > 0 ? $variant->sale_price : $variant->public_price);
+                                                $varTotalPrice = $varBasePrice + $variant->variant_fee;
+                                                if ($vatInclusive && $merchantVatRate > 0) {
+                                                    $varTotalPrice = $varTotalPrice * (1 + $merchantVatRate / 100);
+                                                }
+                                                $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
+                                            @endphp
+                                            @if($hideZero && $varTotalPrice <= 0)
+                                                <span class="text-slate-400 font-medium">N/A</span>
+                                            @else
+                                                {{ $currencySymbol }}{{ number_format($varTotalPrice, 2) }}
+                                                @if($variant->variant_fee > 0)
+                                                    <span class="text-[10px] font-bold text-indigo-500 block">+{{ $currencySymbol }}{{ number_format($variant->variant_fee * (1 + ($vatInclusive ? $merchantVatRate / 100 : 0)), 2) }} @label('product.selection_fee', 'selection fee')</span>
+                                                @endif
+                                            @endif
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
                         @endforeach
                     </div>
                 </div>
@@ -301,26 +566,28 @@
         @endif
 
         <!-- Stock Levels -->
-        @if($selectedVariant && !$selectedVariant->download_item && !$product->hide_inventory_levels)
-            <div class="mt-6 flex items-center gap-2">
-                @php
-                    $stock = $selectedVariant->inventory ? $selectedVariant->inventory->available_stock : 0;
-                    $displayStock = (\App\Models\CmsSetting::isEnabled('display_stock_25_plus') && $stock > 25) ? '25+' : $stock;
-                @endphp
-                @if($stock > 0)
-                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                    <span class="text-xs text-slate-500 font-semibold">{{ $displayStock }} @label('product.in_stock', 'in stock')</span>
-                @elseif(!$outOfStockMessage)
-                    {{-- Only show the generic red OOS dot when no custom message is assigned --}}
-                    <span class="h-2 w-2 rounded-full bg-red-500"></span>
-                    <span class="text-xs text-red-500 font-bold">@label('product.out_of_stock', 'Out of stock')</span>
-                @endif
-            </div>
-        @elseif($selectedVariant && $selectedVariant->download_item)
-            <div class="mt-6 flex items-center gap-2">
-                <span class="h-2 w-2 rounded-full bg-indigo-500"></span>
-                <span class="text-xs text-indigo-600 font-bold">{{ $selectedVariant->download_label ?: siteLabel('product.digital_item', 'Digital Item (Instant Download)') }}</span>
-            </div>
+        @if(!$product->enable_multi_variant_add)
+            @if($selectedVariant && !$selectedVariant->download_item && !$product->hide_inventory_levels)
+                <div class="mt-6 flex items-center gap-2">
+                    @php
+                        $stock = $selectedVariant->inventory ? $selectedVariant->inventory->available_stock : 0;
+                        $displayStock = (\App\Models\CmsSetting::isEnabled('display_stock_25_plus') && $stock > 25) ? '25+' : $stock;
+                    @endphp
+                    @if($stock > 0)
+                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                        <span class="text-xs text-slate-500 font-semibold">{{ $displayStock }} @label('product.in_stock', 'in stock')</span>
+                    @elseif(!$outOfStockMessage)
+                        {{-- Only show the generic red OOS dot when no custom message is assigned --}}
+                        <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                        <span class="text-xs text-red-500 font-bold">@label('product.out_of_stock', 'Out of stock')</span>
+                    @endif
+                </div>
+            @elseif($selectedVariant && $selectedVariant->download_item)
+                <div class="mt-6 flex items-center gap-2">
+                    <span class="h-2 w-2 rounded-full bg-indigo-500"></span>
+                    <span class="text-xs text-indigo-600 font-bold">{{ $selectedVariant->download_label ?: siteLabel('product.digital_item', 'Digital Item (Instant Download)') }}</span>
+                </div>
+            @endif
         @endif
     @endif
 </div>
@@ -459,7 +726,17 @@
 @endif
 
 <!-- Quantity & Add to Cart -->
-@if($product->is_donation_or_bill_pay || ($selectedVariant && ($selectedVariant->download_item || ($selectedVariant->inventory && $selectedVariant->inventory->available_stock > 0))))
+@if($product->enable_multi_variant_add)
+    @if(session()->has('error') || !empty($cartError))
+        <div class="mt-4 flex items-start gap-2.5 p-3.5 bg-rose-50 border border-rose-100 rounded-2xl text-rose-700 text-sm font-medium">
+            <svg class="w-4 h-4 text-rose-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="flex-1">
+                <span class="font-bold block text-rose-800 mb-0.5">@label('product.cart_error', 'Could not add item to cart:')</span>
+                <span>{{ session('error') ?: $cartError }}</span>
+            </div>
+        </div>
+    @endif
+@elseif($product->is_donation_or_bill_pay || ($selectedVariant && ($selectedVariant->download_item || ($selectedVariant->inventory && $selectedVariant->inventory->available_stock > 0))))
     <div id="add-to-cart" class="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-3">
         <div class="flex items-center gap-4">
             @if($product->max_qty != 1 && !$product->is_donation_or_bill_pay)

@@ -38,16 +38,13 @@
                 $defaultVariant = $product->variants->first();
                 $priceToShow    = 0;
                 $originalPrice  = 0;
-                $isFromPrice    = false;
 
                 if ($defaultVariant) {
                     $originalPrice = $defaultVariant->public_price ?? 0;
                     $priceToShow   = DiscountService::getDiscountedPriceForVariant($defaultVariant, $user, 1);
                 }
 
-                $hasVariantPricing = $product->variants->count() > 1
-                    && $product->variants->pluck('public_price')->unique()->count() > 1;
-                $isFromPrice = $hasVariantPricing;
+                $priceRange = $product->getFormattedPriceRange($user ? ($user->user_type ?? 1) : 1);
             @endphp
 
             <div class="group bg-white dark:bg-slate-800 rounded-3xl border border-slate-150 dark:border-slate-700/60 overflow-hidden hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition duration-300 flex flex-col justify-between">
@@ -72,6 +69,9 @@
 
                     {{-- Product Info --}}
                     <div class="p-5 pb-4">
+                        @if($product->brand && !\App\Models\CmsSetting::isEnabled('hide_catalog_brand_name'))
+                            <a href="{{ route('shop.brand', $product->brand->slug) }}" class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 hover:underline mb-1 block !no-underline" style="font-size: 11px; text-decoration: none !important;">{{ $product->brand->name }}</a>
+                        @endif
                         <h3 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2">
                             <a href="{{ route('shop.product', $product->seo_slug) }}" class="!no-underline no-underline text-inherit hover:text-indigo-600 dark:hover:text-indigo-400" style="text-decoration: none !important;">{{ $product->title }}</a>
                         </h3>
@@ -87,7 +87,11 @@
                 <div class="p-5 pt-4 border-t border-slate-100 dark:border-slate-700/80 mt-auto flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 dark:pt-4">
                     <div class="min-w-0">
                         @if(!$product->is_donation_or_bill_pay && $defaultVariant)
-                            @if($defaultVariant->hasStripeTrial() && $defaultVariant->hasTrialLabel())
+                            @if($priceRange['has_range'])
+                                <span class="text-lg font-extrabold text-slate-900 dark:text-slate-200">
+                                    {{ $priceRange['display'] }}
+                                </span>
+                            @elseif($defaultVariant->hasStripeTrial() && $defaultVariant->hasTrialLabel())
                                 <span class="text-lg font-extrabold text-indigo-600 dark:text-indigo-400">
                                     {{ $defaultVariant->getTrialLabel() }}
                                 </span>
@@ -98,7 +102,7 @@
                             @else
                                 <div class="flex items-baseline gap-1.5">
                                     <span class="text-lg font-extrabold text-slate-900 dark:text-slate-200">
-                                        @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
+                                        ${{ number_format($priceToShow, 2) }}
                                     </span>
                                     @if($priceToShow < $originalPrice)
                                         <span class="text-xs text-slate-400 line-through font-semibold">${{ number_format($originalPrice, 2) }}</span>

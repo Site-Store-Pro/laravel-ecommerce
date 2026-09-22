@@ -37,6 +37,17 @@ class AdminEcommerceBrands extends Component
     public string $brand_logo_secret_access_key = '';
     public string $brand_icon_direct_url = '';  // Direct URL (highest priority)
 
+    // Header image properties
+    public $headerImageFile;
+    public string $header_image = '';
+    public int $header_image_s3 = 0;   // 0=Local, 1=Global S3, 2=Custom S3
+    public string $header_image_cdn_url = '';
+    public string $header_image_region = '';
+    public string $header_image_bucket_name = '';
+    public string $header_image_access_key_id = '';
+    public string $header_image_secret_access_key = '';
+    public string $header_image_direct_url = '';  // Direct URL (highest priority)
+
     // Search / Filter
     public string $search = '';
 
@@ -105,6 +116,17 @@ class AdminEcommerceBrands extends Component
         $this->brand_logo_access_key_id = '';
         $this->brand_logo_secret_access_key = '';
         $this->brand_icon_direct_url = '';
+
+        $this->headerImageFile = null;
+        $this->header_image = '';
+        $this->header_image_s3 = 0;
+        $this->header_image_cdn_url = '';
+        $this->header_image_region = '';
+        $this->header_image_bucket_name = '';
+        $this->header_image_access_key_id = '';
+        $this->header_image_secret_access_key = '';
+        $this->header_image_direct_url = '';
+
         $this->isEditing = false;
         $this->isCreating = false;
         
@@ -140,6 +162,15 @@ class AdminEcommerceBrands extends Component
         $this->brand_logo_access_key_id = $brand->brand_logo_access_key_id ?? '';
         $this->brand_logo_secret_access_key = $brand->brand_logo_secret_access_key ?? '';
         $this->brand_icon_direct_url = $brand->brand_icon_direct_url ?? '';
+
+        $this->header_image = $brand->header_image ?? '';
+        $this->header_image_s3 = (int) ($brand->header_image_s3 ?? 0);
+        $this->header_image_cdn_url = $brand->header_image_cdn_url ?? '';
+        $this->header_image_region = $brand->header_image_region ?? '';
+        $this->header_image_bucket_name = $brand->header_image_bucket_name ?? '';
+        $this->header_image_access_key_id = $brand->header_image_access_key_id ?? '';
+        $this->header_image_secret_access_key = $brand->header_image_secret_access_key ?? '';
+        $this->header_image_direct_url = $brand->header_image_direct_url ?? '';
         
         $this->isEditing = true;
     }
@@ -147,21 +178,31 @@ class AdminEcommerceBrands extends Component
     public function saveBrand(): void
     {
         $rules = [
-            'name'                       => 'required|string|max:255',
-            'slug'                       => 'required|string|max:255|unique:product_brands,slug,' . ($this->brandId ?? 'NULL') . ',id',
-            'description'                => 'nullable|string',
-            'sort_order'                 => 'required|integer',
-            'is_visible_in_menu'         => 'required|boolean',
-            'show_image'                 => 'boolean',
-            'brand_url'                  => 'nullable|url|max:255',
-            'logoFile'                   => 'nullable|image|max:2048',
-            'brand_logo_s3'              => 'required|integer',
-            'brand_logo_cdn_url'         => 'nullable|url|max:500',
-            'brand_icon_direct_url'      => 'nullable|url|max:1000',
-            'brand_logo_region'          => 'nullable|string|max:100',
-            'brand_logo_bucket_name'     => 'nullable|string|max:255',
-            'brand_logo_access_key_id'   => 'nullable|string|max:255',
+            'name'                         => 'required|string|max:255',
+            'slug'                         => 'required|string|max:255|unique:product_brands,slug,' . ($this->brandId ?? 'NULL') . ',id',
+            'description'                  => 'nullable|string',
+            'sort_order'                   => 'required|integer',
+            'is_visible_in_menu'           => 'required|boolean',
+            'show_image'                   => 'boolean',
+            'brand_url'                    => 'nullable|url|max:255',
+            'logoFile'                     => 'nullable|image|max:2048',
+            'brand_logo_s3'                => 'required|integer',
+            'brand_logo_cdn_url'           => 'nullable|url|max:500',
+            'brand_icon_direct_url'        => 'nullable|url|max:1000',
+            'brand_logo_region'            => 'nullable|string|max:100',
+            'brand_logo_bucket_name'       => 'nullable|string|max:255',
+            'brand_logo_access_key_id'     => 'nullable|string|max:255',
             'brand_logo_secret_access_key' => 'nullable|string|max:500',
+
+            'headerImageFile'              => 'nullable|image|max:4096',
+            'header_image'                 => 'nullable|string|max:2048',
+            'header_image_s3'              => 'required|integer',
+            'header_image_cdn_url'         => 'nullable|url|max:500',
+            'header_image_direct_url'      => 'nullable|url|max:1000',
+            'header_image_region'          => 'nullable|string|max:100',
+            'header_image_bucket_name'     => 'nullable|string|max:255',
+            'header_image_access_key_id'   => 'nullable|string|max:255',
+            'header_image_secret_access_key' => 'nullable|string|max:500',
         ];
 
         $this->validate($rules);
@@ -201,6 +242,37 @@ class AdminEcommerceBrands extends Component
             }
         }
 
+        // ── Resolve final header image path / URL ─────────────────────────────
+        $finalHeaderImagePath = $this->header_image ?: null;
+
+        if (!empty($this->header_image_direct_url)) {
+            $finalHeaderImagePath = $this->header_image_direct_url;
+        } elseif ($this->headerImageFile) {
+            if ($this->header_image_s3 == 2) {
+                $diskName = 'custom_s3_brand_header_' . ($this->brandId ?: 'new');
+                config([
+                    "filesystems.disks.{$diskName}" => [
+                        'driver' => 's3',
+                        'key'    => $this->header_image_access_key_id,
+                        'secret' => $this->header_image_secret_access_key,
+                        'region' => $this->header_image_region,
+                        'bucket' => $this->header_image_bucket_name,
+                        'use_path_style_endpoint' => false,
+                    ]
+                ]);
+            } else {
+                $diskName = $this->header_image_s3 == 1 ? 's3' : 'public';
+            }
+
+            $stored_path = $this->headerImageFile->store('brands/headers', $diskName);
+
+            if (!empty($this->header_image_cdn_url)) {
+                $finalHeaderImagePath = rtrim($this->header_image_cdn_url, '/') . '/' . ltrim($stored_path, '/');
+            } else {
+                $finalHeaderImagePath = $stored_path;
+            }
+        }
+
         $saveData = [
             'name'                         => $this->name,
             'slug'                         => $this->slug,
@@ -217,6 +289,14 @@ class AdminEcommerceBrands extends Component
             'brand_logo_access_key_id'     => $this->brand_logo_access_key_id ?: null,
             'brand_logo_secret_access_key' => $this->brand_logo_secret_access_key ?: null,
             'brand_icon_direct_url'        => $this->brand_icon_direct_url ?: null,
+            'header_image'                 => $finalHeaderImagePath,
+            'header_image_s3'              => $this->header_image_s3,
+            'header_image_cdn_url'         => $this->header_image_cdn_url ?: null,
+            'header_image_region'          => $this->header_image_region ?: null,
+            'header_image_bucket_name'     => $this->header_image_bucket_name ?: null,
+            'header_image_access_key_id'   => $this->header_image_access_key_id ?: null,
+            'header_image_secret_access_key' => $this->header_image_secret_access_key ?: null,
+            'header_image_direct_url'      => $this->header_image_direct_url ?: null,
         ];
 
         if ($this->isEditing && $this->brandId) {

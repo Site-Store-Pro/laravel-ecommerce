@@ -196,6 +196,12 @@ class ShopCatalog extends Component
     {
         // Normalize first — unchecking all boxes can deliver false instead of []
         $this->normalizeArrayFilters();
+        if ($this->brand) {
+            $brandModel = Brand::where('slug', $this->brand)->first();
+            if ($brandModel && !in_array((string)$brandModel->id, array_map('strval', $this->selectedBrands), true)) {
+                $this->brand = null;
+            }
+        }
         $this->resetPage();
     }
 
@@ -203,6 +209,12 @@ class ShopCatalog extends Component
     {
         // Normalize first — unchecking all boxes can deliver false instead of []
         $this->normalizeArrayFilters();
+        if ($this->category) {
+            $catModel = Category::where('slug', $this->category)->first();
+            if ($catModel && !in_array((string)$catModel->id, array_map('strval', $this->selectedCategories), true)) {
+                $this->category = null;
+            }
+        }
         $this->resetPage();
     }
 
@@ -348,46 +360,135 @@ class ShopCatalog extends Component
         $this->resetPage();
 
         if (request()->routeIs('shop.category') || request()->routeIs('shop.brand')) {
-            return $this->redirectRoute('shop.index', navigate: true);
+            if (\App\Models\CmsSetting::isEnabled('disable_shop_landing')) {
+                return $this->redirect('/');
+            }
+            return $this->redirectRoute('shop.index');
         }
 
         return null;
     }
 
+    public function setCategory(?string $slug): mixed
+    {
+        if (empty($slug)) {
+            return $this->clearCategory();
+        }
+
+        $newCat = Category::where('slug', $slug)->first();
+        if (!$newCat) {
+            return $this->clearCategory();
+        }
+
+        if ($this->category) {
+            $prevCat = Category::where('slug', $this->category)->first();
+            if ($prevCat) {
+                $this->selectedCategories = array_values(array_filter(
+                    $this->selectedCategories,
+                    fn($cId) => (int)$cId !== (int)$prevCat->id
+                ));
+            }
+        }
+        if (!in_array((string)$newCat->id, array_map('strval', $this->selectedCategories), true)) {
+            $this->selectedCategories[] = (string)$newCat->id;
+        }
+
+        $this->category = $newCat->slug;
+        $this->resetPage();
+
+        if (request()->routeIs('shop.category')) {
+            $params = ['category_slug' => $newCat->slug];
+            if ($this->brand) {
+                $params['brand'] = $this->brand;
+            }
+            if (!empty(trim($this->search))) {
+                $params['search'] = trim($this->search);
+            }
+            return $this->redirectRoute('shop.category', $params);
+        }
+
+        return null;
+    }
+
+    public function removeCategoryPill(int $categoryId): mixed
+    {
+        if ($this->category) {
+            $currentCat = Category::where('slug', $this->category)->first();
+            if ($currentCat) {
+                $chain = $currentCat->getBreadcrumbChain();
+                $chainIds = array_map(fn($c) => (int)$c->id, $chain);
+                $index = array_search((int)$categoryId, $chainIds, true);
+
+                if ($index !== false) {
+                    if ($index === 0) {
+                        return $this->clearCategory();
+                    } else {
+                        $parentCat = $chain[$index - 1];
+                        return $this->setCategory($parentCat->slug);
+                    }
+                }
+            }
+        }
+
+        return $this->removeSelectedCategory($categoryId);
+    }
+
     public function clearCategory(): mixed
     {
+        if ($this->category) {
+            $catModel = Category::where('slug', $this->category)->first();
+            if ($catModel) {
+                $catId = (int) $catModel->id;
+                $this->selectedCategories = array_values(array_filter(
+                    $this->selectedCategories,
+                    fn($cId) => (int)$cId !== $catId
+                ));
+            }
+        }
         $this->category = null;
         $this->resetPage();
+
         if (request()->routeIs('shop.category')) {
             if ($this->brand) {
-                return $this->redirectRoute('shop.brand', ['brand_slug' => $this->brand], navigate: true);
+                return $this->redirectRoute('shop.brand', ['brand_slug' => $this->brand]);
             }
             if (\App\Models\CmsSetting::isEnabled('disable_shop_landing') && empty(trim($this->search))) {
-                return $this->redirect('/', navigate: true);
+                return $this->redirect('/');
             }
-            return $this->redirectRoute('shop.index', navigate: true);
+            return $this->redirectRoute('shop.index');
         }
         if (\App\Models\CmsSetting::isEnabled('disable_shop_landing') && !$this->brand && empty(trim($this->search))) {
-            return $this->redirect('/', navigate: true);
+            return $this->redirect('/');
         }
         return null;
     }
 
     public function clearBrand(): mixed
     {
+        if ($this->brand) {
+            $brandModel = Brand::where('slug', $this->brand)->first();
+            if ($brandModel) {
+                $bId = (int) $brandModel->id;
+                $this->selectedBrands = array_values(array_filter(
+                    $this->selectedBrands,
+                    fn($brandId) => (int)$brandId !== $bId
+                ));
+            }
+        }
         $this->brand = null;
         $this->resetPage();
+
         if (request()->routeIs('shop.brand')) {
             if ($this->category) {
-                return $this->redirectRoute('shop.category', ['category_slug' => $this->category], navigate: true);
+                return $this->redirectRoute('shop.category', ['category_slug' => $this->category]);
             }
             if (\App\Models\CmsSetting::isEnabled('disable_shop_landing') && empty(trim($this->search))) {
-                return $this->redirect('/', navigate: true);
+                return $this->redirect('/');
             }
-            return $this->redirectRoute('shop.index', navigate: true);
+            return $this->redirectRoute('shop.index');
         }
         if (\App\Models\CmsSetting::isEnabled('disable_shop_landing') && !$this->category && empty(trim($this->search))) {
-            return $this->redirect('/', navigate: true);
+            return $this->redirect('/');
         }
         return null;
     }
@@ -405,7 +506,7 @@ class ShopCatalog extends Component
         $this->resetPage();
     }
 
-    public function removeSelectedBrand(int $id): void
+    public function removeSelectedBrand(int $id): mixed
     {
         $this->selectedBrands = array_values(array_filter(
             $this->selectedBrands,
@@ -413,15 +514,15 @@ class ShopCatalog extends Component
         ));
         if ($this->brand) {
             $brandModel = Brand::where('slug', $this->brand)->first();
-            if ($brandModel && $brandModel->id === $id) {
-                $this->clearBrand();
-                return;
+            if ($brandModel && (int)$brandModel->id === $id) {
+                return $this->clearBrand();
             }
         }
         $this->resetPage();
+        return null;
     }
 
-    public function removeSelectedCategory(int $id): void
+    public function removeSelectedCategory(int $id): mixed
     {
         $this->selectedCategories = array_values(array_filter(
             $this->selectedCategories,
@@ -429,12 +530,12 @@ class ShopCatalog extends Component
         ));
         if ($this->category) {
             $catModel = Category::where('slug', $this->category)->first();
-            if ($catModel && $catModel->id === $id) {
-                $this->clearCategory();
-                return;
+            if ($catModel && (int)$catModel->id === $id) {
+                return $this->clearCategory();
             }
         }
         $this->resetPage();
+        return null;
     }
 
     public function removeSelectedAttribute(string $key, string $val): void
@@ -1001,8 +1102,10 @@ class ShopCatalog extends Component
             ? Brand::where('slug', $this->brand)->first()
             : null;
 
-        $categoryTitle = $activeCategory
-            ? collect($activeCategory->getBreadcrumbChain())->pluck('name')->implode(' › ')
+        $breadcrumbChain = $activeCategory ? $activeCategory->getBreadcrumbChain() : [];
+
+        $categoryTitle = !empty($breadcrumbChain)
+            ? collect($breadcrumbChain)->pluck('name')->implode(' › ')
             : '';
 
         $defaultDescription = siteLabel('catalog.page_description', 'Browse our curated catalog. Enjoy exclusive wholesale pricing if eligible.');
@@ -1032,10 +1135,13 @@ class ShopCatalog extends Component
             $selectedCategoryModels = Category::withCurrentTranslations()->whereIn('id', $this->selectedCategories)->get()->keyBy('id');
         }
 
-        // Store the full catalog URL in session so Product Details page can link back to exact filters & pagination
-        if (!request()->ajax() || $this->readyToLoad) {
-            session(['last_catalog_url' => request()->fullUrl()]);
-        }
+        // Store the full catalog & search URL in session so Product Details page can link back to exact search, filters & pagination
+        $currentCatalogUrl = $this->getCurrentCatalogUrl();
+        session([
+            'last_catalog_url'   => $currentCatalogUrl,
+            'last_search_url'    => $currentCatalogUrl,
+            'last_search_active' => (trim($this->search) !== '' || $this->hasActiveFilters),
+        ]);
 
         $gaEcommerceData = null;
         if (\App\Services\GoogleAnalyticsService::isEnabled() && $products->isNotEmpty()) {
@@ -1044,8 +1150,42 @@ class ShopCatalog extends Component
             $gaEcommerceData = \App\Services\GoogleAnalyticsService::formatItemList($products->items(), $listName, $listId);
         }
 
+        // Resolve exclusive catalog header banner image
+        // Display header image ONLY if filtered by category OR brand, but NOT both and NOT neither.
+        $headerImageUrl = null;
+        $headerImageAlt = null;
+
+        $isCategoryFiltered = !empty($this->category) || !empty($this->selectedCategories);
+        $isBrandFiltered    = !empty($this->brand) || !empty($this->selectedBrands);
+
+        if ($isCategoryFiltered xor $isBrandFiltered) {
+            if ($isCategoryFiltered) {
+                $targetCat = $activeCategory;
+                if (!$targetCat && !empty($this->selectedCategories)) {
+                    $firstCatId = (int) reset($this->selectedCategories);
+                    $targetCat = $selectedCategoryModels->get($firstCatId) ?? Category::find($firstCatId);
+                }
+                if ($targetCat && method_exists($targetCat, 'getHeaderImageUrl')) {
+                    $headerImageUrl = $targetCat->getHeaderImageUrl();
+                    $headerImageAlt = $targetCat->name;
+                }
+            } elseif ($isBrandFiltered) {
+                $targetBrand = $activeBrand;
+                if (!$targetBrand && !empty($this->selectedBrands)) {
+                    $firstBrandVal = reset($this->selectedBrands);
+                    $targetBrand = is_numeric($firstBrandVal) ? Brand::find((int)$firstBrandVal) : Brand::where('slug', $firstBrandVal)->first();
+                }
+                if ($targetBrand && method_exists($targetBrand, 'getHeaderImageUrl')) {
+                    $headerImageUrl = $targetBrand->getHeaderImageUrl();
+                    $headerImageAlt = $targetBrand->name;
+                }
+            }
+        }
+
         return view('livewire.shop-catalog', [
             'products'                        => $products,
+            'headerImageUrl'                  => $headerImageUrl,
+            'headerImageAlt'                  => $headerImageAlt,
             'userType'                        => $userType,
             'filterCategories'                => $filterCategories,
             'filterBrands'                    => $filterBrands,
@@ -1059,6 +1199,7 @@ class ShopCatalog extends Component
             'activeFilterCount'               => $activeFilterCount,
             'hasActiveFilters'                => $this->hasActiveFilters,
             'activeCategory'                  => $activeCategory,
+            'breadcrumbChain'                 => $breadcrumbChain,
             'activeBrand'                     => $activeBrand,
             'pageTitle'                       => $pageTitle,
             'pageDescription'                 => $pageDescription,
@@ -1073,6 +1214,62 @@ class ShopCatalog extends Component
             'title'        => $metaTitle,
             'canonicalUrl' => $this->canonicalUrl,
         ]);
+    }
+
+    public function getCurrentCatalogUrl(): string
+    {
+        $params = [];
+        if (trim($this->search) !== '') {
+            $params['search'] = trim($this->search);
+        }
+        if (!empty($this->selectedBrands)) {
+            $params['selectedBrands'] = array_values(array_map('intval', (array)$this->selectedBrands));
+        }
+        if (!empty($this->selectedCategories)) {
+            $params['selectedCategories'] = array_values(array_map('intval', (array)$this->selectedCategories));
+        }
+        if ($this->minPriceFilter !== null && $this->minPriceFilter > 0) {
+            $params['minPriceFilter'] = $this->minPriceFilter;
+        }
+        if ($this->maxPriceFilter !== null && $this->maxPriceFilter > 0) {
+            $params['maxPriceFilter'] = $this->maxPriceFilter;
+        }
+        if (!empty($this->selectedAttributes)) {
+            $params['selectedAttributes'] = $this->selectedAttributes;
+        }
+        if ($this->sort !== 'price_asc') {
+            $params['sort'] = $this->sort;
+        }
+        if ($this->perPage && (int)$this->perPage !== 16) {
+            $params['perPage'] = (int)$this->perPage;
+        }
+        $currentPage = $this->getPage();
+        if ($currentPage > 1) {
+            $params['page'] = $currentPage;
+        }
+
+        if (request()->routeIs('shop.brand') && $this->brand) {
+            if ($this->category) {
+                $params['category'] = $this->category;
+            }
+            return route('shop.brand', array_merge(['brand_slug' => $this->brand], $params));
+        }
+
+        if ($this->category) {
+            if ($this->brand) {
+                $params['brand'] = $this->brand;
+            }
+            return route('shop.category', array_merge(['category_slug' => $this->category], $params));
+        }
+
+        if ($this->brand) {
+            if ($this->category) {
+                $params['category'] = $this->category;
+            }
+            return route('shop.brand', array_merge(['brand_slug' => $this->brand], $params));
+        }
+
+        return route('shop.index', $params);
     }
 
     private function resolveItemTaxable(\App\Models\ProductVariant $variant, $product): int

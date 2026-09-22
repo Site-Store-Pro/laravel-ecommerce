@@ -119,6 +119,40 @@ class ShortcodeProcessor
     private static bool $embedCssLoaded = false;
 
     /**
+     * Transform a video embed snippet (YouTube, Vimeo, etc.) to ensure
+     * any <iframe> tags have inline responsive 100% width and height.
+     */
+    public static function makeVideoSnippetResponsive(string $snippet): string
+    {
+        if (empty(trim($snippet))) {
+            return '';
+        }
+
+        if (preg_match('/<iframe\b[^>]*>/i', $snippet)) {
+            $snippet = preg_replace_callback('/<iframe\b([^>]*)>/i', function ($matches) {
+                $attrs = $matches[1];
+
+                // Strip fixed width/height attributes (e.g. width="560" height="315")
+                $attrs = preg_replace('/\bwidth\s*=\s*["\']?[^"\'>\s]+["\']?/i', '', $attrs);
+                $attrs = preg_replace('/\bheight\s*=\s*["\']?[^"\'>\s]+["\']?/i', '', $attrs);
+
+                // Inject or merge style attribute with 100% responsive position
+                if (preg_match('/style\s*=\s*["\']([^"\']*)["\']/i', $attrs, $styleMatch)) {
+                    $existingStyle = rtrim($styleMatch[1], '; ');
+                    $newStyle = $existingStyle . ';position:absolute;top:0;left:0;width:100%;height:100%;border:0;';
+                    $attrs = preg_replace('/style\s*=\s*["\'][^"\']*["\']/i', 'style="' . $newStyle . '"', $attrs);
+                } else {
+                    $attrs .= ' style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"';
+                }
+
+                return '<iframe ' . trim($attrs) . '>';
+            }, $snippet);
+        }
+
+        return $snippet;
+    }
+
+    /**
      * Render a single [code-embed:N] shortcode to HTML.
      *
      * - YouTube / Vimeo (embed_type 0 or 1) → responsive 16:9 wrapper div
@@ -141,24 +175,11 @@ class ShortcodeProcessor
             }
 
             if ($embed->isVideo()) {
-                // Emit responsive wrapper CSS once per request
-                $css = '';
-                if (!static::$embedCssLoaded) {
-                    static::$embedCssLoaded = true;
-                    $css = '<style id="cms-embed-css">' .
-                        '.cms-embed-video-outer{max-width:75%;margin:0 auto;}' .
-                        '.cms-embed-video-wrapper{position:relative;padding-bottom:56.25%;height:0;overflow:hidden;}' .
-                        '.cms-embed-video-wrapper iframe,' .
-                        '.cms-embed-video-wrapper object,' .
-                        '.cms-embed-video-wrapper embed{position:absolute;top:0;left:0;width:100%;height:100%;}' .
-                        '@media(max-width:1000px){.cms-embed-video-outer{max-width:100%;}}' .
-                        '</style>';
-                }
+                $responsiveSnippet = static::makeVideoSnippetResponsive($snippet);
 
-                return $css
-                    . '<div class="cms-embed-video-outer">'
-                    .   '<div class="cms-embed-video-wrapper">'
-                    .     $snippet
+                return '<div class="cms-embed-video-outer" style="width:100%;max-width:100%;margin:0 auto;display:block;">'
+                    .   '<div class="cms-embed-video-wrapper" style="position:relative;width:100%;height:0;padding-bottom:56.25%;overflow:hidden;display:block;">'
+                    .     $responsiveSnippet
                     .   '</div>'
                     . '</div>';
             }

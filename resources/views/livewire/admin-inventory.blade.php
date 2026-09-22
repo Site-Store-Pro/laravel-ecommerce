@@ -299,12 +299,12 @@
                                     </div>
 
                                     <div class="space-y-2">
-                                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Cost Markup Percentage (%)</label>
+                                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Cost / MSRP Markup or Discount (%)</label>
                                         <div class="relative">
-                                            <input type="number" step="0.01" min="0" max="1000" wire:model="markupPercentage" placeholder="e.g. 15 for 15%" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm font-semibold">
+                                            <input type="number" step="0.01" min="-99.99" max="1000" wire:model="markupPercentage" placeholder="e.g. 15 for 15% markup or -20 for 20% off MSRP" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm font-semibold">
                                             <span class="absolute inset-y-0 right-0 flex items-center pr-4 text-xs font-bold text-slate-400 pointer-events-none">%</span>
                                         </div>
-                                        <p class="text-[11px] text-slate-400">Retail price = <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600 font-mono">Cost &times; (1 + Markup / 100)</code>. (e.g., $10.00 cost with 15% markup becomes $11.50 retail).</p>
+                                        <p class="text-[11px] text-slate-400">Retail price = <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600 font-mono">Cost &times; (1 + Markup / 100)</code>. Use positive values (e.g. 15% markup on cost) or negative values (e.g. -20% discount off MSRP).</p>
                                     </div>
                                 </div>
 
@@ -621,11 +621,12 @@
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                                     <div class="space-y-2">
-                                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Cost Markup Percentage (%)</label>
+                                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Cost / MSRP Markup or Discount (%)</label>
                                         <div class="relative">
-                                            <input type="number" step="0.01" min="0" max="1000" wire:model="ftpMarkupPercentage" placeholder="e.g. 10" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl text-xs font-semibold focus:border-indigo-500 focus:outline-none">
+                                            <input type="number" step="0.01" min="-99.99" max="1000" wire:model="ftpMarkupPercentage" placeholder="e.g. 10 or -20" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-800 rounded-2xl text-xs font-semibold focus:border-indigo-500 focus:outline-none">
                                             <span class="absolute inset-y-0 right-0 flex items-center pr-4 text-xs font-bold text-slate-400 pointer-events-none">%</span>
                                         </div>
+                                        <p class="text-[11px] text-slate-400">Use positive values (e.g. 15%) for markup on cost, or negative values (e.g. -20%) to discount from MSRP.</p>
                                     </div>
 
                                     <div class="space-y-2">

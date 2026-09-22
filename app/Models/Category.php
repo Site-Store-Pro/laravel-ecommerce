@@ -24,7 +24,10 @@ class Category extends Model
         'name',
         'slug',
         'description',
+        'amazon_category',
+        'ebay_category',
         'category_image',
+        'header_image',
         'parent_id',
         'sort_order',
         'is_visible_in_menu',
@@ -37,6 +40,13 @@ class Category extends Model
         'category_image_access_key_id',
         'category_image_secret_access_key',
         'category_image_direct_url',
+        'header_image_s3',
+        'header_image_cdn_url',
+        'header_image_region',
+        'header_image_bucket_name',
+        'header_image_access_key_id',
+        'header_image_secret_access_key',
+        'header_image_direct_url',
     ];
 
     protected $casts = [
@@ -45,12 +55,41 @@ class Category extends Model
         'display_image_in_plugins' => 'boolean',
         'sort_order'               => 'integer',
         'category_image_s3'        => 'integer',
+        'header_image_s3'          => 'integer',
     ];
 
 
     public function parent()
     {
         return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    /**
+     * Get the resolved public URL for the category header image.
+     */
+    public function getHeaderImageUrl(): ?string
+    {
+        if (!empty($this->header_image_direct_url)) {
+            return $this->header_image_direct_url;
+        }
+
+        if (empty($this->header_image)) {
+            return null;
+        }
+
+        if (str_starts_with($this->header_image, 'http://') || str_starts_with($this->header_image, 'https://') || str_starts_with($this->header_image, '/')) {
+            return $this->header_image;
+        }
+
+        if (!empty($this->header_image_cdn_url)) {
+            return rtrim($this->header_image_cdn_url, '/') . '/' . ltrim($this->header_image, '/');
+        }
+
+        if ($this->header_image_s3 == 1) {
+            return \Illuminate\Support\Facades\Storage::disk('s3')->url($this->header_image);
+        }
+
+        return asset('storage/' . ltrim($this->header_image, '/'));
     }
 
     /**
@@ -78,6 +117,53 @@ class Category extends Model
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'product_categories_assignments', 'category_id', 'product_id');
+    }
+
+    /**
+     * Precompute cascading distinct product counts for all categories in 1 single fast query.
+     * Returns an associative array [category_id => distinct_product_count].
+     *
+     * @return array<int, int>
+     */
+    public static function getCascadingProductCountsMap(): array
+    {
+        $allCategories = static::all(['id', 'parent_id']);
+        $childrenByParent = $allCategories->groupBy('parent_id');
+
+        $assignments = \DB::table('product_categories_assignments')
+            ->select('category_id', 'product_id')
+            ->get();
+
+        $directProductsByCategory = [];
+        foreach ($assignments as $row) {
+            $directProductsByCategory[$row->category_id][] = $row->product_id;
+        }
+
+        $getDescendants = function ($catId) use (&$getDescendants, $childrenByParent) {
+            $ids = [$catId];
+            if (isset($childrenByParent[$catId])) {
+                foreach ($childrenByParent[$catId] as $child) {
+                    $ids = array_merge($ids, $getDescendants($child->id));
+                }
+            }
+            return $ids;
+        };
+
+        $countsMap = [];
+        foreach ($allCategories as $cat) {
+            $relevantCatIds = $getDescendants($cat->id);
+            $productIds = [];
+            foreach ($relevantCatIds as $rId) {
+                if (isset($directProductsByCategory[$rId])) {
+                    foreach ($directProductsByCategory[$rId] as $pId) {
+                        $productIds[$pId] = true;
+                    }
+                }
+            }
+            $countsMap[$cat->id] = count($productIds);
+        }
+
+        return $countsMap;
     }
 
     /**

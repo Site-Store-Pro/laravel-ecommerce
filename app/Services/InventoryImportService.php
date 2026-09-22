@@ -266,8 +266,8 @@ class InventoryImportService
                         $newCost = $parsedCost;
                         $hasCostUpdate = true;
 
-                        if ($markupPercentage > 0 && $newCost > 0) {
-                            $newPrice = round($newCost * (1 + ($markupPercentage / 100)), 2);
+                        if ($markupPercentage != 0.0 && $newCost > 0) {
+                            $newPrice = max(0.00, round($newCost * (1 + ($markupPercentage / 100)), 2));
                         }
                     }
                 }
@@ -287,7 +287,7 @@ class InventoryImportService
                     $vData = ['updated_at' => now()];
                     if ($hasCostUpdate) {
                         $vData['item_cost'] = $newCost;
-                        if ($markupPercentage > 0 && $newCost > 0) {
+                        if ($markupPercentage != 0.0 && $newCost > 0) {
                             $vData['public_price'] = $newPrice;
                         }
                     }

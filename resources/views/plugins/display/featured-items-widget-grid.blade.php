@@ -37,16 +37,13 @@
                 $defaultVariant = $product->variants->first();
                 $priceToShow    = 0;
                 $originalPrice  = 0;
-                $isFromPrice    = false;
 
                 if ($defaultVariant) {
                     $originalPrice = $defaultVariant->public_price ?? 0;
                     $priceToShow   = DiscountService::getDiscountedPriceForVariant($defaultVariant, $user, 1);
                 }
 
-                $hasVariantPricing = $product->variants->count() > 1
-                    && $product->variants->pluck('public_price')->unique()->count() > 1;
-                $isFromPrice = $hasVariantPricing;
+                $priceRange = $product->getFormattedPriceRange($user ? ($user->user_type ?? 1) : 1);
             @endphp
 
             <div class="fi-card group bg-white dark:bg-slate-800 rounded-3xl border border-slate-150 dark:border-slate-700/60 overflow-hidden hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition duration-300 flex flex-col justify-between">
@@ -71,6 +68,9 @@
 
                     {{-- Product Info --}}
                     <div class="fi-body p-4">
+                        @if($product->brand && !\App\Models\CmsSetting::isEnabled('hide_catalog_brand_name'))
+                            <a href="{{ route('shop.brand', $product->brand->slug) }}" class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 hover:underline mb-1 block !no-underline" style="font-size: 11px; text-decoration: none !important;">{{ $product->brand->name }}</a>
+                        @endif
                         <h3 class="m-0 p-0">
                             <a href="{{ route('shop.product', $product->seo_slug) }}" class="fi-title text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition line-clamp-2 !no-underline" style="font-size: 13px; font-weight: 700; line-height: 1.4; text-decoration: none !important;">
                                 {{ $product->title }}
@@ -88,7 +88,11 @@
                 <div class="fi-footer p-4 pt-3 border-t border-slate-100 dark:border-slate-700/80 mt-auto flex flex-wrap items-center justify-between gap-2">
                     <div class="min-w-0">
                         @if(!$product->is_donation_or_bill_pay && $defaultVariant)
-                            @if($defaultVariant->hasStripeTrial() && $defaultVariant->hasTrialLabel())
+                            @if($priceRange['has_range'])
+                                <div class="fi-price text-slate-900 dark:text-slate-200" style="font-size: 15px; font-weight: 800;">
+                                    {{ $priceRange['display'] }}
+                                </div>
+                            @elseif($defaultVariant->hasStripeTrial() && $defaultVariant->hasTrialLabel())
                                 <div class="fi-price text-indigo-600 dark:text-indigo-400" style="font-size: 15px; font-weight: 800;">
                                     {{ $defaultVariant->getTrialLabel() }}
                                 </div>
@@ -98,7 +102,7 @@
                                 </div>
                             @else
                                 <div class="fi-price text-slate-900 dark:text-slate-200" style="font-size: 15px; font-weight: 800;">
-                                    @if($isFromPrice)@label('plugin.from', 'From') @endif${{ number_format($priceToShow, 2) }}
+                                    ${{ number_format($priceToShow, 2) }}
                                 </div>
                                 @if($priceToShow < $originalPrice)
                                     <div class="fi-price-orig text-xs text-slate-400 line-through" style="font-size: 11px; color: #94a3b8;">${{ number_format($originalPrice, 2) }}</div>
