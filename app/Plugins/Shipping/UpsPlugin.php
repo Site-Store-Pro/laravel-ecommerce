@@ -156,7 +156,8 @@ class UpsPlugin implements ShippingPlugin
                 }
 
                 // Check if this service is enabled in plugin settings
-                if ($plugin->getSetting($settingKey) != '1') {
+                $val = $plugin->getSetting($settingKey);
+                if (!in_array(strtolower(trim((string)$val)), ['1', 'true', 'on', 'yes'], true)) {
                     continue;
                 }
 

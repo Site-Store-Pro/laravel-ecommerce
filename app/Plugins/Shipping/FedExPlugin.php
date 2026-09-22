@@ -109,7 +109,8 @@ class FedExPlugin implements ShippingPlugin
                     $settingKey = array_search($serviceType, $this->serviceMap);
                     
                     if ($settingKey !== false) {
-                        $isEnabled = $plugin->getSetting($settingKey) == '1';
+                        $val = $plugin->getSetting($settingKey);
+                        $isEnabled = in_array(strtolower(trim((string)$val)), ['1', 'true', 'on', 'yes'], true);
                         if ($isEnabled) {
                             $label = ucwords(strtolower(str_replace('_', ' ', $serviceType)));
                             $label = str_replace('Fedex', 'FedEx', $label);

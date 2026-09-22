@@ -136,7 +136,8 @@ class UspsPlugin implements ShippingPlugin
         $rates = [];
 
         foreach ($domesticServices as $settingKey) {
-            if ($plugin->getSetting($settingKey) != '1') {
+            $val = $plugin->getSetting($settingKey);
+            if (!in_array(strtolower(trim((string)$val)), ['1', 'true', 'on', 'yes'], true)) {
                 continue;
             }
 
@@ -196,7 +197,8 @@ class UspsPlugin implements ShippingPlugin
         $rates = [];
 
         foreach ($intlServices as $settingKey => $mailClass) {
-            if ($plugin->getSetting($settingKey) != '1') {
+            $val = $plugin->getSetting($settingKey);
+            if (!in_array(strtolower(trim((string)$val)), ['1', 'true', 'on', 'yes'], true)) {
                 continue;
             }
 

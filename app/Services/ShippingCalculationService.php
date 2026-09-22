@@ -55,8 +55,12 @@ class ShippingCalculationService
             ];
         }
 
-        // 2. Add real-time carriers mock rates if enabled
-        if ($config->realtime_ups) {
+        // 2. Add real-time carriers mock rates if enabled and the respective carrier plugin is not active
+        $uspsPluginActive = \App\Models\Plugin::where('shortcode', 'usps-api')->where('activation_status', 1)->exists();
+        $upsPluginActive = \App\Models\Plugin::where('shortcode', 'ups-api')->where('activation_status', 1)->exists();
+        $fedexPluginActive = \App\Models\Plugin::where('shortcode', 'fedex-api')->where('activation_status', 1)->exists();
+
+        if ($config->realtime_ups && !$upsPluginActive) {
             $options[] = [
                 'id' => 'carrier_ups_ground',
                 'name' => 'UPS Ground Delivery',
@@ -68,7 +72,7 @@ class ShippingCalculationService
                 'amount' => $freeShipping ? 0.00 : 45.00,
             ];
         }
-        if ($config->realtime_fedex) {
+        if ($config->realtime_fedex && !$fedexPluginActive) {
             $options[] = [
                 'id' => 'carrier_fedex_ground',
                 'name' => 'FedEx Home Delivery',
@@ -80,7 +84,7 @@ class ShippingCalculationService
                 'amount' => $freeShipping ? 0.00 : 32.00,
             ];
         }
-        if ($config->realtime_usps) {
+        if ($config->realtime_usps && !$uspsPluginActive) {
             $options[] = [
                 'id' => 'carrier_usps_priority',
                 'name' => 'USPS Priority Mail',
