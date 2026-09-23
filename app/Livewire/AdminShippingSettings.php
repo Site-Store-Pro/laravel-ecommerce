@@ -48,6 +48,10 @@ class AdminShippingSettings extends Component
     public int $editingCountryValueType = 1;
     public string $editingCountryRange = '';
 
+    // Batch Country Actions State
+    public bool $showCountryBatchModal = false;
+    public string $countryBatchAction = ''; // 'activate_all' or 'deactivate_all'
+
     // Flat Rate Form State
     public bool $showFlatRateModal = false;
     public ?int $flatRateId = null;
@@ -228,6 +232,48 @@ class AdminShippingSettings extends Component
             $this->editingCountryId = null;
             $this->dispatch('toast', message: 'Country VAT and range settings updated.', type: 'success');
         }
+    }
+
+    public function promptBatchCountries(string $action): void
+    {
+        if (!in_array($action, ['activate_all', 'deactivate_all'], true)) {
+            return;
+        }
+        $this->countryBatchAction = $action;
+        $this->showCountryBatchModal = true;
+    }
+
+    public function confirmBatchCountries(): void
+    {
+        if ($this->countryBatchAction === 'activate_all') {
+            DB::table('shipping_countries')->update([
+                'is_active' => 1,
+                'updated_at' => now(),
+            ]);
+            $count = DB::table('shipping_countries')->count();
+            $msg = "All {$count} countries have been set to Active.";
+            $type = 'success';
+        } elseif ($this->countryBatchAction === 'deactivate_all') {
+            DB::table('shipping_countries')->update([
+                'is_active' => 0,
+                'updated_at' => now(),
+            ]);
+            $count = DB::table('shipping_countries')->count();
+            $msg = "All {$count} countries have been set to Inactive (Disabled).";
+            $type = 'warning';
+        } else {
+            return;
+        }
+
+        $this->showCountryBatchModal = false;
+        $this->countryBatchAction = '';
+        $this->dispatch('toast', message: $msg, type: $type);
+    }
+
+    public function cancelBatchCountries(): void
+    {
+        $this->showCountryBatchModal = false;
+        $this->countryBatchAction = '';
     }
 
     // Flat Rate Actions

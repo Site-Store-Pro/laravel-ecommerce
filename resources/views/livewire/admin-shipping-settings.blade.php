@@ -298,9 +298,28 @@
         <!-- Tab 3: Countries -->
         @if($activeTab === 'countries')
             <div class="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-6">
-                <div class="flex justify-between items-center gap-4">
-                    <h2 class="text-lg font-bold text-slate-900">International Countries</h2>
-                    <input type="text" wire:model.live="countrySearch" placeholder="Search country code or name..." class="max-w-xs px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">International Countries</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Manage country shipping availability, VAT rates, and flat-rate range matrix grids.</p>
+                    </div>
+                    <div class="flex items-center flex-wrap gap-2.5">
+                        <input type="text" wire:model.live="countrySearch" placeholder="Search country code or name..." class="max-w-xs px-4 py-2 bg-slate-50 border border-slate-200 text-slate-800 rounded-xl focus:outline-none focus:border-indigo-500 text-sm">
+
+                        <button type="button" wire:click="promptBatchCountries('activate_all')" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-xl font-bold text-xs uppercase tracking-wider transition duration-150 shadow-xs">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Activate All
+                        </button>
+
+                        <button type="button" wire:click="promptBatchCountries('deactivate_all')" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 rounded-xl font-bold text-xs uppercase tracking-wider transition duration-150 shadow-xs">
+                            <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                            </svg>
+                            Deactivate All
+                        </button>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -362,7 +381,7 @@
                                         <td class="px-4 py-3 text-xs">
                                             @if($c->flat_rate_value_type == 1)
                                                 Weight
-                                            @elseif($c->flat_rate_value_type == 2)
+                                             @elseif($c->flat_rate_value_type == 2)
                                                 Subtotal
                                             @else
                                                 Items count
@@ -389,6 +408,81 @@
                 <div>
                     {{ $countries->links() }}
                 </div>
+
+                <!-- Batch Countries Confirmation Modal -->
+                @if($showCountryBatchModal)
+                    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div class="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 w-full max-w-lg shadow-2xl space-y-6">
+                            @if($countryBatchAction === 'activate_all')
+                                <div class="flex items-start gap-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-extrabold text-slate-900">Activate ALL Countries?</h3>
+                                        <p class="text-sm text-slate-500 mt-1">
+                                            You are about to batch update all international countries to <strong class="text-emerald-700 font-bold">Active</strong> status.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 bg-emerald-50/70 border border-emerald-100 rounded-2xl text-xs text-emerald-900 space-y-1">
+                                    <p class="font-bold flex items-center gap-1.5 text-emerald-800">
+                                        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        Batch Activation Effect
+                                    </p>
+                                    <p class="text-emerald-800">
+                                        All countries in the database will be enabled. Customers will be able to select any country during checkout and shipping address entry.
+                                    </p>
+                                </div>
+
+                                <div class="pt-2 flex flex-col-reverse sm:flex-row justify-end gap-3">
+                                    <button type="button" wire:click="cancelBatchCountries" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150">
+                                        Cancel
+                                    </button>
+                                    <button type="button" wire:click="confirmBatchCountries" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150 shadow-md shadow-emerald-600/20">
+                                        Yes, Activate All Countries
+                                    </button>
+                                </div>
+                            @elseif($countryBatchAction === 'deactivate_all')
+                                <div class="flex items-start gap-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-extrabold text-slate-900">Deactivate ALL Countries?</h3>
+                                        <p class="text-sm text-slate-500 mt-1">
+                                            You are about to batch update all international countries to <strong class="text-rose-700 font-bold">Inactive (Disabled)</strong> status.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 bg-rose-50/70 border border-rose-100 rounded-2xl text-xs text-rose-900 space-y-1">
+                                    <p class="font-bold flex items-center gap-1.5 text-rose-800">
+                                        <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                        Warning: High Impact Action
+                                    </p>
+                                    <p class="text-rose-800">
+                                        Disabling all countries will remove them from the shipping destination list at checkout. Customers will not be able to order to international addresses until you re-enable individual countries or re-activate all.
+                                    </p>
+                                </div>
+
+                                <div class="pt-2 flex flex-col-reverse sm:flex-row justify-end gap-3">
+                                    <button type="button" wire:click="cancelBatchCountries" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150">
+                                        Cancel
+                                    </button>
+                                    <button type="button" wire:click="confirmBatchCountries" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition duration-150 shadow-md shadow-rose-600/20">
+                                        Yes, Deactivate All Countries
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
         @endif
 

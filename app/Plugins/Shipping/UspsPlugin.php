@@ -19,13 +19,11 @@ class UspsPlugin implements ShippingPlugin
 {
     // Maps our setting key => USPS mail class
     protected array $serviceMap = [
-        'USPS_Priority_Mail'            => 'PRIORITY_MAIL',
-        'USPS_Priority_Mail_Express'    => 'PRIORITY_MAIL_EXPRESS',
-        'USPS_Ground_Advantage'         => 'USPS_GROUND_ADVANTAGE',
-        'USPS_First_Class_Package'      => 'FIRST-CLASS_PACKAGE_SERVICE',
-        'USPS_Parcel_Select'            => 'PARCEL_SELECT',
-        'USPS_Parcel_Select_Lightweight'=> 'PARCEL_SELECT_LIGHTWEIGHT',
-        'USPS_Priority_Mail_Cubic'      => 'PRIORITY_MAIL_CUBIC',
+        'USPS_Priority_Mail'               => 'PRIORITY_MAIL',
+        'USPS_Priority_Mail_Express'       => 'PRIORITY_MAIL_EXPRESS',
+        'USPS_Ground_Advantage'            => 'USPS_GROUND_ADVANTAGE',
+        'USPS_Parcel_Select'               => 'PARCEL_SELECT',
+        'USPS_Priority_Mail_Cubic'         => 'PRIORITY_MAIL_CUBIC',
         'USPS_Priority_Mail_Express_Intl'  => 'PRIORITY_MAIL_EXPRESS_INTERNATIONAL',
         'USPS_Priority_Mail_Intl'          => 'PRIORITY_MAIL_INTERNATIONAL',
         'USPS_First_Class_Package_Intl'    => 'FIRST-CLASS_PACKAGE_INTERNATIONAL_SERVICE',
@@ -35,9 +33,7 @@ class UspsPlugin implements ShippingPlugin
         'PRIORITY_MAIL'                             => 'USPS Priority Mail',
         'PRIORITY_MAIL_EXPRESS'                     => 'USPS Priority Mail Express',
         'USPS_GROUND_ADVANTAGE'                     => 'USPS Ground Advantage',
-        'FIRST-CLASS_PACKAGE_SERVICE'               => 'USPS First-Class Package Service',
         'PARCEL_SELECT'                             => 'USPS Parcel Select',
-        'PARCEL_SELECT_LIGHTWEIGHT'                 => 'USPS Parcel Select Lightweight',
         'PRIORITY_MAIL_CUBIC'                       => 'USPS Priority Mail Cubic',
         'PRIORITY_MAIL_EXPRESS_INTERNATIONAL'       => 'USPS Priority Mail Express International',
         'PRIORITY_MAIL_INTERNATIONAL'               => 'USPS Priority Mail International',
@@ -49,9 +45,7 @@ class UspsPlugin implements ShippingPlugin
         'PRIORITY_MAIL'                             => 2,
         'PRIORITY_MAIL_EXPRESS'                     => 1,
         'USPS_GROUND_ADVANTAGE'                     => 5,
-        'FIRST-CLASS_PACKAGE_SERVICE'               => 3,
         'PARCEL_SELECT'                             => 7,
-        'PARCEL_SELECT_LIGHTWEIGHT'                 => 7,
         'PRIORITY_MAIL_CUBIC'                       => 2,
         'PRIORITY_MAIL_EXPRESS_INTERNATIONAL'       => 3,
         'PRIORITY_MAIL_INTERNATIONAL'               => 10,
@@ -120,16 +114,14 @@ class UspsPlugin implements ShippingPlugin
 
     protected function getDomesticRates(string $token, ShippingContext $context, Plugin $plugin, string $fromZip, float $markup): array
     {
-        $weightOz = max(1, (int) round($context->weightLbs * 16));
+        $weightLbs = max(0.01, round((float)$context->weightLbs, 3));
 
         // Domestic services to quote
         $domesticServices = [
             'USPS_Priority_Mail',
             'USPS_Priority_Mail_Express',
             'USPS_Ground_Advantage',
-            'USPS_First_Class_Package',
             'USPS_Parcel_Select',
-            'USPS_Parcel_Select_Lightweight',
             'USPS_Priority_Mail_Cubic',
         ];
 
@@ -150,10 +142,10 @@ class UspsPlugin implements ShippingPlugin
                     ->post('https://api.usps.com/prices/v3/total-rates/search', [
                         'originZIPCode'      => $fromZip,
                         'destinationZIPCode' => $context->toZip,
-                        'weight'             => $weightOz,
-                        'length'             => 12,
-                        'width'              => 10,
-                        'height'             => 6,
+                        'weight'             => $weightLbs,
+                        'length'             => 6,
+                        'width'              => 4,
+                        'height'             => 1,
                         'mailClass'          => $mailClass,
                         'processingCategory' => 'MACHINABLE',
                         'destinationEntryFacilityType' => 'NONE',
@@ -162,9 +154,9 @@ class UspsPlugin implements ShippingPlugin
                     ]);
 
                 if ($response->successful()) {
-                    $totalPrice = $response->json('price') ?? $response->json('totalBasePrice') ?? null;
+                    $totalPrice = $this->extractRateFromResponse($response->json());
 
-                    if ($totalPrice !== null) {
+                    if ($totalPrice !== null && (float)$totalPrice > 0) {
                         $label = $this->serviceLabels[$mailClass] ?? $settingKey;
                         $rates[] = [
                             'code'  => 'USPS_' . $mailClass,
@@ -174,7 +166,7 @@ class UspsPlugin implements ShippingPlugin
                         ];
                     }
                 } else {
-                    Log::debug('USPS rate skip for ' . $mailClass . ': ' . $response->status());
+                    Log::debug('USPS rate skip for ' . $mailClass . ': ' . $response->status() . ' - ' . $response->body());
                 }
             } catch (\Exception $e) {
                 Log::debug('USPS service error for ' . $mailClass . ': ' . $e->getMessage());
@@ -186,7 +178,7 @@ class UspsPlugin implements ShippingPlugin
 
     protected function getInternationalRates(string $token, ShippingContext $context, Plugin $plugin, string $fromZip, float $markup): array
     {
-        $weightOz = max(1, (int) round($context->weightLbs * 16));
+        $weightLbs = max(0.01, round((float)$context->weightLbs, 3));
 
         $intlServices = [
             'USPS_Priority_Mail_Express_Intl' => 'PRIORITY_MAIL_EXPRESS_INTERNATIONAL',
@@ -209,7 +201,10 @@ class UspsPlugin implements ShippingPlugin
                         'originZIPCode'        => $fromZip,
                         'foreignPostalCode'    => $context->toZip,
                         'destinationCountryCode' => strtoupper($context->toCountry),
-                        'weight'               => $weightOz,
+                        'weight'               => $weightLbs,
+                        'length'               => 6,
+                        'width'                => 4,
+                        'height'               => 1,
                         'mailClass'            => $mailClass,
                         'processingCategory'   => 'MACHINABLE',
                         'rateIndicator'        => 'SP',
@@ -217,9 +212,9 @@ class UspsPlugin implements ShippingPlugin
                     ]);
 
                 if ($response->successful()) {
-                    $totalPrice = $response->json('price') ?? $response->json('totalBasePrice') ?? null;
+                    $totalPrice = $this->extractRateFromResponse($response->json());
 
-                    if ($totalPrice !== null) {
+                    if ($totalPrice !== null && (float)$totalPrice > 0) {
                         $label = $this->serviceLabels[$mailClass] ?? $settingKey;
                         $rates[] = [
                             'code'  => 'USPS_INTL_' . $mailClass,
@@ -228,6 +223,8 @@ class UspsPlugin implements ShippingPlugin
                             'days'  => $this->transitDays[$mailClass] ?? null,
                         ];
                     }
+                } else {
+                    Log::debug('USPS intl rate skip for ' . $mailClass . ': ' . $response->status() . ' - ' . $response->body());
                 }
             } catch (\Exception $e) {
                 Log::debug('USPS intl service error for ' . $mailClass . ': ' . $e->getMessage());
@@ -235,5 +232,52 @@ class UspsPlugin implements ShippingPlugin
         }
 
         return $rates;
+    }
+
+    /**
+     * Extract the standard single-piece package price from USPS Prices API v3 response.
+     */
+    protected function extractRateFromResponse(array $data): ?float
+    {
+        if (empty($data['rateOptions'])) {
+            $fallback = $data['totalBasePrice'] ?? $data['price'] ?? null;
+            return $fallback !== null ? (float)$fallback : null;
+        }
+
+        // 1. Look for standard Single-Piece rate (SP for standard, PA for Express)
+        foreach ($data['rateOptions'] as $option) {
+            $firstRate = $option['rates'][0] ?? [];
+            $indicator = $firstRate['rateIndicator'] ?? '';
+            $desc = strtolower($firstRate['description'] ?? '');
+            if (in_array($indicator, ['SP', 'PA'], true) && !str_contains($desc, 'pmod') && !str_contains($desc, 'ddu') && !str_contains($desc, 'dhub')) {
+                $price = $option['totalBasePrice'] ?? $firstRate['price'] ?? null;
+                if ($price !== null && (float)$price > 0) {
+                    return (float)$price;
+                }
+            }
+        }
+
+        // 2. Look for any standard single-piece description
+        foreach ($data['rateOptions'] as $option) {
+            $firstRate = $option['rates'][0] ?? [];
+            $desc = strtolower($firstRate['description'] ?? '');
+            if (str_contains($desc, 'single-piece') && !str_contains($desc, 'pmod')) {
+                $price = $option['totalBasePrice'] ?? $firstRate['price'] ?? null;
+                if ($price !== null && (float)$price > 0) {
+                    return (float)$price;
+                }
+            }
+        }
+
+        // 3. Fallback: lowest valid price in rateOptions
+        $prices = [];
+        foreach ($data['rateOptions'] as $option) {
+            $price = $option['totalBasePrice'] ?? $option['rates'][0]['price'] ?? null;
+            if ($price !== null && (float)$price > 0) {
+                $prices[] = (float)$price;
+            }
+        }
+
+        return !empty($prices) ? min($prices) : null;
     }
 }

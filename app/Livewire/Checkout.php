@@ -304,6 +304,22 @@ class Checkout extends Component
             $this->shipping_countrycode = $user->shipping_countrycode ?? 'US';
             $this->shipping_state = $user->shipping_state ?? '';
         }
+
+        $activeCountries = \Illuminate\Support\Facades\DB::table('shipping_countries')
+            ->where('is_active', 1)
+            ->get();
+
+        if ($activeCountries->count() === 1) {
+            $singleCountry = $activeCountries->first();
+            $this->shipping_countrycode = $singleCountry->code;
+            $this->shipping_country = $singleCountry->name;
+        } elseif (!empty($this->shipping_countrycode) && !$activeCountries->contains('code', $this->shipping_countrycode)) {
+            $firstActive = $activeCountries->first();
+            if ($firstActive) {
+                $this->shipping_countrycode = $firstActive->code;
+                $this->shipping_country = $firstActive->name;
+            }
+        }
     }
 
     public function toggleLoginForm(): void
@@ -507,12 +523,24 @@ class Checkout extends Component
             ->orderBy('name', 'asc')
             ->get();
 
-        $us = $countries->firstWhere('code', 'US');
-        $ca = $countries->firstWhere('code', 'CA');
-        $gb = $countries->firstWhere('code', 'GB');
+        if ($countries->count() >= 20) {
+            $us = $countries->firstWhere('code', 'US');
+            $ca = $countries->firstWhere('code', 'CA');
+            $gb = $countries->firstWhere('code', 'GB');
 
-        $topCountries = collect(array_filter([$us, $ca, $gb]));
-        $dropdownCountries = $topCountries->concat($countries);
+            $topCountries = collect(array_filter([$us, $ca, $gb]));
+            $dropdownCountries = $topCountries->concat($countries);
+        } else {
+            $dropdownCountries = $countries;
+        }
+
+        if ($countries->count() === 1) {
+            $singleCountry = $countries->first();
+            if (empty($this->shipping_countrycode) || $this->shipping_countrycode !== $singleCountry->code) {
+                $this->shipping_countrycode = $singleCountry->code;
+                $this->shipping_country = $singleCountry->name;
+            }
+        }
 
         $states = [];
         if ($this->shipping_countrycode === 'US' || $this->shipping_countrycode === 'CA') {

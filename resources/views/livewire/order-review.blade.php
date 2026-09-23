@@ -767,7 +767,13 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                             if (res.error) {
                                 this.errorMessage = res.error;
                                 this.processing = false;
-                                return;
+                                throw new Error(res.error);
+                            }
+                            if (!res.planId) {
+                                const msg = 'No subscription plan ID returned for this product.';
+                                this.errorMessage = msg;
+                                this.processing = false;
+                                throw new Error(msg);
                             }
                             return actions.subscription.create({
                                 'plan_id': res.planId
@@ -775,6 +781,7 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                         } catch (err) {
                             this.errorMessage = err.message || '{{ siteLabel('review.paypal_subscription_error', 'Failed to create PayPal subscription.') }}';
                             this.processing = false;
+                            throw err;
                         }
                     };
                     btnConfig.onApprove = async (data, actions) => {
@@ -794,12 +801,19 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                             if (res.error) {
                                 this.errorMessage = res.error;
                                 this.processing = false;
-                                return;
+                                throw new Error(res.error);
+                            }
+                            if (!res.orderId) {
+                                const msg = 'No PayPal order ID returned from server.';
+                                this.errorMessage = msg;
+                                this.processing = false;
+                                throw new Error(msg);
                             }
                             return res.orderId;
                         } catch (err) {
                             this.errorMessage = err.message || '{{ siteLabel('review.paypal_order_error', 'Failed to create PayPal order.') }}';
                             this.processing = false;
+                            throw err;
                         }
                     };
                     btnConfig.onApprove = async (data, actions) => {

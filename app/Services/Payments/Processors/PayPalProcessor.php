@@ -195,6 +195,7 @@ class PayPalProcessor implements PaymentProcessorInterface
     {
         $accessToken = $this->getAccessToken();
         $baseUrl = $this->getBaseUrl();
+        $curr = strtoupper(trim($currency ?: 'USD'));
 
         $response = Http::withToken($accessToken)
             ->withHeaders(['Content-Type' => 'application/json'])
@@ -203,7 +204,7 @@ class PayPalProcessor implements PaymentProcessorInterface
                 'purchase_units' => [
                     [
                         'amount' => [
-                            'currency_code' => strtoupper($currency),
+                            'currency_code' => $curr,
                             'value' => number_format($amount, 2, '.', ''),
                         ]
                     ]
@@ -211,12 +212,30 @@ class PayPalProcessor implements PaymentProcessorInterface
             ]);
 
         if ($response->failed()) {
-            $err = $response->json();
-            $msg = $err['message'] ?? 'Could not create PayPal order.';
+            $err = $response->json() ?? [];
+            $detailMsgs = [];
+            if (!empty($err['details']) && is_array($err['details'])) {
+                foreach ($err['details'] as $detail) {
+                    $desc = $detail['description'] ?? $detail['issue'] ?? null;
+                    if ($desc) {
+                        $detailMsgs[] = $desc;
+                    }
+                }
+            }
+            $msg = !empty($detailMsgs)
+                ? implode('; ', $detailMsgs)
+                : ($err['message'] ?? $err['error_description'] ?? 'Could not create PayPal order (' . $response->status() . ').');
+            Log::error("[PayPalProcessor] createOrder failed ({$response->status()}): " . $response->body());
             throw new \RuntimeException($msg);
         }
 
-        return $response->json()['id'];
+        $orderId = $response->json()['id'] ?? null;
+        if (empty($orderId)) {
+            Log::error("[PayPalProcessor] createOrder response missing id: " . $response->body());
+            throw new \RuntimeException('PayPal API did not return an order ID.');
+        }
+
+        return $orderId;
     }
 
     /**
@@ -368,17 +387,19 @@ class PayPalProcessor implements PaymentProcessorInterface
     public function getClientId(?bool $forceSandbox = null): string
     {
         $isSandbox = $forceSandbox !== null ? $forceSandbox : $this->sandbox;
-        return $isSandbox
-            ? config('services.paypal.sandbox_client_id') ?? env('PAYPAL_SANDBOX_CLIENT_ID', '')
-            : config('services.paypal.client_id') ?? env('PAYPAL_CLIENT_ID', '');
+        $val = $isSandbox
+            ? (config('services.paypal.sandbox_client_id') ?: env('PAYPAL_SANDBOX_CLIENT_ID', ''))
+            : (config('services.paypal.client_id') ?: env('PAYPAL_CLIENT_ID', ''));
+        return trim((string) $val);
     }
 
     private function getClientSecret(?bool $forceSandbox = null): string
     {
         $isSandbox = $forceSandbox !== null ? $forceSandbox : $this->sandbox;
-        return $isSandbox
-            ? config('services.paypal.sandbox_client_secret') ?? env('PAYPAL_SANDBOX_CLIENT_SECRET', '')
-            : config('services.paypal.client_secret') ?? env('PAYPAL_CLIENT_SECRET', '');
+        $val = $isSandbox
+            ? (config('services.paypal.sandbox_client_secret') ?: env('PAYPAL_SANDBOX_CLIENT_SECRET', ''))
+            : (config('services.paypal.client_secret') ?: env('PAYPAL_CLIENT_SECRET', ''));
+        return trim((string) $val);
     }
 
     public function getBaseUrl(?bool $forceSandbox = null): string
@@ -389,13 +410,15 @@ class PayPalProcessor implements PaymentProcessorInterface
 
     public function getAccessToken(?bool $forceSandbox = null): string
     {
+        $isSandbox = $forceSandbox !== null ? $forceSandbox : $this->sandbox;
         $clientId = $this->getClientId($forceSandbox);
         $clientSecret = $this->getClientSecret($forceSandbox);
         $baseUrl = $this->getBaseUrl($forceSandbox);
 
         if (empty($clientId) || empty($clientSecret)) {
-            $envName = ($forceSandbox !== null ? $forceSandbox : $this->sandbox) ? 'Sandbox' : 'Live';
-            throw new \RuntimeException("PayPal {$envName} credentials are not configured in the environment.");
+            $envName = $isSandbox ? 'Sandbox' : 'Live';
+            $varPrefix = $isSandbox ? 'PAYPAL_SANDBOX_' : 'PAYPAL_';
+            throw new \RuntimeException("PayPal {$envName} credentials are not configured in .env ({$varPrefix}CLIENT_ID and {$varPrefix}CLIENT_SECRET).");
         }
 
         $response = Http::withBasicAuth($clientId, $clientSecret)
@@ -405,7 +428,11 @@ class PayPalProcessor implements PaymentProcessorInterface
             ]);
 
         if ($response->failed()) {
-            throw new \RuntimeException('Failed to authenticate with PayPal. Check client ID and secret.');
+            $mode = $isSandbox ? 'Sandbox' : 'Live';
+            Log::error("[PayPalProcessor] OAuth authentication failed ({$mode}, {$response->status()}): " . $response->body());
+            $err = $response->json();
+            $msg = $err['error_description'] ?? $err['message'] ?? 'Failed to authenticate with PayPal. Check client ID and secret.';
+            throw new \RuntimeException("PayPal {$mode} authentication failed: {$msg}");
         }
 
         return $response->json()['access_token'];
