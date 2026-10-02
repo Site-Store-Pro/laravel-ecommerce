@@ -1033,11 +1033,17 @@ class AdminProductEdit extends Component
             return;
         }
 
-        // Auto-commit any pending URL-mode image set that hasn't been explicitly added yet.
-        // This handles the case where the user filled in URLs and clicked Save without
+        // Auto-commit any pending file-upload or URL-mode image set that hasn't been explicitly added yet.
+        // This handles the case where the user selected images/URLs and clicked Save without
         // pressing "Add Image Set" first.
-        if ($this->new_image_url_source && $this->new_thumbnail_url && $this->new_main_url) {
-            $this->addImageSet();
+        if ($this->new_image_url_source) {
+            if ($this->new_thumbnail_url && $this->new_main_url) {
+                $this->addImageSet();
+            }
+        } else {
+            if ($this->new_thumbnail && $this->new_main) {
+                $this->addImageSet();
+            }
         }
 
         // Sync inline attributes back to JSON string before saving
@@ -1509,9 +1515,17 @@ class AdminProductEdit extends Component
             ]);
         }
 
-        // Auto-commit any pending URL-mode image set that hasn't been explicitly added yet.
-        if ($this->new_image_url_source && $this->new_thumbnail_url && $this->new_main_url) {
-            $this->addImageSet();
+        // Auto-commit any pending file-upload or URL-mode image set that hasn't been explicitly added yet.
+        // This handles the case where the user selected images/URLs and clicked Save without
+        // pressing "Add Image Set" first.
+        if ($this->new_image_url_source) {
+            if ($this->new_thumbnail_url && $this->new_main_url) {
+                $this->addImageSet();
+            }
+        } else {
+            if ($this->new_thumbnail && $this->new_main) {
+                $this->addImageSet();
+            }
         }
 
         if ($this->new_image_s3 == 2) {
@@ -1933,8 +1947,42 @@ class AdminProductEdit extends Component
         return true;
     }
 
+    private function resolveUploadedFile($file)
+    {
+        if (! $file) {
+            return null;
+        }
+
+        if ($file instanceof \Illuminate\Http\UploadedFile) {
+            return $file;
+        }
+
+        if (is_string($file)) {
+            $filename = $file;
+            if (str_starts_with($filename, 'livewire-file:')) {
+                $filename = substr($filename, 14);
+            }
+
+            try {
+                return \Livewire\Features\SupportFileUploads\TemporaryUploadedFile::createFromLivewire($filename);
+            } catch (\Throwable $e) {
+                \Log::warning('Failed to resolve TemporaryUploadedFile from string', [
+                    'file'  => $filename,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return null;
+    }
+
     private function uploadFileHelper($file, int $s3Setting, string $folder, ProductVariant $variant, ?array $s3Config = null): string
     {
+        $file = $this->resolveUploadedFile($file);
+        if (! $file) {
+            return '';
+        }
+
         $diskName = 'public';
         if ($s3Setting == 1) {
             $diskName = 's3';
@@ -1971,6 +2019,26 @@ class AdminProductEdit extends Component
 
         try {
             $path = $file->store($targetFolder, $diskName);
+
+            // If store returned empty on local public disk, fallback to direct stream/file copy
+            if (! $path && $diskName === 'public') {
+                $ext = $file->getClientOriginalExtension() ?: 'jpg';
+                $fallbackFilename = Str::random(40) . '.' . $ext;
+                $fallbackPath = $targetFolder . '/' . $fallbackFilename;
+
+                if (method_exists($file, 'getRealPath') && file_exists($file->getRealPath())) {
+                    $contents = @file_get_contents($file->getRealPath());
+                    if ($contents !== false && Storage::disk('public')->put($fallbackPath, $contents)) {
+                        $path = $fallbackPath;
+                    }
+                } elseif (method_exists($file, 'readStream')) {
+                    $stream = $file->readStream();
+                    if ($stream && Storage::disk('public')->put($fallbackPath, $stream)) {
+                        $path = $fallbackPath;
+                    }
+                }
+            }
+
             if (! $path) {
                 \Log::error('Variant image upload: store returned false/empty', [
                     'disk'        => $diskName,
