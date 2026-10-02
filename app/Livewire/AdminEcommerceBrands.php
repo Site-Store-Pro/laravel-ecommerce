@@ -232,6 +232,13 @@ class AdminEcommerceBrands extends Component
                 $diskName = $this->brand_logo_s3 == 1 ? 's3' : 'public';
             }
 
+            if ($diskName === 'public') {
+                $realDir = storage_path('app/public/brands/logos');
+                if (! is_dir($realDir)) {
+                    @mkdir($realDir, 0775, true);
+                }
+            }
+
             $stored_path = $this->logoFile->store('brands/logos', $diskName);
 
             // Apply CDN prefix if provided
@@ -262,6 +269,13 @@ class AdminEcommerceBrands extends Component
                 ]);
             } else {
                 $diskName = $this->header_image_s3 == 1 ? 's3' : 'public';
+            }
+
+            if ($diskName === 'public') {
+                $realDir = storage_path('app/public/brands/headers');
+                if (! is_dir($realDir)) {
+                    @mkdir($realDir, 0775, true);
+                }
             }
 
             $stored_path = $this->headerImageFile->store('brands/headers', $diskName);

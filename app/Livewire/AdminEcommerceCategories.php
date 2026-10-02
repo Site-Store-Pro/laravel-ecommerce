@@ -310,6 +310,13 @@ class AdminEcommerceCategories extends Component
                 $diskName = 'public';
             }
 
+            if ($diskName === 'public') {
+                $realDir = storage_path('app/public/uploads/categories');
+                if (! is_dir($realDir)) {
+                    @mkdir($realDir, 0775, true);
+                }
+            }
+
             $stored_path = $this->category_image_file->store('uploads/categories', $diskName);
 
             // Apply CDN prefix if provided
@@ -344,6 +351,13 @@ class AdminEcommerceCategories extends Component
                 $diskName = 's3';
             } else {
                 $diskName = 'public';
+            }
+
+            if ($diskName === 'public') {
+                $realDir = storage_path('app/public/uploads/categories/headers');
+                if (! is_dir($realDir)) {
+                    @mkdir($realDir, 0775, true);
+                }
             }
 
             $stored_path = $this->header_image_file->store('uploads/categories/headers', $diskName);

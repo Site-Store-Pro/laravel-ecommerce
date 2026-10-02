@@ -898,30 +898,8 @@ class ProductDetails extends Component
         }
         $breadcrumbs = $bestChain;
 
-        // Determine active brand for breadcrumb trail
-        $activeBrand = null;
-        $lastUrl = $this->returnToSearchResultsUrl ?: (session('last_search_url') ?: session('last_catalog_url'));
-        if ($lastUrl) {
-            $parsed = parse_url($lastUrl);
-            $path = $parsed['path'] ?? '';
-            $query = [];
-            if (!empty($parsed['query'])) {
-                parse_str($parsed['query'], $query);
-            }
-
-            if (preg_match('~^/brands/([^/?#]+)~', $path, $matches)) {
-                $activeBrand = \App\Models\Brand::where('slug', $matches[1])->first();
-            } elseif (!empty($query['brand'])) {
-                $activeBrand = \App\Models\Brand::where('slug', $query['brand'])->first();
-            } elseif (!empty($query['selectedBrands'])) {
-                $brandIds = (array) $query['selectedBrands'];
-                $activeBrand = \App\Models\Brand::whereIn('id', array_map('intval', $brandIds))->first();
-            }
-        }
-
-        if (!$activeBrand && $this->product->brand_id) {
-            $activeBrand = $this->product->brand;
-        }
+        // Determine brand for breadcrumb trail solely from the item's own properties
+        $activeBrand = $this->product->brand_id ? $this->product->brand : null;
 
         // ── Related / recommended products — cross-sells with display_on_item_view ──
         $relatedProducts = collect();

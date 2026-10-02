@@ -3,6 +3,7 @@
     $aspectClass    = $imgOrientation === '1:1' ? 'aspect-square' : 'aspect-video';
     $objectClass    = $imgOrientation === '1:1' ? 'object-contain' : 'object-cover';
     $listSizeClass  = $imgOrientation === '1:1' ? 'w-24 sm:w-28 aspect-square' : 'w-32 sm:w-36 aspect-video';
+    $placeholderSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22none%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23f8fafc%22%2F%3E%3Cg%20transform%3D%22translate(200%2C%20115)%22%20text-anchor%3D%22middle%22%3E%3Crect%20x%3D%22-40%22%20y%3D%22-30%22%20width%3D%2280%22%20height%3D%2260%22%20rx%3D%228%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%222.5%22%20fill%3D%22%23f1f5f9%22%2F%3E%3Ccircle%20cx%3D%22-15%22%20cy%3D%22-10%22%20r%3D%226%22%20fill%3D%22%2394a3b8%22%2F%3E%3Cpath%20d%3D%22M-30%2020%20L-5%20-5%20L15%2015%20L25%205%20L35%2020%20Z%22%20fill%3D%22%23e2e8f0%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%2F%3E%3Cline%20x1%3D%22-48%22%20y1%3D%22-38%22%20x2%3D%2248%22%20y2%3D%2238%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%22200%22%20y%3D%22185%22%20text-anchor%3D%22middle%22%20font-family%3D%22system-ui%2C%20-apple-system%2C%20sans-serif%22%20font-size%3D%2212%22%20font-weight%3D%22700%22%20fill%3D%22%2394a3b8%22%20letter-spacing%3D%220.06em%22%3EIMAGE%20NOT%20AVAILABLE%3C%2Ftext%3E%3C%2Fsvg%3E";
 @endphp
 <div wire:init="loadProducts"
      x-data="{ slideoutOpen: @entangle('slideoutOpen') }" 
@@ -86,7 +87,7 @@
         </div>
         <!-- Shop Breadcrumbs Bar -->
         @if(\App\Models\CmsSetting::isEnabled('show_shop_breadcrumbs', true))
-            <div class="mb-6 flex items-center gap-2 text-xs font-semibold text-slate-400 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 px-4 py-2.5 rounded-2xl shadow-xs">
+            <div class="shop-breadcrumbs-bar mb-6 flex items-center gap-2 text-xs font-semibold text-slate-400 bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700/80 px-4 py-2.5 rounded-2xl shadow-sm hover:shadow transition-shadow">
                 <a href="{{ url('/') }}" wire:navigate class="text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors flex items-center gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
@@ -472,7 +473,7 @@
                         @php
                             $firstVariant = $product->variants->first();
                             $inStock = $firstVariant ? $firstVariant->getStockForFulfillment(auth()->user()?->shipping_countrycode, auth()->user()?->shipping_state) > 0 : false;
-                            $thumbUrl = $firstVariant ? $firstVariant->thumbnailImageUrl() : null;
+                            $thumbUrl = $product->primaryThumbnailUrl();
                         @endphp
                         <div class="group bg-white dark:bg-slate-800 rounded-3xl border border-slate-150 dark:border-slate-700/60 overflow-hidden hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition duration-300 flex flex-col justify-between">
                             <div>
@@ -480,11 +481,15 @@
                                    x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }"
                                    class="block relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 {{ $aspectClass }}">
                                     @if($thumbUrl)
-                                        <img src="{{ $thumbUrl }}" alt="{{ $product->title }}" class="w-full h-full {{ $objectClass }} group-hover:scale-105 transition duration-500">
+                                        <img src="{{ $thumbUrl }}"
+                                             alt="{{ $product->title }}"
+                                             loading="lazy"
+                                             onerror="this.onerror=null; this.src='{{ $placeholderSvg }}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-2', 'opacity-80');"
+                                             class="w-full h-full {{ $objectClass }} group-hover:scale-105 transition duration-500">
                                     @else
-                                        <div class="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-600">
-                                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                        </div>
+                                        <img src="{{ $placeholderSvg }}"
+                                             alt="{{ $product->title }}"
+                                             class="w-full h-full object-contain p-2 opacity-80">
                                     @endif
                                     @if($firstVariant && $firstVariant->on_sale && $userType == 1)
                                         <span class="absolute top-3 left-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md">@label('catalog.sale', 'Sale')</span>
@@ -563,18 +568,22 @@
                         @php
                             $firstVariant = $product->variants->first();
                             $inStock = $firstVariant ? $firstVariant->getStockForFulfillment(auth()->user()?->shipping_countrycode, auth()->user()?->shipping_state) > 0 : false;
-                            $thumbUrl = $firstVariant ? $firstVariant->thumbnailImageUrl() : null;
+                            $thumbUrl = $product->primaryThumbnailUrl();
                         @endphp
                         <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-150 dark:border-slate-700/60 p-4 sm:p-5 flex flex-col sm:flex-row items-center gap-6 hover:shadow-lg transition">
                             <a href="{{ route('shop.product', $product->seo_slug) }}"
                                x-on:click="if(typeof window.trackGaEvent === 'function') { window.trackGaEvent('select_item', { item_list_id: '{{ $gaEcommerceData['item_list_id'] ?? 'catalog_products' }}', item_list_name: '{{ $gaEcommerceData['item_list_name'] ?? 'Catalog Products' }}', items: [{{ json_encode(\App\Services\GoogleAnalyticsService::formatItem($product)) }}] }); }"
                                 class="shrink-0 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-900/50 {{ $listSizeClass }} flex items-center justify-center p-1">
                                 @if($thumbUrl)
-                                    <img src="{{ $thumbUrl }}" alt="{{ $product->title }}" class="w-full h-full object-contain">
+                                    <img src="{{ $thumbUrl }}"
+                                         alt="{{ $product->title }}"
+                                         loading="lazy"
+                                         onerror="this.onerror=null; this.src='{{ $placeholderSvg }}';"
+                                         class="w-full h-full object-contain">
                                 @else
-                                    <div class="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-600">
-                                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                    </div>
+                                    <img src="{{ $placeholderSvg }}"
+                                         alt="{{ $product->title }}"
+                                         class="w-full h-full object-contain p-1 opacity-80">
                                 @endif
                             </a>
                             <div class="flex-1 min-w-0 text-center sm:text-left">

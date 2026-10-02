@@ -1800,6 +1800,13 @@ class AdminProductEdit extends Component
                     'temp_path' => $this->downloadFile->getRealPath()
                 ]);
 
+                if ($diskName === 'public') {
+                    $realDir = storage_path('app/public/' . trim($folder, '/'));
+                    if (! is_dir($realDir)) {
+                        @mkdir($realDir, 0775, true);
+                    }
+                }
+
                 $path = $this->downloadFile->store($folder, $diskName);
 
                 \Log::debug("Store completed", ['path' => $path]);
@@ -1951,13 +1958,34 @@ class AdminProductEdit extends Component
         }
 
         $prefix = $this->s3_folder ? trim($this->s3_folder, '/') . '/' : '';
+        $targetFolder = $prefix . trim($folder, '/');
+
+        // Ensure the target directory exists on the real filesystem for public disk
+        // (Storage::disk does not auto-create nested parent dirs on all environments)
+        if ($diskName === 'public') {
+            $realDir = storage_path('app/public/' . $targetFolder);
+            if (! is_dir($realDir)) {
+                @mkdir($realDir, 0775, true);
+            }
+        }
 
         try {
-            return $file->store($prefix . $folder, $diskName) ?: '';
+            $path = $file->store($targetFolder, $diskName);
+            if (! $path) {
+                \Log::error('Variant image upload: store returned false/empty', [
+                    'disk'        => $diskName,
+                    'folder'      => $targetFolder,
+                    'real_dir'    => $diskName === 'public' ? storage_path('app/public/' . $targetFolder) : null,
+                    'dir_exists'  => $diskName === 'public' ? is_dir(storage_path('app/public/' . $targetFolder)) : null,
+                    'is_writable' => $diskName === 'public' ? is_writable(storage_path('app/public/' . $targetFolder)) : null,
+                ]);
+                return '';
+            }
+            return $path;
         } catch (\Throwable $e) {
             \Log::warning('Image upload failed (bad S3 config or connectivity).', [
                 'disk'      => $diskName,
-                'folder'    => $prefix . $folder,
+                'folder'    => $targetFolder,
                 'error'     => $e->getMessage(),
             ]);
             return '';

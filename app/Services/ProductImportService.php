@@ -555,6 +555,12 @@ class ProductImportService
             return;
         }
 
+        // Only set search_image = 1 if no variant for this product already has a search_image
+        $hasSearchImage = ProductImage::whereHas('variant', function ($q) use ($variant) {
+            $q->where('product_id', $variant->product_id);
+        })->where('search_image', 1)->exists();
+        $isSearchImage = !$hasSearchImage ? 1 : 0;
+
         if ($isDirectUrl) {
             // Store as external URL links directly
             ProductImage::updateOrCreate(
@@ -566,7 +572,7 @@ class ProductImportService
                     'thumbnail_path'   => $thumbTarget,
                     'zoom_path'        => $zoomTarget,
                     'image_url_source' => 1,
-                    'search_image'     => 1,
+                    'search_image'     => $isSearchImage,
                     'active'           => 1,
                 ]
             );
@@ -588,7 +594,7 @@ class ProductImportService
                 'thumbnail_path'   => $localThumb ?: $thumbTarget,
                 'zoom_path'        => $localZoom ?: $zoomTarget,
                 'image_url_source' => $localMain ? 0 : 1,
-                'search_image'     => 1,
+                'search_image'     => $isSearchImage,
                 'active'           => 1,
             ]
         );

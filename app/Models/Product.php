@@ -365,12 +365,6 @@ class Product extends Model
             }
         }
 
-        foreach ($this->variants as $variant) {
-            $url = $variant->thumbnailImageUrl();
-            if ($url) {
-                return $url;
-            }
-        }
         return null;
     }
 

@@ -425,12 +425,7 @@ class ProductVariant extends Model
     public function searchActiveImageSet(): ?ProductImage
     {
         // Ensure images relation is loaded/eager loaded
-        $set = $this->images->where('active', 1)->where('search_image', 1)->first();
-        if ($set) {
-            return $set;
-        }
-
-        return $this->images->where('active', 1)->first();
+        return $this->images->where('active', 1)->where('search_image', 1)->first();
     }
 
     public function thumbnailImageUrl(): ?string
