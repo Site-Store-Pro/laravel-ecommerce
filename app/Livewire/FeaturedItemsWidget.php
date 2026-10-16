@@ -134,6 +134,76 @@ class FeaturedItemsWidget extends Component
             }
         }
 
+        // Check inventory and existing cart quantities
+        if (!$variant->download_item && $variant->inventory && !$product->is_donation_or_bill_pay) {
+            $available = $variant->getStockForFulfillment(
+                auth()->user()?->shipping_countrycode,
+                auth()->user()?->shipping_state
+            );
+
+            $currentQtyInCart = (int) ShoppingCartLog::where(function ($q) use ($sessionId, $userId) {
+                if ($userId > 0) {
+                    $q->where('user_id', $userId);
+                } else {
+                    $q->where('cart_log_session', $sessionId)->where('user_id', 0);
+                }
+            })
+            ->where(function ($q) use ($variant) {
+                $q->where('variant_id', $variant->id);
+                if (!empty($variant->sku)) {
+                    $q->orWhere('item_name', 'like', '%(' . $variant->sku . ')%');
+                }
+            })
+            ->where('order_id', 0)
+            ->sum('item_qty');
+
+            if ($available <= 0) {
+                $this->dispatch('show-cart-error', message: 'This item is currently out of stock.');
+                return;
+            }
+
+            if (($currentQtyInCart + 1) > $available) {
+                $remainingAllowed = max(0, $available - $currentQtyInCart);
+                $msg = $remainingAllowed <= 0
+                    ? "You already have the maximum available stock ({$available}) in your cart."
+                    : "You already have {$currentQtyInCart} in your cart. Only {$remainingAllowed} more unit" . ($remainingAllowed === 1 ? '' : 's') . " can be added (Stock: {$available}).";
+                $this->dispatch('show-cart-error', message: $msg);
+                return;
+            }
+        }
+
+        // Per-product max_qty check
+        if ($product && (int) $product->max_qty > 0 && !$product->is_donation_or_bill_pay) {
+            $currentVariantCartQty = (int) ShoppingCartLog::where(function ($q) use ($sessionId, $userId) {
+                if ($userId > 0) {
+                    $q->where('user_id', $userId);
+                } else {
+                    $q->where('cart_log_session', $sessionId)->where('user_id', 0);
+                }
+            })
+            ->where(function ($q) use ($variant) {
+                $q->where('variant_id', $variant->id);
+                if (!empty($variant->sku)) {
+                    $q->orWhere('item_name', 'like', '%(' . $variant->sku . ')%');
+                }
+            })
+            ->where('order_id', 0)
+            ->sum('item_qty');
+
+            if (($currentVariantCartQty + 1) > (int) $product->max_qty) {
+                $maxLimit = (int) $product->max_qty;
+                $remainingMax = max(0, $maxLimit - $currentVariantCartQty);
+                $msg = $remainingMax <= 0
+                    ? ($maxLimit === 1 ? "You can only purchase a maximum of 1 unit of this item per order." : "You already have the maximum allowed quantity ({$maxLimit}) in your cart.")
+                    : "You already have {$currentVariantCartQty} in your cart. You can only add {$remainingMax} more unit" . ($remainingMax === 1 ? '' : 's') . " (Maximum {$maxLimit} per order).";
+                $this->dispatch('show-cart-error', message: $msg);
+                if ($product->checkout_redirect == 1 || $product->standalone_purchase == 1) {
+                    return redirect()->route('shop.checkout');
+                }
+                return;
+            }
+        }
+
         $cartItem = ShoppingCartLog::where(function ($q) use ($sessionId, $userId) {
             if ($userId > 0) {
                 $q->where('user_id', $userId);
@@ -145,14 +215,6 @@ class FeaturedItemsWidget extends Component
             ->where('item_attributes', $variant->attributes)
             ->where('order_id', 0)
             ->first();
-
-        if ($cartItem && $product && $product->max_qty == 1) {
-            $this->dispatch('show-cart-error', message: 'You can only purchase a maximum of 1 unit of this item per order.');
-            if ($product->checkout_redirect == 1 || $product->standalone_purchase == 1) {
-                return redirect()->route('shop.checkout');
-            }
-            return;
-        }
 
         $formattedItemName = \App\Services\CartSessionService::formatCartItemName($product, $variant);
 

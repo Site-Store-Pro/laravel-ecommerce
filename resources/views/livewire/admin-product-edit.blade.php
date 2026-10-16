@@ -1030,7 +1030,7 @@
 
                             {{-- Hide Gallery Thumbnails Strip Toggle --}}
                             <label class="flex items-start gap-3 cursor-pointer">
-                                <input type="checkbox" wire:model="hide_gallery_thumbnails" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
+                                <input type="checkbox" wire:model.live="hide_gallery_thumbnails" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
                                 <div class="flex flex-col">
                                     <span class="text-xs font-bold {{ $hide_gallery_thumbnails ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700' }} transition-colors">
                                         Hide Thumbnails in Gallery Display
@@ -1042,9 +1042,26 @@
                                 </div>
                             </label>
 
+                            {{-- Lock Gallery Image on Top When Scrolling (Mobile View < 550px) --}}
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input type="checkbox" wire:model.live="lock_mobile_gallery" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold {{ $lock_mobile_gallery ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700' }} transition-colors">
+                                        Lock Gallery Image on Top When Scrolling (Mobile View &lt; 550px)
+                                        @if($lock_mobile_gallery)
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-indigo-100 text-indigo-700 ml-1">Active</span>
+                                        @endif
+                                    </span>
+                                    <span class="text-xs text-slate-400">Locks the gallery image to the top of the viewport when scrolling down on small screens (&lt; 550px). Applies to all product layouts where the gallery image appears on top in mobile views, including the Direct Order Matrix view.</span>
+                                    <span class="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-1">
+                                        ⚠️ <strong>Note:</strong> If this product has multiple thumbnails, it is recommended to also enable <strong>"Hide Thumbnails in Gallery Display"</strong> above to keep the locked gallery compact and avoid excessive screen height usage on mobile screens.
+                                    </span>
+                                </div>
+                            </label>
+
                             {{-- Hide Product Price Toggle --}}
                             <label class="flex items-start gap-3 cursor-pointer">
-                                <input type="checkbox" wire:model="hide_product_price" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
+                                <input type="checkbox" wire:model.live="hide_product_price" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 bg-white mt-0.5">
                                 <div class="flex flex-col">
                                     <span class="text-xs font-bold {{ $hide_product_price ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-700' }} transition-colors">
                                         Hide Price Display on Product Details & Quick Shop
@@ -1184,8 +1201,8 @@
                                              Show Model / Part No After Item Name
                                         </label>
                                         <select id="show_part_number_in_cart" wire:model="show_part_number_in_cart" class="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                            <option value="">Default (Show if Set on Variant)</option>
-                                            <option value="1">Always Show (e.g. Name (Part No))</option>
+                                            <option value="">Default (Inherit Store Setting - {{ \App\Models\CmsSetting::isEnabled('cart_show_part_number', false) ? 'Show' : 'Hide' }})</option>
+                                            <option value="1">Show Model / Part No (e.g. Name (Part No))</option>
                                             <option value="0">Hide Model / Part No</option>
                                         </select>
                                         <p class="text-[11px] text-slate-400">Controls whether variant Model / Part No is appended to this item in cart and orders.</p>

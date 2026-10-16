@@ -43,28 +43,43 @@ class ShoppingCart extends Component
             }
         }
 
-        // Find associated variant from item name (which has the SKU inside parentheses)
-        $sku = null;
-        if (preg_match('/\(([^)]+)\)$/', $item->item_name, $matches)) {
-            $sku = $matches[1];
+        // Find associated variant from variant_id or item name (SKU in parentheses)
+        $variant = null;
+        if (!empty($item->variant_id)) {
+            $variant = \App\Models\ProductVariant::with(['inventory', 'product'])->find($item->variant_id);
+        }
+        if (!$variant && preg_match('/\(([^)]+)\)$/', $item->item_name, $matches)) {
+            $variant = \App\Models\ProductVariant::where('sku', $matches[1])->with(['inventory', 'product'])->first();
         }
 
-        if ($sku) {
-            $variant = \App\Models\ProductVariant::where('sku', $sku)->with(['inventory', 'product'])->first();
-            if ($variant) {
-                if ($variant->product && $variant->product->max_qty == 1 && $qty > 1) {
-                    session()->flash('error', "Maximum 1 unit per order is allowed for '{$item->item_name}'.");
-                    return;
-                }
-                if ($variant->inventory) {
-                    $available = $variant->getStockForFulfillment(
-                        auth()->user()?->shipping_countrycode,
-                        auth()->user()?->shipping_state
-                    );
-                    if ($qty > $available) {
-                        session()->flash('error', "Only {$available} units of '{$item->item_name}' are available in stock.");
-                        return;
+        if ($variant) {
+            $otherQty = (int) $this->getCartQuery()
+                ->where('id', '!=', $itemId)
+                ->where(function ($q) use ($variant) {
+                    $q->where('variant_id', $variant->id);
+                    if (!empty($variant->sku)) {
+                        $q->orWhere('item_name', 'like', '%(' . $variant->sku . ')%');
                     }
+                })
+                ->sum('item_qty');
+
+            if ($variant->product && (int) $variant->product->max_qty > 0 && ($qty + $otherQty) > (int) $variant->product->max_qty) {
+                $maxLimit = (int) $variant->product->max_qty;
+                $rem = max(0, $maxLimit - $otherQty);
+                session()->flash('error', $maxLimit === 1
+                    ? "Maximum 1 unit per order is allowed for '{$item->item_name}'."
+                    : "Maximum {$maxLimit} units per order are allowed for '{$item->item_name}'. You can only set this item to {$rem}.");
+                return;
+            }
+
+            if ($variant->inventory && !$variant->download_item) {
+                $available = $variant->getStockForFulfillment(
+                    auth()->user()?->shipping_countrycode,
+                    auth()->user()?->shipping_state
+                );
+                if (($qty + $otherQty) > $available) {
+                    session()->flash('error', "Only {$available} unit" . ($available === 1 ? '' : 's') . " of '{$item->item_name}' available in stock.");
+                    return;
                 }
             }
         }
@@ -123,16 +138,16 @@ class ShoppingCart extends Component
         $discountResult = \App\Services\DiscountService::applyDiscountsToCart($items, auth()->user());
 
         $items = $discountResult['items']->map(function ($item) {
-            $sku = null;
-            if (preg_match('/\(([^)]+)\)$/', $item->item_name, $matches)) {
-                $sku = $matches[1];
+            $variant = null;
+            if (!empty($item->variant_id)) {
+                $variant = \App\Models\ProductVariant::where('id', $item->variant_id)->with('product')->first();
+            }
+            if (!$variant && preg_match('/\(([^)]+)\)$/', $item->item_name, $matches)) {
+                $variant = \App\Models\ProductVariant::where('sku', $matches[1])->with('product')->first();
             }
             $item->max_qty = 0;
-            if ($sku) {
-                $variant = \App\Models\ProductVariant::where('sku', $sku)->with('product')->first();
-                if ($variant && $variant->product) {
-                    $item->max_qty = (int) $variant->product->max_qty;
-                }
+            if ($variant && $variant->product) {
+                $item->max_qty = (int) $variant->product->max_qty;
             }
             // Decode attributes to retrieve BOGO details
             $attrs = json_decode($item->item_attributes, true) ?: [];

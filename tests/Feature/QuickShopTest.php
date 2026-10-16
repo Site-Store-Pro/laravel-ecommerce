@@ -337,4 +337,65 @@ class QuickShopTest extends TestCase
         // When language is requested via getTranslated on fresh product
         $this->assertEquals('Achat Rapide', $product->fresh()->getTranslated('quick_shop_label', $lang->id));
     }
+
+    public function test_quick_shop_modal_dispatches_gallery_variant_changed_on_variant_selection(): void
+    {
+        $product = Product::create([
+            'active'             => true,
+            'show_in_results'    => true,
+            'title'              => 'Color Variant Product ' . rand(1000, 9999),
+            'meta_title'         => 'Color Variant Product',
+            'short_description'  => 'Color variant description',
+            'seo_slug'           => 'color-variant-prod-' . rand(1000, 9999),
+            'quick_shop_active'  => true,
+            'dependent_variants' => 1,
+            'layout_type'        => 1,
+        ]);
+
+        $vRed = ProductVariant::create([
+            'product_id'      => $product->id,
+            'sku'             => 'COLOR-RED',
+            'attributes'      => json_encode(['Color' => 'Red']),
+            'public_price'    => 20.00,
+            'wholesale_price' => 15.00,
+            'shipping'        => 1,
+        ]);
+
+        $vBlue = ProductVariant::create([
+            'product_id'      => $product->id,
+            'sku'             => 'COLOR-BLUE',
+            'attributes'      => json_encode(['Color' => 'Blue']),
+            'public_price'    => 22.00,
+            'wholesale_price' => 16.00,
+            'shipping'        => 1,
+        ]);
+
+        // 1. Open quick shop modal -> dispatches initial variant selection
+        $test = Livewire::test(QuickShopModal::class)
+            ->dispatch('open-quick-shop', $product->id)
+            ->assertSet('selectedVariantId', $vRed->id)
+            ->assertDispatched('gallery:variant-changed', function ($event, $params) use ($vRed) {
+                return $params['variantId'] === $vRed->id && $params['color'] === 'Red';
+            });
+
+        // 2. Select attribute 'Color' => 'Blue'
+        $test->call('selectAttribute', 'Color', 'Blue')
+            ->assertSet('selectedVariantId', $vBlue->id)
+            ->assertDispatched('gallery:variant-changed', function ($event, $params) use ($vBlue) {
+                return $params['variantId'] === $vBlue->id && $params['color'] === 'Blue';
+            });
+
+        // 3. Select radio option via updatedSelectedVariantId
+        $test->set('selectedVariantId', $vRed->id)
+            ->assertDispatched('gallery:variant-changed', function ($event, $params) use ($vRed) {
+                return $params['variantId'] === $vRed->id && $params['color'] === 'Red';
+            });
+
+        // 4. Select variant directly
+        $test->call('selectVariant', $vBlue->id)
+            ->assertSet('selectedVariantId', $vBlue->id)
+            ->assertDispatched('gallery:variant-changed', function ($event, $params) use ($vBlue) {
+                return $params['variantId'] === $vBlue->id && $params['color'] === 'Blue';
+            });
+    }
 }

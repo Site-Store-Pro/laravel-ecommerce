@@ -178,14 +178,22 @@ class ShopCatalog extends Component
     {
         if ($this->category) {
             $catModel = Category::where('slug', $this->category)->first();
-            if ($catModel && !in_array((string)$catModel->id, array_map('strval', $this->selectedCategories), true)) {
-                $this->selectedCategories[] = (string) $catModel->id;
+            if ($catModel) {
+                if (!in_array((string)$catModel->id, array_map('strval', $this->selectedCategories), true)) {
+                    $this->selectedCategories[] = (string) $catModel->id;
+                }
+            } else {
+                $this->category = null;
             }
         }
         if ($this->brand) {
             $brandModel = Brand::where('slug', $this->brand)->first();
-            if ($brandModel && !in_array((string)$brandModel->id, array_map('strval', $this->selectedBrands), true)) {
-                $this->selectedBrands[] = (string) $brandModel->id;
+            if ($brandModel) {
+                if (!in_array((string)$brandModel->id, array_map('strval', $this->selectedBrands), true)) {
+                    $this->selectedBrands[] = (string) $brandModel->id;
+                }
+            } else {
+                $this->brand = null;
             }
         }
     }
@@ -249,6 +257,26 @@ class ShopCatalog extends Component
 
     public function getHasActiveFiltersProperty(): bool
     {
+        $hasCategory = false;
+        if (!empty($this->category)) {
+            $hasCategory = Category::where('slug', $this->category)->exists();
+        }
+
+        $hasBrand = false;
+        if (!empty($this->brand)) {
+            $hasBrand = Brand::where('slug', $this->brand)->exists();
+        }
+
+        $hasSelectedBrands = false;
+        if (!empty($this->selectedBrands)) {
+            $hasSelectedBrands = Brand::whereIn('id', array_map('intval', $this->selectedBrands))->exists();
+        }
+
+        $hasSelectedCategories = false;
+        if (!empty($this->selectedCategories)) {
+            $hasSelectedCategories = Category::whereIn('id', array_map('intval', $this->selectedCategories))->exists();
+        }
+
         $hasSelectedAttrs = false;
         if (is_array($this->selectedAttributes)) {
             foreach ($this->selectedAttributes as $vals) {
@@ -265,11 +293,11 @@ class ShopCatalog extends Component
             }
         }
 
-        return !empty($this->category)
-            || !empty($this->brand)
+        return $hasCategory
+            || $hasBrand
             || !empty(trim($this->search))
-            || !empty($this->selectedBrands)
-            || !empty($this->selectedCategories)
+            || $hasSelectedBrands
+            || $hasSelectedCategories
             || $hasSelectedAttrs
             || $this->minPriceFilter !== null
             || $this->maxPriceFilter !== null;
@@ -660,20 +688,77 @@ class ShopCatalog extends Component
             }
         }
 
+        // Check inventory and existing cart quantities
+        if (!$variant->download_item && $variant->inventory && !$product->is_donation_or_bill_pay) {
+            $available = $variant->getStockForFulfillment(
+                auth()->user()?->shipping_countrycode,
+                auth()->user()?->shipping_state
+            );
+
+            $currentQtyInCart = (int) \App\Services\CartSessionService::getCartQuery($sessionId)
+                ->where(function ($q) use ($variant) {
+                    $q->where('variant_id', $variant->id);
+                    if (!empty($variant->sku)) {
+                        $q->orWhere('item_name', 'like', '%(' . $variant->sku . ')%');
+                    }
+                })
+                ->sum('item_qty');
+
+            if ($available <= 0) {
+                $this->catalogError = "This item is currently out of stock.";
+                session()->flash('error', $this->catalogError);
+                $this->dispatch('show-catalog-error', message: $this->catalogError);
+                return;
+            }
+
+            if (($currentQtyInCart + 1) > $available) {
+                $remainingAllowed = max(0, $available - $currentQtyInCart);
+                if ($remainingAllowed <= 0) {
+                    $this->catalogError = "You already have the maximum available stock ({$available}) in your cart.";
+                } else {
+                    $this->catalogError = "You already have {$currentQtyInCart} in your cart. Only {$remainingAllowed} more unit" . ($remainingAllowed === 1 ? '' : 's') . " can be added (Stock: {$available}).";
+                }
+                session()->flash('error', $this->catalogError);
+                $this->dispatch('show-catalog-error', message: $this->catalogError);
+                return;
+            }
+        }
+
+        // Per-product max_qty check
+        if ($product && (int) $product->max_qty > 0 && !$product->is_donation_or_bill_pay) {
+            $currentVariantCartQty = (int) \App\Services\CartSessionService::getCartQuery($sessionId)
+                ->where(function ($q) use ($variant) {
+                    $q->where('variant_id', $variant->id);
+                    if (!empty($variant->sku)) {
+                        $q->orWhere('item_name', 'like', '%(' . $variant->sku . ')%');
+                    }
+                })
+                ->sum('item_qty');
+
+            if (($currentVariantCartQty + 1) > (int) $product->max_qty) {
+                $maxLimit = (int) $product->max_qty;
+                $remainingMax = max(0, $maxLimit - $currentVariantCartQty);
+                if ($remainingMax <= 0) {
+                    $msg = $maxLimit === 1
+                        ? "You can only purchase a maximum of 1 unit of this item per order."
+                        : "You already have the maximum allowed quantity ({$maxLimit}) in your cart.";
+                } else {
+                    $msg = "You already have {$currentVariantCartQty} in your cart. You can only add {$remainingMax} more unit" . ($remainingMax === 1 ? '' : 's') . " (Maximum {$maxLimit} per order).";
+                }
+                $this->catalogError = $msg;
+                session()->flash('error', $msg);
+                $this->dispatch('show-catalog-error', message: $msg);
+                if ($product->checkout_redirect == 1 || $product->standalone_purchase == 1) {
+                    return redirect()->route('shop.checkout');
+                }
+                return;
+            }
+        }
+
         $cartItem = \App\Services\CartSessionService::getCartQuery($sessionId)
             ->where('variant_id', $variant->id)
             ->where('item_attributes', $variant->attributes)
             ->first();
-
-        if ($cartItem && $product && $product->max_qty == 1) {
-            $this->catalogError = "You can only purchase a maximum of 1 unit of this item per order.";
-            session()->flash('error', $this->catalogError);
-            $this->dispatch('show-catalog-error', message: $this->catalogError);
-            if ($product->checkout_redirect == 1 || $product->standalone_purchase == 1) {
-                return redirect()->route('shop.checkout');
-            }
-            return;
-        }
 
         $formattedItemName = \App\Services\CartSessionService::formatCartItemName($variant->product, $variant);
         $qtyToAdd = 1;
@@ -715,6 +800,7 @@ class ShopCatalog extends Component
     public function render(): View
     {
         $this->sanitizePerPage();
+        $this->syncActivePreselection();
 
         if (\App\Models\CmsSetting::isEnabled('disable_shop_landing')) {
             $hasFilter = !empty($this->category) || !empty($this->brand) || !empty(trim($this->search));
@@ -752,12 +838,16 @@ class ShopCatalog extends Component
                             ->whereColumn('product_categories_assignments.product_id', 'products.id')
                             ->whereIn('product_categories_assignments.category_id', $categoryIds);
                     });
+                } else {
+                    $query->whereRaw('1 = 0');
                 }
             })
             ->when($this->brand, function ($query) {
                 $brandId = Brand::where('slug', $this->brand)->value('id');
                 if ($brandId) {
                     $query->where('products.brand_id', $brandId);
+                } else {
+                    $query->whereRaw('1 = 0');
                 }
             })
             ->when($this->search, function ($query) {

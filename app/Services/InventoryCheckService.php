@@ -18,6 +18,7 @@ class InventoryCheckService
     public static function validateAndCleanCart(Collection $cartItems): array
     {
         $removedItems = [];
+        $variantRequestedTotals = [];
 
         foreach ($cartItems as $item) {
             // Resolve variant
@@ -49,10 +50,11 @@ class InventoryCheckService
 
             // If variant has an inventory record (stock tracking enabled)
             if ($variant && $variant->inventory) {
+                $vKey = $variant->id;
+                $variantRequestedTotals[$vKey] = ($variantRequestedTotals[$vKey] ?? 0) + (int) $item->item_qty;
                 $availableStock = $variant->inventory->available_stock;
-                $requestedQty = (int) $item->item_qty;
 
-                if ($availableStock <= 0 || $requestedQty > $availableStock) {
+                if ($availableStock <= 0 || $variantRequestedTotals[$vKey] > $availableStock) {
                     $itemLabel = !empty($variant->sku) ? "{$item->item_name} (SKU: {$variant->sku})" : $item->item_name;
                     $removedItems[] = $itemLabel;
                     $item->delete();

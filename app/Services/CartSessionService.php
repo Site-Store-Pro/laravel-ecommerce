@@ -101,22 +101,22 @@ class CartSessionService
             return trim((string) $variant->variant_custom_name);
         }
 
+        $name = trim((string) ($product->title ?? ''));
+
         // 1. Resolve Show SKU setting (per-product override takes precedence, fallback to global setting)
-        $showSku = ($product->show_sku_in_cart !== null)
+        $showSku = ($product->show_sku_in_cart !== null && $product->show_sku_in_cart !== '')
             ? (bool) $product->show_sku_in_cart
             : (bool) \App\Models\CmsSetting::isEnabled('cart_show_sku', true);
 
-        // 2. Resolve Show Part Number setting (per-product override, defaults to true)
-        $showPartNumber = ($product->show_part_number_in_cart !== null)
+        // 2. Resolve Show Part Number setting (per-product override takes precedence, fallback to global setting)
+        $showPartNumber = ($product->show_part_number_in_cart !== null && $product->show_part_number_in_cart !== '')
             ? (bool) $product->show_part_number_in_cart
-            : true;
+            : (bool) \App\Models\CmsSetting::isEnabled('cart_show_part_number', false);
 
         // 3. Resolve Show Variant setting (per-product override takes precedence, fallback to global setting)
-        $showVariant = ($product->show_variant_in_cart !== null)
+        $showVariant = ($product->show_variant_in_cart !== null && $product->show_variant_in_cart !== '')
             ? (bool) $product->show_variant_in_cart
             : (bool) \App\Models\CmsSetting::isEnabled('cart_show_variant_name', false);
-
-        $name = trim($product->title);
 
         $skuPart = '';
         if ($showSku && !empty(trim((string)$variant->sku))) {

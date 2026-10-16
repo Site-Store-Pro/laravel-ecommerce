@@ -213,6 +213,7 @@ class AdminSettings extends Component
 
     // Cart & Order Details Item Title Display Options
     public bool   $cart_show_sku = true;
+    public bool   $cart_show_part_number = false;
     public bool   $cart_show_variant_name = false;
 
     // Pricing & Variant Display Options
@@ -335,6 +336,7 @@ class AdminSettings extends Component
         $this->shop_header_custom_html               = (string) ($settings['shop_header_custom_html'] ?? '');
         $this->hide_catalog_brand_name               = (bool) ($settings['hide_catalog_brand_name'] ?? false);
         $this->cart_show_sku                         = (bool) ($settings['cart_show_sku'] ?? true);
+        $this->cart_show_part_number                = (bool) ($settings['cart_show_part_number'] ?? false);
         $this->cart_show_variant_name                = (bool) ($settings['cart_show_variant_name'] ?? false);
         $this->hide_zero_price_variants              = (bool) ($settings['hide_zero_price_variants'] ?? false);
         $this->display_stock_25_plus                 = (bool) ($settings['display_stock_25_plus'] ?? false);
@@ -526,6 +528,7 @@ class AdminSettings extends Component
             'hide_zero_price_variants' => 'boolean',
             'display_stock_25_plus' => 'boolean',
             'cart_show_sku' => 'boolean',
+            'cart_show_part_number' => 'boolean',
             'cart_show_variant_name' => 'boolean',
             'show_frontend_dark_mode_switcher' => 'boolean',
             'show_admin_dark_mode_switcher'    => 'boolean',
@@ -707,6 +710,7 @@ class AdminSettings extends Component
             'display_stock_25_plus'                => $this->display_stock_25_plus ? '1' : '0',
             'shop_header_custom_html'              => $this->shop_header_custom_html ?? '',
             'cart_show_sku'                        => $this->cart_show_sku ? '1' : '0',
+            'cart_show_part_number'               => $this->cart_show_part_number ? '1' : '0',
             'cart_show_variant_name'               => $this->cart_show_variant_name ? '1' : '0',
             // Account Dashboard Tab Visibility
             'disable_account_downloads_tab' => $this->disable_account_downloads_tab ? '1' : '0',

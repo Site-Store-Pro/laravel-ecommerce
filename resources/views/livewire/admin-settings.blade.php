@@ -2236,6 +2236,20 @@
                     </label>
                 </div>
 
+                {{-- Show Model / Part No After Item Name In Cart | Order Details --}}
+                <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Show Model / Part No After Item Name In Cart | Order Details <span class="font-normal text-slate-400 dark:text-slate-500">(e.g. Name (Part No))</span></label>
+                        <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-xl">
+                            When enabled, appends the variant Model / Part Number (if set on the variant) to the product title in the shopping cart, checkout, order review, customer invoices, and admin order details.
+                        </p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">
+                        <input type="checkbox" wire:model="cart_show_part_number" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
                 {{-- Show Variant(s) Name After Item Name In Cart | Order Details --}}
                 <div class="pt-5 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
                     <div>
@@ -2244,7 +2258,7 @@
                             When enabled, appends the selected variant attribute values (e.g. <code class="px-1 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-300 font-mono text-[11px]">Blue</code> or <code class="px-1 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-300 font-mono text-[11px]">XL &gt; Blue</code>) to the product title in the shopping cart and order details.
                         </p>
                         <p class="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium mt-1">
-                            ℹ️ Note: If both SKU and Variant(s) options are turned on, the format will be: <code class="px-1.5 py-0.5 bg-indigo-50 dark:bg-slate-700 rounded font-semibold text-indigo-700 dark:text-indigo-300 font-mono text-xs">Name (SKU) (Variant(s))</code>
+                            ℹ️ Note: If SKU, Part No, and Variant(s) options are turned on, the format will be: <code class="px-1.5 py-0.5 bg-indigo-50 dark:bg-slate-700 rounded font-semibold text-indigo-700 dark:text-indigo-300 font-mono text-xs">Name (SKU) (Part No) (Variant(s))</code>
                         </p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-4">

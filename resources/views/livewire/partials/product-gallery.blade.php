@@ -66,6 +66,7 @@
      IMAGE GALLERY (Alpine.js — zero Livewire round-trips)
      ────────────────────────────────────────────────────────────── --}}
 <div
+    wire:key="product-gallery-{{ $product->id }}"
     x-data="{
         images: {{ $alpineImages }},
         current: {{ (int)$initialIndex }},
@@ -106,7 +107,7 @@
             }
         },
     }"
-    @keydown.escape.window="lightbox = false"
+    @keydown.escape.window="if (lightbox) { lightbox = false; $event.stopImmediatePropagation(); }"
     @gallery:variant-changed.window="
         const varId = parseInt($event.detail.variantId);
         if (varId === activeVariantId && !$event.detail.force) return;
@@ -214,9 +215,9 @@
             x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0"
-            class="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/85 backdrop-blur-md"
+            class="fixed inset-0 z-[99999999] flex items-center justify-center p-4 bg-slate-900/85 backdrop-blur-md"
             @click.self="lightbox = false"
-            style="display:none"
+            style="display:none; z-index: 99999999 !important;"
         >
             {{-- Close button --}}
             <button

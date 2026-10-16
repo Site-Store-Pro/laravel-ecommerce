@@ -3,6 +3,7 @@
     $outOfStockMessage = $outOfStockMessage ?? null;
     $isQuickShop = $isQuickShop ?? false;
     $shortDesc = $isQuickShop ? $product->parsed_quick_shop_description : $product->parsed_short_description;
+    $placeholderSvg = "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20300%22%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22none%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23f8fafc%22%2F%3E%3Cg%20transform%3D%22translate(200%2C%20115)%22%20text-anchor%3D%22middle%22%3E%3Crect%20x%3D%22-40%22%20y%3D%22-30%22%20width%3D%2280%22%20height%3D%2260%22%20rx%3D%228%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%222.5%22%20fill%3D%22%23f1f5f9%22%2F%3E%3Ccircle%20cx%3D%22-15%22%20cy%3D%22-10%22%20r%3D%226%22%20fill%3D%22%2394a3b8%22%2F%3E%3Cpath%20d%3D%22M-30%2020%20L-5%20-5%20L15%2015%20L25%205%20L35%2020%20Z%22%20fill%3D%22%23e2e8f0%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%2F%3E%3Cline%20x1%3D%22-48%22%20y1%3D%22-38%22%20x2%3D%2248%22%20y2%3D%2238%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%22200%22%20y%3D%22185%22%20text-anchor%3D%22middle%22%20font-family%3D%22system-ui%2C%20-apple-system%2C%20sans-serif%22%20font-size%3D%2212%22%20font-weight%3D%22700%22%20fill%3D%22%2394a3b8%22%20letter-spacing%3D%220.06em%22%3EIMAGE%20NOT%20AVAILABLE%3C%2Ftext%3E%3C%2Fsvg%3E";
 @endphp
     <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">{{ $product->title }}</h1>
     @if(!empty(trim(strip_tags($shortDesc))))
@@ -210,14 +211,18 @@
                                                     class="group/thumb relative shrink-0 text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl cursor-pointer"
                                                     title="View in main gallery">
                                                 @if($vThumb)
-                                                    <img src="{{ $vThumb }}" alt="{{ $v->sku }}" class="w-14 h-14 rounded-xl object-cover border border-slate-100 shadow-2xs group-hover/thumb:border-indigo-400 group-hover/thumb:shadow-md transition">
+                                                    <img src="{{ $vThumb }}"
+                                                         alt="{{ $v->sku }}"
+                                                         loading="lazy"
+                                                         onerror="this.onerror=null; this.src='{{ $placeholderSvg }}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-1', 'opacity-80');"
+                                                         class="w-14 h-14 rounded-xl object-cover border border-slate-100 shadow-2xs group-hover/thumb:border-indigo-400 group-hover/thumb:shadow-md transition">
                                                     <div class="absolute inset-0 bg-indigo-900/15 rounded-xl opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center pointer-events-none">
                                                         <svg class="w-4 h-4 text-white drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                                     </div>
                                                 @else
-                                                    <div class="w-14 h-14 rounded-xl bg-slate-100 shrink-0 flex items-center justify-center border border-slate-200/60 group-hover/thumb:border-indigo-300 transition">
-                                                        <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                                    </div>
+                                                    <img src="{{ $placeholderSvg }}"
+                                                         alt="{{ $v->sku }}"
+                                                         class="w-14 h-14 rounded-xl object-contain p-1 opacity-80 border border-slate-200/60 group-hover/thumb:border-indigo-300 transition">
                                                 @endif
                                             </button>
                                             <div class="flex-1 min-w-0">
@@ -259,8 +264,18 @@
                                             @else
                                                 <div class="flex items-center gap-2">
                                                     @if($product->max_qty != 1 && !$product->is_donation_or_bill_pay)
-                                                        <input type="number" min="1" step="1"
-                                                               wire:model="multiVariantQuantities.{{ $v->id }}"
+                                                        @php
+                                                            $vMaxAllowed = 10000;
+                                                            if (!$v->download_item && $v->inventory && !$product->is_donation_or_bill_pay) {
+                                                                $vStockAvail = (int) ($v->inventory->available_stock ?? 0);
+                                                                $vMaxAllowed = ($product->max_qty > 0) ? min($vStockAvail, (int) $product->max_qty) : $vStockAvail;
+                                                            } elseif ($product->max_qty > 0) {
+                                                                $vMaxAllowed = (int) $product->max_qty;
+                                                            }
+                                                            $vMaxAllowed = max(1, $vMaxAllowed);
+                                                        @endphp
+                                                        <input type="number" min="1" max="{{ $vMaxAllowed }}" step="1"
+                                                               wire:model.live="multiVariantQuantities.{{ $v->id }}"
                                                                placeholder="1"
                                                                class="w-14 text-center py-2 px-1 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
                                                     @endif
@@ -321,14 +336,18 @@
                                                             class="group/thumb relative shrink-0 text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-xl block cursor-pointer"
                                                             title="View in main gallery">
                                                         @if($vThumb)
-                                                            <img src="{{ $vThumb }}" alt="{{ $v->sku }}" class="w-12 h-12 rounded-xl object-cover border border-slate-100 shadow-2xs group-hover/thumb:border-indigo-400 group-hover/thumb:shadow-md transition">
+                                                            <img src="{{ $vThumb }}"
+                                                                 alt="{{ $v->sku }}"
+                                                                 loading="lazy"
+                                                                 onerror="this.onerror=null; this.src='{{ $placeholderSvg }}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-1', 'opacity-80');"
+                                                                 class="w-12 h-12 rounded-xl object-cover border border-slate-100 shadow-2xs group-hover/thumb:border-indigo-400 group-hover/thumb:shadow-md transition">
                                                             <div class="absolute inset-0 bg-indigo-900/15 rounded-xl opacity-0 group-hover/thumb:opacity-100 transition flex items-center justify-center pointer-events-none">
                                                                 <svg class="w-3.5 h-3.5 text-white drop-shadow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                                             </div>
                                                         @else
-                                                            <div class="w-12 h-12 rounded-xl bg-slate-100 shrink-0 flex items-center justify-center border border-slate-200/60 group-hover/thumb:border-indigo-300 transition">
-                                                                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                                            </div>
+                                                            <img src="{{ $placeholderSvg }}"
+                                                                 alt="{{ $v->sku }}"
+                                                                 class="w-12 h-12 rounded-xl object-contain p-1 opacity-80 border border-slate-200/60 group-hover/thumb:border-indigo-300 transition">
                                                         @endif
                                                     </button>
                                                 </td>
@@ -379,8 +398,18 @@
                                                     @else
                                                         <div class="flex flex-col items-end gap-1.5">
                                                             @if($product->max_qty != 1 && !$product->is_donation_or_bill_pay)
-                                                                <input type="number" min="1" step="1"
-                                                                       wire:model="multiVariantQuantities.{{ $v->id }}"
+                                                                @php
+                                                                    $vMaxAllowed = 10000;
+                                                                    if (!$v->download_item && $v->inventory && !$product->is_donation_or_bill_pay) {
+                                                                        $vStockAvail = (int) ($v->inventory->available_stock ?? 0);
+                                                                        $vMaxAllowed = ($product->max_qty > 0) ? min($vStockAvail, (int) $product->max_qty) : $vStockAvail;
+                                                                    } elseif ($product->max_qty > 0) {
+                                                                        $vMaxAllowed = (int) $product->max_qty;
+                                                                    }
+                                                                    $vMaxAllowed = max(1, $vMaxAllowed);
+                                                                @endphp
+                                                                <input type="number" min="1" max="{{ $vMaxAllowed }}" step="1"
+                                                                       wire:model.live="multiVariantQuantities.{{ $v->id }}"
                                                                        placeholder="1"
                                                                        class="w-14 text-center py-1.5 px-1 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500">
                                                             @endif
@@ -476,6 +505,7 @@
                                             <button 
                                                 type="button"
                                                 wire:click="selectAttribute('{{ addslashes($key) }}', '{{ addslashes($value) }}')"
+                                                @click="if ({{ json_encode(in_array(strtolower($key), ['color', 'colour', 'shade', 'tint'])) }}) { $dispatch('gallery:variant-changed', { color: '{{ addslashes($value) }}', force: true }); }"
                                                 @disabled(!$isSelectable)
                                                 class="px-4 py-2.5 text-xs font-bold border rounded-2xl transition duration-150 focus:outline-none 
                                                     {{ $isSelected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : '' }}
@@ -515,17 +545,22 @@
                                             return "$displayKey: $displayVal";
                                         })->implode(', ');
                                     @endphp
-                                    <label class="flex items-center justify-between p-4 bg-white border {{ $selectedVariantId == $variant->id ? 'border-indigo-500 ring-2 ring-indigo-500/10 bg-indigo-50/10' : 'border-slate-200' }} rounded-2xl cursor-pointer hover:border-indigo-300 transition duration-150">
+                                    <label @click="$dispatch('gallery:variant-changed', { variantId: {{ $variant->id }}, color: '{{ addslashes(method_exists($this, 'getVariantColor') ? ($this->getVariantColor($variant) ?? '') : '') }}', force: true })"
+                                           class="flex items-center justify-between p-4 bg-white border {{ $selectedVariantId == $variant->id ? 'border-indigo-500 ring-2 ring-indigo-500/10 bg-indigo-50/10' : 'border-slate-200' }} rounded-2xl cursor-pointer hover:border-indigo-300 transition duration-150">
                                         <div class="flex items-center gap-3">
                                             <input type="radio" wire:model.live="selectedVariantId" name="variant" value="{{ $variant->id }}" class="text-indigo-600 focus:ring-indigo-500 h-4 w-4 shrink-0">
                                             @if($product->show_variant_selector_thumbnail)
                                                 @php $varThumbUrl = $variant->thumbnailImageUrl(); @endphp
                                                 @if($varThumbUrl)
-                                                    <img src="{{ $varThumbUrl }}" alt="{{ $variant->sku }}" class="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-100 shadow-sm">
+                                                    <img src="{{ $varThumbUrl }}"
+                                                         alt="{{ $variant->sku }}"
+                                                         loading="lazy"
+                                                         onerror="this.onerror=null; this.src='{{ $placeholderSvg }}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-1', 'opacity-80');"
+                                                         class="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-100 shadow-sm">
                                                 @else
-                                                    <div class="w-12 h-12 rounded-xl bg-slate-100 shrink-0 flex items-center justify-center">
-                                                        <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                                    </div>
+                                                    <img src="{{ $placeholderSvg }}"
+                                                         alt="{{ $variant->sku }}"
+                                                         class="w-12 h-12 rounded-xl object-contain p-1 opacity-80 border border-slate-100 shadow-sm shrink-0">
                                                 @endif
                                             @endif
                                             <div>
@@ -740,9 +775,19 @@
     <div id="add-to-cart" class="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-3">
         <div class="flex items-center gap-4">
             @if($product->max_qty != 1 && !$product->is_donation_or_bill_pay)
+                @php
+                    $maxAllowed = 10000;
+                    if ($selectedVariant && !$selectedVariant->download_item && $selectedVariant->inventory && !$product->is_donation_or_bill_pay) {
+                        $stockAvail = (int) ($selectedVariant->inventory->available_stock ?? 0);
+                        $maxAllowed = ($product->max_qty > 0) ? min($stockAvail, (int) $product->max_qty) : $stockAvail;
+                    } elseif ($product->max_qty > 0) {
+                        $maxAllowed = (int) $product->max_qty;
+                    }
+                    $maxAllowed = max(1, $maxAllowed);
+                @endphp
                 <div class="flex flex-col w-28 shrink-0">
                     <label class="sr-only">@label('product.quantity', 'Quantity')</label>
-                    <input type="number" min="1" step="1" wire:model.live="quantity" class="w-full text-center py-3 bg-slate-50 border @error('quantity') border-red-500 @else border-slate-200 @enderror rounded-2xl focus:outline-none focus:border-indigo-500 text-slate-800 font-bold">
+                    <input type="number" min="1" max="{{ $maxAllowed }}" step="1" wire:model.live="quantity" class="w-full text-center py-3 bg-slate-50 border @error('quantity') border-red-500 @else border-slate-200 @enderror rounded-2xl focus:outline-none focus:border-indigo-500 text-slate-800 font-bold">
                     @error('quantity')
                         <span class="text-red-500 text-[10px] mt-1 text-center font-semibold">{{ $message }}</span>
                     @enderror

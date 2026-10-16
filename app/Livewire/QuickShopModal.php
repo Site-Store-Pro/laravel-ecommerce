@@ -154,6 +154,12 @@ class QuickShopModal extends Component
         }
 
         $this->showModal = true;
+
+        if ($this->selectedVariantId > 0) {
+            $variant = $this->product->variants->firstWhere('id', $this->selectedVariantId);
+            $color = $variant ? $this->getVariantColor($variant) : null;
+            $this->dispatch('gallery:variant-changed', variantId: (int) $this->selectedVariantId, color: $color, force: true);
+        }
     }
 
     public function closeModal(): void
@@ -211,26 +217,78 @@ class QuickShopModal extends Component
         return $this->product->inventoryAlert?->message ?? null;
     }
 
+    public function getMaxAllowedQuantity(?ProductVariant $variant = null): int
+    {
+        $variant = $variant ?: $this->selectedVariant;
+        if (!$variant || !isset($this->product) || !$this->product) {
+            return 10000;
+        }
+
+        if ($this->product->is_donation_or_bill_pay || (int) $this->product->max_qty === 1) {
+            return 1;
+        }
+
+        $max = 10000;
+        if (!$variant->download_item && $variant->inventory) {
+            $available = $variant->getStockForFulfillment(
+                auth()->user()?->shipping_countrycode,
+                auth()->user()?->shipping_state
+            );
+            $max = max(0, $available);
+        }
+
+        if ((int) $this->product->max_qty > 1) {
+            $max = min($max, (int) $this->product->max_qty);
+        }
+
+        return max(1, $max);
+    }
+
+    public function getMaxQuantityProperty(): int
+    {
+        return $this->getMaxAllowedQuantity();
+    }
+
     protected function validationRules(): array
     {
+        $max = $this->getMaxAllowedQuantity();
         return [
-            'quantity' => 'required|integer|min:1|max:10000',
+            'quantity' => "required|integer|min:1|max:{$max}",
         ];
     }
 
     protected function validationMessages(): array
     {
+        $max = $this->getMaxAllowedQuantity();
         return [
             'quantity.required' => 'Please enter a quantity.',
             'quantity.integer' => 'Quantity must be a whole number.',
             'quantity.min' => 'Quantity must be at least 1.',
-            'quantity.max' => 'Quantity cannot exceed 10,000.',
+            'quantity.max' => "Only {$max} unit" . ($max === 1 ? '' : 's') . " available in stock.",
         ];
     }
 
     public function updatedQuantity(): void
     {
         $this->validateOnly('quantity', $this->validationRules(), $this->validationMessages());
+    }
+
+    public function updatedMultiVariantQuantities($value, $key): void
+    {
+        $variantId = (int) $key;
+        $variant = $this->product?->variants->firstWhere('id', $variantId);
+        if (!$variant) {
+            return;
+        }
+
+        $max = $this->getMaxAllowedQuantity($variant);
+        $intVal = (int) filter_var($value, FILTER_VALIDATE_INT);
+
+        if ($intVal > $max) {
+            $this->multiVariantQuantities[$variantId] = $max;
+        } elseif ($intVal < 1 && $value !== '' && $value !== null) {
+            $this->multiVariantQuantities[$variantId] = 1;
+        }
     }
 
     public function getHasQtyDiscountProperty(): bool
@@ -465,7 +523,8 @@ class QuickShopModal extends Component
     {
         $variant = $this->selectedVariant;
         if ($variant && $variant->images->isNotEmpty()) {
-            $this->selectedImageSetId = $variant->images->first()->id;
+            $activeImages = $variant->images->where('active', 1);
+            $this->selectedImageSetId = $activeImages->isNotEmpty() ? $activeImages->first()->id : 0;
         } else {
             $this->selectedImageSetId = 0;
         }
@@ -486,6 +545,30 @@ class QuickShopModal extends Component
         }
     }
 
+    public function updatedSelectedVariantId(): void
+    {
+        $this->initializeSelectedImageSet();
+        $this->initializeSelectedAttributes();
+        
+        $this->personalization_selected = false;
+        $this->personalization_text = '';
+
+        $max = $this->getMaxAllowedQuantity();
+        if ((int) $this->quantity > $max) {
+            $this->quantity = $max;
+        }
+        if ((int) $this->quantity < 1) {
+            $this->quantity = 1;
+        }
+        $this->resetErrorBag('quantity');
+        $this->cartError = '';
+
+        $variant = $this->product?->variants->firstWhere('id', $this->selectedVariantId);
+        $color = $variant ? $this->getVariantColor($variant) : null;
+
+        $this->dispatch('gallery:variant-changed', variantId: (int) $this->selectedVariantId, color: $color);
+    }
+
     public function selectImageSet(int $imageSetId): void
     {
         $this->selectedImageSetId = $imageSetId;
@@ -498,7 +581,19 @@ class QuickShopModal extends Component
             $this->selectedVariantId = $variantId;
             $this->initializeSelectedImageSet();
             $this->initializeSelectedAttributes();
+            
+            $max = $this->getMaxAllowedQuantity($variant);
+            if ((int) $this->quantity > $max) {
+                $this->quantity = $max;
+            }
+            if ((int) $this->quantity < 1) {
+                $this->quantity = 1;
+            }
+            $this->resetErrorBag('quantity');
             $this->cartError = '';
+
+            $color = $this->getVariantColor($variant);
+            $this->dispatch('gallery:variant-changed', variantId: (int) $this->selectedVariantId, color: $color);
         }
     }
 
@@ -557,13 +652,40 @@ class QuickShopModal extends Component
         if ($match) {
             $this->selectedVariantId = $match->id;
             $this->initializeSelectedImageSet();
+        } else {
+            $fallback = $this->product->variants->first(function ($variant) use ($name, $value) {
+                $attrs = json_decode($variant->attributes, true);
+                return is_array($attrs) && isset($attrs[$name]) && $attrs[$name] === $value;
+            });
+            if ($fallback) {
+                $this->selectedVariantId = $fallback->id;
+                $this->selectedAttributes = json_decode($fallback->attributes, true) ?: [];
+                $this->initializeSelectedImageSet();
+            }
         }
+
+        $max = $this->getMaxAllowedQuantity();
+        if ((int) $this->quantity > $max) {
+            $this->quantity = $max;
+        }
+        if ((int) $this->quantity < 1) {
+            $this->quantity = 1;
+        }
+        $this->resetErrorBag('quantity');
+
+        $variant = $this->product->variants->firstWhere('id', $this->selectedVariantId);
+        $color = $variant ? $this->getVariantColor($variant) : null;
+
+        $this->dispatch('gallery:variant-changed', variantId: (int) $this->selectedVariantId, color: $color);
     }
 
     public function incrementQuantity(): void
     {
-        $this->quantity = (int) $this->quantity + 1;
-        $this->updatedQuantity();
+        $max = $this->getMaxAllowedQuantity();
+        if ((int) $this->quantity < $max) {
+            $this->quantity = (int) $this->quantity + 1;
+            $this->updatedQuantity();
+        }
     }
 
     public function decrementQuantity(): void
@@ -591,7 +713,6 @@ class QuickShopModal extends Component
     public function addToCart()
     {
         $this->cartError = ''; // reset any previous inline error
-        $this->validate($this->validationRules(), $this->validationMessages());
 
         if ($this->selectedVariantId === 0) {
             $this->cartError = 'Please select a variant before adding to cart.';
@@ -600,6 +721,16 @@ class QuickShopModal extends Component
 
         $variant = ProductVariant::with(['inventory', 'product'])->findOrFail($this->selectedVariantId);
         $product = $variant->product;
+
+        $maxAllowed = $this->getMaxAllowedQuantity($variant);
+        $this->validate([
+            'quantity' => "required|integer|min:1|max:{$maxAllowed}",
+        ], [
+            'quantity.required' => 'Please enter a quantity.',
+            'quantity.integer'  => 'Quantity must be a whole number.',
+            'quantity.min'      => 'Quantity must be at least 1.',
+            'quantity.max'      => "Only {$maxAllowed} unit" . ($maxAllowed === 1 ? '' : 's') . " available in stock.",
+        ]);
 
         $hideZero = \App\Models\CmsSetting::isEnabled('hide_zero_price_variants');
         $isWholesale = auth()->check() && auth()->user()->isWholesale();
@@ -646,17 +777,39 @@ class QuickShopModal extends Component
             $qtyToAdd = 1;
         } else {
             // Force quantity to 1 if max_qty = 1
-            $qtyToAdd = ($product && $product->max_qty == 1) ? 1 : $this->quantity;
+            $qtyToAdd = ($product && (int) $product->max_qty == 1) ? 1 : (int) $this->quantity;
         }
 
-        // Check inventory
+        // Check inventory & existing cart quantities
         if (!$variant->download_item && $variant->inventory && !$product->is_donation_or_bill_pay) {
             $available = $variant->getStockForFulfillment(
                 auth()->user()?->shipping_countrycode,
                 auth()->user()?->shipping_state
             );
-            if ($qtyToAdd > $available) {
-                $this->cartError = "Only {$available} unit" . ($available === 1 ? '' : 's') . " available in stock.";
+
+            $currentQtyInCart = (int) \App\Services\CartSessionService::getCartQuery($sessionId)
+                ->where(function ($q) use ($variant) {
+                    $q->where('variant_id', $variant->id);
+                    if (!empty($variant->sku)) {
+                        $q->orWhere('item_name', 'like', '%(' . $variant->sku . ')%');
+                    }
+                })
+                ->sum('item_qty');
+
+            if ($available <= 0) {
+                $this->cartError = "This item is currently out of stock.";
+                session()->flash('error', $this->cartError);
+                return;
+            }
+
+            if (($currentQtyInCart + $qtyToAdd) > $available) {
+                $remainingAllowed = max(0, $available - $currentQtyInCart);
+                if ($remainingAllowed <= 0) {
+                    $this->cartError = "You already have the maximum available stock ({$available}) in your cart.";
+                } else {
+                    $this->cartError = "You already have {$currentQtyInCart} in your cart. Only {$remainingAllowed} more unit" . ($remainingAllowed === 1 ? '' : 's') . " can be added (Stock: {$available}).";
+                }
+                session()->flash('error', $this->cartError);
                 return;
             }
         }
@@ -878,16 +1031,35 @@ class QuickShopModal extends Component
             ->where('item_attributes', $attributesJson)
             ->first();
 
-        // Max qty check
-        if ($cartItem && $product && $product->max_qty == 1) {
-            $msg = "You can only purchase a maximum of 1 unit of this item per order.";
-            $this->cartError = $msg;
-            session()->flash('error', $msg);
-            if ($product->checkout_redirect == 1 || $product->standalone_purchase == 1) {
-                $this->closeModal();
-                return redirect()->route('shop.checkout');
+        // Max qty check against cumulative quantity in cart
+        if ($product && (int) $product->max_qty > 0 && !$product->is_donation_or_bill_pay) {
+            $currentVariantCartQty = (int) \App\Services\CartSessionService::getCartQuery($sessionId)
+                ->where(function ($q) use ($variant) {
+                    $q->where('variant_id', $variant->id);
+                    if (!empty($variant->sku)) {
+                        $q->orWhere('item_name', 'like', '%(' . $variant->sku . ')%');
+                    }
+                })
+                ->sum('item_qty');
+
+            if (($currentVariantCartQty + $qtyToAdd) > (int) $product->max_qty) {
+                $maxLimit = (int) $product->max_qty;
+                $remainingMax = max(0, $maxLimit - $currentVariantCartQty);
+                if ($remainingMax <= 0) {
+                    $msg = $maxLimit === 1
+                        ? "You can only purchase a maximum of 1 unit of this item per order."
+                        : "You already have the maximum allowed quantity ({$maxLimit}) in your cart.";
+                } else {
+                    $msg = "You already have {$currentVariantCartQty} in your cart. You can only add {$remainingMax} more unit" . ($remainingMax === 1 ? '' : 's') . " (Maximum {$maxLimit} per order).";
+                }
+                $this->cartError = $msg;
+                session()->flash('error', $msg);
+                if ($product->checkout_redirect == 1 || $product->standalone_purchase == 1) {
+                    $this->closeModal();
+                    return redirect()->route('shop.checkout');
+                }
+                return;
             }
-            return;
         }
 
         $formattedItemName = \App\Services\CartSessionService::formatCartItemName($this->product, $variant);
@@ -1048,10 +1220,10 @@ class QuickShopModal extends Component
 
         if ($selectedVariant) {
             if ($this->selectedImageSetId) {
-                $selectedImageSet = $selectedVariant->images->firstWhere('id', $this->selectedImageSetId);
+                $selectedImageSet = $selectedVariant->images->where('active', 1)->firstWhere('id', $this->selectedImageSetId);
             }
             if (!$selectedImageSet) {
-                $selectedImageSet = $selectedVariant->images->first();
+                $selectedImageSet = $selectedVariant->images->where('active', 1)->first();
             }
         }
 

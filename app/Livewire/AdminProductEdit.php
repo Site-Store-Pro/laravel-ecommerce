@@ -62,8 +62,9 @@ class AdminProductEdit extends Component
     public int    $featured_item        = 0;
     public int    $show_item_total      = 0;  // Show live item total (price × qty) below Add to Cart
     public int    $show_variant_selector_thumbnail = 0;  // Show variant thumbnail image in flat selector rows
-    public int    $hide_gallery_thumbnails = 0; // Hide the thumbnails strip in gallery display (show large image only)
-    public int    $hide_product_price      = 0; // Hide main pricing field on product details & quick shop modal
+    public bool   $hide_gallery_thumbnails = false; // Hide the thumbnails strip in gallery display (show large image only)
+    public bool   $lock_mobile_gallery     = false; // Lock gallery image on top when scrolling in mobile view (< 550px)
+    public bool   $hide_product_price      = false; // Hide main pricing field on product details & quick shop modal
     public string $variant_label        = 'Select Option:';  // Label above variant selector on storefront
     public string $product_video_embed  = '';               // Embed code/shortcode for layout types 3 & 5
     public bool   $is_donation_or_bill_pay = false;
@@ -333,14 +334,15 @@ class AdminProductEdit extends Component
     public function mount(int $id): void
     {
         abort_unless(auth()->check() && auth()->user()->isStaff(), 403, 'Unauthorized staff access.');
-        $hasColumns = \Illuminate\Support\Facades\Cache::rememberForever('db_has_cols_product_edit_v1', function () {
+        $hasColumns = \Illuminate\Support\Facades\Cache::rememberForever('db_has_cols_product_edit_v2', function () {
             return \Illuminate\Support\Facades\Schema::hasColumn('products', 'show_in_results')
                 && \Illuminate\Support\Facades\Schema::hasColumn('products', 'is_donation_or_bill_pay')
+                && \Illuminate\Support\Facades\Schema::hasColumn('products', 'lock_mobile_gallery')
                 && \Illuminate\Support\Facades\Schema::hasColumn('product_variants', 'paypal_sandbox_plan_id');
         });
         if (!$hasColumns) {
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-            \Illuminate\Support\Facades\Cache::forget('db_has_cols_product_edit_v1');
+            \Illuminate\Support\Facades\Cache::forget('db_has_cols_product_edit_v2');
         }
         $this->productId = $id;
         $this->loadProduct();
@@ -397,8 +399,9 @@ class AdminProductEdit extends Component
         $this->custom_amount_options = (string) ($this->product->custom_amount_options ?? '');
         $this->inventory_alert_id    = $this->product->inventory_alert_id ? (int) $this->product->inventory_alert_id : null;
         $this->show_variant_selector_thumbnail = (int) ($this->product->show_variant_selector_thumbnail ?? 0);
-        $this->hide_gallery_thumbnails = (int) ($this->product->hide_gallery_thumbnails ?? 0);
-        $this->hide_product_price = (int) ($this->product->hide_product_price ?? 0);
+        $this->hide_gallery_thumbnails = (bool) ($this->product->hide_gallery_thumbnails ?? false);
+        $this->lock_mobile_gallery = (bool) ($this->product->lock_mobile_gallery ?? false);
+        $this->hide_product_price = (bool) ($this->product->hide_product_price ?? false);
         $this->quick_shop_active = (bool) ($this->product->quick_shop_active ?? false);
         $this->quick_shop_label = (string) ($this->product->quick_shop_label ?? '');
         $this->show_sku_in_cart = $this->product->show_sku_in_cart !== null ? (string) $this->product->show_sku_in_cart : '';
@@ -486,6 +489,7 @@ class AdminProductEdit extends Component
             'inventory_alert_id' => 'nullable|integer|exists:product_inventory_alerts,id',
             'show_variant_selector_thumbnail' => 'nullable|boolean',
             'hide_gallery_thumbnails' => 'nullable|boolean',
+            'lock_mobile_gallery' => 'nullable|boolean',
             'hide_product_price' => 'nullable|boolean',
             'quick_shop_active' => 'boolean',
             'quick_shop_label' => 'nullable|string|max:255',
@@ -552,8 +556,9 @@ class AdminProductEdit extends Component
             'custom_amount_options' => trim($this->custom_amount_options) ?: null,
             'inventory_alert_id' => $this->inventory_alert_id ?: null,
             'show_variant_selector_thumbnail' => (int) $this->show_variant_selector_thumbnail,
-            'hide_gallery_thumbnails' => (int) $this->hide_gallery_thumbnails,
-            'hide_product_price' => (int) $this->hide_product_price,
+            'hide_gallery_thumbnails' => $this->hide_gallery_thumbnails ? 1 : 0,
+            'lock_mobile_gallery' => $this->lock_mobile_gallery ? 1 : 0,
+            'hide_product_price' => $this->hide_product_price ? 1 : 0,
             'quick_shop_active' => (bool) $this->quick_shop_active,
             'quick_shop_label' => trim($this->quick_shop_label) ?: null,
             'show_sku_in_cart' => $this->show_sku_in_cart !== '' && $this->show_sku_in_cart !== null ? (int) $this->show_sku_in_cart : null,

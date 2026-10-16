@@ -77,14 +77,68 @@
             </div>
         @endif
 
+        @if(!empty($product->lock_mobile_gallery))
+        <style>
+            @media (max-width: 550px) {
+                .mobile-locked-gallery-container {
+                    position: -webkit-sticky !important;
+                    position: sticky !important;
+                    top: var(--mobile-gallery-sticky-top, 0px) !important;
+                    z-index: 35 !important;
+                    background-color: #ffffff !important;
+                    padding-top: 0.5rem !important;
+                    padding-bottom: 0.5rem !important;
+                    border-radius: 1.25rem !important;
+                    box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.08) !important;
+                }
+                .dark .mobile-locked-gallery-container {
+                    background-color: #0f172a !important;
+                    box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.4) !important;
+                }
+            }
+        </style>
+        <script>
+            (function() {
+                function updateMobileGalleryOffset() {
+                    if (window.innerWidth <= 550) {
+                        var headerOffset = 0;
+                        var stickyElements = document.querySelectorAll('.public-header, header.sticky, div.sticky.top-0, nav.sticky, .header_container, [class*="sticky top-0"]');
+                        for (var i = 0; i < stickyElements.length; i++) {
+                            var el = stickyElements[i];
+                            var style = window.getComputedStyle(el);
+                            if (style.position === 'sticky' || style.position === 'fixed') {
+                                var rect = el.getBoundingClientRect();
+                                if (rect.top <= 5 && rect.bottom > 0) {
+                                    headerOffset = Math.max(headerOffset, Math.round(rect.bottom));
+                                }
+                            }
+                        }
+                        document.documentElement.style.setProperty('--mobile-gallery-sticky-top', headerOffset + 'px');
+                    } else {
+                        document.documentElement.style.removeProperty('--mobile-gallery-sticky-top');
+                    }
+                }
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', updateMobileGalleryOffset);
+                } else {
+                    updateMobileGalleryOffset();
+                }
+                window.addEventListener('resize', updateMobileGalleryOffset, { passive: true });
+                window.addEventListener('scroll', updateMobileGalleryOffset, { passive: true });
+                setTimeout(updateMobileGalleryOffset, 150);
+                setTimeout(updateMobileGalleryOffset, 600);
+            })();
+        </script>
+        @endif
+
         <!-- Main Product Section -->
         @switch($product->layout_type)
             @case(2)
                 {{-- Left Side Images, description full-width below --}}
                 <div class="space-y-8">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm items-start">
+                    <div class="flex flex-col lg:grid lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm items-start">
                         <!-- Left Side: Visual / Gallery -->
-                        <div class="lg:col-span-7 flex flex-col lg:sticky lg:top-24">
+                        <div class="lg:col-span-7 flex flex-col lg:sticky lg:top-24 {{ $product->lock_mobile_gallery ? 'mobile-locked-gallery-container' : '' }}">
                             @include('livewire.partials.product-gallery')
                             @include('livewire.partials.product-video-player')
                         </div>
@@ -103,13 +157,13 @@
             @case(3)
                 {{-- Right Side Images With Large Video Player Space Below, description full-width below --}}
                 <div class="space-y-8">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm items-start">
+                    <div class="flex flex-col lg:grid lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm items-start">
                         <!-- Left Side: Configuration & Buy -->
                         <div class="lg:col-span-5 flex flex-col justify-start order-2 lg:order-1">
                             @include('livewire.partials.product-buy-box')
                         </div>
                         <!-- Right Side: Visual / Info -->
-                        <div class="lg:col-span-7 flex flex-col order-1 lg:order-2 lg:sticky lg:top-24">
+                        <div class="lg:col-span-7 flex flex-col order-1 lg:order-2 lg:sticky lg:top-24 {{ $product->lock_mobile_gallery ? 'mobile-locked-gallery-container' : '' }}">
                             @include('livewire.partials.product-gallery')
                         </div>
                     </div>
@@ -136,7 +190,7 @@
                 {{-- Centered Layout With Images On Top, description full-width below --}}
                 <div class="space-y-8">
                     <div class="bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm space-y-12">
-                        <div class="max-w-3xl mx-auto flex flex-col items-stretch">
+                        <div class="max-w-3xl mx-auto flex flex-col items-stretch {{ $product->lock_mobile_gallery ? 'mobile-locked-gallery-container' : '' }}">
                             @include('livewire.partials.product-gallery')
                         </div>
                         <div class="max-w-2xl mx-auto flex flex-col items-stretch">
@@ -167,7 +221,7 @@
                                 @endif
                             </div>
                         @endif
-                        <div class="max-w-3xl mx-auto flex flex-col items-stretch">
+                        <div class="max-w-3xl mx-auto flex flex-col items-stretch {{ $product->lock_mobile_gallery ? 'mobile-locked-gallery-container' : '' }}">
                             @include('livewire.partials.product-gallery')
                         </div>
                         <div class="max-w-2xl mx-auto flex flex-col items-stretch">
@@ -205,13 +259,13 @@
             @default
                 {{-- Right Side Images (Default) — description full-width below --}}
                 <div class="space-y-8">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm items-start">
+                    <div class="flex flex-col lg:grid lg:grid-cols-12 gap-12 bg-white border border-slate-100 rounded-3xl p-8 lg:p-12 shadow-sm items-start">
                         <!-- Left Side: Configuration & Buy -->
                         <div class="lg:col-span-5 flex flex-col justify-start order-2 lg:order-1">
                             @include('livewire.partials.product-buy-box')
                         </div>
                         <!-- Right Side: Visual / Info -->
-                        <div class="lg:col-span-7 flex flex-col order-1 lg:order-2 lg:sticky lg:top-24">
+                        <div class="lg:col-span-7 flex flex-col order-1 lg:order-2 lg:sticky lg:top-24 {{ $product->lock_mobile_gallery ? 'mobile-locked-gallery-container' : '' }}">
                             @include('livewire.partials.product-gallery')
                             @include('livewire.partials.product-video-player')
                         </div>

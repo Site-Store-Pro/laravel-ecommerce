@@ -37,18 +37,30 @@ class DiscountService
         // 2. Identify user type
         $userType = ($user && $user->isWholesale()) ? 2 : 1; // 1 = Public/Retail, 2 = Wholesale
         
-        // 3. Extract SKUs and map to ProductVariants
+        // 3. Extract Variant IDs and SKUs and map to ProductVariants
+        $variantIds = [];
         $skus = [];
         foreach ($items as $item) {
-            if (preg_match('/\(([^)]+)\)$/', $item->item_name, $matches)) {
+            if (!empty($item->variant_id)) {
+                $variantIds[$item->id] = $item->variant_id;
+            } elseif (preg_match('/\(([^)]+)\)$/', $item->item_name, $matches)) {
                 $skus[$item->id] = $matches[1];
             }
         }
 
-        $variants = ProductVariant::whereIn('sku', array_unique(array_values($skus)))
-            ->with(['product.categories', 'quantityDiscounts'])
-            ->get()
-            ->keyBy('sku');
+        $variantsById = !empty($variantIds)
+            ? ProductVariant::whereIn('id', array_unique(array_values($variantIds)))
+                ->with(['product.categories', 'quantityDiscounts'])
+                ->get()
+                ->keyBy('id')
+            : collect();
+
+        $variantsBySku = !empty($skus)
+            ? ProductVariant::whereIn('sku', array_unique(array_values($skus)))
+                ->with(['product.categories', 'quantityDiscounts'])
+                ->get()
+                ->keyBy('sku')
+            : collect();
 
         // 4. First phase: Apply Item-Level discounts to each item individually
         // Sequence:
@@ -60,10 +72,13 @@ class DiscountService
         // Whichever is the last one in the sequence that is applicable overrides the price.
         
         foreach ($items as $item) {
-            $sku = $skus[$item->id] ?? null;
-            if (!$sku) continue;
-            
-            $variant = $variants->get($sku);
+            $variant = null;
+            if (!empty($item->variant_id)) {
+                $variant = $variantsById->get($item->variant_id);
+            }
+            if (!$variant && isset($skus[$item->id])) {
+                $variant = $variantsBySku->get($skus[$item->id]);
+            }
             if (!$variant) continue;
             
             $product = $variant->product;
