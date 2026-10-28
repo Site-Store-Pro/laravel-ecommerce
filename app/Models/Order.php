@@ -42,6 +42,7 @@ class Order extends Model
         'order_subtotal' => 'decimal:2',
         'order_taxes' => 'decimal:2',
         'order_discounts' => 'decimal:2',
+        'order_shipping' => 'decimal:2',
         'order_handling' => 'decimal:2',
         'custom_field_data' => 'array',
     ];

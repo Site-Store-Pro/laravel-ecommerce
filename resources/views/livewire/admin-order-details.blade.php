@@ -15,23 +15,33 @@
                 </div>
             </div>
 
-            <!-- Delete Order Button -->
-            @if(!$showDeleteConfirm)
-                <button wire:click="confirmDelete" class="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 text-red-700 text-xs font-bold rounded-xl hover:bg-red-100 transition-all shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    Delete Order
-                </button>
-            @else
-                <div class="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-2xl">
-                    <span class="text-xs font-bold text-red-700">⚠ Delete this order and restore inventory?</span>
-                    <button wire:click="deleteOrder" wire:loading.attr="disabled" wire:target="deleteOrder" class="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-xl hover:bg-red-500 transition-all">
-                        Yes, Delete
+            <!-- Top Actions: Printer-Friendly Receipt & Delete Order -->
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <a href="{{ route('admin.ecommerce.order-receipt', $order->id) }}" target="_blank"
+                   class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-500 transition-all shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    Printer-Friendly Receipt
+                </a>
+
+                @if(!$showDeleteConfirm)
+                    <button wire:click="confirmDelete" class="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 text-red-700 text-xs font-bold rounded-xl hover:bg-red-100 transition-all shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        Delete Order
                     </button>
-                    <button wire:click="cancelDelete" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all">
-                        Cancel
-                    </button>
-                </div>
-            @endif
+                @else
+                    <div class="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-2xl">
+                        <span class="text-xs font-bold text-red-700">⚠ Delete this order and restore inventory?</span>
+                        <button wire:click="deleteOrder" wire:loading.attr="disabled" wire:target="deleteOrder" class="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-xl hover:bg-red-500 transition-all">
+                            Yes, Delete
+                        </button>
+                        <button wire:click="cancelDelete" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all">
+                            Cancel
+                        </button>
+                    </div>
+                @endif
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -395,14 +405,26 @@
                                 <span>Subtotal</span>
                                 <span class="font-bold text-slate-800">${{ number_format($order->order_subtotal, 2) }}</span>
                             </div>
+                            @if($order->order_discounts > 0)
+                                <div class="flex justify-between text-emerald-700">
+                                    <span>Promotional Discount</span>
+                                    <span class="font-bold">-${{ number_format($order->order_discounts, 2) }}</span>
+                                </div>
+                            @endif
                             <div class="flex justify-between text-slate-600">
                                 <span>Tax</span>
                                 <span class="font-bold text-slate-800">${{ number_format($order->order_taxes, 2) }}</span>
                             </div>
                             <div class="flex justify-between text-slate-600">
-                                <span>Shipping Fee</span>
+                                <span>Shipping Fee @if(!empty($order->order_shipping_method_name))({{ $order->order_shipping_method_name }})@endif</span>
                                 <span class="font-bold text-slate-800">${{ number_format($order->order_shipping, 2) }}</span>
                             </div>
+                            @if($order->order_handling > 0)
+                                <div class="flex justify-between text-slate-600">
+                                    <span>Handling Surcharge</span>
+                                    <span class="font-bold text-slate-800">${{ number_format($order->order_handling, 2) }}</span>
+                                </div>
+                            @endif
                             <div class="flex justify-between text-slate-800 pt-3 border-t border-slate-100 text-base font-extrabold">
                                 <span>Total Paid</span>
                                 <span>${{ number_format($order->order_total, 2) }}</span>
@@ -491,6 +513,27 @@
                                     </button>
                                 </div>
                             @endif
+                        </div>
+
+                        <!-- Printer-Friendly Receipt Action -->
+                        <div class="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                            <h4 class="text-xs font-bold text-slate-700">Printer-Friendly Receipt</h4>
+                            <p class="text-xs text-slate-500">Open a clean, printable invoice/receipt with your company header, order confirmation details, and shipping tracking info.</p>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <a href="{{ route('admin.ecommerce.order-receipt', $order->id) }}" target="_blank"
+                                   class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-md hover:opacity-90 inline-flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                    </svg>
+                                    Print Receipt
+                                </a>
+                                @if(auth()->user()?->isAdmin())
+                                    <a href="{{ route('admin.settings') }}#invoice-header-settings" wire:navigate
+                                       class="px-3 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-50 transition-all inline-flex items-center gap-1">
+                                        Edit Header Info
+                                    </a>
+                                @endif
+                            </div>
                         </div>
 
                         <!-- Mark Shipped Action -->
