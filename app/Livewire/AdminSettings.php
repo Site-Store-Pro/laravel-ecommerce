@@ -21,6 +21,9 @@ class AdminSettings extends Component
 
     // Site Identity
     public string $site_name = '';
+    public string $invoice_company_name = '';
+    public string $invoice_company_address = '';
+    public string $invoice_company_phone_email = '';
     public bool   $header_show_logo = true;
     public bool   $header_show_site_title = true;
     public string $logo_type = '';        // local|s3|cdn|url|svg
@@ -232,6 +235,9 @@ class AdminSettings extends Component
 
         // Site Identity
         $this->site_name              = $settings['site_name'] ?? '';
+        $this->invoice_company_name   = $settings['invoice_company_name'] ?? '';
+        $this->invoice_company_address = $settings['invoice_company_address'] ?? '';
+        $this->invoice_company_phone_email = $settings['invoice_company_phone_email'] ?? '';
         $this->header_show_logo       = (bool) ($settings['header_show_logo'] ?? true);
         $this->header_show_site_title = (bool) ($settings['header_show_site_title'] ?? true);
         $this->logo_type              = $settings['logo_type'] ?? '';
@@ -478,6 +484,9 @@ class AdminSettings extends Component
     {
         $this->validate([
             'site_name'           => 'nullable|string|max:255',
+            'invoice_company_name'        => 'nullable|string|max:255',
+            'invoice_company_address'     => 'nullable|string|max:1000',
+            'invoice_company_phone_email' => 'nullable|string|max:500',
             'logo_type'           => 'nullable|string|in:local,s3,custom_s3,cdn,url,svg,',
             'logo_path'           => 'nullable|string|max:500',
             'logo_cdn_url'        => 'nullable|url|max:500',
@@ -570,8 +579,11 @@ class AdminSettings extends Component
         }
 
         CmsSetting::setMany([
-            'site_name'              => trim($this->site_name),
-            'header_show_logo'       => $this->header_show_logo ? '1' : '0',
+            'site_name'                   => trim($this->site_name),
+            'invoice_company_name'        => trim($this->invoice_company_name),
+            'invoice_company_address'     => trim($this->invoice_company_address),
+            'invoice_company_phone_email' => trim($this->invoice_company_phone_email),
+            'header_show_logo'            => $this->header_show_logo ? '1' : '0',
             'header_show_site_title' => $this->header_show_site_title ? '1' : '0',
             'logo_type'              => $this->logo_type,
             'logo_path'          => trim($this->logo_path),

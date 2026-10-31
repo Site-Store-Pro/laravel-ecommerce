@@ -90,6 +90,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('ecommerce/products/{id}/edit', \App\Livewire\AdminProductEdit::class)->name('ecommerce.product-edit');
         Route::get('ecommerce/orders', \App\Livewire\AdminOrders::class)->name('ecommerce.orders');
         Route::get('ecommerce/orders/{id}', \App\Livewire\AdminOrderDetails::class)->name('ecommerce.order-details');
+        Route::get('ecommerce/orders/{id}/receipt', [\App\Http\Controllers\Admin\OrderReceiptController::class, 'show'])->name('ecommerce.order-receipt');
         Route::get('ecommerce/reviews', \App\Livewire\AdminProductReviews::class)->name('ecommerce.reviews');
         Route::get('reports', \App\Livewire\AdminReports::class)->name('reports.index');
         Route::post('cms-pages/upload-image', [\App\Http\Controllers\CmsImageUploadController::class, 'upload'])->name('cms-pages.upload-image');

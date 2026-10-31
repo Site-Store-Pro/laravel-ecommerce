@@ -160,9 +160,14 @@ class CurrencyService
      * CA  → "GST/HST"
      * *   → "VAT"
      */
-    public static function taxLabel(string $customerCountryCode): string
+    public static function taxLabel(?string $customerCountryCode = null): string
     {
-        return match (strtoupper($customerCountryCode)) {
+        $country = trim((string) $customerCountryCode);
+        if ($country === '') {
+            $country = self::merchantCountry();
+        }
+
+        return match (strtoupper($country)) {
             'US'    => 'Sales Tax',
             'CA'    => 'GST/HST',
             default => 'VAT',
@@ -193,8 +198,9 @@ class CurrencyService
      *
      * vatAmount = inclusivePrice × rate / (100 + rate)
      */
-    public static function extractVat(float $inclusivePrice, float $rate): float
+    public static function extractVat(float $inclusivePrice, ?float $rate = null): float
     {
+        $rate ??= self::merchantVatRate();
         if ($rate <= 0) {
             return 0.0;
         }
@@ -222,11 +228,15 @@ class CurrencyService
      * Rule: VAT is stripped when the merchant IS VAT-inclusive
      *       but the customer is in a non-VAT country (US or CA).
      */
-    public static function isCrossBorderExport(string $customerCountryCode): bool
+    public static function isCrossBorderExport(?string $customerCountryCode = null): bool
     {
         if (!self::isVatInclusive()) {
             return false; // US/CA merchant — never strip
         }
-        return in_array(strtoupper($customerCountryCode), ['US', 'CA'], true);
+        $country = trim((string) $customerCountryCode);
+        if ($country === '') {
+            return false;
+        }
+        return in_array(strtoupper($country), ['US', 'CA'], true);
     }
 }
