@@ -348,8 +348,9 @@
                             @endif
 
                             {{-- Mobile Hamburger Button Toggle --}}
-                            <button id="header_mobile_toggle" type="button" wire:click="toggleMobileMenu" class="header_mobile_toggle lg:hidden inline-flex items-center justify-center p-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition ml-auto" aria-label="Toggle Menu">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                            <button id="header_mobile_toggle" type="button" @click="mobileMenuOpen = !mobileMenuOpen" :aria-expanded="mobileMenuOpen.toString()" class="header_mobile_toggle lg:hidden inline-flex items-center justify-center p-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition ml-auto cursor-pointer" aria-label="Toggle Menu">
+                                <svg x-show="!mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                                <svg x-show="mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
                     </div>
@@ -400,16 +401,39 @@
             @if($navMenu && $navItems)
                 <x-nav-dynamic :menu="$navMenu" :items="$navItems" :cartCount="$cartCount" :user="auth()->user()" />
             @endif
+            <button id="header_mobile_toggle" type="button" @click="mobileMenuOpen = !mobileMenuOpen" :aria-expanded="mobileMenuOpen.toString()" class="header_mobile_toggle lg:hidden inline-flex items-center justify-center p-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition ml-auto cursor-pointer" aria-label="Toggle Menu">
+                <svg x-show="!mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <svg x-show="mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
         </div>
     @endif
 
     {{-- Mobile Navigation Drawer --}}
-    @if($mobileMenuOpen)
-        <div class="lg:hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm" wire:click="toggleMobileMenu"></div>
-        <div class="lg:hidden fixed inset-y-0 right-0 z-50 w-full max-w-xs bg-white dark:bg-slate-800 shadow-2xl p-6 overflow-y-auto space-y-6">
+    <div id="header_mobile_drawer"
+         x-show="mobileMenuOpen"
+         x-cloak
+         style="{{ ($mobileMenuOpen ?? false) ? '' : 'display: none;' }}"
+         class="lg:hidden">
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition-opacity ease-linear duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm"
+             @click="mobileMenuOpen = false"></div>
+        <div x-show="mobileMenuOpen"
+             x-transition:enter="transition ease-out duration-200 transform"
+             x-transition:enter-start="translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in duration-150 transform"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="translate-x-full"
+             class="fixed inset-y-0 right-0 z-50 w-full max-w-xs bg-white dark:bg-slate-800 shadow-2xl p-6 overflow-y-auto space-y-6">
             <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4">
                 <span class="font-bold text-slate-900 dark:text-white text-base">@label('nav.menu', 'Menu')</span>
-                <button wire:click="toggleMobileMenu" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                <button type="button" @click="mobileMenuOpen = false" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer" aria-label="Close Menu">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -477,5 +501,5 @@
                 </div>
             @endif
         </div>
-    @endif
+    </div>
 </header>

@@ -34,6 +34,7 @@ class PublicHeader extends Component
     public function toggleMobileMenu(): void
     {
         $this->mobileMenuOpen = !$this->mobileMenuOpen;
+        $this->dispatch('toggle-mobile-menu', open: $this->mobileMenuOpen);
     }
 
     #[On('toggle-frontend-dark-mode')]

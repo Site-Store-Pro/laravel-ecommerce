@@ -65,11 +65,21 @@ class HeaderFooterCacheService
 
         $cacheKey = self::CACHE_PREFIX_HEADER . "{$langId}_{$device}";
 
-        return Cache::rememberForever($cacheKey, function () use ($langId, $device) {
+        $html = Cache::rememberForever($cacheKey, function () use ($langId, $device) {
+            $settingKey = self::SETTING_PREFIX_HEADER . "{$langId}_{$device}";
+            $cached = CmsSetting::get($settingKey);
+            return !empty($cached) ? $cached : null;
+        });
+
+        // Auto-rebuild if an older cached payload lacks the pre-rendered mobile drawer
+        if ($html !== null && !str_contains($html, 'id="header_mobile_drawer"')) {
+            self::buildCache();
             $settingKey = self::SETTING_PREFIX_HEADER . "{$langId}_{$device}";
             $html = CmsSetting::get($settingKey);
             return !empty($html) ? $html : null;
-        });
+        }
+
+        return $html;
     }
 
     /**

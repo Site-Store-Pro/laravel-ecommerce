@@ -1,4 +1,5 @@
 <div x-data="{ 
+        mobileMenuOpen: @js((bool) ($mobileMenuOpen ?? false)),
         checkDevice() {
             let w = window.innerWidth;
             let dev = w < 768 ? 'mobile' : (w < 1024 ? 'tablet' : 'desktop');
@@ -21,6 +22,8 @@
         }
      }" 
      x-init="checkDevice(); updateCartBadges({{ (int) ($cartCount ?? 0) }})" 
+     @toggle-mobile-menu.window="mobileMenuOpen = ($event.detail && typeof $event.detail.open !== 'undefined') ? $event.detail.open : !mobileMenuOpen"
+     @keydown.escape.window="mobileMenuOpen = false"
      @cart-updated.window="
         if ($event.detail && typeof $event.detail.count !== 'undefined') {
             updateCartBadges($event.detail.count);
@@ -30,7 +33,7 @@
         });
      "
      @resize.window.debounce.150ms="checkDevice()" 
-     class="w-full {{ $isSticky ? 'sticky top-0 z-[999] shadow-md' : 'relative z-40' }}">
+     class="w-full {{ $isSticky ? 'sticky top-0 z-[999] shadow-md' : 'relative z-[999]' }}">
     @if(!empty($cachedHtml))
         {!! $cachedHtml !!}
     @elseif($useFallback)
