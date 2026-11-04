@@ -135,7 +135,7 @@ class AdminProductReviews extends Component
 
     public function render(): View
     {
-        $query = ProductReview::with('product');
+        $query = ProductReview::with('product:id,title');
 
         if (!empty($this->search)) {
             $query->where(function($q) {
@@ -154,7 +154,10 @@ class AdminProductReviews extends Component
         }
 
         $reviews = $query->latest()->paginate(15);
-        $products = Product::orderBy('title')->get();
+        $products = Product::select(['id', 'title'])
+            ->whereIn('id', ProductReview::select('product_id')->distinct())
+            ->orderBy('title')
+            ->get();
 
         return view('livewire.admin-product-reviews', [
             'reviews' => $reviews,
