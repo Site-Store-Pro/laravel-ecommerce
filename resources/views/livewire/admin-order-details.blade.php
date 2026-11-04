@@ -150,6 +150,39 @@
                     @endif
                 </div>
 
+                <!-- Custom Order Data Card -->
+                @php
+                    $customFieldData = is_array($order->custom_field_data)
+                        ? $order->custom_field_data
+                        : (is_string($order->custom_field_data) ? (json_decode($order->custom_field_data, true) ?: []) : []);
+                    $nonEmptyCustomFields = collect($customFieldData)->filter(function ($val) {
+                        if (is_array($val)) {
+                            return count(array_filter($val, fn($v) => $v !== null && $v !== '')) > 0;
+                        }
+                        if (is_bool($val)) {
+                            return true;
+                        }
+                        return $val !== null && trim((string) $val) !== '';
+                    });
+                @endphp
+                @if($nonEmptyCustomFields->isNotEmpty())
+                    <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-4">
+                        <h3 class="text-lg font-bold text-slate-900 pb-3 border-b border-slate-100 flex items-center gap-2">
+                            <span class="w-1.5 h-6 bg-indigo-600 rounded"></span> Custom Order Data
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            @foreach($nonEmptyCustomFields as $fieldLabel => $fieldValue)
+                                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                                    <span class="text-xs font-extrabold text-slate-400 uppercase tracking-wider block">
+                                        {{ $fieldLabel }}
+                                    </span>
+                                    <div class="text-sm font-semibold text-slate-800 whitespace-pre-wrap break-words">@if(is_bool($fieldValue)){{ $fieldValue ? 'Yes' : 'No' }}@elseif(is_array($fieldValue)){{ implode(', ', array_filter($fieldValue, fn($v) => $v !== null && $v !== '')) }}@else{{ $fieldValue }}@endif</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Purchased Items Card -->
                 <div class="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-6">
                     <h3 class="text-lg font-bold text-slate-900 pb-3 border-b border-slate-100">Items Purchased</h3>
