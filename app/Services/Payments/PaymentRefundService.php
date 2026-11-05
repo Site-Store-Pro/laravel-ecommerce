@@ -183,6 +183,16 @@ class PaymentRefundService
             return new PayPalProcessor($isSandbox);
         }
 
+        // Detect auto-discovered payment plugins (e.g. Square, etc.)
+        foreach ($this->processorManager->getPluginProcessors() as $procId => $pluginClass) {
+            $isSandbox = $this->processorManager->activeProcessorIsSandbox($procId) || str_contains($method, 'sandbox');
+            /** @var \App\Services\Payments\Contracts\PaymentPluginInterface $plugin */
+            $plugin = new $pluginClass($isSandbox);
+            if ($plugin->matchesPayment($payment)) {
+                return $plugin;
+            }
+        }
+
         // Default or Fallback to active processor
         try {
             return $this->processorManager->resolveActive();

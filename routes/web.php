@@ -216,5 +216,6 @@ Route::post('webhooks/inventory-update', [\App\Http\Controllers\InventoryWebhook
 Route::post('webhooks/stripe',  [\App\Http\Controllers\StripeWebhookController::class,  'handle'])->name('webhooks.stripe');
 Route::post('webhooks/paddle',  [\App\Http\Controllers\PaddleWebhookController::class,  'handle'])->name('webhooks.paddle');
 Route::post('webhooks/paypal',  [\App\Http\Controllers\PayPalWebhookController::class,  'handle'])->name('webhooks.paypal');
+Route::post('webhooks/payment/{provider}', [\App\Http\Controllers\PaymentPluginWebhookController::class, 'handle'])->name('webhooks.payment-plugin');
 
 Route::get('{slug}', [\App\Http\Controllers\PageController::class, 'show'])->where('slug', '.*')->name('page.show');

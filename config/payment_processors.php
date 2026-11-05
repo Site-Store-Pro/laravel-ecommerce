@@ -101,7 +101,34 @@ if (file_exists($_paypalExtension)) {
     $processors[3] = \PaymentProcessors\PayPal\PayPalProcessorExtension::class;
 }
 
-// ─── Add further custom processors below this line ──────────────────────────
+// ─── Auto-discover stand-alone payment plugins (processor.json) ─────────────
+// Any folder in payment-processors/<slug>/ containing a processor.json manifest
+// is automatically loaded and registered here by its processor_id (100+).
+foreach (glob(base_path('payment-processors/*/processor.json')) ?: [] as $_manifestPath) {
+    $_manifest = json_decode((string) file_get_contents($_manifestPath), true);
+    if (!is_array($_manifest) || empty($_manifest['processor_id']) || empty($_manifest['class'])) {
+        continue;
+    }
+
+    $_procId = (int) $_manifest['processor_id'];
+    // Never allow a custom plugin to overwrite built-in reserved IDs (0..3)
+    if ($_procId < 4) {
+        continue;
+    }
+
+    $_fileName = $_manifest['file'] ?? (basename(str_replace('\\', '/', $_manifest['class'])) . '.php');
+    $_classFile = dirname($_manifestPath) . '/' . $_fileName;
+
+    if (file_exists($_classFile)) {
+        require_once $_classFile;
+    }
+
+    if (class_exists($_manifest['class'])) {
+        $processors[$_procId] = $_manifest['class'];
+    }
+}
+
+// ─── Add further manual custom processors below this line ───────────────────
 // Follow the same pattern: require_once + $processors[N] = ClassName::class;
 // Use processor IDs starting at 100 (IDs 0 to 99 are reserved).
 //

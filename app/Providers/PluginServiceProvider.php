@@ -59,6 +59,6 @@ class PluginServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        \App\Services\Payments\PaymentProcessorManager::syncDiscoveredProcessors();
     }
 }

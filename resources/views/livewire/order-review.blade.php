@@ -250,6 +250,15 @@
                                 <div id="paypal-button-container" class="w-full min-h-[150px] relative z-10" wire:ignore></div>
                             </div>
 
+                        {{-- ─── Stand-Alone Payment Plugin (e.g. Square) ───── --}}
+                        @elseif(!empty($activePluginView) && file_exists($activePluginView))
+                            {!! view()->file($activePluginView, array_merge([
+                                'user'                     => $user,
+                                'total'                    => $total,
+                                'currencyCode'             => $currencyCode,
+                                'activeProcessorIsSandbox' => $activeProcessorIsSandbox,
+                            ], $activePluginData ?? []))->render() !!}
+
                         {{-- ─── Test Processor ─────────────────────────────── --}}
                         @else
                             <div class="space-y-4">
@@ -563,6 +572,10 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                 this.$nextTick(() => {
                     this.initPaypal();
                 });
+            } else if (window.PaymentProcessorPlugins && window.PaymentProcessorPlugins[this.processorType]?.init) {
+                this.$nextTick(() => {
+                    window.PaymentProcessorPlugins[this.processorType].init(this);
+                });
             }
         },
 
@@ -579,6 +592,8 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                     container.innerHTML = '';
                 }
                 await this.initPaypal();
+            } else if (window.PaymentProcessorPlugins && window.PaymentProcessorPlugins[this.processorType]?.reboot) {
+                await window.PaymentProcessorPlugins[this.processorType].reboot(this);
             }
         },
 
@@ -845,6 +860,12 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
                     return;
                 }
 
+                // Custom payment plugin hook (e.g. Square Web Payments SDK client-side tokenization)
+                if (window.PaymentProcessorPlugins && window.PaymentProcessorPlugins[this.processorType]?.handlePlaceOrder) {
+                    await window.PaymentProcessorPlugins[this.processorType].handlePlaceOrder(this);
+                    return;
+                }
+
                 // For Stripe Payment Element (Deferred Intent Flow), submit fields before async work
                 if (this.processorType === 'stripe' && this.elementsInstance) {
                     const { error: submitError } = await this.elementsInstance.submit();
@@ -910,6 +931,9 @@ function paymentHandler(processorType, stripePublishableKey = '', stripeAddressR
 
                 } else if (data.processor === 'paddle') {
                     await this.handlePaddle(data);
+
+                } else if (window.PaymentProcessorPlugins && window.PaymentProcessorPlugins[data.processor]?.handlePrepared) {
+                    await window.PaymentProcessorPlugins[data.processor].handlePrepared(this, data);
 
                 } else {
                     // Test processor — gatewayToken is already synced via wire:model on the radio

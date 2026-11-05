@@ -1,135 +1,131 @@
-﻿# Example Gateway — Custom Processor Template
+# Example Gateway — Custom Processor Template
 
 This directory is a **template** for adding a completely new (third-party) payment gateway.
-It is not active by default.
+It is not active by default because it does not contain a `processor.json` manifest.
 
 ---
 
-## When to use this vs. the Stripe/Paddle extension
+## When to use this vs. the Stripe/Paddle/PayPal extension
 
 | Scenario | What to do |
 |---|---|
 | Customise or extend Stripe | Use `payment-processors/stripe/StripeProcessorExtension.php` (auto-detected) |
 | Customise or extend Paddle | Use `payment-processors/paddle/PaddleProcessorExtension.php` (auto-detected) |
-| Add a brand-new gateway (e.g. Braintree, Square, Authorize.net) | Follow the steps below |
+| Customise or extend PayPal | Use `payment-processors/paypal/PayPalProcessorExtension.php` (auto-detected) |
+| Add a brand-new drop-in gateway (e.g. Square, Braintree, Authorize.net) | Follow the Auto-Discovery Plugin steps below (see `payment-processors/square/` for a complete working example) |
 
 ---
 
-## Steps to add a new custom processor
+## Drop-In Auto-Discovery Payment Plugin (Recommended)
 
-### 1. Copy this directory
+New payment processors placed in `payment-processors/<slug>/` with a `processor.json` manifest and implementing `PaymentPluginInterface` are **automatically discovered, registered in the database, rendered at checkout, refunded from Admin Order Details, and routed for webhooks** without editing any core checkout or Admin files.
 
-```bash
-cp -r payment-processors/example-gateway payment-processors/my-gateway
-```
-
-### 2. Rename the PHP file
+### 1. Create your plugin directory
 
 ```
-payment-processors/my-gateway/MyGatewayProcessor.php
+payment-processors/my-gateway/
+├── processor.json           ← Auto-discovery manifest
+├── MyGatewayProcessor.php   ← Main driver (implements PaymentPluginInterface)
+├── checkout.blade.php       ← Self-contained checkout card UI + JS hooks
+└── README.md                ← Setup notes & credentials
 ```
 
-### 3. Update namespace and class name
+### 2. Create `processor.json`
+
+Use a unique `processor_id` of `100` or higher (`0`–`3` are reserved for built-in processors):
+
+```json
+{
+    "processor_id": 105,
+    "name": "My Gateway",
+    "type": "my-gateway",
+    "class": "PaymentProcessors\\MyGateway\\MyGatewayProcessor",
+    "file": "MyGatewayProcessor.php",
+    "production_default": 0,
+    "description": "My Gateway payment processor plugin"
+}
+```
+
+On application boot, `PluginServiceProvider` calls `PaymentProcessorManager::syncDiscoveredProcessors()`, which automatically creates the row in `order_processors` (`processor_id = 105`) if it does not already exist. It immediately appears in **Admin → Checkout → Payment Processors**.
+
+### 3. Implement `PaymentPluginInterface`
+
+`PaymentPluginInterface` extends `PaymentProcessorInterface` (`charge()`, `refund()`, `isSandbox()`, `getName()`) with lifecycle hooks for checkout, refunds, and webhooks:
 
 ```php
 namespace PaymentProcessors\MyGateway;
 
-class MyGatewayProcessor implements PaymentProcessorInterface
-```
+use App\Models\OrderPayment;
+use App\Services\Payments\Contracts\PaymentPluginInterface;
+use App\Services\Payments\PaymentResult;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
-### 4. Implement the three required interface methods
-
-```php
-public function charge(float $amount, string $currency, array $payload): PaymentResult;
-public function isSandbox(): bool;
-public function getName(): string;
-```
-
-`charge()` is called after the client-side JS has completed checkout. Use `$payload` to
-receive the gateway''s transaction reference from the browser (via Livewire).
-
-### 5. Add credentials to `.env`
-
-```env
-MY_GATEWAY_API_KEY=your_live_key
-MY_GATEWAY_SANDBOX_API_KEY=your_sandbox_key
-```
-
-### 6. Insert the processor row into the database
-
-The processor needs a row in `order_processors` matching your chosen `processor_id`.
-Use an ID of 3 or higher (0, 1, and 2 are reserved for Test, Stripe, and Paddle).
-
-```sql
-INSERT INTO order_processors (processor_id, processor_name, production, created_at, updated_at)
-VALUES (3, 'My Gateway', 0, NOW(), NOW());
-```
-
-Or run a seeder / migration that inserts this row.
-
-### 7. Register in `config/payment_processors.php`
-
-Add these two lines in the "custom processors" section at the bottom of the file:
-
-```php
-require_once base_path('payment-processors/my-gateway/MyGatewayProcessor.php');
-$processors[3] = \PaymentProcessors\MyGateway\MyGatewayProcessor::class;
-```
-
-> **Note:** The processor ID here (3) must match the `processor_id` value in `order_processors`.
-
-### 8. Handle the frontend JS checkout
-
-In `OrderReview::preparePayment()`, add a new `elseif ($type === 'my-gateway')` branch
-that calls your processor''s client-token method and passes the data to your JS widget.
-
-Update `PaymentProcessorManager::activeProcessorType()` to return the type string:
-
-```php
-return match ($this->activeProcessorId()) {
-    1       => 'stripe',
-    2       => 'paddle',
-    3       => 'my-gateway',   // <-- add this
-    default => 'test',
-};
-```
-
-### 9. Enable in Admin
-
-`Admin → Checkout → Processors` → Set **My Gateway** as Primary → Toggle Production on/off.
-
----
-
-## Files in a complete processor package
-
-```
-payment-processors/my-gateway/
-├── MyGatewayProcessor.php   ← Main driver (implements PaymentProcessorInterface)
-└── README.md                ← Credentials, setup notes, webhook info
-```
-
----
-
-## Interface Contract
-
-```php
-// app/Services/Payments/Contracts/PaymentProcessorInterface.php
-
-interface PaymentProcessorInterface
+class MyGatewayProcessor implements PaymentPluginInterface
 {
-    public function charge(float $amount, string $currency, array $payload): PaymentResult;
-    public function isSandbox(): bool;
-    public function getName(): string;
+    public function __construct(private readonly bool $sandbox = true) {}
+
+    public function getTypeSlug(): string { return 'my-gateway'; }
+    public function isSandbox(): bool { return $this->sandbox; }
+    public function getName(): string { return 'My Gateway'; }
+
+    public function prepareCheckout(float $total, string $currency, int $userId): array
+    {
+        return ['ready' => true];
+    }
+
+    public function buildChargePayload(string $paymentToken, array $context = []): array
+    {
+        return ['token' => $paymentToken];
+    }
+
+    public function charge(float $amount, string $currency, array $payload): PaymentResult
+    {
+        // Call gateway charge API...
+    }
+
+    public function refund(OrderPayment $payment, float $amount, string $currency = 'USD'): PaymentResult
+    {
+        // Call gateway refund API...
+    }
+
+    public function getCheckoutViewPath(): ?string
+    {
+        return __DIR__ . '/checkout.blade.php';
+    }
+
+    public function getCheckoutViewData(float $total, string $currency): array
+    {
+        return ['total' => $total, 'currency' => $currency];
+    }
+
+    public function matchesPayment(OrderPayment $payment): bool
+    {
+        return str_contains(strtolower((string) $payment->payment_method), 'my gateway');
+    }
+
+    public function handleWebhook(Request $request): Response
+    {
+        return response()->json(['status' => 'ok']);
+    }
 }
 ```
 
-The `PaymentResult` constructor accepts:
-```php
-new PaymentResult(
-    success:           bool,
-    authorizationCode: string,
-    transactionId:     string  = '',
-    errorMessage:      string  = '',
-    processorName:     string  = '',
-);
+### 4. Create `checkout.blade.php`
+
+Your Blade view renders the payment container and registers `window.PaymentProcessorPlugins['my-gateway']` with:
+- `init(component)`: Called on checkout page init.
+- `reboot(component)`: Called when Livewire updates the DOM (e.g., promo code applied).
+- `handlePlaceOrder(component)`: Tokenizes the payment method and calls `await component.$wire.placeOrder(token)` to finalize the order.
+
+### 5. Webhooks
+
+Your plugin automatically receives webhook `POST` requests at:
 ```
+POST /webhooks/payment/my-gateway
+```
+which delegates directly to `MyGatewayProcessor::handleWebhook(Request $request)`.
+
+### 6. Enable in Admin
+
+Navigate to **Admin → Checkout → Processors** (`/admin/checkout/processors`), select **My Gateway** as Primary (or Secondary/Tertiary), and toggle Sandbox/Production mode.

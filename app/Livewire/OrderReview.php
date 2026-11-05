@@ -721,6 +721,20 @@ class OrderReview extends Component
                 ];
 
             } else {
+                $driver = $manager->resolveActive($processorId);
+                if ($driver instanceof \App\Services\Payments\Contracts\PaymentPluginInterface) {
+                    $result = $driver->prepareCheckout($total, $currency, [
+                        'user'            => $user,
+                        'items'           => $totals['items'],
+                        'totals'          => $totals,
+                        'paymentMethodId' => $paymentMethodId,
+                        'isSubscription'  => (bool) $subVariant,
+                        'subVariant'      => $subVariant,
+                    ]);
+                    $this->paymentReady = empty($result['error']);
+                    return $result;
+                }
+
                 // Test processor — no gateway work needed
                 $this->paymentReady = true;
                 return ['processor' => 'test'];
@@ -829,9 +843,15 @@ class OrderReview extends Component
                 'paypal' => (str_starts_with($gatewayToken, 'I-') || $this->paypalIsSubscription)
                     ? ['subscription_id' => $gatewayToken]
                     : ['order_id'        => $gatewayToken],
+                // For custom payment plugins, delegate payload construction to the plugin driver.
                 // For test processor, read gatewayToken from Livewire property (synced by wire:model radio).
                 // '' = simulate success, 'fail' = simulate decline.
-                default  => ['simulate' => $this->gatewayToken],
+                default  => ($driver instanceof \App\Services\Payments\Contracts\PaymentPluginInterface)
+                    ? $driver->buildChargePayload($gatewayToken, [
+                        'user'   => Auth::user(),
+                        'totals' => $totals,
+                    ])
+                    : ['simulate' => $this->gatewayToken],
             };
 
             $payResult = $driver->charge($totals['total'], $currency, $payload);
@@ -1289,6 +1309,16 @@ class OrderReview extends Component
 
         $this->currencyCode = strtoupper(CurrencyService::code());
 
+        $activePluginView = null;
+        $activePluginData = [];
+        if (!in_array($activeType, ['stripe', 'paddle', 'paypal', 'test'], true)) {
+            $pluginDriver = $manager->resolveActive($processorId);
+            if ($pluginDriver instanceof \App\Services\Payments\Contracts\PaymentPluginInterface) {
+                $activePluginView = $pluginDriver->getCheckoutViewPath();
+                $activePluginData = $pluginDriver->getCheckoutViewData($totals['total'], $this->currencyCode);
+            }
+        }
+
         return view('livewire.order-review', [
             'items'                => $totals['items'],
             'subtotal'             => $totals['subtotal'],
@@ -1312,6 +1342,8 @@ class OrderReview extends Component
             'isSubscription'           => (bool) $this->resolveSubscriptionVariant(),
             'paypalClientId'           => $this->paypalClientId,
             'currencyCode'             => strtoupper(CurrencyService::code()),
+            'activePluginView'         => $activePluginView,
+            'activePluginData'         => $activePluginData,
             // Checkout custom fields
             'billingFields'          => \App\Models\CheckoutCustomField::where('position', 'billing')
                 ->where('is_active', true)
