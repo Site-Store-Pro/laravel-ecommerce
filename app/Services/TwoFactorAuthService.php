@@ -117,17 +117,48 @@ class TwoFactorAuthService
      */
     public static function startLoginChallenge(User $user, bool $remember = false): void
     {
+        $now = now()->timestamp;
+        $existingCode = session('2fa_code');
+        $existingEmail = (string) session('2fa_email', '');
+        $existingContext = session('2fa_context');
+        $expiresAt = (int) session('2fa_expires_at', 0);
+        $lastSentAt = (int) session('2fa_last_sent_at', 0);
+
+        // Idempotency guard: if an unexpired login code for the same email was just sent within the cooldown window, reuse it
+        if (
+            !empty($existingCode)
+            && $existingContext === 'login'
+            && strcasecmp($existingEmail, $user->email) === 0
+            && $expiresAt > $now
+            && ($now - $lastSentAt) < self::RESEND_COOLDOWN_SECONDS
+        ) {
+            session([
+                '2fa_user_id'  => $user->id,
+                '2fa_name'     => $user->name,
+                '2fa_remember' => $remember,
+            ]);
+            return;
+        }
+
+        $previousCode = (
+            !empty($existingCode)
+            && $existingContext === 'login'
+            && strcasecmp($existingEmail, $user->email) === 0
+            && $expiresAt > $now
+        ) ? $existingCode : null;
+
         $code = self::generateCode();
 
         session([
-            '2fa_context'      => 'login',
-            '2fa_user_id'      => $user->id,
-            '2fa_email'        => $user->email,
-            '2fa_name'         => $user->name,
-            '2fa_code'         => $code,
-            '2fa_expires_at'   => now()->addMinutes(self::CODE_EXPIRY_MINUTES)->timestamp,
-            '2fa_remember'     => $remember,
-            '2fa_last_sent_at' => now()->timestamp,
+            '2fa_context'       => 'login',
+            '2fa_user_id'       => $user->id,
+            '2fa_email'         => $user->email,
+            '2fa_name'          => $user->name,
+            '2fa_code'          => $code,
+            '2fa_previous_code' => $previousCode,
+            '2fa_expires_at'    => now()->addMinutes(self::CODE_EXPIRY_MINUTES)->timestamp,
+            '2fa_remember'      => $remember,
+            '2fa_last_sent_at'  => $now,
         ]);
 
         self::sendVerificationEmail($user->email, $user->name, $code);
@@ -138,16 +169,46 @@ class TwoFactorAuthService
      */
     public static function startCheckoutChallenge(string $email, string $name, ?int $userId = null): void
     {
+        $now = now()->timestamp;
+        $existingCode = session('2fa_code');
+        $existingEmail = (string) session('2fa_email', '');
+        $existingContext = session('2fa_context');
+        $expiresAt = (int) session('2fa_expires_at', 0);
+        $lastSentAt = (int) session('2fa_last_sent_at', 0);
+
+        // Idempotency guard: if an unexpired checkout code for the same email was just sent within the cooldown window, reuse it
+        if (
+            !empty($existingCode)
+            && $existingContext === 'checkout'
+            && strcasecmp($existingEmail, $email) === 0
+            && $expiresAt > $now
+            && ($now - $lastSentAt) < self::RESEND_COOLDOWN_SECONDS
+        ) {
+            session([
+                '2fa_user_id' => $userId,
+                '2fa_name'    => $name,
+            ]);
+            return;
+        }
+
+        $previousCode = (
+            !empty($existingCode)
+            && $existingContext === 'checkout'
+            && strcasecmp($existingEmail, $email) === 0
+            && $expiresAt > $now
+        ) ? $existingCode : null;
+
         $code = self::generateCode();
 
         session([
-            '2fa_context'      => 'checkout',
-            '2fa_user_id'      => $userId,
-            '2fa_email'        => $email,
-            '2fa_name'         => $name,
-            '2fa_code'         => $code,
-            '2fa_expires_at'   => now()->addMinutes(self::CODE_EXPIRY_MINUTES)->timestamp,
-            '2fa_last_sent_at' => now()->timestamp,
+            '2fa_context'       => 'checkout',
+            '2fa_user_id'       => $userId,
+            '2fa_email'         => $email,
+            '2fa_name'          => $name,
+            '2fa_code'          => $code,
+            '2fa_previous_code' => $previousCode,
+            '2fa_expires_at'    => now()->addMinutes(self::CODE_EXPIRY_MINUTES)->timestamp,
+            '2fa_last_sent_at'  => $now,
         ]);
 
         self::sendVerificationEmail($email, $name, $code);
@@ -158,9 +219,10 @@ class TwoFactorAuthService
      */
     public static function verifyCode(string $enteredCode, string $context = 'login'): bool
     {
-        $storedCode = session('2fa_code');
-        $expiresAt  = session('2fa_expires_at');
-        $sessionCtx = session('2fa_context');
+        $storedCode   = session('2fa_code');
+        $previousCode = session('2fa_previous_code');
+        $expiresAt    = session('2fa_expires_at');
+        $sessionCtx   = session('2fa_context');
 
         if (empty($storedCode) || empty($expiresAt)) {
             return false;
@@ -174,7 +236,11 @@ class TwoFactorAuthService
             return false;
         }
 
-        if (trim($enteredCode) !== (string) $storedCode) {
+        $sanitized = preg_replace('/\D/', '', $enteredCode);
+        $matchesCurrent  = $sanitized !== '' && hash_equals((string) $storedCode, $sanitized);
+        $matchesPrevious = $sanitized !== '' && !empty($previousCode) && hash_equals((string) $previousCode, $sanitized);
+
+        if (!$matchesCurrent && !$matchesPrevious) {
             return false;
         }
 
@@ -189,6 +255,12 @@ class TwoFactorAuthService
                 Auth::login($user, $remember);
                 CartSessionService::associateCartOnLogin($user->id);
             }
+
+            // Treat recent login 2FA verification as valid for checkout 2FA in the same session
+            session([
+                'checkout_2fa_verified'    => true,
+                'checkout_2fa_verified_at' => now()->timestamp,
+            ]);
         } elseif ($context === 'checkout') {
             session([
                 'checkout_2fa_verified'    => true,
@@ -237,12 +309,14 @@ class TwoFactorAuthService
             ];
         }
 
+        $previousCode = session('2fa_code');
         $newCode = self::generateCode();
 
         session([
-            '2fa_code'         => $newCode,
-            '2fa_expires_at'   => now()->addMinutes(self::CODE_EXPIRY_MINUTES)->timestamp,
-            '2fa_last_sent_at' => now()->timestamp,
+            '2fa_code'          => $newCode,
+            '2fa_previous_code' => $previousCode,
+            '2fa_expires_at'    => now()->addMinutes(self::CODE_EXPIRY_MINUTES)->timestamp,
+            '2fa_last_sent_at'  => now()->timestamp,
         ]);
 
         self::sendVerificationEmail($email, $name, $newCode);
@@ -285,6 +359,7 @@ class TwoFactorAuthService
             '2fa_email',
             '2fa_name',
             '2fa_code',
+            '2fa_previous_code',
             '2fa_expires_at',
             '2fa_remember',
             '2fa_last_sent_at',

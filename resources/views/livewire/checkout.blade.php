@@ -74,7 +74,7 @@
                                     <div class="text-xs text-red-600 font-semibold bg-red-50 border border-red-100 p-2.5 rounded-xl text-red-800">{{ $message }}</div>
                                 @enderror
 
-                                <button type="button" wire:click.prevent="loginUser" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl shadow-md transition duration-150">
+                                <button type="button" wire:click.prevent="loginUser" wire:loading.attr="disabled" wire:target="loginUser" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl shadow-md transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
                                     @label('checkout.sign_in_continue', 'Sign In & Continue')
                                 </button>
                             </div>
@@ -337,7 +337,7 @@
                             @endif
 
                             <div class="md:col-span-2 mt-6 border-t border-slate-100 pt-6">
-                                <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-md hover:scale-[1.01] transition duration-150 flex items-center justify-center gap-2">
+                                <button type="submit" wire:loading.attr="disabled" wire:target="saveDetailsAndContinue" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-md hover:scale-[1.01] transition duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                                     @label('checkout.continue_to_review', 'Continue to Review')
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>

@@ -58,7 +58,8 @@
                            type="text"
                            inputmode="numeric"
                            pattern="[0-9]*"
-                           maxlength="6"
+                           maxlength="10"
+                           x-on:input="$el.value = $el.value.replace(/\D/g, '').slice(0, 6); $wire.set('code', $el.value, false)"
                            autofocus
                            autocomplete="one-time-code"
                            placeholder="••••••"

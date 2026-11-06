@@ -54,6 +54,9 @@ class TwoFactorVerify extends Component
         $this->resetErrorBag();
         $this->errorMessage = '';
 
+        // Strip whitespace and non-digit characters before validation so pasted codes with spaces are accepted
+        $this->code = preg_replace('/\D/', '', $this->code) ?? '';
+
         $this->validate([
             'code' => 'required|string|size:6',
         ], [

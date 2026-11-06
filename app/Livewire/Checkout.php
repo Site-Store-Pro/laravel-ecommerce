@@ -54,6 +54,10 @@ class Checkout extends Component
     // Shippable flag
     public bool $requiresShipping = false;
 
+    // Track edit mode and active 2FA challenge to prevent duplicate challenge triggers
+    public bool $isEditing = false;
+    public bool $challengeStarted = false;
+
     // Coupon Code
     public string $couponCode = '';
 
@@ -198,6 +202,7 @@ class Checkout extends Component
             return redirect()->route('shop.cart');
         }
 
+        $this->isEditing = request()->boolean('edit');
         $this->loadCartDetails();
 
         // Pre-populate any saved session values from a previous step-1 visit
@@ -208,8 +213,23 @@ class Checkout extends Component
             $this->checkoutOptIn = (bool) session('checkout_opt_in');
         }
 
-        // Note: auto-redirect for completed profiles is handled in booted()
-        // so it fires on every Livewire lifecycle, not just the initial page load.
+        if ($this->canBypassCheckout()) {
+            $user = Auth::user();
+            $this->getCartQuery()->update(['user_id' => $user->id]);
+
+            if (\App\Services\TwoFactorAuthService::isCheckout2FaEnabled()
+                && ! \App\Services\TwoFactorAuthService::isCheckout2FaVerified()
+                && ! \App\Services\TwoFactorAuthService::isCustomerExemptFromCheckout2Fa($user, $user->email)
+            ) {
+                $this->challengeStarted = true;
+                \App\Services\TwoFactorAuthService::startCheckoutChallenge($user->email, $user->name, $user->id);
+                $this->redirect(\App\Services\TwoFactorAuthService::getVerifyUrl('checkout'), navigate: false);
+                return;
+            }
+
+            $this->redirect(route('shop.checkout-review'), navigate: false);
+            return;
+        }
     }
 
     /**
@@ -218,7 +238,7 @@ class Checkout extends Component
      */
     private function canBypassCheckout(): bool
     {
-        if (request()->has('edit') || !Auth::check()) {
+        if ($this->isEditing || request()->has('edit') || !Auth::check()) {
             return false;
         }
 
@@ -250,8 +270,6 @@ class Checkout extends Component
 
     /**
      * booted() runs on every Livewire request (initial + subsequent re-renders).
-     * This ensures the bypass redirect fires even after loginUser() triggers
-     * a component re-render, which does NOT re-run mount().
      */
     public function booted(): void
     {
@@ -266,24 +284,6 @@ class Checkout extends Component
             session()->flash('error', $msg);
             $this->redirect(route('shop.cart'));
             return;
-        }
-
-        if ($this->canBypassCheckout()) {
-            $user = Auth::user();
-            // Associate current guest cart items with this user before leaving
-            $this->getCartQuery()->update(['user_id' => $user->id]);
-
-            // Check 2FA requirement for checkout
-            if (\App\Services\TwoFactorAuthService::isCheckout2FaEnabled()
-                && ! \App\Services\TwoFactorAuthService::isCheckout2FaVerified()
-                && ! \App\Services\TwoFactorAuthService::isCustomerExemptFromCheckout2Fa($user, $user->email)
-            ) {
-                \App\Services\TwoFactorAuthService::startCheckoutChallenge($user->email, $user->name, $user->id);
-                $this->redirect(\App\Services\TwoFactorAuthService::getVerifyUrl('checkout'), navigate: false);
-                return;
-            }
-
-            $this->redirect(route('shop.checkout-review'), navigate: false);
         }
     }
 
@@ -346,11 +346,8 @@ class Checkout extends Component
             $this->loginEmail = '';
             $this->loginPassword = '';
 
-            $this->dispatch('cart-updated');
-
             // If profile is already complete, bypass the details form immediately.
-            // canBypassCheckout() + booted() would catch this on the next render,
-            // but doing it here avoids the one-render flash of the checkout form.
+            // Do not dispatch 'cart-updated' before redirecting to avoid concurrent Livewire requests racing with session state.
             if ($this->canBypassCheckout()) {
                 $user = Auth::user();
                 $this->getCartQuery()->update(['user_id' => $user->id]);
@@ -359,7 +356,10 @@ class Checkout extends Component
                     && ! \App\Services\TwoFactorAuthService::isCheckout2FaVerified()
                     && ! \App\Services\TwoFactorAuthService::isCustomerExemptFromCheckout2Fa($user, $user->email)
                 ) {
-                    \App\Services\TwoFactorAuthService::startCheckoutChallenge($user->email, $user->name, $user->id);
+                    if (!$this->challengeStarted) {
+                        $this->challengeStarted = true;
+                        \App\Services\TwoFactorAuthService::startCheckoutChallenge($user->email, $user->name, $user->id);
+                    }
                     $this->redirect(\App\Services\TwoFactorAuthService::getVerifyUrl('checkout'), navigate: false);
                     return;
                 }
@@ -368,6 +368,7 @@ class Checkout extends Component
                 return;
             }
 
+            $this->dispatch('cart-updated');
             session()->flash('status', 'Logged in successfully!');
         } else {
             $this->addError('login_error', 'Invalid email or password.');
@@ -506,7 +507,10 @@ class Checkout extends Component
             && ! \App\Services\TwoFactorAuthService::isCheckout2FaVerified()
             && ! \App\Services\TwoFactorAuthService::isCustomerExemptFromCheckout2Fa($resolvedUser, $this->email)
         ) {
-            \App\Services\TwoFactorAuthService::startCheckoutChallenge($this->email, $this->name, $userId);
+            if (!$this->challengeStarted) {
+                $this->challengeStarted = true;
+                \App\Services\TwoFactorAuthService::startCheckoutChallenge($this->email, $this->name, $userId);
+            }
             return redirect()->to(\App\Services\TwoFactorAuthService::getVerifyUrl('checkout'));
         }
 

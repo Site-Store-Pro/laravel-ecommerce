@@ -69,13 +69,13 @@ new #[Layout('layouts.public')] class extends Component
         \App\Services\CartSessionService::associateCartOnLogin($user->id);
 
         if (\App\Services\CartSessionService::getCartCount() > 0) {
-            $this->redirect(route('shop.checkout'), navigate: true);
+            $this->redirect(route('shop.checkout'), navigate: false);
             return;
         }
 
         $this->redirect(
             route('dashboard'),
-            navigate: true
+            navigate: false
         );
     }
 };
@@ -93,13 +93,16 @@ new #[Layout('layouts.public')] class extends Component
     <form
         novalidate
         x-data="{
+            submitting: false,
             submitForm() {
+                if (this.submitting) return;
+                this.submitting = true;
 
                 if (
                     typeof grecaptcha === 'undefined'
                     || !window.recaptchaSiteKey
                 ) {
-                    $wire.register()
+                    $wire.register().finally(() => { this.submitting = false; })
                     return
                 }
 
@@ -113,11 +116,15 @@ new #[Layout('layouts.public')] class extends Component
 
                         $wire.set(
                             'recaptchaToken',
-                            token
+                            token,
+                            false
                         )
 
-                        $wire.register()
+                        $wire.register().finally(() => { this.submitting = false; })
 
+                    })
+                    .catch(() => {
+                        this.submitting = false;
                     })
 
                 })
@@ -130,7 +137,7 @@ new #[Layout('layouts.public')] class extends Component
 
         <input
             type="hidden"
-            wire:model.live="recaptchaToken"
+            wire:model="recaptchaToken"
         >
 
 
@@ -143,7 +150,7 @@ new #[Layout('layouts.public')] class extends Component
 
 
             <input
-                wire:model.live="name"
+                wire:model="name"
                 id="name"
                 type="text"
                 autocomplete="name"
@@ -172,7 +179,7 @@ new #[Layout('layouts.public')] class extends Component
 
 
             <input
-                wire:model.live="email"
+                wire:model="email"
                 id="email"
                 type="email"
                 autocomplete="username"
@@ -201,7 +208,7 @@ new #[Layout('layouts.public')] class extends Component
 
 
             <input
-                wire:model.live="password"
+                wire:model="password"
                 id="password"
                 type="password"
                 autocomplete="new-password"
@@ -229,7 +236,7 @@ new #[Layout('layouts.public')] class extends Component
 
 
             <input
-                wire:model.live="password_confirmation"
+                wire:model="password_confirmation"
                 id="password_confirmation"
                 type="password"
                 autocomplete="new-password"
@@ -249,7 +256,7 @@ new #[Layout('layouts.public')] class extends Component
 
 
         <!-- Submit -->
-        <button type="submit" wire:loading.attr="disabled" class="auth-btn primary-btn btn-theme-primary w-full mt-2">
+        <button type="submit" :disabled="submitting" wire:loading.attr="disabled" class="auth-btn primary-btn btn-theme-primary w-full mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
 
             <span wire:loading.remove wire:target="register">
                 @label('auth.create_account', 'Create Account')
